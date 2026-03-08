@@ -1,0 +1,5 @@
+RESTAURANTS IN DATABASE:
+Name: Jindungo Demo -> Slug: demo
+Name: Quinta das Quinta -> Slug: comida-bebida
+Name: Restaurante Demo -> Slug: demo-restaurant
+Name: Restaurante Dikuzimba -> Slug: meu-restaurante-dikuzimba

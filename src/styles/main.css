@@ -1,0 +1,202 @@
+/* Custom Styles */
+
+/* Custom Styles */
+/* Root variables are now managed in index.css via Tailwind @theme */
+
+
+/* Editor Layout */
+.editor-container {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.editor-sidebar {
+  background: var(--color-surface);
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+  padding: var(--space-lg);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.editor-preview-area {
+  background-color: #e9ecef;
+  /* Neutral gray for contrast */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background-image: radial-gradient(#dee2e6 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Legacy Controls CSS removed during Tailwind migration */
+
+/* Phone Simulator */
+.phone-frame {
+  width: 375px;
+  height: 812px;
+  background: var(--color-surface);
+  border-radius: 40px;
+  box-shadow:
+    0 0 0 12px #333,
+    0 50px 100px -20px rgba(50, 50, 93, 0.25),
+    0 30px 60px -30px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 8px solid #333;
+  /* Inner bezel */
+}
+
+/* Dynamic Content Area of Phone */
+.phone-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md);
+  /* The variables here will be overridden by inline styles from the editor state */
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+
+.phone-header {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+  margin-bottom: var(--space-md);
+}
+
+/* Premium UI Utilities */
+.menu-card {
+  background: var(--color-surface, white);
+  border-radius: 1.5rem;
+  /* rounded-2xl */
+  box-shadow: 0 4px 15px -5px rgba(0, 0, 0, 0.05), 0 2px 5px -3px rgba(0, 0, 0, 0.04);
+  /* shadow-md */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  cursor: pointer;
+  transform-origin: center center;
+  position: relative;
+}
+
+/* Hover Effect (Zoom In) - "Aumentar Zoom" */
+@media (hover: hover) {
+  .menu-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    border-color: var(--color-primary);
+  }
+}
+
+/* Click Effect (Press) */
+.menu-card:active {
+  transform: scale(0.95);
+  /* More tactile press */
+}
+
+.glass-header {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+/* Updated Layouts */
+.grid-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  padding-bottom: 100px;
+}
+
+.grid-item {
+  /* Inherits menu-card styles effectively via composition if verified, or just duplicated here for safety since we can't easily edit JSX classNames massively without risk */
+  background: white;
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: transform 0.1s ease-in-out;
+
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.grid-item:active {
+  transform: scale(0.98);
+}
+
+.grid-item img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.list-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.list-item {
+  display: flex;
+  gap: var(--space-sm);
+  border-bottom: 1px solid #eee;
+  padding-bottom: var(--space-sm);
+}
+
+.list-item img {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+}
+
+.minimal-layout {
+  text-align: center;
+}
+
+.minimal-item {
+  margin-bottom: var(--space-lg);
+}
+
+.minimal-item h3 {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  margin-bottom: var(--space-xs);
+}
+
+/* Skeleton Shimmer Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.dark-mode .skeleton-shimmer {
+  background: linear-gradient(90deg, #2d3748 25%, #4a5568 50%, #2d3748 75%);
+  background-size: 200% 100%;
+}

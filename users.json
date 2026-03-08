@@ -1,0 +1,25 @@
+{
+  "profiles": [
+    {
+      "id": "160da23b-d6a7-4841-aff1-de0cfb503410",
+      "email": "juliopchquinta@gmail.com",
+      "role": "super_admin",
+      "created_at": "2026-02-07T03:00:56.730823+00:00",
+      "status": "active"
+    },
+    {
+      "id": "049c2c0b-f0f4-46eb-9a86-d94103e58e21",
+      "email": "julioquinta8@gmail.com",
+      "role": "super_admin",
+      "created_at": "2026-03-02T20:11:41.148937+00:00",
+      "status": "active"
+    },
+    {
+      "id": "0640ac07-e28e-45e6-bc36-cbd3db085470",
+      "email": "quintajulio8@hotmail.com",
+      "role": "admin",
+      "created_at": "2026-03-02T23:31:23.781694+00:00",
+      "status": "active"
+    }
+  ]
+}

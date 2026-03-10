@@ -262,6 +262,60 @@ const StyleControls = ({ config, setConfig, onReset, onLogoUpload, slug, onSlugC
                 </div>
             </div>
 
+            {/* Background Color */}
+            <div>
+                <label className={labelClasses}>Cor de Fundo do Menu</label>
+                <p className="text-xs text-gray-400 mb-3">Se definida, irá sobrepor o Modo Noturno. O texto adaptar-se-á automaticamente para continuar legível.</p>
+
+                <div className="flex flex-wrap gap-3 mb-4">
+                    {[
+                        { value: '', label: 'Padrão (Fundo Limpo)' },
+                        { value: '#ffffff', label: 'Branco Puro' },
+                        { value: '#121212', label: 'Preto (Noturno)' },
+                        { value: '#fdf6e3', label: 'Papiro / Creme' },
+                        { value: '#2d3436', label: 'Cinza Escuro' }
+                    ].map(swatch => (
+                        <button
+                            key={swatch.value || 'default'}
+                            onClick={() => handleChange('backgroundColor', swatch.value)}
+                            title={swatch.label}
+                            className={`px-3 py-2 rounded-xl text-sm font-medium transition-all relative outline-none ring-2 ring-offset-2 ring-offset-[#141414] shadow-sm flex items-center gap-2 ${(config.backgroundColor || '') === swatch.value
+                                    ? 'ring-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.4)] text-white'
+                                    : 'ring-transparent border border-white/10 text-gray-400 hover:text-white hover:border-white/30'
+                                }`}
+                            style={{ backgroundColor: swatch.value || 'rgba(255,255,255,0.05)' }}
+                        >
+                            <span
+                                className="w-4 h-4 rounded-full border border-gray-500/50 block"
+                                style={{ backgroundColor: swatch.value || 'transparent' }}
+                            ></span>
+                            <span className={swatch.value === '#ffffff' ? 'text-gray-800' : ''}>
+                                {swatch.label}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+
+                <div className="flex gap-4 items-center">
+                    <div className="relative w-12 h-12 rounded-xl overflow-hidden ring-2 ring-white/10 shadow-inner group cursor-pointer focus-within:ring-[#D4AF37] transition-colors">
+                        <input
+                            type="color"
+                            value={config.backgroundColor || '#ffffff'}
+                            onChange={(e) => handleChange('backgroundColor', e.target.value)}
+                            className="absolute -inset-2 w-20 h-20 cursor-pointer border-0 bg-transparent"
+                        />
+                    </div>
+                    <input
+                        type="text"
+                        className={`${inputClasses} flex-1 uppercase font-mono tracking-wider`}
+                        value={config.backgroundColor || ''}
+                        onChange={(e) => handleChange('backgroundColor', e.target.value)}
+                        placeholder="Ex: #1A1A1A ou deixe vazio"
+                        maxLength={7}
+                    />
+                </div>
+            </div>
+
             {/* Typography */}
             <div>
                 <label className={labelClasses}>Tipografia</label>

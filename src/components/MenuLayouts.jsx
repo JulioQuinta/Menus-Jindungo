@@ -95,10 +95,25 @@ const QuantityControls = ({ item, isEditing, primaryColor, darkMode }) => {
     );
 };
 
-// Helper for dark mode conditional styles
-const getCardStyle = (darkMode) => darkMode ? 'bg-[#1E1E1E] border-white/5' : 'bg-white border-gray-100';
-const getTextStyle = (darkMode) => darkMode ? 'text-gray-100' : 'text-gray-900';
-const getSubTextStyle = (darkMode) => darkMode ? 'text-gray-400' : 'text-gray-500';
+// Helper for dark mode conditional styles - now supporting custom background overrides
+const getCardStyle = (darkMode, customBg) => {
+    if (customBg?.isCustom) {
+        return customBg.textColor === '#ffffff' ? 'bg-black/30 border-white/10 backdrop-blur-md' : 'bg-white/70 border-gray-800/10 backdrop-blur-md';
+    }
+    return darkMode ? 'bg-[#1E1E1E] border-white/5' : 'bg-white border-gray-100';
+};
+const getTextStyle = (darkMode, customBg) => {
+    if (customBg?.isCustom) {
+        return customBg.textColor === '#ffffff' ? 'text-white' : 'text-gray-900';
+    }
+    return darkMode ? 'text-gray-100' : 'text-gray-900';
+};
+const getSubTextStyle = (darkMode, customBg) => {
+    if (customBg?.isCustom) {
+        return customBg.textColor === '#ffffff' ? 'text-gray-300' : 'text-gray-600';
+    }
+    return darkMode ? 'text-gray-400' : 'text-gray-500';
+};
 
 // [NEW] Helper to get translated text
 const getTrans = (item, lang, field) => {
@@ -106,13 +121,13 @@ const getTrans = (item, lang, field) => {
     return item.translations[lang.toLowerCase()][field] || item[field];
 };
 
-export const GridLayout = ({ items = [], primaryColor, isEditing, darkMode, selectedLanguage = 'PT' }) => {
+export const GridLayout = ({ items = [], primaryColor, isEditing, darkMode, selectedLanguage = 'PT', customBgInfo }) => {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map(item => (
                 <div
                     key={item.id}
-                    className={`rounded-xl shadow-lg transition-all duration-300 overflow-hidden border flex flex-col h-full group backdrop-blur-md animate-fade-in-up ${getCardStyle(darkMode)} hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] hover:border-[#D4AF37]/50`}
+                    className={`rounded-xl shadow-lg transition-all duration-300 overflow-hidden border flex flex-col h-full group animate-fade-in-up ${getCardStyle(darkMode, customBgInfo)} hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] hover:border-[#D4AF37]/50`}
                     style={{ boxShadow: darkMode ? '0 10px 30px -10px rgba(0,0,0,0.5)' : '0 10px 25px -5px rgba(0, 0, 0, 0.1)' }}
                 >
                     {/* Image Section */}
@@ -134,14 +149,14 @@ export const GridLayout = ({ items = [], primaryColor, isEditing, darkMode, sele
                     <div className="p-5 flex-1 flex flex-col justify-between relative">
                         <div>
                             <div className="flex justify-between items-start mb-2">
-                                <h3 className={`font-bold text-xl leading-tight line-clamp-2 ${getTextStyle(darkMode)}`}>
+                                <h3 className={`font-bold text-xl leading-tight line-clamp-2 ${getTextStyle(darkMode, customBgInfo)}`}>
                                     {getTrans(item, selectedLanguage, 'name')}
                                 </h3>
                                 <span className="font-bold text-lg whitespace-nowrap ml-2" style={{ color: primaryColor }}>
                                     {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(Number(String(item.price).replace(/[^0-9.]/g, '')) || 0)}
                                 </span>
                             </div>
-                            <p className={`text-sm line-clamp-2 mb-4 font-light ${getSubTextStyle(darkMode)}`}>
+                            <p className={`text-sm line-clamp-2 mb-4 font-light ${getSubTextStyle(darkMode, customBgInfo)}`}>
                                 {getTrans(item, selectedLanguage, 'desc')}
                             </p>
                         </div>
@@ -156,13 +171,13 @@ export const GridLayout = ({ items = [], primaryColor, isEditing, darkMode, sele
     );
 };
 
-export const ListLayout = ({ items = [], primaryColor, isEditing, darkMode, selectedLanguage = 'PT' }) => {
+export const ListLayout = ({ items = [], primaryColor, isEditing, darkMode, selectedLanguage = 'PT', customBgInfo }) => {
     return (
         <div className="flex flex-col gap-4">
             {items.map(item => (
                 <div
                     key={item.id}
-                    className={`rounded-2xl shadow-sm border p-3 flex gap-4 transition-all hover:shadow-lg hover:translate-x-1 animate-fade-in-up ${getCardStyle(darkMode)}`}
+                    className={`rounded-2xl shadow-sm border p-3 flex gap-4 transition-all hover:shadow-lg hover:translate-x-1 animate-fade-in-up ${getCardStyle(darkMode, customBgInfo)}`}
                 >
                     {/* Image */}
                     <div className="w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 rounded-xl overflow-hidden relative group">
@@ -177,14 +192,14 @@ export const ListLayout = ({ items = [], primaryColor, isEditing, darkMode, sele
                     <div className="flex-1 flex flex-col justify-between py-1">
                         <div>
                             <div className="flex justify-between items-start">
-                                <h3 className={`font-bold text-lg leading-tight ${getTextStyle(darkMode)}`}>
+                                <h3 className={`font-bold text-lg leading-tight ${getTextStyle(darkMode, customBgInfo)}`}>
                                     {getTrans(item, selectedLanguage, 'name')}
                                 </h3>
                                 <span className="font-bold text-sm sm:text-base whitespace-nowrap ml-2" style={{ color: primaryColor }}>
                                     {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(Number(String(item.price).replace(/[^0-9.]/g, '')) || 0)}
                                 </span>
                             </div>
-                            <p className={`text-xs sm:text-sm line-clamp-2 mt-1 font-light ${getSubTextStyle(darkMode)}`}>
+                            <p className={`text-xs sm:text-sm line-clamp-2 mt-1 font-light ${getSubTextStyle(darkMode, customBgInfo)}`}>
                                 {getTrans(item, selectedLanguage, 'desc')}
                             </p>
                         </div>
@@ -199,14 +214,14 @@ export const ListLayout = ({ items = [], primaryColor, isEditing, darkMode, sele
     );
 };
 
-export const MinimalLayout = ({ items = [], primaryColor, fontFamily, isEditing, darkMode, selectedLanguage = 'PT' }) => {
+export const MinimalLayout = ({ items = [], primaryColor, fontFamily, isEditing, darkMode, selectedLanguage = 'PT', customBgInfo }) => {
     return (
         <div className={`flex flex-col divide-y divide-dashed ${darkMode ? 'divide-gray-800' : 'divide-gray-200'}`}>
             {items.map(item => (
                 <div key={item.id} className="py-5 flex justify-between items-center gap-4 hover:bg-white/5 rounded-lg px-3 transition-colors group animate-fade-in-up">
                     <div className="flex-1">
                         <div className="flex items-baseline justify-between mb-1">
-                            <h3 className={`font-medium text-lg group-hover:text-primary transition-colors ${getTextStyle(darkMode)}`}>
+                            <h3 className={`font-medium text-lg group-hover:text-primary transition-colors ${getTextStyle(darkMode, customBgInfo)}`}>
                                 {getTrans(item, selectedLanguage, 'name')}
                             </h3>
                             <div className={`flex-1 mx-4 border-b border-dotted h-4 opacity-30 hidden sm:block ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}></div>
@@ -215,7 +230,7 @@ export const MinimalLayout = ({ items = [], primaryColor, fontFamily, isEditing,
                             </span>
                         </div>
                         {item.desc && (
-                            <p className={`text-xs line-clamp-1 italic ${getSubTextStyle(darkMode)}`}>
+                            <p className={`text-xs line-clamp-1 italic ${getSubTextStyle(darkMode, customBgInfo)}`}>
                                 {getTrans(item, selectedLanguage, 'desc')}
                             </p>
                         )}

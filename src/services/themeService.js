@@ -6,7 +6,8 @@ const DEFAULT_THEME = {
     fontFamily: 'Inter, sans-serif',
     layoutMode: 'list',
     logoUrl: '',
-    darkMode: false
+    darkMode: false,
+    backgroundColor: ''
 };
 
 export const themeService = {

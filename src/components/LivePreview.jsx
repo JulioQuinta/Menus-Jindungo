@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabaseClient';
 import { GridLayout, ListLayout, MinimalLayout, GridLayoutSkeleton, ListLayoutSkeleton } from './MenuLayouts';
 import StickyCategoryNav from './StickyCategoryNav';
 import HighlightsCarousel from './HighlightsCarousel'; // Assuming these exist or will be uncommented
+import { getContrastColor } from '../utils/colorUtils';
+
 // import SearchBar from './SearchBar';
 
 const FlagSelector = ({ selected, onSelect }) => {
@@ -117,7 +119,7 @@ const CategoryCarousel = ({ categories, activeCategory, onSelect, primaryColor }
 };
 
 const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, restaurantId }) => {
-    const { layoutMode, primaryColor, fontFamily, backgroundImage, darkMode } = config;
+    const { layoutMode, primaryColor, fontFamily, backgroundImage, darkMode, backgroundColor } = config;
     const [selectedLanguage, setSelectedLanguage] = React.useState('PT');
     const [activeCategory, setActiveCategory] = React.useState(categories?.[0]?.id);
 
@@ -136,7 +138,11 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
             );
         }
 
-        const commonProps = { primaryColor, isEditing, darkMode, selectedLanguage };
+        const effectiveBgColor = backgroundColor || (darkMode ? '#121212' : '#f8f9fa');
+        const effectiveTextColor = backgroundColor ? getContrastColor(effectiveBgColor) : (darkMode ? '#ffffff' : '#1a1a1a');
+        const isCustomBg = !!backgroundColor;
+
+        const commonProps = { primaryColor, isEditing, darkMode, selectedLanguage, customBgInfo: { isCustom: isCustomBg, textColor: effectiveTextColor, bgColor: effectiveBgColor } };
 
         switch (layoutMode) {
             case 'grid':
@@ -215,13 +221,17 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
         if (el) el.scrollIntoView({ behavior: 'smooth' });
     };
 
+    const effectiveBgColor = backgroundColor || (darkMode ? '#121212' : '#f8f9fa');
+    const effectiveTextColor = backgroundColor ? getContrastColor(effectiveBgColor) : (darkMode ? '#ffffff' : '#1a1a1a');
+
     return (
         <div className={`min-h-screen ${isFullPage ? '' : 'rounded-3xl overflow-hidden border border-gray-800'}`}
             style={{
                 fontFamily: fontFamily || 'Inter, sans-serif',
-                backgroundColor: darkMode ? '#121212' : '#f8f9fa',
-                color: darkMode ? '#ffffff' : '#1a1a1a',
-                transition: 'background-color 0.5s ease'
+                backgroundColor: effectiveBgColor,
+                color: effectiveTextColor,
+                transition: 'background-color 0.5s ease',
+                minHeight: '100%'
             }}>
 
             {/* Header / Hero */}

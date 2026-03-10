@@ -24,16 +24,7 @@ import ChatAdminPanel from '../components/ChatAdminPanel';
 import InstallPWA from '../components/InstallPWA';
 import QRCodeGenerator from '../components/QRCodeGenerator';
 
-// Placeholder for Client Manager
-const ClientManager = () => (
-    <div className="p-6 bg-white rounded-xl shadow-sm">
-        <h2 className="text-xl font-bold mb-4">Gerenciar Clientes / Staff</h2>
-        <p className="text-gray-500">Funcionalidade de adicionar clientes será implementada aqui.</p>
-        <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-            + Adicionar Cliente
-        </button>
-    </div>
-);
+import ClientManager from '../components/ClientManager';
 
 const AdminDashboard = () => {
     const { signOut, user } = useAuth();
@@ -672,7 +663,7 @@ const AdminDashboard = () => {
                         <Route path="/" element={<DashboardStats restaurantId={restaurant?.id} />} />
                         <Route path="/menu" element={<MenuManager categories={categories} restaurantId={restaurant?.id} onUpdate={handleMenuUpdate} />} />
                         <Route path="/orders" element={<KitchenBoard restaurantId={restaurant?.id} config={config} restaurantName={restaurant?.name} />} />
-                        <Route path="/clients" element={<ClientManager />} />
+                        <Route path="/clients" element={<ClientManager restaurantId={restaurant?.id} />} />
                         <Route path="/chat" element={<ChatAdminPanel categories={categories} onUpdate={handleMenuUpdate} restaurantId={restaurant?.id} />} />
                         <Route path="/qrcode" element={<QRCodeGenerator url={`${window.location.origin}/${restaurant?.slug}`} restaurantName={restaurant?.slug} />} />
                         <Route path="/settings" element={

@@ -43,55 +43,44 @@ const DashboardStats = ({ restaurantId }) => {
     const [recentOrders, setRecentOrders] = useState([]);
     const [ordersLoading, setOrdersLoading] = useState(false);
 
-    // Initial load for general stats
+    // Load all initial data (General Stats + Recent Orders)
     useEffect(() => {
-        const loadGeneralStats = async () => {
+        let isMounted = true;
+
+        const loadInitialData = async () => {
             if (!restaurantId) return;
             setLoading(true);
+            setOrdersLoading(true);
+
             try {
-                const [analyticsData, { count: itemsCount }, { count: catsCount }] = await Promise.all([
+                // 1. Parallel but controlled general counts
+                const [analyticsData, itemsRes, catsRes, ordersRes] = await Promise.all([
                     analyticsService.getStats(restaurantId),
-                    supabase.from('menu_items').select('*', { count: 'exact', head: true }).eq('restaurant_id', restaurantId),
-                    supabase.from('categories').select('*', { count: 'exact', head: true }).eq('restaurant_id', restaurantId)
+                    supabase.from('menu_items').select('id', { count: 'exact', head: true }).eq('restaurant_id', restaurantId),
+                    supabase.from('categories').select('id', { count: 'exact', head: true }).eq('restaurant_id', restaurantId),
+                    supabase.from('orders').select('*').eq('restaurant_id', restaurantId).in('status', ['pending', 'preparing']).order('created_at', { ascending: false }).limit(5)
                 ]);
 
+                if (!isMounted) return;
+
                 setStats(analyticsData);
-                setTotalItems(itemsCount || 0);
-                setTotalCategories(catsCount || 0);
-            } catch (err) {
-                console.error("Error loading general stats", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadGeneralStats();
-    }, [restaurantId]);
+                setTotalItems(itemsRes.count || 0);
+                setTotalCategories(catsRes.count || 0);
 
-    // Load recent active orders
-    useEffect(() => {
-        const loadRecentOrders = async () => {
-            if (!restaurantId) return;
-            setOrdersLoading(true);
-            try {
-                const { data, error } = await supabase
-                    .from('orders')
-                    .select('*')
-                    .eq('restaurant_id', restaurantId)
-                    .in('status', ['pending', 'preparing'])
-                    .order('created_at', { ascending: false })
-                    .limit(5);
-
-                if (!error && data) {
-                    setRecentOrders(data);
+                if (!ordersRes.error && ordersRes.data) {
+                    setRecentOrders(ordersRes.data);
                 }
-            } catch (error) {
-                console.error("Error loading recent orders", error);
+            } catch (err) {
+                console.error("Error loading dashboard data", err);
             } finally {
-                setOrdersLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                    setOrdersLoading(false);
+                }
             }
         };
 
-        loadRecentOrders();
+        loadInitialData();
 
         const channel = supabase
             .channel('dashboard-orders')
@@ -99,16 +88,20 @@ const DashboardStats = ({ restaurantId }) => {
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'orders', filter: `restaurant_id=eq.${restaurantId}` },
                 () => {
-                    loadRecentOrders(); // Refetch on any order change
+                    if (isMounted) loadInitialData();
                 }
             )
             .subscribe();
 
-        return () => supabase.removeChannel(channel);
+        return () => {
+            isMounted = false;
+            supabase.removeChannel(channel);
+        };
     }, [restaurantId]);
 
     // Load sales based on filter
     useEffect(() => {
+        let isMounted = true;
         const loadSales = async () => {
             if (!restaurantId) return;
             setSalesLoading(true);
@@ -143,6 +136,8 @@ const DashboardStats = ({ restaurantId }) => {
                 }
 
                 const salesData = await orderService.getSalesByDateRange(restaurantId, start, end);
+
+                if (!isMounted) return;
 
                 if (salesData && salesData.data) {
                     const revenue = salesData.data.reduce((sum, order) => sum + (order.total || 0), 0);
@@ -180,22 +175,25 @@ const DashboardStats = ({ restaurantId }) => {
                         .sort((a, b) => b.quantity - a.quantity)
                         .slice(0, 5);
 
-                    setSalesStats({
-                        revenue,
-                        ordersCount: salesData.data.length,
-                        avgTicket: salesData.data.length > 0 ? revenue / salesData.data.length : 0,
-                        data: salesData.data,
-                        chartData,
-                        topProducts
-                    });
+                    if (isMounted) {
+                        setSalesStats({
+                            revenue,
+                            ordersCount: salesData.data.length,
+                            avgTicket: salesData.data.length > 0 ? revenue / salesData.data.length : 0,
+                            data: salesData.data,
+                            chartData,
+                            topProducts
+                        });
+                    }
                 }
             } catch (error) {
-                console.error("Error loading sales", error);
+                if (isMounted) console.error("Error loading sales", error);
             } finally {
-                setSalesLoading(false);
+                if (isMounted) setSalesLoading(false);
             }
         };
         loadSales();
+        return () => { isMounted = false; };
     }, [restaurantId, salesFilter, customDate]);
 
     const handleExportCSV = () => {

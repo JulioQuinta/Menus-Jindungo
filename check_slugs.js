@@ -1,18 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
-dotenv.config();
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
 
-async function listSlugs() {
-    const { data: restaurants, error } = await supabase.from('restaurants').select('name, slug');
-    if (error) {
-        console.error("Error fetching rules:", error);
-    } else {
-        console.log("RESTAURANTS IN DATABASE:");
-        restaurants.forEach(r => console.log(`Name: ${r.name} -> Slug: ${r.slug}`));
-    }
+const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
+
+async function check() {
+    const { data, error } = await supabase.from('restaurants').select('id, name, slug');
+    if (error) console.error(error);
+    else console.log(JSON.stringify(data, null, 2));
 }
-listSlugs();
+check();

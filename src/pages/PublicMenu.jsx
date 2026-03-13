@@ -84,10 +84,16 @@ const PublicMenu = () => {
                 setCategories(menuData || []);
 
             } catch (err) {
+                // If it's an AbortError, it means the request was cancelled (e.g. unmount), ignore it.
+                if (err.name === 'AbortError' || err.message?.includes('Abort')) {
+                    console.log("Fetch aborted");
+                    return;
+                }
                 console.error("Public Menu Critical Error:", err);
                 setError(err.message || 'Erro desconhecido');
                 toast.error(`Erro: ${err.message}`);
             } finally {
+                // Only set loading false if we didn't abort (otherwise state update on unmounted component)
                 setLoading(false);
             }
         };

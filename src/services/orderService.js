@@ -81,7 +81,7 @@ export const orderService = {
         try {
             const { data, error } = await supabase
                 .from('orders')
-                .select('*')
+                .select('id, created_at, total, items, status')
                 .eq('restaurant_id', restaurantId)
                 .eq('status', 'paid')
                 .gte('created_at', startDate.toISOString())

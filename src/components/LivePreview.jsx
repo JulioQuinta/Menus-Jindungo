@@ -5,6 +5,7 @@ import StickyCategoryNav from './StickyCategoryNav';
 import HighlightsCarousel from './HighlightsCarousel'; // Assuming these exist or will be uncommented
 import { getContrastColor } from '../utils/colorUtils';
 
+import { Search, X, Globe } from 'lucide-react';
 // import SearchBar from './SearchBar';
 
 const FlagSelector = ({ selected, onSelect }) => {
@@ -118,12 +119,18 @@ const CategoryCarousel = ({ categories, activeCategory, onSelect, primaryColor }
     );
 };
 
-const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, restaurantId }) => {
+const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, restaurantId, features = {} }) => {
     const { layoutMode, primaryColor, fontFamily, backgroundImage, darkMode, backgroundColor } = config;
     const [selectedLanguage, setSelectedLanguage] = React.useState('PT');
     const [activeCategory, setActiveCategory] = React.useState(categories?.[0]?.id);
+    const [searchTerm, setSearchTerm] = React.useState('');
 
-    // Auto-scroll logic for preview would go here, or manual selection
+    const translations = {
+        PT: { welcome: 'Bem-vindo ao', searchPlaceholder: 'Pesquisar no menu...', noResults: 'Nenhum resultado para', waitMsg: 'O garçom está a caminho!', tech: 'Tecnologia' },
+        EN: { welcome: 'Welcome to', searchPlaceholder: 'Search menu...', noResults: 'No results for', waitMsg: 'The waiter is coming!', tech: 'Technology' },
+        FR: { welcome: 'Bienvenue à', searchPlaceholder: 'Chercher au menu...', noResults: 'Aucun résultat pour', waitMsg: 'Le serveur arrive!', tech: 'Technologie' },
+        ES: { welcome: 'Bienvenido a', searchPlaceholder: 'Buscar en el menú...', noResults: 'No hay resultados para', waitMsg: '¡El camarero viene!', tech: 'Tecnología' }
+    };
 
     const renderLayout = () => {
         if (isLoading) {
@@ -142,20 +149,44 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
         const effectiveTextColor = backgroundColor ? getContrastColor(effectiveBgColor) : (darkMode ? '#ffffff' : '#1a1a1a');
         const isCustomBg = !!backgroundColor;
 
+        const filteredCategories = categories.map(cat => {
+            const filteredItems = cat.items.filter(item => {
+                const searchLower = searchTerm.toLowerCase();
+                return (
+                    item.name.toLowerCase().includes(searchLower) ||
+                    (item.description && item.description.toLowerCase().includes(searchLower))
+                );
+            });
+            return { ...cat, items: filteredItems };
+        }).filter(cat => cat.items.length > 0);
+
+        if (searchTerm && filteredCategories.length === 0) {
+            return (
+                <div className="text-center py-20 animate-fade-in">
+                    <div className="text-4xl mb-4 grayscale opacity-50">🔍</div>
+                    <p className="text-gray-500 font-medium">
+                        {translations[selectedLanguage].noResults} "{searchTerm}"
+                    </p>
+                </div>
+            );
+        }
+
         const commonProps = { primaryColor, isEditing, darkMode, selectedLanguage, customBgInfo: { isCustom: isCustomBg, textColor: effectiveTextColor, bgColor: effectiveBgColor } };
+
+        const targetCategories = searchTerm ? filteredCategories : categories;
 
         switch (layoutMode) {
             case 'grid':
-                return categories.map(cat => (
+                return targetCategories.map(cat => (
                     <CategorySection key={cat.id} cat={cat} Layout={GridLayout} commonProps={commonProps} />
                 ));
             case 'minimal':
-                return categories.map(cat => (
+                return targetCategories.map(cat => (
                     <CategorySection key={cat.id} cat={cat} Layout={MinimalLayout} commonProps={commonProps} fontFamily={fontFamily} />
                 ));
             case 'list':
             default:
-                return categories.map(cat => (
+                return targetCategories.map(cat => (
                     <CategorySection key={cat.id} cat={cat} Layout={ListLayout} commonProps={commonProps} />
                 ));
         }
@@ -268,10 +299,34 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
 
                 {/* Welcome Text */}
                 <div className="text-center">
-                    <p className={`text-sm font-medium tracking-widest uppercase ${darkMode ? 'text-white/80' : 'text-white/90'}`}>
-                        {selectedLanguage === 'PT' ? 'Bem-vindo ao' : 'Welcome to'} {config.restaurantName || 'Jindungo'}
+                    <p className={`text-sm font-medium tracking-widest uppercase mb-6 ${darkMode ? 'text-white/80' : 'text-white/90'}`}>
+                        {translations[selectedLanguage].welcome} {config.restaurantName || 'Jindungo'}
                     </p>
                 </div>
+
+                {/* Corporate Feature: Dynamic Search */}
+                {features.hasDynamicSearch && (
+                    <div className="w-full max-w-sm relative animate-fade-in">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50">
+                            <Search size={18} />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder={translations[selectedLanguage].searchPlaceholder}
+                            className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl py-3.5 pl-12 pr-12 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 transition-all text-sm"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                        {searchTerm && (
+                            <button
+                                onClick={() => setSearchTerm('')}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
+                            >
+                                <X size={18} />
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Sticky Category Carousel */}
@@ -289,6 +344,17 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
             <div className="p-4 pb-32 space-y-2">
                 {renderLayout()}
             </div>
+
+            {/* Branding Watermark */}
+            {!features.canHideBranding && (
+                <div className="pb-8 pt-4 text-center opacity-50 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-[10px] uppercase tracking-widest font-bold mb-1">Tecnologia</span>
+                    <div className="flex items-center gap-1.5 grayscale">
+                        <div className="w-5 h-5 bg-black rounded flex items-center justify-center text-[10px] text-[#D4AF37] font-serif border border-gray-800">M</div>
+                        <span className="font-serif font-bold text-sm tracking-tight">JindungoMenus</span>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -36,7 +36,7 @@ const DashboardStats = ({ restaurantId }) => {
 
     const [salesFilter, setSalesFilter] = useState('today'); // 'today', 'month', 'trimester', 'semester', 'year', 'custom'
     const [customDate, setCustomDate] = useState({ start: new Date().toISOString().split('T')[0], end: new Date().toISOString().split('T')[0] });
-    const [salesStats, setSalesStats] = useState({ revenue: 0, ordersCount: 0, data: [], chartData: [] });
+    const [salesStats, setSalesStats] = useState({ revenue: 0, ordersCount: 0, avgTicket: 0, data: [], chartData: [], topProducts: [] });
     const [salesLoading, setSalesLoading] = useState(false);
 
     // Recent Orders State
@@ -164,11 +164,29 @@ const DashboardStats = ({ restaurantId }) => {
                         return new Date(`${y1}-${m1}-${d1}`).getTime() - new Date(`${y2}-${m2}-${d2}`).getTime();
                     });
 
+                    // Top Products Analysis
+                    const productFreq = {};
+                    salesData.data.forEach(order => {
+                        const items = order.items || [];
+                        items.forEach(item => {
+                            const name = item.name;
+                            if (!productFreq[name]) productFreq[name] = 0;
+                            productFreq[name] += (item.quantity || 1);
+                        });
+                    });
+
+                    const topProducts = Object.keys(productFreq)
+                        .map(name => ({ name, quantity: productFreq[name] }))
+                        .sort((a, b) => b.quantity - a.quantity)
+                        .slice(0, 5);
+
                     setSalesStats({
                         revenue,
                         ordersCount: salesData.data.length,
+                        avgTicket: salesData.data.length > 0 ? revenue / salesData.data.length : 0,
                         data: salesData.data,
-                        chartData
+                        chartData,
+                        topProducts
                     });
                 }
             } catch (error) {
@@ -287,10 +305,10 @@ const DashboardStats = ({ restaurantId }) => {
                     trend="Ao vivo"
                 />
                 <StatCard
-                    title="Pratos Ativos"
-                    value={totalItems}
-                    icon={Calendar}
-                    colorClass="bg-[#D4AF37] text-[#D4AF37] border-[#D4AF37] hover:border-yellow-400"
+                    title="Ticket Médio"
+                    value={salesLoading ? '...' : `${Math.round(salesStats.avgTicket).toLocaleString('pt-AO')} Kz`}
+                    icon={TrendingUp}
+                    colorClass="bg-purple-500 text-purple-400 border-purple-500 hover:border-purple-400"
                 />
             </div>
 
@@ -355,6 +373,40 @@ const DashboardStats = ({ restaurantId }) => {
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Corporate: Top Products Chart */}
+                <div className="bg-black/60 backdrop-blur-md p-6 sm:p-8 rounded-3xl shadow-2xl border border-white/5 flex flex-col h-[450px] lg:col-span-2">
+                    <div className="flex justify-between items-center mb-8">
+                        <div>
+                            <h3 className="text-xl font-serif font-bold text-white">Top 5 Pratos Mais Vendidos</h3>
+                            <p className="text-gray-500 text-sm">Baseado no volume de pedidos do período selecionado.</p>
+                        </div>
+                        <div className="bg-[#D4AF37]/20 text-[#D4AF37] px-3 py-1 rounded-full text-xs font-bold border border-[#D4AF37]/20 uppercase tracking-widest">
+                            Corporate
+                        </div>
+                    </div>
+                    <div className="flex-1 w-full min-h-0">
+                        {salesStats.topProducts.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={salesStats.topProducts} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
+                                    <XAxis type="number" hide />
+                                    <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} width={120} tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                                    <Tooltip
+                                        cursor={{ fill: 'rgba(212,175,55,0.05)' }}
+                                        contentStyle={{ borderRadius: '12px', background: '#121212', border: '1px solid rgba(255,255,255,0.1)' }}
+                                        itemStyle={{ color: '#D4AF37' }}
+                                    />
+                                    <Bar dataKey="quantity" fill="#D4AF37" radius={[0, 4, 4, 0]} barSize={32} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="h-full flex items-center justify-center text-gray-500 font-medium">
+                                Nenhuma venda identificada para análise de produtos.
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

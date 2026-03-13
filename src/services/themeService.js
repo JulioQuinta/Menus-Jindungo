@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 const DEFAULT_THEME = {
     primaryColor: '#ff6b6b',
     secondaryColor: '#4ecdc4',
-    fontFamily: 'Inter, sans-serif',
+    fontFamily: '"Plus Jakarta Sans", sans-serif',
     layoutMode: 'list',
     logoUrl: '',
     darkMode: false,

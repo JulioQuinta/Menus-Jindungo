@@ -87,7 +87,7 @@ const Register = () => {
                 {/* Glass Effect Card */}
                 <div className="relative group">
                     {/* Glowing border effect behind the card */}
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-1000"></div>
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-[#D4AF37] to-yellow-600 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-1000"></div>
 
                     <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-8 sm:p-10 shadow-2xl">
 
@@ -112,14 +112,14 @@ const Register = () => {
 
                             <div className="space-y-4">
                                 <div className="group/input">
-                                    <label htmlFor="email" className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider ml-1 group-focus-within/input:text-red-400 transition-colors">Email</label>
+                                    <label htmlFor="email" className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider ml-1 group-focus-within/input:text-[#D4AF37] transition-colors">Email</label>
                                     <input
                                         id="email"
                                         name="email"
                                         type="email"
                                         autoComplete="email"
                                         required
-                                        className="block w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                                        className="block w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-[#D4AF37]/50 focus:ring-1 focus:ring-[#D4AF37]/50 transition-all duration-300 backdrop-blur-sm"
                                         placeholder="seu@email.com"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
@@ -127,13 +127,13 @@ const Register = () => {
                                 </div>
 
                                 <div className="group/input">
-                                    <label htmlFor="password" className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider ml-1 group-focus-within/input:text-red-400 transition-colors">Senha</label>
+                                    <label htmlFor="password" className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider ml-1 group-focus-within/input:text-[#D4AF37] transition-colors">Senha</label>
                                     <input
                                         id="password"
                                         name="password"
                                         type="password"
                                         required
-                                        className="block w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                                        className="block w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-[#D4AF37]/50 focus:ring-1 focus:ring-[#D4AF37]/50 transition-all duration-300 backdrop-blur-sm"
                                         placeholder="Mínimo 6 caracteres"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
@@ -141,13 +141,13 @@ const Register = () => {
                                 </div>
 
                                 <div className="group/input">
-                                    <label htmlFor="confirmPassword" className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider ml-1 group-focus-within/input:text-red-400 transition-colors">Confirmar Senha</label>
+                                    <label htmlFor="confirmPassword" className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider ml-1 group-focus-within/input:text-[#D4AF37] transition-colors">Confirmar Senha</label>
                                     <input
                                         id="confirmPassword"
                                         name="confirmPassword"
                                         type="password"
                                         required
-                                        className="block w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                                        className="block w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-[#D4AF37]/50 focus:ring-1 focus:ring-[#D4AF37]/50 transition-all duration-300 backdrop-blur-sm"
                                         placeholder="Repita a senha"
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
@@ -158,9 +158,9 @@ const Register = () => {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full relative group overflow-hidden py-4 px-4 rounded-xl font-bold text-white shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none mt-2"
+                                className="w-full relative group overflow-hidden py-4 px-4 rounded-xl font-bold text-black shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none mt-2"
                             >
-                                <div className="absolute inset-0 bg-gradient-to-r from-red-700 to-red-600 transition-all group-hover:from-red-600 group-hover:to-red-500"></div>
+                                <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37] to-yellow-500 transition-all group-hover:from-yellow-500 group-hover:to-yellow-400"></div>
                                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] opacity-10"></div>
                                 <span className="relative flex items-center justify-center gap-2">
                                     {isLoading ? 'Criando Conta...' : 'Começar Agora'} <span className="text-lg transition-transform group-hover:translate-x-1">→</span>
@@ -171,7 +171,7 @@ const Register = () => {
                         <div className="mt-8 text-center">
                             <p className="text-sm text-gray-500">
                                 Já tem uma conta?{' '}
-                                <Link to="/login" className="font-semibold text-white hover:text-red-400 transition-colors border-b border-transparent hover:border-red-400 pb-0.5">
+                                <Link to="/login" className="font-semibold text-white hover:text-[#D4AF37] transition-colors border-b border-transparent hover:border-[#D4AF37] pb-0.5">
                                     Fazer Login
                                 </Link>
                             </p>

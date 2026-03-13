@@ -56,8 +56,8 @@ const Login = () => {
         <div className="min-h-screen relative flex items-center justify-center overflow-hidden bg-[#121212]">
             {/* Ambient Background */}
             <div className="absolute inset-0 z-0">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary/20 blur-[120px] animate-pulse-slow"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-secondary/40 blur-[120px]"></div>
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[#D4AF37]/10 blur-[120px] animate-pulse-slow"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-white/5 blur-[120px]"></div>
             </div>
 
             {/* Login Card */}
@@ -79,14 +79,14 @@ const Login = () => {
                     </div>
 
                     {/* Type Toggle */}
-                    <div className="flex bg-black/40 p-1.5 rounded-xl mb-8 relative border border-white/5">
+                    <div className="flex bg-black/40 p-1.5 rounded-xl mb-6 relative border border-white/5">
                         {/* Sliding Background */}
-                        <div className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 rounded-lg transition-all duration-300 shadow-[0_0_10px_rgba(212,175,55,0.1)] ${loginType === 'restaurant' ? 'left-1.5' : 'left-[50%]'}`}></div>
+                        <div className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-[#D4AF37]/20 border border-[#D4AF37]/30 rounded-lg transition-all duration-300 shadow-[0_0_10px_rgba(212,175,55,0.1)] ${loginType === 'restaurant' ? 'left-1.5' : 'left-[50%]'}`}></div>
 
                         <button
                             type="button"
                             onClick={() => setLoginType('restaurant')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg relative z-10 transition-colors ${loginType === 'restaurant' ? 'text-primary' : 'text-gray-400 hover:text-white'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg relative z-10 transition-colors ${loginType === 'restaurant' ? 'text-[#D4AF37]' : 'text-gray-400 hover:text-white'}`}
                         >
                             <ChefHat size={18} />
                             Restaurante
@@ -94,11 +94,30 @@ const Login = () => {
                         <button
                             type="button"
                             onClick={() => setLoginType('internal')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg relative z-10 transition-colors ${loginType === 'internal' ? 'text-primary' : 'text-gray-400 hover:text-white'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg relative z-10 transition-colors ${loginType === 'internal' ? 'text-[#D4AF37]' : 'text-gray-400 hover:text-white'}`}
                         >
                             <Briefcase size={18} />
                             Gestão
                         </button>
+                    </div>
+
+                    {/* Type Description */}
+                    <div className="text-center mb-8 px-4 h-5">
+                        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold flex items-center justify-center gap-2 animate-fade-in">
+                            {loginType === 'restaurant' ? (
+                                <>
+                                    <span className="w-4 h-[1px] bg-gray-700"></span>
+                                    Painel do Lojista & Ementas
+                                    <span className="w-4 h-[1px] bg-gray-700"></span>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="w-4 h-[1px] bg-gray-700"></span>
+                                    Administração SaaS Jindungo
+                                    <span className="w-4 h-[1px] bg-gray-700"></span>
+                                </>
+                            )}
+                        </p>
                     </div>
 
                     {/* Form */}

@@ -372,18 +372,15 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
     return (
         <div className="menu-manager h-full relative flex flex-col">
             {/* Toolbar */}
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                 <div>
-                    <h2 className="text-3xl font-serif font-bold text-white mb-2">Editor de Menu</h2>
-                    <p className="text-gray-400">Gerencie seus pratos e categorias com facilidade.</p>
+                    <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white mb-1 sm:mb-2">Editor de Menu</h2>
+                    <p className="text-gray-400 text-sm">Gerencie seus pratos e categorias com facilidade.</p>
                 </div>
                 <button
                     onClick={() => setShowCategoryManager(true)}
-                    className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 transition-all backdrop-blur-sm"
+                    className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 transition-all backdrop-blur-sm w-full sm:w-auto justify-center"
                 >
-                    <SortableContext items={[]} strategy={verticalListSortingStrategy}>
-                        {/* Icon placeholder if needed */}
-                    </SortableContext>
                     <span>Gerenciar Categorias</span>
                 </button>
             </div>

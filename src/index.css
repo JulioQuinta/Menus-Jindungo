@@ -16,8 +16,8 @@
   /* Slightly lighter for cards */
   --color-dark-input: #1A1A1C;
 
-  --font-sans: "Inter", ui-sans-serif, system-ui;
-  --font-serif: "Playfair Display", ui-serif, Georgia;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui;
+  --font-serif: "Outfit", ui-serif, Georgia;
 
   --animate-shake: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;

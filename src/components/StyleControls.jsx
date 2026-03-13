@@ -280,8 +280,8 @@ const StyleControls = ({ config, setConfig, onReset, onLogoUpload, slug, onSlugC
                             onClick={() => handleChange('backgroundColor', swatch.value)}
                             title={swatch.label}
                             className={`px-3 py-2 rounded-xl text-sm font-medium transition-all relative outline-none ring-2 ring-offset-2 ring-offset-[#141414] shadow-sm flex items-center gap-2 ${(config.backgroundColor || '') === swatch.value
-                                    ? 'ring-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.4)] text-white'
-                                    : 'ring-transparent border border-white/10 text-gray-400 hover:text-white hover:border-white/30'
+                                ? 'ring-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.4)] text-white'
+                                : 'ring-transparent border border-white/10 text-gray-400 hover:text-white hover:border-white/30'
                                 }`}
                             style={{ backgroundColor: swatch.value || 'rgba(255,255,255,0.05)' }}
                         >
@@ -325,8 +325,8 @@ const StyleControls = ({ config, setConfig, onReset, onLogoUpload, slug, onSlugC
                         value={config.fontFamily}
                         onChange={(e) => handleChange('fontFamily', e.target.value)}
                     >
-                        <option value="Inter, sans-serif">Inter (Moderno & Limpo)</option>
-                        <option value="Playfair Display, serif">Playfair Display (Premium Elegance)</option>
+                        <option value='"Plus Jakarta Sans", sans-serif'>Plus Jakarta Sans (Legibilidade Máxima)</option>
+                        <option value='"Outfit", sans-serif'>Outfit (Tech & Moderno)</option>
                         <option value="Fira Code, monospace">Fira Code (Tech/Café)</option>
                         <option value="Lato, sans-serif">Lato (Simples)</option>
                         <option value="Montserrat, sans-serif">Montserrat (Geométrico)</option>

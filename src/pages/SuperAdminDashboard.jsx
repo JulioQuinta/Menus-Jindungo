@@ -680,7 +680,7 @@ const SuperAdminDashboard = () => {
                                                         </button>
                                                     </td>
                                                     <td className="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
-                                                        <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                        <div className="flex gap-2 justify-end transition-opacity duration-300">
                                                             <button
                                                                 onClick={() => setRenewModal({ isOpen: true, restaurant: rest, selectedPlan: PLANS[1], customDays: 0 })}
                                                                 className="w-8 h-8 rounded-lg bg-green-900/20 text-green-400 border border-green-900/50 hover:bg-green-500 hover:text-white flex items-center justify-center transition-all shadow-[0_4px_10px_rgba(0,0,0,0.3)] hover:scale-110"

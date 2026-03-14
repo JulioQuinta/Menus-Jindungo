@@ -2,7 +2,8 @@ export const generateWhatsAppLink = (cartItems, total, orderType, details, resta
     if (!cartItems || cartItems.length === 0) return '';
 
     // Sanitize phone number: remove all non-digits
-    let cleanPhone = restaurantPhoneParam ? restaurantPhoneParam.replace(/\D/g, '') : '';
+    let phoneStr = restaurantPhoneParam ? String(restaurantPhoneParam) : '';
+    let cleanPhone = phoneStr.replace(/\D/g, '');
 
     // Fallback or Add country code if missing
     if (!cleanPhone || cleanPhone.length < 9) {

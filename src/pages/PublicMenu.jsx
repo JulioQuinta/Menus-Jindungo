@@ -39,49 +39,81 @@ const PublicMenu = () => {
             setError(null);
 
             try {
-                // 1. Fetch Restaurant
-                const normalizedSlug = slug.trim().replace(/\s+/g, '-');
-                console.log("Step 1: Fetching Restaurant with slug:", normalizedSlug);
+                // 1. Combined Fetch (Restaurant + Theme + Menu)
+                const normalizedSlug = slug ? slug.trim().replace(/\s+/g, '-') : '';
+                console.log("Step 1: Fetching optimized menu data for slug:", normalizedSlug);
 
                 const { data: restaurants, error: rError } = await supabase
                     .from('restaurants')
-                    .select('id, name, slug, status, plan, delivery_config')
+                    .select(`
+                        id, 
+                        name, 
+                        slug, 
+                        status, 
+                        plan, 
+                        delivery_config, 
+                        theme_config,
+                        categories (
+                            id, 
+                            label, 
+                            sort_order,
+                            menu_items (*)
+                        )
+                    `)
                     .eq('slug', normalizedSlug);
 
-                if (rError) throw new Error(`Erro ao buscar restaurante: ${rError.message}`);
-                const restaurantData = restaurants?.[0];
-                if (!restaurantData) throw new Error('Restaurante não encontrado (404)');
+                if (rError) throw new Error(`Erro de conexão: ${rError.message}`);
 
+                const restaurantData = restaurants?.[0];
+                if (!restaurantData) {
+                    console.error("No restaurant found for slug:", normalizedSlug);
+                    throw new Error('Restaurante não encontrado (404)');
+                }
+
+                // Set Restaurant & Features
                 setRestaurant(restaurantData);
                 setFeatures(getPlanFeatures(restaurantData.plan));
 
-                // 2. Fetch Theme (Sequential)
-                // 2. Fetch Theme (Sequential)
-                console.log("Step 2: Fetching Theme...");
-                let themeData = DEFAULT_CONFIG;
-                try {
-                    themeData = await themeService.getTheme(restaurantData.id);
-                } catch (tErr) {
-                    console.error("Theme fetch failed, using default", tErr);
-                }
-
-                // [FIX] Merge restaurant name into config
+                // 2. Process Theme/Config (Now derived from Step 1)
+                const themeData = restaurantData.theme_config || DEFAULT_CONFIG;
                 const finalConfig = {
-                    ...(themeData || DEFAULT_CONFIG),
-                    restaurantName: restaurantData.name // Ensure name is passed
+                    ...DEFAULT_CONFIG,
+                    ...themeData,
+                    restaurantName: restaurantData.name
                 };
-
                 setConfig(finalConfig);
 
-                // 3. Fetch Menu (Sequential)
-                console.log("Step 3: Fetching Menu...");
-                let menuData = [];
-                try {
-                    menuData = await menuService.getMenuCategories(restaurantData.id);
-                } catch (mErr) {
-                    throw new Error(`Erro ao buscar menu: ${mErr.message}`);
-                }
-                setCategories(menuData || []);
+                // 3. Process Categories & Items (Now nested in Step 1)
+                const dbCategories = restaurantData.categories || [];
+
+                // Sort categories by sort_order
+                const sortedCats = [...dbCategories].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
+                // Map to compatible format for LivePreview
+                const mappedCats = sortedCats.map(cat => ({
+                    id: cat.id,
+                    label: cat.label,
+                    items: (cat.menu_items || [])
+                        .filter(item => item.available)
+                        .map(item => ({
+                            id: item.id,
+                            name: item.name,
+                            price: item.price,
+                            desc: item.desc_text,
+                            img: item.img_url,
+                            subcategory: item.subcategory,
+                            isHighlight: item.is_highlight,
+                            badge: item.badge,
+                            translations: {
+                                pt: { name: item.name, desc: item.desc_text },
+                                en: { name: item.name_en || item.name, desc: item.desc_en || item.desc_text },
+                                fr: { name: item.name_fr || item.name, desc: item.desc_fr || item.desc_text },
+                                es: { name: item.name_es || item.name, desc: item.desc_es || item.desc_text },
+                            }
+                        }))
+                }));
+
+                setCategories(mappedCats);
 
             } catch (err) {
                 // If it's an AbortError, it means the request was cancelled (e.g. unmount), ignore it.

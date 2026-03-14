@@ -1,5 +1,16 @@
-export const generateWhatsAppLink = (cartItems, total, orderType, details, restaurantPhone = '244923456789') => { // Default to a demo number
+export const generateWhatsAppLink = (cartItems, total, orderType, details, restaurantPhoneParam) => {
     if (!cartItems || cartItems.length === 0) return '';
+
+    // Sanitize phone number: remove all non-digits
+    let cleanPhone = restaurantPhoneParam ? restaurantPhoneParam.replace(/\D/g, '') : '';
+
+    // Fallback or Add country code if missing
+    if (!cleanPhone || cleanPhone.length < 9) {
+        cleanPhone = '244923456789'; // Default demo number if empty or too short
+    } else if (cleanPhone.length === 9) {
+        // Se introduziu só 9 números (Angola), assume 244
+        cleanPhone = '244' + cleanPhone;
+    }
 
     let message = '';
 
@@ -35,5 +46,5 @@ export const generateWhatsAppLink = (cartItems, total, orderType, details, resta
     message += `\n_Pedido enviado via Menú Jindungo_`;
 
     const encodedMessage = encodeURIComponent(message);
-    return `https://wa.me/${restaurantPhone}?text=${encodedMessage}`;
+    return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
 };

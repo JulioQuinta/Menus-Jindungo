@@ -99,7 +99,8 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                     alert("Modo Preview: Pedido simulado via WhatsApp.");
                 }
                 const link = generateWhatsAppLink(cartItems, total, orderType, { ...orderData, paymentMethod, changeFor }, whatsappNumber);
-                window.open(link, '_blank');
+                const cacheBusterLink = link + (link.includes('?') ? '&' : '?') + 't=' + Date.now();
+                window.open(cacheBusterLink, '_blank');
 
                 // If it's a real restaurant but no KDS, we can still close since WhatsApp is the main channel
                 if (!features?.canUseKDS && restaurantId) {
@@ -307,7 +308,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                 cursor: 'pointer', opacity: (cartItems.length === 0 || isSending) ? 0.5 : 1
                             }}
                         >
-                            {isSending ? 'Enviando...' : (restaurantId ? 'Enviar para Cozinha 👨‍🍳' : 'Enviar via WhatsApp 🟢')}
+                            {isSending ? 'Enviando...' : ((features?.canUseKDS && restaurantId) ? 'Enviar para Cozinha 👨‍🍳' : 'Enviar Pedido Via WhatsApp 🟢')}
                         </button>
                     </>
                 )}

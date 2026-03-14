@@ -7,7 +7,7 @@ export const generateWhatsAppLink = (cartItems, total, orderType, details, resta
 
     // Fallback or Add country code if missing
     if (!cleanPhone || cleanPhone.length < 9) {
-        cleanPhone = '244923456789'; // Default demo number if empty or too short
+        cleanPhone = '244111000000'; // DEBUG FALLBACK (If you see this, the number was empty/too short)
     } else if (cleanPhone.length === 9) {
         // Se introduziu só 9 números (Angola), assume 244
         cleanPhone = '244' + cleanPhone;

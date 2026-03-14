@@ -92,15 +92,20 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
             // 2. Track Analytics
             // analyticsService.incrementOrders(restaurantId, cartItems);
 
-            // 3. Fallback/Notification via WhatsApp (User choice or auto?)
-            // For KDS, we emphasize the system, but WhatsApp is a good backup.
-            // Let's just create the system order and show status.
+            // 3. Fallback/Notification via WhatsApp
+            // For Start plan (no KDS feature), we MUST auto-redirect to WhatsApp so the owner gets the order.
+            if (!features?.canUseKDS || !restaurantId) {
+                if (!restaurantId) {
+                    alert("Modo Preview: Pedido simulado via WhatsApp.");
+                }
+                const link = generateWhatsAppLink(cartItems, total, orderType, { ...orderData, paymentMethod, changeFor }, whatsappNumber);
+                window.open(link, '_blank');
 
-            // If NO restaurantId (Preview Mode), we simulate or open WhatsApp
-            if (!restaurantId) {
-                alert("Modo Preview: Pedido simulado via WhatsApp.");
-                window.open(generateWhatsAppLink(cartItems, total, orderType, { ...orderData, paymentMethod, changeFor }, whatsappNumber), '_blank');
-                onClose();
+                // If it's a real restaurant but no KDS, we can still close since WhatsApp is the main channel
+                if (!features?.canUseKDS && restaurantId) {
+                    onClose(); // Just close cart, they are on WhatsApp now
+                    return; // Stop here so it doesn't show the OrderStatusView which implies an internal tracking
+                }
             }
 
         } catch (err) {

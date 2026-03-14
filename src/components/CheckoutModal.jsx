@@ -174,11 +174,6 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                     <button onClick={onClose} style={{ background: 'transparent', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#a0aec0' }}>&times;</button>
                 </div>
 
-                {/* DEBUG TRACE */}
-                <div style={{ fontSize: '10px', color: 'gray', textAlign: 'center', marginBottom: '10px' }}>
-                    SysTrace: {whatsappNumber || 'VAZIO'}
-                </div>
-
                 {features?.hasUpsell && showUpsell ? (
                     <CheckoutUpsell
                         restaurantId={restaurantId}

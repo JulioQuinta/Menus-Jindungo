@@ -171,11 +171,14 @@ const SuperAdminDashboard = () => {
 
     // --- SaaS: Extend Subscription ---
     const handleConfirmRenewal = async () => {
-        if (!renewModal.restaurant || !renewModal.selectedPlan) return;
+        if (!renewModal.restaurant || !renewModal.selectedPlan || !renewModal.selectedTier) {
+            toast.error("Por favor, selecione tanto o Plano (Nível) como o Ciclo de Faturação.");
+            return;
+        }
 
         const { id: restId, valid_until: currentValidUntil } = renewModal.restaurant;
         let daysToAdd = renewModal.selectedPlan.days;
-        let planName = renewModal.selectedPlan.name;
+        let planName = renewModal.selectedTier.name; // Use the selected tier name (Start, Business, Corporate)
 
         if (renewModal.selectedPlan.id === 'manual') {
             daysToAdd = parseInt(renewModal.customDays) || 0;
@@ -183,7 +186,6 @@ const SuperAdminDashboard = () => {
                 toast.error("Insira um número válido de dias (ex: -30 ou 15).");
                 return;
             }
-            planName = 'Ajuste Manual';
         }
 
         try {
@@ -209,8 +211,8 @@ const SuperAdminDashboard = () => {
             if (error) throw error;
 
             setRestaurants(restaurants.map(r => r.id === restId ? { ...r, valid_until: newDateStr, plan: planName } : r));
-            toast.success(`${planName} aplicado com sucesso! Validade atualizada.`);
-            setRenewModal({ isOpen: false, restaurant: null, selectedPlan: null, customDays: 0 });
+            toast.success(`Plano ${planName} aplicado com sucesso! Validade atualizada.`);
+            setRenewModal({ isOpen: false, restaurant: null, selectedPlan: null, selectedTier: null, customDays: 0 });
 
         } catch (error) {
             console.error("Erro ao renovar:", error);
@@ -438,13 +440,13 @@ const SuperAdminDashboard = () => {
     }, [searchQuery, activeTab]);
 
     // Financial Intelligence Calculations
-    const PLAN_PRICES = {
-        'Plano Semanal': { price: 5000, mrr: 21428, icon: '📅' },
-        'Plano Mensal': { price: 15000, mrr: 15000, icon: '🌙' },
-        'Plano Trimestral': { price: 40000, mrr: 13333, icon: '🍂' },
-        'Plano Quadrimestral': { price: 50000, mrr: 12500, icon: '❄️' },
-        'Plano Semestral': { price: 70000, mrr: 11666, icon: '☀️' },
-        'Plano Anual': { price: 120000, mrr: 10000, icon: '🌍' }
+    // With the new tier system, pricing might be different (e.g. Start=$10, Business=$20, Corporate=$50)
+    // For now, I'll map the tiers to some hypothetical monthly MRR to keep the dashboard working.
+    const TIER_PRICES = {
+        'Start': { price: 15000, mrr: 15000, icon: '🌱' }, // Assuming Monthly Start
+        'Business': { price: 30000, mrr: 30000, icon: '🚀' }, // Assuming Monthly Business
+        'Corporate': { price: 60000, mrr: 60000, icon: '🏢' }, // Assuming Monthly Corporate
+        'Free Trial': { price: 0, mrr: 0, icon: '⏱️' }
     };
 
     let totalMRR = 0;
@@ -454,12 +456,14 @@ const SuperAdminDashboard = () => {
     restaurants.forEach(rest => {
         if (!rest.valid_until || isExpired(rest.valid_until)) return;
 
-        const planName = rest.plan;
-        const planData = PLAN_PRICES[planName];
+        const tierName = rest.plan || 'Free Trial';
+        // Handle legacy plan names gracefully
+        const mappedTierName = ['Start', 'Business', 'Corporate', 'Free Trial'].includes(tierName) ? tierName : 'Start';
+        const planData = TIER_PRICES[mappedTierName];
 
         if (planData) {
             totalMRR += planData.mrr;
-            planBreakdown[planName] = (planBreakdown[planName] || 0) + 1;
+            planBreakdown[tierName] = (planBreakdown[tierName] || 0) + 1;
 
             const diffDays = Math.ceil((new Date(rest.valid_until) - new Date()) / (1000 * 60 * 60 * 24));
             if (diffDays <= 7 && diffDays >= 0) {
@@ -1012,31 +1016,34 @@ const SuperAdminDashboard = () => {
                             <div className="bg-black/60 backdrop-blur-md border border-white/5 rounded-3xl p-8 shadow-2xl">
                                 <h3 className="text-xl font-serif font-bold text-white mb-6 flex items-center gap-3">
                                     <span className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-sm">🥧</span>
-                                    Distribuição de Planos Ativos
+                                    Distribuição de Níveis (Tiers)
                                 </h3>
 
                                 {Object.keys(planBreakdown).length > 0 ? (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {Object.entries(planBreakdown).sort((a, b) => b[1] - a[1]).map(([planName, count]) => (
-                                            <div key={planName} className="bg-white/5 border border-white/10 rounded-xl p-5 flex items-center justify-between hover:bg-white/10 transition-colors">
-                                                <div className="flex items-center gap-3">
-                                                    <span className="text-2xl">{PLAN_PRICES[planName]?.icon || '📋'}</span>
-                                                    <div>
-                                                        <p className="font-bold text-white text-sm">{planName}</p>
-                                                        <p className="text-xs text-gray-400 mt-1">{formatCurrency(PLAN_PRICES[planName]?.price || 0)} /ciclo</p>
+                                        {Object.entries(planBreakdown).sort((a, b) => b[1] - a[1]).map(([planName, count]) => {
+                                            const mappedPlan = ['Start', 'Business', 'Corporate', 'Free Trial'].includes(planName) ? planName : 'Start';
+                                            return (
+                                                <div key={planName} className="bg-white/5 border border-white/10 rounded-xl p-5 flex items-center justify-between hover:bg-white/10 transition-colors">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-2xl">{TIER_PRICES[mappedPlan]?.icon || '📋'}</span>
+                                                        <div>
+                                                            <p className="font-bold text-white text-sm">{planName}</p>
+                                                            <p className="text-xs text-gray-400 mt-1">{formatCurrency(TIER_PRICES[mappedPlan]?.price || 0)} estimativa</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="text-xl font-bold text-[#D4AF37]">{count}</span>
+                                                        <span className="block text-[10px] text-gray-500 uppercase">Clientes</span>
                                                     </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <span className="text-xl font-bold text-[#D4AF37]">{count}</span>
-                                                    <span className="block text-[10px] text-gray-500 uppercase">Clientes</span>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            )
+                                        })}
                                     </div>
                                 ) : (
                                     <div className="text-center py-12 border border-white/5 rounded-xl bg-white/5">
                                         <span className="text-4xl mb-3 block">📉</span>
-                                        <p className="text-gray-400 font-medium">Nenhum plano pago ativo no momento.</p>
+                                        <p className="text-gray-400 font-medium">Nenhum restaurante ativo no momento.</p>
                                     </div>
                                 )}
                             </div>
@@ -1309,16 +1316,40 @@ const SuperAdminDashboard = () => {
                             <p className="text-sm text-[#D4AF37] font-bold mt-1">{renewModal.restaurant.name}</p>
                         </div>
 
-                        <div className="space-y-4 mb-8">
+                        <div className="space-y-6 mb-8">
+                            {/* 1. Seleção do Nível (Tier) */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-2">Selecione o Ciclo de Faturação:</label>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">1. Selecione o Nível (SaaS Tier):</label>
+                                <div className="grid grid-cols-3 gap-3">
+                                    {[
+                                        { id: 'start', name: 'Start' },
+                                        { id: 'business', name: 'Business' },
+                                        { id: 'corporate', name: 'Corporate' }
+                                    ].map(tier => (
+                                        <button
+                                            key={tier.id}
+                                            onClick={() => setRenewModal({ ...renewModal, selectedTier: tier })}
+                                            className={`p-3 rounded-xl border text-sm font-bold transition-all text-center ${renewModal.selectedTier?.id === tier.id
+                                                ? 'bg-[#D4AF37] text-black border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.4)]'
+                                                : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/30 hover:text-white'
+                                                }`}
+                                        >
+                                            {tier.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 2. Seleção do Ciclo de Faturação */}
+                            <div className="pt-4 border-t border-white/5">
+                                <label className="block text-sm font-medium text-gray-400 mb-2">2. Selecione o Ciclo de Faturação / Dias:</label>
                                 <div className="grid grid-cols-2 gap-3">
                                     {PLANS.map(plan => (
                                         <button
                                             key={plan.id}
                                             onClick={() => setRenewModal({ ...renewModal, selectedPlan: plan })}
                                             className={`p-3 rounded-xl border text-sm font-bold transition-all text-center ${plan.id === 'manual' ? 'col-span-2' : ''} ${renewModal.selectedPlan?.id === plan.id
-                                                ? 'bg-[#D4AF37] text-black border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.4)]'
+                                                ? 'bg-white/20 text-white border-white/50 shadow-[0_0_10px_rgba(255,255,255,0.1)]'
                                                 : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/30 hover:text-white'
                                                 }`}
                                         >
@@ -1329,7 +1360,7 @@ const SuperAdminDashboard = () => {
                             </div>
 
                             {renewModal.selectedPlan?.id === 'manual' && (
-                                <div className="mt-4 bg-black/50 border border-white/10 rounded-xl p-4">
+                                <div className="bg-black/50 border border-white/10 rounded-xl p-4">
                                     <label className="block text-sm font-medium text-gray-300 mb-2">Dias a Adicionar / Remover</label>
                                     <input
                                         type="number"

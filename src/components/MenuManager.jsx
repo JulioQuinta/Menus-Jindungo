@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { toast } from 'react-hot-toast';
 import CategoryManager from './CategoryManager';
 import { SortableItem } from './SortableItem';
+import { compressImage } from '../lib/imageUtils';
 
 import {
     DndContext,
@@ -16,13 +18,16 @@ import {
     SortableContext,
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
+    rectSortingStrategy,
 } from '@dnd-kit/sortable';
+import { Search, X } from 'lucide-react';
 
 const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdate }) => {
     const [categories, setCategories] = useState([]);
     const [editingItem, setEditingItem] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
     const [showCategoryManager, setShowCategoryManager] = useState(false);
+    const [adminSearch, setAdminSearch] = useState('');
 
     // Sensors for DND
     const sensors = useSensors(
@@ -49,27 +54,59 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
         setCategories(sortedCats);
     }, [initialCategories]);
 
-    // Handle Drag End for Categories
+    // Handle Drag End for Categories and Items
     const handleDragEnd = async (event) => {
         const { active, over } = event;
+        if (!over) return;
 
         if (active.id !== over.id) {
-            setCategories((items) => {
-                const oldIndex = items.findIndex((item) => item.id === active.id);
-                const newIndex = items.findIndex((item) => item.id === over.id);
+            const isCategory = categories.some(cat => cat.id === active.id);
 
-                const newItems = arrayMove(items, oldIndex, newIndex);
+            // CASE 1: Reordering Categories
+            if (isCategory) {
+                setCategories((prev) => {
+                    const oldIndex = prev.findIndex((item) => item.id === active.id);
+                    const newIndex = prev.findIndex((item) => item.id === over.id);
 
-                // Persist new order
-                Promise.all(newItems.map((cat, index) =>
-                    supabase.from('categories').update({ position: index }).eq('id', cat.id)
-                )).then(() => {
-                    console.log('Order updated');
-                    if (onUpdate) onUpdate(); // Optional: Refresh from server 
+                    if (newIndex === -1) return prev;
+
+                    const newItems = arrayMove(prev, oldIndex, newIndex);
+
+                    // Persist new order
+                    Promise.all(newItems.map((cat, index) =>
+                        supabase.from('categories').update({ position: index }).eq('id', cat.id)
+                    )).then(() => {
+                        if (onUpdate) onUpdate();
+                    });
+
+                    return newItems;
                 });
+            }
+            // CASE 2: Reordering Items
+            else {
+                // Find category containing the item
+                const category = categories.find(cat => cat.items?.some(i => i.id === active.id));
+                if (!category) return;
 
-                return newItems;
-            });
+                const oldIndex = category.items.findIndex(i => i.id === active.id);
+                const newIndex = category.items.findIndex(i => i.id === over.id);
+
+                if (newIndex === -1) return;
+
+                const newItems = arrayMove(category.items, oldIndex, newIndex);
+
+                // Update local state
+                setCategories(prev => prev.map(cat =>
+                    cat.id === category.id ? { ...cat, items: newItems } : cat
+                ));
+
+                // Persist to DB
+                Promise.all(newItems.map((item, index) =>
+                    supabase.from('menu_items').update({ position: index }).eq('id', item.id)
+                )).then(() => {
+                    if (onUpdate) onUpdate();
+                });
+            }
         }
     };
 
@@ -90,7 +127,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
             const isNew = !item.id;
 
             if (!item.name || !item.price || !item.category_id) {
-                alert("Nome, Preço e Categoria são obrigatórios.");
+                toast.error("Nome, Preço e Categoria são obrigatórios.");
                 setIsSaving(false);
                 return;
             }
@@ -135,11 +172,11 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
 
             setEditingItem(null);
             if (onUpdate) onUpdate();
-            alert(isNew ? "Prato criado!" : "Prato atualizado!");
+            toast.success(isNew ? "Prato criado com sucesso!" : "Prato atualizado com sucesso!");
 
         } catch (err) {
             console.error("Error saving item:", err);
-            alert("Erro ao salvar item.");
+            toast.error("Erro ao salvar item. Tente novamente.");
         } finally {
             setIsSaving(false);
         }
@@ -153,7 +190,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
             if (onUpdate) onUpdate();
         } catch (err) {
             console.error("Error deleting:", err);
-            alert("Erro ao apagar.");
+            toast.error("Erro ao apagar o prato.");
         }
     };
 
@@ -197,7 +234,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                             <button
                                 type="button"
                                 onClick={() => {
-                                    if (!editingItem.name) return alert("Digite o nome do prato primeiro!");
+                                    if (!editingItem.name) return toast.error("Digite o nome do prato primeiro!");
                                     const templates = [
                                         `O delicioso ${editingItem.name} é preparado com ingredientes frescos e selecionados, trazendo uma explosão de sabor a cada mordida.`,
                                         `Experimente nosso ${editingItem.name}, feito artesanalmente para proporcionar uma experiência gastronômica única.`,
@@ -308,35 +345,35 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                             onChange={async (e) => {
                                 const file = e.target.files[0];
                                 if (!file) return;
+
                                 try {
+                                    toast.loading("Otimizando imagem...", { id: 'upload' });
+
+                                    // COMPRESSION (New)
+                                    let uploadFile = file;
+                                    if (file.type.startsWith('image/') && file.size > 200 * 1024) {
+                                        uploadFile = await compressImage(file);
+                                    }
+
                                     // Sanitize filename
-                                    const fileExt = file.name.split('.').pop();
+                                    const fileExt = uploadFile.name.split('.').pop() || 'jpg';
                                     const fileName = `items/${restaurantId}/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
 
-                                    // Debug Alert
-                                    // alert("Iniciando upload para: " + fileName);
-
-                                    const { data, error } = await supabase.storage.from('menus').upload(fileName, file, {
+                                    const { error } = await supabase.storage.from('menus').upload(fileName, uploadFile, {
                                         cacheControl: '3600',
                                         upsert: false
                                     });
 
-                                    if (error) {
-                                        console.error("Upload Error:", error);
-                                        throw error;
-                                    }
+                                    if (error) throw error;
 
-                                    // Get Public URL
                                     const { data: { publicUrl } } = supabase.storage.from('menus').getPublicUrl(fileName);
-
-                                    // Verify URL (simple check)
                                     if (!publicUrl) throw new Error("Falha ao gerar URL pública");
 
                                     setEditingItem({ ...editingItem, img_url: publicUrl });
-                                    alert("Foto enviada com sucesso! Não esqueça de SALVAR o prato abaixo.");
+                                    toast.success("Foto enviada com sucesso!", { id: 'upload' });
 
                                 } catch (err) {
-                                    alert("Erro no upload: " + (err.message || JSON.stringify(err)));
+                                    toast.error("Erro no upload da imagem.", { id: 'upload' });
                                     console.error(err);
                                 }
                             }}
@@ -377,12 +414,32 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                     <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white mb-1 sm:mb-2">Editor de Menu</h2>
                     <p className="text-gray-400 text-sm">Gerencie seus pratos e categorias com facilidade.</p>
                 </div>
-                <button
-                    onClick={() => setShowCategoryManager(true)}
-                    className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 transition-all backdrop-blur-sm w-full sm:w-auto justify-center"
-                >
-                    <span>Gerenciar Categorias</span>
-                </button>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                    <div className="relative flex-1 sm:min-w-[280px]">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Procurar prato..."
+                            value={adminSearch}
+                            onChange={(e) => setAdminSearch(e.target.value)}
+                            className="w-full pl-10 pr-10 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] transition-all"
+                        />
+                        {adminSearch && (
+                            <button
+                                onClick={() => setAdminSearch('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                            >
+                                <X size={16} />
+                            </button>
+                        )}
+                    </div>
+                    <button
+                        onClick={() => setShowCategoryManager(true)}
+                        className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 transition-all backdrop-blur-sm justify-center"
+                    >
+                        <span>Gerenciar Categorias</span>
+                    </button>
+                </div>
             </div>
 
             <div className="flex-1 overflow-y-auto pb-24 scrollbar-hide">
@@ -396,114 +453,140 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                         strategy={verticalListSortingStrategy}
                     >
                         <div className="space-y-8">
-                            {categories.map(cat => (
-                                <SortableItem key={cat.id} id={cat.id}>
-                                    <div className="mb-6">
-                                        {/* Category Header */}
-                                        <div className="flex items-center gap-3 mb-4 pl-2 group cursor-grab active:cursor-grabbing bg-white/5 py-2 px-4 rounded-xl border border-white/5 backdrop-blur-sm w-max">
-                                            <div className="p-1 rounded bg-white/5 text-gray-500 group-hover:text-[#D4AF37] transition-colors">
-                                                <span className="text-xl leading-none">⋮⋮</span>
-                                            </div>
-                                            <h3 className="text-xl font-serif font-bold text-white tracking-wide">
-                                                {cat.label || cat.name}
-                                                <span className="ml-3 text-xs font-bold text-[#D4AF37] bg-yellow-900/20 px-2.5 py-1 rounded-lg border border-[#D4AF37]/30">
-                                                    {cat.items?.length || 0} itens
-                                                </span>
-                                            </h3>
-                                        </div>
+                            {categories.map(cat => {
+                                const filteredItems = adminSearch
+                                    ? cat.items?.filter(item =>
+                                        item.name.toLowerCase().includes(adminSearch.toLowerCase()) ||
+                                        item.desc_text?.toLowerCase().includes(adminSearch.toLowerCase())
+                                    )
+                                    : cat.items;
 
-                                        <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
-                                            {cat.items && cat.items.map(item => (
-                                                <div
-                                                    key={item.id}
-                                                    className="group relative bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 hover:border-[#D4AF37]/70 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(212,175,55,0.1)] overflow-hidden"
-                                                >
-                                                    <div className="flex h-full">
-                                                        {/* Image Section */}
-                                                        <div className="w-1/3 min-h-[120px] relative overflow-hidden">
-                                                            <img
-                                                                src={item.img_url || 'https://via.placeholder.com/150'}
-                                                                alt={item.name}
-                                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                                            />
-                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                                                        </div>
+                                if (adminSearch && (!filteredItems || filteredItems.length === 0)) return null;
 
-                                                        {/* Content Section */}
-                                                        <div className="flex-1 p-4 flex flex-col justify-between">
-                                                            <div>
-                                                                <div className="flex justify-between items-start mb-1">
-                                                                    <h4 className="font-bold text-white text-lg leading-tight pr-2 line-clamp-2">{item.name}</h4>
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setEditingItem({
-                                                                                ...item,
-                                                                                variants: item.translations?.variants || item.variants || null
-                                                                            });
-                                                                        }}
-                                                                        className="text-gray-400 hover:text-[#D4AF37] bg-white/5 hover:bg-white/10 rounded-lg p-1.5 transition-all outline outline-1 outline-white/10 border-none shadow-sm"
-                                                                        title="Editar Produto"
-                                                                    >
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                                                                    </button>
-                                                                </div>
-                                                                <p className="text-[#D4AF37] font-bold text-base mb-2">{item.price}</p>
-                                                                <p className="text-gray-500 text-xs line-clamp-2">{item.desc_text || "Sem descrição..."}</p>
-                                                            </div>
-
-                                                            <div className="flex justify-between items-center mt-3 pt-3 border-t border-white/5">
-                                                                <label className="flex items-center gap-2 cursor-pointer relative">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        className="sr-only peer"
-                                                                        checked={item.available !== false} // Default true
-                                                                        onChange={async () => {
-                                                                            // Optimistic toggle
-                                                                            const newVal = !(item.available !== false);
-                                                                            const newItems = categories.map(c => {
-                                                                                if (c.id !== cat.id) return c;
-                                                                                return {
-                                                                                    ...c,
-                                                                                    items: c.items.map(i => i.id === item.id ? { ...i, available: newVal } : i)
-                                                                                };
-                                                                            });
-                                                                            setCategories(newItems);
-
-                                                                            await supabase.from('menu_items').update({ available: newVal }).eq('id', item.id);
-                                                                        }}
-                                                                    />
-                                                                    <div className="w-10 h-6 bg-gray-700/80 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:shadow-[0_0_5px_rgba(0,0,0,0.5)] after:transition-all peer-checked:bg-green-500"></div>
-                                                                    <span className={`text-[10px] font-bold uppercase tracking-widest ${item.available !== false ? 'text-green-400' : 'text-gray-500'}`}>{item.available !== false ? 'Disponível' : 'Esgotado'}</span>
-                                                                </label>
-
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); handleDelete(item.id) }}
-                                                                    className="text-gray-500 hover:text-red-500 bg-white/5 hover:bg-white/10 rounded-lg p-1.5 transition-all outline outline-1 outline-white/10 border-none shadow-sm"
-                                                                    title="Apagar Prato"
-                                                                >
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                                                </button>
-                                                            </div>
-                                                        </div>
+                                return (
+                                    <SortableItem key={cat.id} id={cat.id} useHandle={true}>
+                                        {(context) => (
+                                            <div className="mb-6">
+                                                {/* Category Header */}
+                                                <div className="flex items-center gap-3 mb-4 pl-2 bg-white/5 py-2 px-4 rounded-xl border border-white/5 backdrop-blur-sm w-max">
+                                                    <div
+                                                        {...context.attributes}
+                                                        {...context.listeners}
+                                                        className="p-1 rounded bg-white/5 text-gray-500 hover:text-[#D4AF37] transition-colors cursor-grab active:cursor-grabbing"
+                                                    >
+                                                        <span className="text-xl leading-none">⋮⋮</span>
                                                     </div>
+                                                    <h3 className="text-xl font-serif font-bold text-white tracking-wide">
+                                                        {cat.label || cat.name}
+                                                        <span className="ml-3 text-xs font-bold text-[#D4AF37] bg-yellow-900/20 px-2.5 py-1 rounded-lg border border-[#D4AF37]/30">
+                                                            {cat.items?.length || 0} itens
+                                                        </span>
+                                                    </h3>
                                                 </div>
-                                            ))}
 
-                                            {/* Add Item Card Placeholder */}
-                                            <button
-                                                onClick={() => setEditingItem({ ...DEFAULT_ITEM, category_id: cat.id })}
-                                                className="flex flex-col items-center justify-center min-h-[140px] rounded-2xl border-2 border-dashed border-white/20 hover:border-[#D4AF37]/50 hover:bg-[#D4AF37]/5 transition-all group shadow-sm bg-black/20"
-                                            >
-                                                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-gray-400 group-hover:bg-[#D4AF37] group-hover:text-black transition-colors mb-2 shadow-[0_0_15px_rgba(255,255,255,0.05)] group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)]">
-                                                    <span className="text-2xl font-light leading-none">+</span>
-                                                </div>
-                                                <span className="text-sm font-bold text-gray-500 group-hover:text-[#D4AF37] uppercase tracking-wider">Novo Prato</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </SortableItem>
-                            ))}
+                                                <SortableContext
+                                                    items={filteredItems?.map(i => i.id) || []}
+                                                    strategy={rectSortingStrategy}
+                                                >
+                                                    <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+                                                        {filteredItems && filteredItems.map(item => (
+                                                            <SortableItem key={item.id} id={item.id}>
+                                                                <div
+                                                                    className="group relative bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 hover:border-[#D4AF37]/70 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(212,175,55,0.1)] overflow-hidden h-full"
+                                                                >
+                                                                    <div className="flex h-full">
+                                                                        {/* Image Section */}
+                                                                        <div className="w-1/3 min-h-[120px] relative overflow-hidden">
+                                                                            <img
+                                                                                src={item.img_url || 'https://via.placeholder.com/150'}
+                                                                                alt={item.name}
+                                                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                                            />
+                                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                                                                        </div>
+
+                                                                        {/* Content Section */}
+                                                                        <div className="flex-1 p-4 flex flex-col justify-between">
+                                                                            <div>
+                                                                                <div className="flex justify-between items-start mb-1">
+                                                                                    <h4 className="font-bold text-white text-lg leading-tight pr-2 line-clamp-2">{item.name}</h4>
+                                                                                    <div className="flex gap-2">
+                                                                                        <button
+                                                                                            onClick={(e) => {
+                                                                                                e.stopPropagation();
+                                                                                                setEditingItem({
+                                                                                                    ...item,
+                                                                                                    variants: item.translations?.variants || item.variants || null
+                                                                                                });
+                                                                                            }}
+                                                                                            className="text-gray-400 hover:text-[#D4AF37] bg-white/5 hover:bg-white/10 rounded-lg p-1.5 transition-all outline outline-1 outline-white/10 border-none shadow-sm"
+                                                                                            title="Editar Produto"
+                                                                                        >
+                                                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <p className="text-[#D4AF37] font-bold text-base mb-2">{item.price}</p>
+                                                                                <p className="text-gray-500 text-xs line-clamp-2">{item.desc_text || "Sem descrição..."}</p>
+                                                                            </div>
+
+                                                                            <div className="flex justify-between items-center mt-3 pt-3 border-t border-white/5">
+                                                                                <label className="flex items-center gap-2 cursor-pointer relative">
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        className="sr-only peer"
+                                                                                        checked={item.available !== false} // Default true
+                                                                                        onChange={async (e) => {
+                                                                                            e.stopPropagation();
+                                                                                            // Optimistic toggle
+                                                                                            const newVal = !(item.available !== false);
+                                                                                            const newItems = categories.map(c => {
+                                                                                                if (c.id !== cat.id) return c;
+                                                                                                return {
+                                                                                                    ...c,
+                                                                                                    items: c.items.map(i => i.id === item.id ? { ...i, available: newVal } : i)
+                                                                                                };
+                                                                                            });
+                                                                                            setCategories(newItems);
+
+                                                                                            await supabase.from('menu_items').update({ available: newVal }).eq('id', item.id);
+                                                                                        }}
+                                                                                    />
+                                                                                    <div className="w-10 h-6 bg-gray-700/80 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:shadow-[0_0_5px_rgba(0,0,0,0.5)] after:transition-all peer-checked:bg-green-500"></div>
+                                                                                    <span className={`text-[10px] font-bold uppercase tracking-widest ${item.available !== false ? 'text-green-400' : 'text-gray-500'}`}>{item.available !== false ? 'Disponível' : 'Esgotado'}</span>
+                                                                                </label>
+
+                                                                                <button
+                                                                                    onClick={(e) => { e.stopPropagation(); handleDelete(item.id) }}
+                                                                                    className="text-gray-500 hover:text-red-500 bg-white/5 hover:bg-white/10 rounded-lg p-1.5 transition-all outline outline-1 outline-white/10 border-none shadow-sm"
+                                                                                    title="Apagar Prato"
+                                                                                >
+                                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </SortableItem>
+                                                        ))}
+
+                                                        {/* Add Item Card Placeholder */}
+                                                        <button
+                                                            onClick={() => setEditingItem({ ...DEFAULT_ITEM, category_id: cat.id })}
+                                                            className="flex flex-col items-center justify-center min-h-[140px] rounded-2xl border-2 border-dashed border-white/20 hover:border-[#D4AF37]/50 hover:bg-[#D4AF37]/5 transition-all group shadow-sm bg-black/20"
+                                                        >
+                                                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-gray-400 group-hover:bg-[#D4AF37] group-hover:text-black transition-colors mb-2 shadow-[0_0_15px_rgba(255,255,255,0.05)] group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)]">
+                                                                <span className="text-2xl font-light leading-none">+</span>
+                                                            </div>
+                                                            <span className="text-sm font-bold text-gray-500 group-hover:text-[#D4AF37] uppercase tracking-wider">Novo Prato</span>
+                                                        </button>
+                                                    </div>
+                                                </SortableContext>
+                                            </div>
+                                        )}
+                                    </SortableItem>
+                                )
+                            })}
                         </div>
                     </SortableContext>
                 </DndContext>

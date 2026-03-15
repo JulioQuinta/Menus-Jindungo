@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import QRCodeGenerator from './QRCodeGenerator';
-import { UploadCloud, Check } from 'lucide-react';
+import { UploadCloud, Check, X } from 'lucide-react';
 
 const COLOR_SWATCHES = [
     { value: '#ff6b6b', label: 'Vermelho Jindungo' },
@@ -32,8 +32,9 @@ const ToggleSwitch = ({ checked, onChange }) => (
     </button>
 );
 
-const StyleControls = ({ config, setConfig, onReset, onLogoUpload, slug, onSlugChange, restaurantName, onNameChange }) => {
+const StyleControls = ({ config, setConfig, onReset, onLogoUpload, onHeaderBgUpload, slug, onSlugChange, restaurantName, onNameChange }) => {
     const fileInputRef = useRef(null);
+    const headerBgRef = useRef(null);
     const [localSlug, setLocalSlug] = React.useState(slug || '');
     const [isSavingSlug, setIsSavingSlug] = React.useState(false);
 
@@ -97,59 +98,105 @@ const StyleControls = ({ config, setConfig, onReset, onLogoUpload, slug, onSlugC
                     <button
                         onClick={handleSaveSlug}
                         disabled={isSavingSlug || localSlug === slug || !localSlug.trim()}
-                        className={`px-6 py-3 rounded-xl font-bold transition-all whitespace-nowrap ${localSlug !== slug && localSlug.trim()
-                            ? 'bg-gradient-to-r from-[#D4AF37] to-yellow-600 text-black shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:brightness-110 hover:-translate-y-0.5'
-                            : 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/5'
+                        className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap ${localSlug !== slug && localSlug.trim()
+                                ? 'bg-gradient-to-r from-[#D4AF37] to-yellow-600 text-black shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:brightness-110 hover:-translate-y-0.5'
+                                : 'bg-green-500/10 text-green-500 border border-green-500/20 opacity-80'
                             }`}
                     >
-                        {isSavingSlug ? '...' : (localSlug !== slug ? 'Salvar Novo' : 'Salvo')}
+                        {isSavingSlug ? '...' : (localSlug !== slug ? 'Salvar Novo Link' : <><Check size={18} /> Link Salvo</>)}
                     </button>
                 </div>
                 <p className="text-xs text-gray-400 mt-3">
-                    O seu link atual é: <span className="text-[#D4AF37] font-mono bg-yellow-900/20 px-2 py-0.5 rounded border border-yellow-500/20">{originUrl}/{slug}</span>
+                    Link atual: <span className="text-[#D4AF37] font-mono bg-yellow-900/20 px-2 py-0.5 rounded border border-yellow-500/20">{originUrl}/{slug}</span>
                 </p>
             </div>
 
-            {/* Logo Upload Dropzone */}
-            <div>
-                <label className={labelClasses}>Logotipo do Restaurante</label>
-                <div
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full relative group cursor-pointer"
-                >
-                    <div className="absolute inset-0 bg-white/5 rounded-2xl border-2 border-dashed border-white/10 group-hover:border-[#D4AF37]/50 group-hover:bg-[#D4AF37]/5 transition-all duration-300"></div>
-                    <div className="relative p-8 flex flex-col items-center justify-center gap-3 text-center">
-                        {config.logoUrl ? (
-                            <div className="relative w-32 h-32 mb-2 group-hover:scale-105 transition-transform duration-300">
-                                <img src={config.logoUrl} alt="Logotipo do Restaurante" className="w-full h-full object-contain drop-shadow-md rounded-xl bg-black/50 backdrop-blur" />
-                                <div className="absolute inset-0 bg-black/60 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                                    <UploadCloud size={28} className="text-[#D4AF37] drop-shadow-lg" />
+            {/* Images Group (Logo & Hero) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Logo Upload Dropzone */}
+                <div>
+                    <label className={labelClasses}>Logotipo do Restaurante</label>
+                    <div
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full relative group cursor-pointer"
+                    >
+                        <div className="absolute inset-0 bg-white/5 rounded-2xl border-2 border-dashed border-white/10 group-hover:border-[#D4AF37]/50 group-hover:bg-[#D4AF37]/10 transition-all duration-300"></div>
+                        <div className="relative p-6 flex flex-col items-center justify-center gap-3 text-center">
+                            {config.logoUrl ? (
+                                <div className="relative w-24 h-24 mb-1 group-hover:scale-105 transition-transform duration-300">
+                                    <img src={config.logoUrl} alt="Logotipo" className="w-full h-full object-contain drop-shadow-md rounded-xl bg-black/50 backdrop-blur" />
+                                    <div className="absolute inset-0 bg-black/60 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                                        <UploadCloud size={24} className="text-[#D4AF37]" />
+                                    </div>
                                 </div>
+                            ) : (
+                                <div className="w-12 h-12 rounded-full bg-black/50 border border-white/10 flex items-center justify-center text-gray-400 group-hover:scale-110 group-hover:text-[#D4AF37] group-hover:border-[#D4AF37]/50 transition-all duration-500">
+                                    <UploadCloud size={24} />
+                                </div>
+                            )}
+                            <div>
+                                <p className="text-sm font-bold text-gray-200 uppercase tracking-tighter">Alterar Logo</p>
+                                <p className="text-[10px] text-gray-500 mt-1 italic">Sincroniza automaticamente</p>
                             </div>
-                        ) : (
-                            <div className="w-16 h-16 rounded-full bg-black/50 border border-white/10 shadow-sm flex items-center justify-center text-gray-400 group-hover:scale-110 group-hover:text-[#D4AF37] group-hover:border-[#D4AF37]/50 transition-all duration-500">
-                                <UploadCloud size={28} />
-                            </div>
-                        )}
-                        <div>
-                            <p className="font-bold text-gray-200">
-                                {config.logoUrl ? "Clique para alterar o Logo" : "Clique para carregar o seu Logo"}
-                            </p>
-                            <p className="text-xs text-gray-400 mt-1.5">PNG, JPG, transparente. Máx 5MB.</p>
                         </div>
                     </div>
+                    <input type="file" ref={fileInputRef} accept="image/*" onChange={onLogoUpload} className="hidden" />
                 </div>
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    accept="image/*"
-                    onChange={onLogoUpload}
-                    className="hidden"
-                />
+
+                {/* Header Background Upload Dropzone */}
+                <div>
+                    <label className={labelClasses}>Imagem de Banner (Topo)</label>
+                    <div
+                        onClick={() => headerBgRef.current?.click()}
+                        className="w-full relative group cursor-pointer"
+                    >
+                        <div className="absolute inset-0 bg-white/5 rounded-2xl border-2 border-dashed border-white/10 group-hover:border-[#D4AF37]/50 group-hover:bg-[#D4AF37]/10 transition-all duration-300"></div>
+                        <div className="relative p-6 flex flex-col items-center justify-center gap-3 text-center">
+                            {config.headerBgUrl ? (
+                                <div className="relative w-full h-24 overflow-hidden rounded-xl border border-white/10 group-hover:scale-[1.02] transition-transform duration-300 shadow-2xl">
+                                    <img src={config.headerBgUrl} alt="Fundo do Topo" className="w-full h-full object-cover transition-all" />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                                        <UploadCloud size={24} className="text-[#D4AF37]" />
+                                    </div>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleChange('headerBgUrl', null);
+                                        }}
+                                        className="absolute top-2 right-2 p-1.5 bg-red-500/80 hover:bg-red-500 rounded-lg text-white z-20 transition-all opacity-0 group-hover:opacity-100"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="w-12 h-12 rounded-full bg-black/50 border border-white/10 flex items-center justify-center text-gray-400 group-hover:scale-110 group-hover:text-[#D4AF37] group-hover:border-[#D4AF37]/50 transition-all duration-500">
+                                    <UploadCloud size={24} />
+                                </div>
+                            )}
+                            <div>
+                                <p className="text-sm font-bold text-gray-200">Imagem de Banner</p>
+                                <p className="text-[10px] text-gray-500 mt-1">Formatos: JPG, PNG. Recom: 1200x600px</p>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="file" ref={headerBgRef} accept="image/*" onChange={onHeaderBgUpload} className="hidden" />
+                </div>
             </div>
 
             {/* Toggles Container */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-black/40 p-6 rounded-2xl border border-white/5 backdrop-blur-md">
+
+                {/* Store Open/Closed Toggle */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <label className="text-sm font-bold text-white">Estado do Restaurante</label>
+                        <p className="text-xs text-gray-400 mt-0.5">{config.isOpen !== false ? 'Aberto e a aceitar pedidos' : 'Fechado (Apenas visualização)'}</p>
+                    </div>
+                    <ToggleSwitch
+                        checked={config.isOpen !== false}
+                        onChange={(val) => handleChange('isOpen', val)}
+                    />
+                </div>
 
                 {/* Dark Mode Toggle */}
                 <div className="flex items-center justify-between">
@@ -263,56 +310,76 @@ const StyleControls = ({ config, setConfig, onReset, onLogoUpload, slug, onSlugC
             </div>
 
             {/* Background Color */}
-            <div>
-                <label className={labelClasses}>Cor de Fundo do Menu</label>
-                <p className="text-xs text-gray-400 mb-3">Se definida, irá sobrepor o Modo Noturno. O texto adaptar-se-á automaticamente para continuar legível.</p>
+            {/* Background Color Section - Enlarged and More Visual */}
+            <div className="bg-white/5 p-6 rounded-[2rem] border border-white/10 shadow-inner">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="2" /><path d="m22 7-3.5 3.5" /><path d="m17.5 11.5L14 15" /><path d="m14.5 14.5 3.5 3.5" /><path d="m22 22-8-8" /></svg>
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-bold text-white">Fundo do Menu Público</h3>
+                        <p className="text-xs text-gray-400">Escolha a cor predominante do seu menu digital.</p>
+                    </div>
+                </div>
 
-                <div className="flex flex-wrap gap-3 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
                     {[
-                        { value: '', label: 'Padrão (Fundo Limpo)' },
-                        { value: '#ffffff', label: 'Branco Puro' },
-                        { value: '#121212', label: 'Preto (Noturno)' },
-                        { value: '#fdf6e3', label: 'Papiro / Creme' },
-                        { value: '#2d3436', label: 'Cinza Escuro' }
+                        { value: '', label: 'Inteligente (Auto)', desc: 'Adapta-se ao Logo' },
+                        { value: '#ffffff', label: 'Branco Puro', desc: 'Clássico & Limpo' },
+                        { value: '#121212', label: 'Preto Profundo', desc: 'Elegância Dark' },
+                        { value: '#fdf6e3', label: 'Creme Vintage', desc: 'Estilo Papiro' },
+                        { value: '#1a1a1a', label: 'Grafite', desc: 'Moderno' },
+                        { value: '#f8f9fa', label: 'Gelo', desc: 'Minimalista' }
                     ].map(swatch => (
                         <button
                             key={swatch.value || 'default'}
                             onClick={() => handleChange('backgroundColor', swatch.value)}
-                            title={swatch.label}
-                            className={`px-3 py-2 rounded-xl text-sm font-medium transition-all relative outline-none ring-2 ring-offset-2 ring-offset-[#141414] shadow-sm flex items-center gap-2 ${(config.backgroundColor || '') === swatch.value
-                                ? 'ring-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.4)] text-white'
-                                : 'ring-transparent border border-white/10 text-gray-400 hover:text-white hover:border-white/30'
+                            className={`p-4 rounded-2xl transition-all relative border flex flex-col items-start gap-1 group ${(config.backgroundColor || '') === swatch.value
+                                ? 'bg-[#D4AF37]/20 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.2)]'
+                                : 'bg-black/40 border-white/10 hover:border-white/30'
                                 }`}
-                            style={{ backgroundColor: swatch.value || 'rgba(255,255,255,0.05)' }}
                         >
-                            <span
-                                className="w-4 h-4 rounded-full border border-gray-500/50 block"
-                                style={{ backgroundColor: swatch.value || 'transparent' }}
-                            ></span>
-                            <span className={swatch.value === '#ffffff' ? 'text-gray-800' : ''}>
+                            <div className="flex items-center justify-between w-full">
+                                <span
+                                    className="w-8 h-8 rounded-lg border border-white/20 shadow-sm transition-transform group-hover:scale-110"
+                                    style={{ backgroundColor: swatch.value || (config.primaryColor + '10') }}
+                                />
+                                {(config.backgroundColor || '') === swatch.value && (
+                                    <div className="w-5 h-5 bg-[#D4AF37] rounded-full flex items-center justify-center text-black">
+                                        <Check size={12} strokeWidth={4} />
+                                    </div>
+                                )}
+                            </div>
+                            <span className={`text-sm font-bold mt-2 ${swatch.value === '#ffffff' && (config.backgroundColor || '') !== swatch.value ? 'text-gray-300' : ''}`}>
                                 {swatch.label}
                             </span>
+                            <span className="text-[10px] text-gray-500 font-medium">{swatch.desc}</span>
                         </button>
                     ))}
                 </div>
 
-                <div className="flex gap-4 items-center">
-                    <div className="relative w-12 h-12 rounded-xl overflow-hidden ring-2 ring-white/10 shadow-inner group cursor-pointer focus-within:ring-[#D4AF37] transition-colors">
-                        <input
-                            type="color"
-                            value={config.backgroundColor || '#ffffff'}
-                            onChange={(e) => handleChange('backgroundColor', e.target.value)}
-                            className="absolute -inset-2 w-20 h-20 cursor-pointer border-0 bg-transparent"
-                        />
+                <div className="flex flex-col sm:flex-row gap-4 items-center bg-black/30 p-4 rounded-2xl border border-white/5">
+                    <div className="flex items-center gap-3 flex-1 w-full">
+                        <div className="relative w-14 h-14 rounded-2xl overflow-hidden ring-4 ring-white/5 shadow-2xl group cursor-pointer shrink-0">
+                            <input
+                                type="color"
+                                value={config.backgroundColor || '#ffffff'}
+                                onChange={(e) => handleChange('backgroundColor', e.target.value)}
+                                className="absolute -inset-4 w-24 h-24 cursor-pointer border-0 bg-transparent"
+                            />
+                        </div>
+                        <div className="flex-1">
+                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Cromatismo Personalizado</label>
+                            <input
+                                type="text"
+                                className="w-full bg-transparent border-0 p-0 text-lg font-mono text-[#D4AF37] outline-none focus:ring-0 uppercase"
+                                value={config.backgroundColor || ''}
+                                onChange={(e) => handleChange('backgroundColor', e.target.value)}
+                                placeholder="#ESCOLHA-UMA-COR"
+                                maxLength={7}
+                            />
+                        </div>
                     </div>
-                    <input
-                        type="text"
-                        className={`${inputClasses} flex-1 uppercase font-mono tracking-wider`}
-                        value={config.backgroundColor || ''}
-                        onChange={(e) => handleChange('backgroundColor', e.target.value)}
-                        placeholder="Ex: #1A1A1A ou deixe vazio"
-                        maxLength={7}
-                    />
                 </div>
             </div>
 

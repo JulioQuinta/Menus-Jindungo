@@ -66,16 +66,20 @@ const Login = () => {
                 <div className="glass-dark border border-white/10 rounded-3xl p-8 sm:p-10 shadow-2xl relative overflow-hidden backdrop-blur-xl">
 
                     {/* Header */}
-                    <div className="text-center mb-8">
-                        <div className="inline-block p-4 rounded-full bg-primary/10 mb-5 border border-primary/20 shadow-[0_0_20px_rgba(212,175,55,0.2)]">
-                            <span className="text-4xl font-serif text-primary drop-shadow-md">Mj</span>
+                    <div className="text-center mb-10">
+                        <div className="inline-block p-1 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 mb-6 border border-primary/20 shadow-[0_10px_40px_rgba(212,175,55,0.2)] overflow-hidden">
+                            <img src="/jindungo_logo_v3.png" className="w-36 h-36 object-contain" alt="Jindungo Logo" />
                         </div>
-                        <h2 className="text-3xl font-serif font-bold text-white tracking-tight mb-2">
+                        <h2 className="text-4xl font-serif font-black text-white tracking-tighter mb-2 scale-y-105">
                             Menús Jindungo
                         </h2>
-                        <p className="text-gray-400 text-sm font-light tracking-wide uppercase">
-                            Acesso Premium
-                        </p>
+                        <div className="flex items-center justify-center gap-3">
+                            <span className="h-[1px] w-4 bg-primary/30"></span>
+                            <p className="text-primary text-[10px] font-black tracking-[0.3em] uppercase">
+                                Acesso Premium
+                            </p>
+                            <span className="h-[1px] w-4 bg-primary/30"></span>
+                        </div>
                     </div>
 
                     {/* Type Toggle */}

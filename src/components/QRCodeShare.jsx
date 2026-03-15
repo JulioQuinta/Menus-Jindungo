@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import toast from 'react-hot-toast';
 import { QRCodeCanvas } from 'qrcode.react';
 
 const QRCodeShare = ({ slug, restaurantName, isOpen, onClose }) => {
@@ -21,7 +22,7 @@ const QRCodeShare = ({ slug, restaurantName, isOpen, onClose }) => {
 
     const copyLink = () => {
         navigator.clipboard.writeText(url);
-        alert("Link copiado!");
+        toast.success("Link copiado para a área de transferência!");
     };
 
     return (

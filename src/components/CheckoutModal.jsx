@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { useCart } from '../context/CartContext';
 import { generateWhatsAppLink } from '../utils/whatsappGenerator';
 // import { analyticsService } from '../services/analyticsService';
@@ -6,6 +7,9 @@ import { orderService } from '../services/orderService';
 import { supabase } from '../lib/supabaseClient';
 import OrderStatusView from './OrderStatusView';
 import CheckoutUpsell from './CheckoutUpsell';
+import { couponService } from '../services/couponService';
+import { Ticket, X, CheckCircle2, Award, Star, UtensilsCrossed, Bike, User, Smartphone, MapPin, Banknote, CreditCard, ChevronRight } from 'lucide-react';
+import { loyaltyService } from '../services/loyaltyService';
 
 const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features = {}, initialTable = '', deliveryConfig = {} }) => {
     const { cartItems, getCartTotal, clearCart } = useCart();
@@ -15,7 +19,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
     const [selectedZone, setSelectedZone] = useState(null);
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
-    const [showUpsell, setShowUpsell] = useState(true); // Default to true, logic inside will instantly skip if no items
+    const [showUpsell, setShowUpsell] = useState(true);
 
     // Dine-in fields
     const [tableNumber, setTableNumber] = useState(initialTable);
@@ -27,7 +31,6 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
 
     // Delivery fields
     const [address, setAddress] = useState('');
-    const [locationLink, setLocationLink] = useState('');
 
     // Payment fields
     const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' | 'multicaixa'
@@ -36,6 +39,16 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
     // System Order State
     const [createdOrder, setCreatedOrder] = useState(null);
     const [isSending, setIsSending] = useState(false);
+
+    // Coupon State
+    const [couponCode, setCouponCode] = useState('');
+    const [appliedCoupon, setAppliedCoupon] = useState(null);
+    const [couponError, setCouponError] = useState('');
+    const [isValidating, setIsValidating] = useState(false);
+
+    // Loyalty State
+    const [loyaltyConfig, setLoyaltyConfig] = useState(null);
+    const [loyaltyPoints, setLoyaltyPoints] = useState(null);
 
     useEffect(() => {
         if (isOpen && createdOrder && restaurantId) {
@@ -50,17 +63,80 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
         }
     }, [isOpen, createdOrder, restaurantId]);
 
+    // Fetch Loyalty Config
+    useEffect(() => {
+        if (isOpen && restaurantId && features.canCollectClientData) {
+            loyaltyService.getConfig(restaurantId).then(({ data }) => {
+                if (data && data.is_active) setLoyaltyConfig(data);
+            });
+        }
+    }, [isOpen, restaurantId, features.canCollectClientData]);
+
+    // Check Loyalty Points when phone changes
+    useEffect(() => {
+        if (customerPhone.length >= 7 && loyaltyConfig) {
+            const timer = setTimeout(() => {
+                loyaltyService.getCustomerPoints(restaurantId, customerPhone).then(({ count }) => {
+                    setLoyaltyPoints(count);
+                });
+            }, 500);
+            return () => clearTimeout(timer);
+        } else {
+            setLoyaltyPoints(null);
+        }
+    }, [customerPhone, loyaltyConfig, restaurantId]);
+
     if (!isOpen) return null;
 
     const subtotal = getCartTotal();
     const deliveryFee = (orderType === 'delivery' && selectedZone) ? selectedZone.fee : 0;
-    const total = subtotal + deliveryFee;
+
+    // Calculate Discount
+    let discount = 0;
+    if (appliedCoupon) {
+        if (appliedCoupon.discount_type === 'percentage') {
+            discount = (subtotal * appliedCoupon.discount_value) / 100;
+        } else {
+            discount = appliedCoupon.discount_value;
+        }
+    }
+
+    const total = Math.max(0, subtotal + deliveryFee - discount);
+
+    const handleApplyCoupon = async () => {
+        if (!couponCode) return;
+        setIsValidating(true);
+        setCouponError('');
+
+        const result = await couponService.validateCoupon(restaurantId, couponCode);
+
+        if (result.valid) {
+            // Check min purchase
+            if (result.coupon.min_purchase > 0 && subtotal < result.coupon.min_purchase) {
+                setCouponError(`Compra mínima para este cupão: ${result.coupon.min_purchase} Kz`);
+                setAppliedCoupon(null);
+            } else {
+                setAppliedCoupon(result.coupon);
+                setCouponError('');
+            }
+        } else {
+            setCouponError(result.message);
+            setAppliedCoupon(null);
+        }
+        setIsValidating(false);
+    };
+
+    const removeCoupon = () => {
+        setAppliedCoupon(null);
+        setCouponCode('');
+        setCouponError('');
+    };
 
     const isSystemOrder = !!restaurantId; // If we have an ID, we use the system. If not (preview), we default to WhatsApp?
 
     const handleSendOrder = async () => {
-        if (orderType === 'dine-in' && !tableNumber) return alert("Informe o número da mesa.");
-        if (orderType === 'delivery' && !address) return alert("Informe o endereço.");
+        if (orderType === 'dine-in' && !tableNumber) return toast.error("Informe o número da mesa.");
+        if (orderType === 'delivery' && !address) return toast.error("Informe o endereço.");
 
         setIsSending(true);
 
@@ -76,6 +152,9 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
             customer_name: customerName || 'Cliente',
             customer_phone: customerPhone,
             table_number: `${baseTableOrAddress} | Pgto: ${paymentInfo}`,
+            coupon_id: appliedCoupon?.id || null,
+            coupon_code: appliedCoupon?.code || null,
+            coupon_discount: discount
         };
 
         try {
@@ -96,7 +175,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
             // For Start plan (no KDS feature), we MUST auto-redirect to WhatsApp so the owner gets the order.
             if (!features?.canUseKDS || !restaurantId) {
                 if (!restaurantId) {
-                    alert("Modo Preview: Pedido simulado via WhatsApp.");
+                    toast.success("Modo Preview: Pedido simulado via WhatsApp.");
                 }
                 const link = generateWhatsAppLink(cartItems, total, orderType, { ...orderData, paymentMethod, changeFor }, whatsappNumber);
                 const cacheBusterLink = link + (link.includes('?') ? '&' : '?') + 't=' + Date.now();
@@ -110,7 +189,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
             }
 
         } catch (err) {
-            alert("Erro ao enviar pedido: " + err.message);
+            toast.error("Erro ao enviar pedido: " + err.message);
             console.error(err);
         } finally {
             setIsSending(false);
@@ -184,12 +263,20 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                 ) : (
                     <>
                         {/* Tabs Order Type */}
-                        <div style={{ display: 'flex', background: '#edf2f7', padding: '4px', borderRadius: '12px', marginBottom: '1.5rem' }}>
-                            <button onClick={() => setOrderType('dine-in')} style={{ flex: 1, padding: '0.6rem', border: 'none', borderRadius: '10px', background: orderType === 'dine-in' ? 'white' : 'transparent', boxShadow: orderType === 'dine-in' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none', fontWeight: '600', color: orderType === 'dine-in' ? 'var(--color-primary)' : '#718096', transition: 'all 0.2s', cursor: 'pointer' }}>
-                                🍽️ Mesa
+                        <div className="flex bg-gray-100 p-1 rounded-2xl mb-8 border border-gray-200/50 shadow-inner">
+                            <button
+                                onClick={() => setOrderType('dine-in')}
+                                className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 font-bold ${orderType === 'dine-in' ? 'bg-white text-primary shadow-md transform scale-[1.02]' : 'bg-transparent text-gray-500 hover:text-gray-700'}`}
+                            >
+                                <UtensilsCrossed size={18} />
+                                <span>No Local</span>
                             </button>
-                            <button onClick={() => setOrderType('delivery')} style={{ flex: 1, padding: '0.6rem', border: 'none', borderRadius: '10px', background: orderType === 'delivery' ? 'white' : 'transparent', boxShadow: orderType === 'delivery' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none', fontWeight: '600', color: orderType === 'delivery' ? 'var(--color-primary)' : '#718096', transition: 'all 0.2s', cursor: 'pointer' }}>
-                                🛵 Entrega
+                            <button
+                                onClick={() => setOrderType('delivery')}
+                                className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 font-bold ${orderType === 'delivery' ? 'bg-white text-primary shadow-md transform scale-[1.02]' : 'bg-transparent text-gray-500 hover:text-gray-700'}`}
+                            >
+                                <Bike size={18} />
+                                <span>Entrega</span>
                             </button>
                         </div>
 
@@ -216,6 +303,12 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                     <span>+{deliveryFee} Kz</span>
                                 </div>
                             )}
+                            {discount > 0 && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#38a169', fontWeight: 'bold' }}>
+                                    <span>Desconto ({appliedCoupon?.code})</span>
+                                    <span>-{discount} Kz</span>
+                                </div>
+                            )}
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', fontWeight: 'bold', marginTop: '0.5rem', color: 'var(--text-primary)' }}>
                                 <span>Total Final</span>
                                 <span style={{ color: 'var(--color-primary)' }}>
@@ -224,16 +317,126 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                             </div>
                         </div>
 
-                        <div style={{ marginBottom: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Seu Nome</label>
-                                <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Ex: Ana Silva" className="input-text" />
+                        {/* Coupon Section */}
+                        <div style={{ marginBottom: '1.5rem', background: 'rgba(212,175,55,0.05)', padding: '1rem', borderRadius: '16px', border: '1px dashed rgba(212,175,55,0.2)' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.8rem', fontWeight: '800', color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                Cupão de Desconto
+                            </label>
+
+                            {!appliedCoupon ? (
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <input
+                                        type="text"
+                                        placeholder="Tens um código?"
+                                        className="input-text"
+                                        style={{ margin: 0, textTransform: 'uppercase' }}
+                                        value={couponCode}
+                                        onChange={e => setCouponCode(e.target.value)}
+                                        onKeyPress={e => e.key === 'Enter' && handleApplyCoupon()}
+                                    />
+                                    <button
+                                        onClick={handleApplyCoupon}
+                                        disabled={!couponCode || isValidating}
+                                        style={{ background: '#D4AF37', color: 'black', border: 'none', padding: '0 1rem', borderRadius: '12px', fontWeight: 'bold', fontSize: '0.9rem', cursor: 'pointer' }}
+                                    >
+                                        {isValidating ? '...' : 'OK'}
+                                    </button>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '0.5rem 1rem', borderRadius: '12px', border: '1px solid #c6f6d5' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#2f855a', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                                        <CheckCircle2 size={16} /> {appliedCoupon.code}
+                                    </div>
+                                    <button onClick={removeCoupon} style={{ background: 'transparent', border: 'none', color: '#e53e3e', cursor: 'pointer' }}>
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            )}
+
+                            {couponError && (
+                                <p style={{ color: '#e53e3e', fontSize: '0.75rem', marginTop: '0.5rem', fontWeight: 'bold' }}>{couponError}</p>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                    <User size={12} className="text-gray-400" />
+                                    Seu Nome
+                                </label>
+                                <input
+                                    type="text"
+                                    value={customerName}
+                                    onChange={e => setCustomerName(e.target.value)}
+                                    placeholder="Ex: Ana Silva"
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm font-medium"
+                                />
                             </div>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Telemóvel (WhatsApp)</label>
-                                <input type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="9xx xxx xxx" className="input-text" />
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                    <Smartphone size={12} className="text-gray-400" />
+                                    Telemóvel
+                                </label>
+                                <input
+                                    type="tel"
+                                    value={customerPhone}
+                                    onChange={e => setCustomerPhone(e.target.value)}
+                                    placeholder="9xx xxx xxx"
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm font-medium"
+                                />
                             </div>
                         </div>
+
+                        {/* Loyalty Card in Checkout */}
+                        {loyaltyConfig && loyaltyPoints !== null && (
+                            <div style={{
+                                marginBottom: '1.5rem',
+                                background: 'linear-gradient(135deg, rgba(212,175,55,0.1) 0%, rgba(212,175,55,0.05) 100%)',
+                                padding: '1.2rem',
+                                borderRadius: '20px',
+                                border: '1px solid rgba(212,175,55,0.2)',
+                                animation: 'fadeIn 0.4s'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <Award size={18} style={{ color: '#D4AF37' }} />
+                                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                            Cartão VIP {loyaltyPoints}/{loyaltyConfig.goal}
+                                        </span>
+                                    </div>
+                                    {loyaltyPoints >= loyaltyConfig.goal && (
+                                        <span style={{ fontSize: '0.7rem', background: '#38a169', color: 'white', padding: '2px 8px', borderRadius: '8px', fontWeight: 'bold' }}>
+                                            RECOMPENSA!
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                                    {[...Array(loyaltyConfig.goal)].map((_, i) => (
+                                        <div key={i} style={{
+                                            width: '24px',
+                                            height: '24px',
+                                            borderRadius: '50%',
+                                            border: i < loyaltyPoints ? 'none' : '2px dashed rgba(0,0,0,0.1)',
+                                            background: i < loyaltyPoints ? '#D4AF37' : 'transparent',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: i < loyaltyPoints ? 'black' : 'rgba(0,0,0,0.1)'
+                                        }}>
+                                            <Star size={10} fill={i < loyaltyPoints ? "currentColor" : "none"} />
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <p style={{ fontSize: '0.75rem', color: '#666', marginTop: '1rem', textAlign: 'center', fontStyle: 'italic' }}>
+                                    {loyaltyPoints >= loyaltyConfig.goal
+                                        ? `Parabéns! Recompensa: ${loyaltyConfig.reward_text}`
+                                        : `Faltam ${loyaltyConfig.goal - loyaltyPoints} pedidos para o seu prémio!`
+                                    }
+                                </p>
+                            </div>
+                        )}
 
                         {orderType === 'dine-in' ? (
                             <div style={{ marginBottom: '1.5rem', animation: 'fadeIn 0.3s' }}>
@@ -272,22 +475,33 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                             </div>
                         )}
 
-                        {/* Payment Methods */}
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Método de Pagamento</label>
-                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                    <input type="radio" name="payment" value="cash" checked={paymentMethod === 'cash'} onChange={() => setPaymentMethod('cash')} />
-                                    💵 Dinheiro
-                                </label>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                    <input type="radio" name="payment" value="multicaixa" checked={paymentMethod === 'multicaixa'} onChange={() => setPaymentMethod('multicaixa')} />
-                                    💳 Multicaixa
-                                </label>
+                        <div className="mb-8 p-5 bg-gray-50 rounded-[24px] border border-gray-100 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Forma de Pagamento</label>
+                            <div className="grid grid-cols-2 gap-3 mb-4">
+                                <button
+                                    onClick={() => setPaymentMethod('cash')}
+                                    className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${paymentMethod === 'cash' ? 'bg-green-50 border-green-500 text-green-700 shadow-sm' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300'}`}
+                                >
+                                    <Banknote size={18} />
+                                    <span>Dinheiro</span>
+                                </button>
+                                <button
+                                    onClick={() => setPaymentMethod('multicaixa')}
+                                    className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${paymentMethod === 'multicaixa' ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300'}`}
+                                >
+                                    <CreditCard size={18} />
+                                    <span>Multicaixa</span>
+                                </button>
                             </div>
                             {paymentMethod === 'cash' && (
-                                <div>
-                                    <input type="number" placeholder="Troco para..." className="input-text" value={changeFor} onChange={e => setChangeFor(e.target.value)} />
+                                <div className="mt-2 animate-in slide-in-from-right duration-300">
+                                    <input
+                                        type="number"
+                                        placeholder="Troco para que valor?"
+                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-100 focus:border-green-400 outline-none transition-all text-sm font-medium"
+                                        value={changeFor}
+                                        onChange={e => setChangeFor(e.target.value)}
+                                    />
                                 </div>
                             )}
                         </div>

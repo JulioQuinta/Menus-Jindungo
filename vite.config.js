@@ -17,12 +17,12 @@ export default defineConfig({
         background_color: '#121212',
         icons: [
           {
-            src: '/jindungo_long.png',
+            src: '/jindungo_logo_v3.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/jindungo_long.png',
+            src: '/jindungo_logo_v3.png',
             sizes: '512x512',
             type: 'image/png'
           }

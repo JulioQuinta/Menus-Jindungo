@@ -14,7 +14,6 @@ const QRCodeGenerator = ({ url, restaurantName }) => {
         const image = canvas.toDataURL("image/png");
         const link = document.createElement('a');
         link.href = image;
-        // Filename includes table number if present
         link.download = `${restaurantName || 'menu'}${tableNumber ? `-mesa-${tableNumber}` : ''}-qr.png`;
         document.body.appendChild(link);
         link.click();
@@ -34,10 +33,10 @@ const QRCodeGenerator = ({ url, restaurantName }) => {
                     level={"H"}
                     includeMargin={true}
                     imageSettings={{
-                        src: "/jindungo_icon.png", // Prefer a square icon if possible, or omit safely
+                        src: "/jindungo_icon.png",
                         x: undefined,
                         y: undefined,
-                        height: 30, // smaller to avoid scanning errors
+                        height: 30,
                         width: 30,
                         excavate: true,
                     }}
@@ -58,9 +57,6 @@ const QRCodeGenerator = ({ url, restaurantName }) => {
                             className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] outline-none transition-all text-white font-medium shadow-inner"
                         />
                     </div>
-                    <p className="text-xs text-gray-500 mt-2 font-medium">
-                        Ao preencher, o cliente abrirá o menu diretamente na mesa.
-                    </p>
                 </div>
 
                 {isLocalhost && (

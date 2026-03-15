@@ -43,6 +43,11 @@ export const generateWhatsAppLink = (cartItems, total, orderType, details, resta
     // Format total nicely
     const formattedTotal = new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(total).replace('AOA', 'Kz');
 
+    if (details.coupon_code) {
+        const formattedDiscount = new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(details.coupon_discount).replace('AOA', 'Kz');
+        message += `\n*Cupão:* ${details.coupon_code} (-${formattedDiscount})`;
+    }
+
     message += `\n*Total: ${formattedTotal}*\n`;
     message += `\n_Pedido enviado via Menú Jindungo_`;
 

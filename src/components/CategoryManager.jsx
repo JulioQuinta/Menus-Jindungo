@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { toast } from 'react-hot-toast';
 
 const inputClasses = "w-full flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary focus:bg-white outline-none transition-all text-gray-900 font-medium";
 const labelClasses = "block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-4 first:mt-0";
@@ -19,7 +20,7 @@ const CategoryManager = ({ categories, restaurantId, onUpdate, onClose }) => {
         if (!newCategory.trim()) return;
 
         if (!restaurantId) {
-            alert("Erro: Restaurante não identificado. Recarregue a página.");
+            toast.error("Erro: Restaurante não identificado. Recarregue a página.");
             return;
         }
 
@@ -39,9 +40,10 @@ const CategoryManager = ({ categories, restaurantId, onUpdate, onClose }) => {
             console.log("Category added:", data);
             setNewCategory('');
             onUpdate();
+            toast.success("Categoria adicionada!");
         } catch (err) {
             console.error("Error adding category:", err);
-            alert(`Erro ao adicionar categoria: ${err.message}`);
+            toast.error("Erro ao adicionar categoria.");
         } finally {
             setIsLoading(false);
         }
@@ -68,9 +70,10 @@ const CategoryManager = ({ categories, restaurantId, onUpdate, onClose }) => {
             if (error) throw error;
             setEditingId(null);
             onUpdate();
+            toast.success("Categoria atualizada!");
         } catch (err) {
             console.error("Error updating category:", err);
-            alert("Erro ao atualizar categoria.");
+            toast.error("Erro ao atualizar categoria.");
         } finally {
             setIsLoading(false);
         }
@@ -102,9 +105,10 @@ const CategoryManager = ({ categories, restaurantId, onUpdate, onClose }) => {
 
             if (error) throw error;
             onUpdate();
+            toast.success("Categoria removida.");
         } catch (err) {
             console.error("Error deleting category:", err);
-            alert("Erro ao apagar categoria: " + err.message);
+            toast.error("Erro ao apagar categoria.");
         } finally {
             setIsLoading(false);
         }

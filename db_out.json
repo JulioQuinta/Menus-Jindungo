@@ -1,0 +1,14 @@
+[
+  {
+    "slug": "novo-restaurante-comidas-da-terra",
+    "theme_config": {
+      "logoUrl": "https://dntbzdlliymbworzqowb.supabase.co/storage/v1/object/public/menus/logos/def7479a-6c90-45e4-9d69-cae1aace983b/logo_1772736585982.png",
+      "darkMode": true,
+      "fontFamily": "Open Sans, sans-serif",
+      "layoutMode": "grid",
+      "primaryColor": "#6bcb77",
+      "whatsappNumber": "244926094002",
+      "backgroundColor": "#fdf6e3"
+    }
+  }
+]

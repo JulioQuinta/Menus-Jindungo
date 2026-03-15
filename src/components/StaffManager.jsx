@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
-import { Plus, Search, User, Trash2, Key, Users } from 'lucide-react';
+import { staffService } from '../services/staffService';
+import { Plus, Search, User, Trash2, Key, Users, Mail, ShieldCheck } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
-const ClientManager = ({ restaurantId }) => {
+const StaffManager = ({ restaurantId }) => {
     const [staff, setStaff] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
 
     // Form State
-    const [newStaff, setNewStaff] = useState({ name: '', role: 'Garçom', pin_code: '' });
+    const [newStaff, setNewStaff] = useState({
+        name: '',
+        role: 'waiter',
+        pin_code: '',
+        email: ''
+    });
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
@@ -21,17 +27,11 @@ const ClientManager = ({ restaurantId }) => {
     const fetchStaff = async () => {
         try {
             setLoading(true);
-            const { data, error } = await supabase
-                .from('staff_members')
-                .select('*')
-                .eq('restaurant_id', restaurantId)
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
+            const data = await staffService.getStaff(restaurantId);
             setStaff(data || []);
         } catch (error) {
             console.error('Erro ao carregar staff:', error);
-            alert("Erro ao carregar a equipa. Tente recarregar a página.");
+            toast.error("Erro ao carregar a equipa.");
         } finally {
             setLoading(false);
         }
@@ -40,54 +40,34 @@ const ClientManager = ({ restaurantId }) => {
     const handleAddStaff = async (e) => {
         e.preventDefault();
         if (!newStaff.name.trim() || !newStaff.pin_code.trim()) {
-            alert("O Nome e o PIN são obrigatórios.");
+            toast.error("O Nome e o PIN são obrigatórios.");
             return;
         }
 
         if (newStaff.pin_code.length < 4) {
-            alert("O PIN deve ter pelo menos 4 dígitos para segurança.");
+            toast.error("O PIN deve ter pelo menos 4 dígitos para segurança.");
             return;
         }
 
         try {
             setIsSaving(true);
 
-            // Check if PIN already exists for this restaurant to prevent conflicts
-            const { data: existingPin } = await supabase
-                .from('staff_members')
-                .select('id')
-                .eq('restaurant_id', restaurantId)
-                .eq('pin_code', newStaff.pin_code)
-                .maybeSingle();
+            await staffService.addStaff({
+                restaurant_id: restaurantId,
+                name: newStaff.name.trim(),
+                role: newStaff.role,
+                pin_code: newStaff.pin_code,
+                email: newStaff.email.trim() || null
+            });
 
-            if (existingPin) {
-                alert("Este PIN já está a ser usado por outro Garçom no seu restaurante. Escolha outro.");
-                setIsSaving(false);
-                return;
-            }
-
-            const { data, error } = await supabase
-                .from('staff_members')
-                .insert([{
-                    restaurant_id: restaurantId,
-                    name: newStaff.name.trim(),
-                    role: newStaff.role,
-                    pin_code: newStaff.pin_code,
-                    active: true
-                }])
-                .select()
-                .single();
-
-            if (error) throw error;
-
-            setStaff([data, ...staff]);
+            toast.success("Membro da equipa adicionado com sucesso!");
+            fetchStaff();
             setShowAddModal(false);
-            setNewStaff({ name: '', role: 'Garçom', pin_code: '' });
-            alert("Membro da equipa adicionado com sucesso!");
+            setNewStaff({ name: '', role: 'waiter', pin_code: '', email: '' });
 
         } catch (error) {
             console.error("Erro ao adicionar staff:", error);
-            alert("Erro ao gravar. Verifique as permissões ou tente novamente.");
+            toast.error("Erro ao gravar. Verifique se o PIN ou Email já estão em uso.");
         } finally {
             setIsSaving(false);
         }
@@ -97,25 +77,30 @@ const ClientManager = ({ restaurantId }) => {
         if (!window.confirm(`Tem certeza que deseja remover ${name} da equipa? Eles perderão o acesso.`)) return;
 
         try {
-            const { error } = await supabase
-                .from('staff_members')
-                .delete()
-                .eq('id', id);
-
-            if (error) throw error;
-
+            await staffService.deleteStaff(id);
             setStaff(staff.filter(s => s.id !== id));
-
+            toast.success("Membro removido.");
         } catch (error) {
             console.error("Erro ao remover:", error);
-            alert("Não foi possível remover. Tente novamente.");
+            toast.error("Não foi possível remover.");
         }
     };
 
     const filteredStaff = staff.filter(s =>
         s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.role.toLowerCase().includes(searchTerm.toLowerCase())
+        s.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (s.email && s.email.toLowerCase().includes(searchTerm.toLowerCase()))
     );
+
+    const getRoleLabel = (role) => {
+        const roles = {
+            'admin': 'Administrador',
+            'waiter': 'Garçom / Mesa',
+            'kitchen': 'Cozinha / KDS',
+            'reception': 'Receção / Reservas'
+        };
+        return roles[role] || role;
+    };
 
     return (
         <div className="space-y-6 animate-fade-in text-white">
@@ -124,28 +109,28 @@ const ClientManager = ({ restaurantId }) => {
                 <div>
                     <h2 className="text-2xl font-serif font-bold text-white flex items-center gap-3">
                         <Users className="text-[#D4AF37]" size={28} />
-                        A Sua Equipa (Staff)
+                        Gestão de Equipa (Staff)
                     </h2>
-                    <p className="text-gray-400 mt-1">Gerencie os Garçons e o seu acesso ao sistema de pedidos.</p>
+                    <p className="text-gray-400 mt-1">Delegue acessos e gerencie as permissões dos seus funcionários.</p>
                 </div>
                 <button
                     onClick={() => setShowAddModal(true)}
                     className="bg-gradient-to-r from-[#D4AF37] to-yellow-600 text-black px-6 py-3 rounded-xl font-bold hover:brightness-110 transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(212,175,55,0.3)] hover:-translate-y-0.5"
                 >
                     <Plus size={20} />
-                    Adicionar Membro
+                    Adicionar Colaborador
                 </button>
             </div>
 
             {/* Search and List */}
             <div className="bg-black/40 backdrop-blur-md rounded-3xl border border-white/10 shadow-xl overflow-hidden">
                 <div className="p-6 border-b border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <h3 className="text-lg font-bold text-gray-200">Garçons & Gestores</h3>
+                    <h3 className="text-lg font-bold text-gray-200">Colaboradores & Permissões</h3>
                     <div className="relative w-full sm:w-72">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                         <input
                             type="text"
-                            placeholder="Buscar nome..."
+                            placeholder="Buscar por nome ou role..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-white focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all"
@@ -163,22 +148,17 @@ const ClientManager = ({ restaurantId }) => {
                         <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 border border-white/10">
                             <User size={30} className="text-gray-500" />
                         </div>
-                        <p className="text-lg font-medium text-white mb-1">Nenhum membro encontrado</p>
-                        <p className="text-sm">Comece por adicionar o seu primeiro garçom.</p>
-                        {searchTerm && (
-                            <button onClick={() => setSearchTerm('')} className="mt-4 text-[#D4AF37] hover:underline text-sm font-bold">
-                                Limpar Busca
-                            </button>
-                        )}
+                        <p className="text-lg font-medium text-white mb-1">Nenhum colaborador encontrado</p>
+                        <p className="text-sm">Comece por adicionar o seu primeiro colaborador.</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-white/5 text-gray-400 text-xs uppercase tracking-wider">
-                                    <th className="px-6 py-4 font-bold border-b border-white/5">Nome</th>
-                                    <th className="px-6 py-4 font-bold border-b border-white/5">Função</th>
-                                    <th className="px-6 py-4 font-bold border-b border-white/5">PIN de Acesso</th>
+                                    <th className="px-6 py-4 font-bold border-b border-white/5">Nome / Email</th>
+                                    <th className="px-6 py-4 font-bold border-b border-white/5">Função (Role)</th>
+                                    <th className="px-6 py-4 font-bold border-b border-white/5">Acesso Rápido</th>
                                     <th className="px-6 py-4 font-bold border-b border-white/5 text-right">Ações</th>
                                 </tr>
                             </thead>
@@ -190,12 +170,19 @@ const ClientManager = ({ restaurantId }) => {
                                                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-800 to-black border border-white/10 flex items-center justify-center text-white font-bold text-lg shadow-inner">
                                                     {person.name.charAt(0).toUpperCase()}
                                                 </div>
-                                                <span className="font-bold text-gray-200">{person.name}</span>
+                                                <div>
+                                                    <div className="font-bold text-gray-200">{person.name}</div>
+                                                    {person.email && <div className="text-xs text-gray-500 flex items-center gap-1"><Mail size={10} /> {person.email}</div>}
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="bg-[#D4AF37]/20 text-[#D4AF37] text-xs font-bold px-3 py-1.5 rounded-full border border-[#D4AF37]/20">
-                                                {person.role}
+                                            <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-widest ${person.role === 'admin' ? 'bg-red-400/10 text-red-400 border-red-400/20' :
+                                                    person.role === 'kitchen' ? 'bg-blue-400/10 text-blue-400 border-blue-400/20' :
+                                                        person.role === 'reception' ? 'bg-green-400/10 text-green-400 border-green-400/20' :
+                                                            'bg-yellow-400/10 text-yellow-400 border-yellow-400/20'
+                                                }`}>
+                                                {getRoleLabel(person.role)}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
@@ -221,32 +208,42 @@ const ClientManager = ({ restaurantId }) => {
                 )}
             </div>
 
-            {/* Add Staff Modal */}
+            {/* Add Modal */}
             {showAddModal && (
                 <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
                     <div className="bg-[#121212] rounded-3xl p-6 sm:p-8 w-full max-w-md border border-white/10 shadow-2xl animate-fade-in-up">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold font-serif text-white">Novo Membro</h3>
+                        <div className="flex justify-between items-center mb-6 text-white ">
+                            <h3 className="text-xl font-bold font-serif ">Novo Colaborador</h3>
                             <button onClick={() => setShowAddModal(false)} className="text-gray-500 hover:text-white transition-colors">✕</button>
                         </div>
 
                         <form onSubmit={handleAddStaff} className="space-y-5">
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nome Completo</label>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nome do Colaborador</label>
                                 <input
                                     type="text"
                                     required
                                     value={newStaff.name}
                                     onChange={e => setNewStaff({ ...newStaff, name: e.target.value })}
-                                    placeholder="Ex: Ana Silva"
-                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none transition-all"
+                                    placeholder="Ex: João Silva"
+                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#D4AF37] outline-none transition-all"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">PIN Secreto (4 DÍGITOS)</label>
-                                <div className="relative">
-                                    <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Email (Opcional - para Login Web)</label>
+                                <input
+                                    type="email"
+                                    value={newStaff.email}
+                                    onChange={e => setNewStaff({ ...newStaff, email: e.target.value })}
+                                    placeholder="joao@exemplo.com"
+                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#D4AF37] outline-none transition-all"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 text-white">PIN (4 DÍGITOS)</label>
                                     <input
                                         type="password"
                                         required
@@ -254,24 +251,36 @@ const ClientManager = ({ restaurantId }) => {
                                         value={newStaff.pin_code}
                                         onChange={e => setNewStaff({ ...newStaff, pin_code: e.target.value.replace(/\D/g, '') })}
                                         placeholder="1234"
-                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 pl-12 text-white font-mono tracking-widest focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none transition-all"
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white font-mono tracking-widest focus:border-[#D4AF37] outline-none"
                                     />
                                 </div>
-                                <p className="text-xs text-gray-500 mt-2">Este código será usado pelo garçom para entrar no telemóvel dele e ver as mesas.</p>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 text-white">Função</label>
+                                    <select
+                                        value={newStaff.role}
+                                        onChange={e => setNewStaff({ ...newStaff, role: e.target.value })}
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#D4AF37] outline-none"
+                                    >
+                                        <option value="waiter">Garçom</option>
+                                        <option value="kitchen">Cozinha</option>
+                                        <option value="reception">Receção</option>
+                                        <option value="admin">Administrador</option>
+                                    </select>
+                                </div>
                             </div>
 
-                            <div className="pt-4 flex gap-3">
+                            <div className="pt-4 flex gap-3 text-white">
                                 <button
                                     type="button"
                                     onClick={() => setShowAddModal(false)}
-                                    className="flex-1 py-3 text-gray-400 font-bold hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                                    className="flex-1 py-3 text-gray-400 font-bold hover:bg-white/5 rounded-xl transition-all"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isSaving}
-                                    className="flex-1 bg-[#D4AF37] text-black py-3 rounded-xl font-bold hover:brightness-110 shadow-lg transition-all disabled:opacity-50"
+                                    className="flex-1 bg-[#D4AF37] text-black py-3 rounded-xl font-bold hover:brightness-110 shadow-lg disabled:opacity-50 transition-all font-serif"
                                 >
                                     {isSaving ? 'A Gravar...' : 'Gravar'}
                                 </button>
@@ -284,4 +293,4 @@ const ClientManager = ({ restaurantId }) => {
     );
 };
 
-export default ClientManager;
+export default StaffManager;

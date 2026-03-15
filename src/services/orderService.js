@@ -19,11 +19,14 @@ export const orderService = {
     },
 
     // Update order status (Admin)
-    async updateOrderStatus(orderId, status) {
+    async updateOrderStatus(orderId, status, rejectionReason = null) {
         try {
+            const updateData = { status };
+            if (rejectionReason) updateData.rejection_reason = rejectionReason;
+
             const { data, error } = await supabase
                 .from('orders')
-                .update({ status })
+                .update(updateData)
                 .eq('id', orderId)
                 .select()
                 .single();
@@ -77,15 +80,22 @@ export const orderService = {
     },
 
     // [NEW] Get sales by date range
-    async getSalesByDateRange(restaurantId, startDate, endDate) {
+    async getSalesByDateRange(restaurantId, startDate, endDate, status = 'paid') {
         try {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('orders')
                 .select('id, created_at, total, items, status')
                 .eq('restaurant_id', restaurantId)
-                .eq('status', 'paid')
                 .gte('created_at', startDate.toISOString())
                 .lte('created_at', endDate.toISOString());
+
+            if (status === 'all') {
+                query = query.neq('status', 'cancelled');
+            } else if (status) {
+                query = query.eq('status', status);
+            }
+
+            const { data, error } = await query;
 
             if (error) throw error;
             return { data, error: null };

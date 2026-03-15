@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import toast, { Toaster } from 'react-hot-toast';
+import { compressImage } from '../lib/imageUtils';
 import {
     LayoutDashboard,
     UtensilsCrossed,
@@ -11,7 +13,15 @@ import {
     QrCode,
     Menu as MenuIcon,
     MessageSquare,
-    User
+    User,
+    Ticket,
+    Award,
+    Info,
+    Share2,
+    Calendar,
+    ExternalLink,
+    ChevronRight,
+    Eye
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
@@ -25,8 +35,13 @@ import DeliverySettings from '../components/DeliverySettings';
 import CustomerManager from '../components/CustomerManager';
 import ChatAdminPanel from '../components/ChatAdminPanel';
 import InstallPWA from '../components/InstallPWA';
+import StaffManager from '../components/StaffManager';
 import QRCodeGenerator from '../components/QRCodeGenerator';
-import ClientManager from '../components/ClientManager';
+import OrderHistory from '../components/OrderHistory';
+import LoyaltyManager from '../components/LoyaltyManager';
+import BusinessInfoManager from '../components/BusinessInfoManager';
+import ReservationManager from '../components/ReservationManager';
+import CouponManager from '../components/CouponManager';
 import UpgradePrompt from '../components/UpgradePrompt';
 import { getPlanFeatures } from '../utils/planLimits';
 
@@ -137,6 +152,54 @@ const AdminDashboard = () => {
                         created_at: payload.new.created_at
                     };
                     setActiveAlerts(prev => [...prev, newOrderAlert]);
+
+                    // Browser Notification
+                    if (Notification.permission === 'granted') {
+                        new Notification("Novo Pedido Jindungo!", {
+                            body: `De: ${payload.new.customer_name || 'Cliente'} - ${payload.new.total} Kz`,
+                            icon: '/jindungo_logo_v3.png'
+                        });
+                    }
+                }
+            )
+            .subscribe();
+
+        const reservationsChannel = supabase
+            .channel('new-reservations-alerts')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'reservations',
+                    filter: `restaurant_id=eq.${restaurant.id}`
+                },
+                (payload) => {
+                    // Play Sound
+                    try {
+                        const audio = new Audio('/bell.mp3');
+                        audio.play().catch(e => console.log("Audio autoplay blocked", e));
+                    } catch (err) {
+                        console.log("Audio error", err);
+                    }
+
+                    const newResAlert = {
+                        id: `res-${payload.new.id}`,
+                        isReservation: true,
+                        mesa_id: `${payload.new.num_tables} Mesas`,
+                        request_type: `Reserva: ${payload.new.customer_name}`,
+                        created_at: payload.new.created_at
+                    };
+                    setActiveAlerts(prev => [...prev, newResAlert]);
+                    toast.success(`Nova Reserva de ${payload.new.customer_name}!`, { icon: '📅', duration: 6000 });
+
+                    // Browser Notification
+                    if (Notification.permission === 'granted') {
+                        new Notification("Nova Reserva Jindungo!", {
+                            body: `Cliente: ${payload.new.customer_name} para ${payload.new.num_tables} mesas`,
+                            icon: '/jindungo_logo_v3.png'
+                        });
+                    }
                 }
             )
             .subscribe();
@@ -155,6 +218,7 @@ const AdminDashboard = () => {
         return () => {
             supabase.removeChannel(waiterChannel);
             supabase.removeChannel(ordersChannel);
+            supabase.removeChannel(reservationsChannel);
         };
     }, [restaurant]);
 
@@ -164,8 +228,9 @@ const AdminDashboard = () => {
         // Optimistic Remove
         setActiveAlerts(prev => prev.filter(a => a.id !== id));
 
-        if (alertToDismiss && alertToDismiss.isOrder) {
-            navigate('/admin/orders');
+        if (alertToDismiss && (alertToDismiss.isOrder || alertToDismiss.isReservation)) {
+            if (alertToDismiss.isOrder) navigate('/admin/orders');
+            if (alertToDismiss.isReservation) navigate('/admin/reservations');
         } else {
             // DB Update for Waiter Alerts
             await supabase
@@ -185,9 +250,16 @@ const AdminDashboard = () => {
         logoUrl: ''
     });
 
+    const [businessInfo, setBusinessInfo] = useState(null);
+
     useEffect(() => {
         if (user) {
             fetchRestaurantData();
+
+            // Request Notification Permission
+            if (Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
         }
     }, [user]);
 
@@ -252,6 +324,10 @@ const AdminDashboard = () => {
                     setConfig(prev => ({ ...prev, ...currentRestaurant.theme_config }));
                 }
 
+                if (currentRestaurant.business_info) {
+                    setBusinessInfo(currentRestaurant.business_info);
+                }
+
                 // 2. Get Categories & Items
                 const { data: cats, error: cError } = await supabase
                     .from('categories')
@@ -276,12 +352,33 @@ const AdminDashboard = () => {
 
         // Debounced save to DB would go here
         if (restaurant) {
-            const { error } = await supabase
-                .from('restaurants')
-                .update({ theme_config: updated })
-                .eq('id', restaurant.id);
+            try {
+                const { error } = await supabase
+                    .from('restaurants')
+                    .update({ theme_config: updated }) // updated is now guaranteed to be the evaluated object
+                    .eq('id', restaurant.id);
 
-            if (error) throw error; // Throw to be caught by caller
+                if (error) throw error;
+            } catch (err) {
+                console.error("Erro ao salvar config:", err);
+            }
+        }
+    };
+
+    const handleBusinessInfoSave = async (newInfo) => {
+        setBusinessInfo(newInfo);
+        if (restaurant) {
+            try {
+                const { error } = await supabase
+                    .from('restaurants')
+                    .update({ business_info: newInfo })
+                    .eq('id', restaurant.id);
+                if (error) throw error;
+                toast.success("Informações do negócio atualizadas!");
+            } catch (err) {
+                console.error("Erro ao salvar info:", err);
+                toast.error("Erro ao salvar as informações.");
+            }
         }
     };
 
@@ -316,7 +413,7 @@ const AdminDashboard = () => {
                 .maybeSingle();
 
             if (existing) {
-                alert("Este link já está em uso por outro restaurante. Por favor, escolha outro.");
+                toast.error("Este link já está em uso. Por favor, escolha outro.");
                 return false;
             }
 
@@ -330,11 +427,11 @@ const AdminDashboard = () => {
 
             // Update local state
             setRestaurant(prev => ({ ...prev, slug: formattedSlug }));
-            alert("Link do menu atualizado com sucesso!");
+            toast.success("Link do menu atualizado!");
             return true;
         } catch (error) {
             console.error("Error updating slug:", error);
-            alert("Erro ao atualizar o link. Tente novamente.");
+            toast.error("Erro ao atualizar o link.");
             return false;
         }
     };
@@ -344,41 +441,61 @@ const AdminDashboard = () => {
         const file = e.target.files[0];
         if (!file || !restaurant) return;
 
-        // SIZE LIMIT CHECK (5MB max for storage)
-        if (file.size > 5 * 1024 * 1024) {
-            alert("A imagem é muito grande! Por favor, use um arquivo menor que 5MB.");
-            return;
-        }
-
         try {
-            // Display loading/saving state could be added here
-            const fileExt = file.name.split('.').pop();
+            toast.loading("Otimizando logotipo...", { id: 'logo-upload' });
+
+            // Compress logo to smaller size (maxWidth 400 for logos)
+            const uploadFile = await compressImage(file, 400, 0.85);
+
+            const fileExt = uploadFile.name.split('.').pop() || 'png';
             const fileName = `logos/${restaurant.id}/logo_${Date.now()}.${fileExt}`;
 
-            // Upload to 'marcas' or 'menus' bucket (Assuming we use 'menus' for now, or if 'marcas' exists we should use it. 
-            // We used 'menus' in MenuManager, we can use the same bucket but a different folder).
-            const { error: uploadError } = await supabase.storage.from('menus').upload(fileName, file, {
+            const { error: uploadError } = await supabase.storage.from('menus').upload(fileName, uploadFile, {
                 cacheControl: '3600',
                 upsert: true
             });
 
-            if (uploadError) {
-                console.error("Upload Error:", uploadError);
-                throw uploadError;
-            }
+            if (uploadError) throw uploadError;
 
             const { data: { publicUrl } } = supabase.storage.from('menus').getPublicUrl(fileName);
-
             if (!publicUrl) throw new Error("Falha ao obter URL pública");
 
-            // Update Config with new URL
-            const newConfig = { ...config, logoUrl: publicUrl };
-            await handleConfigChange(newConfig);
-
-            alert("Logotipo atualizado com sucesso!");
+            await handleConfigChange(prev => ({ ...prev, logoUrl: publicUrl }));
+            toast.success("Logotipo atualizado com sucesso!", { id: 'logo-upload' });
         } catch (error) {
             console.error('Error saving logo:', error);
-            alert(`Erro ao salvar logotipo: ${error.message}`);
+            toast.error("Erro ao salvar logotipo.", { id: 'logo-upload' });
+        }
+    };
+
+    // [NEW] Handle Header Background Upload
+    const handleHeaderBgUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file || !restaurant) return;
+
+        try {
+            toast.loading("Otimizando capa...", { id: 'capa-upload' });
+
+            const uploadFile = await compressImage(file, 1600, 0.75);
+
+            const fileExt = uploadFile.name.split('.').pop() || 'jpg';
+            const fileName = `headers/${restaurant.id}/headbg_${Date.now()}.${fileExt}`;
+
+            const { error: uploadError } = await supabase.storage.from('menus').upload(fileName, uploadFile, {
+                cacheControl: '3600',
+                upsert: true
+            });
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage.from('menus').getPublicUrl(fileName);
+            if (!publicUrl) throw new Error("Falha ao obter URL pública");
+
+            await handleConfigChange(prev => ({ ...prev, headerBgUrl: publicUrl }));
+            toast.success("Capa atualizada com sucesso!", { id: 'capa-upload' });
+        } catch (error) {
+            console.error("Error uploading header bg:", error);
+            toast.error("Erro ao carregar a imagem de capa.", { id: 'capa-upload' });
         }
     };
 
@@ -393,8 +510,12 @@ const AdminDashboard = () => {
         { icon: MessageSquare, label: 'Assistente IA', path: '/admin/chat' },
         { icon: UtensilsCrossed, label: 'Menu Digital', path: '/admin/menu' },
         { icon: ClipboardList, label: 'Pedidos (Cozinha)', path: '/admin/orders' },
+        { icon: Calendar, label: 'Reservas', path: '/admin/reservations' },
         { icon: User, label: 'CRM Clientes', path: '/admin/crm', feature: 'canCollectClientData' },
-        { icon: Users, label: 'Equipa / Staff', path: '/admin/clients', feature: 'canManageStaff' },
+        { icon: Award, label: 'Fidelização', path: '/admin/loyalty', feature: 'canCollectClientData' },
+        { icon: Info, label: 'Horários & Info', path: '/admin/info', feature: 'canCollectClientData' },
+        { icon: Ticket, label: 'Marketing', path: '/admin/marketing' },
+        { icon: Users, label: 'Equipa / Staff', path: '/admin/staff', feature: 'canManageStaff' },
         { icon: QrCode, label: 'QR Code', path: '/admin/qrcode' },
         { icon: Settings, label: 'Configurações', path: '/admin/settings' },
     ];
@@ -501,8 +622,8 @@ const AdminDashboard = () => {
 
                 <div className="p-8 border-b border-white/5 flex items-center justify-between">
                     <div className={`flex items-center gap-3 transition-opacity duration-300 ${isSidebarOpen || isMobileMenuOpen ? 'opacity-100' : 'lg:opacity-0 lg:hidden'}`}>
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#D4AF37] to-yellow-200 flex items-center justify-center shadow-[0_0_15px_rgba(212,175,55,0.4)] transform hover:scale-105 transition-transform cursor-pointer">
-                            <span className="font-serif font-bold text-black text-xl">M</span>
+                        <div className="w-16 h-16 rounded-2xl overflow-hidden bg-white/10 flex items-center justify-center shadow-[0_0_20px_rgba(212,175,55,0.3)] transform hover:scale-105 transition-transform cursor-pointer border border-[#D4AF37]/30">
+                            <img src="/jindungo_logo_v3.png" className="w-full h-full object-cover" alt="Logo" />
                         </div>
                         <span className="font-serif text-2xl font-bold text-white tracking-tight cursor-pointer">
                             Jindu<span className="text-[#D4AF37]">ngo</span>
@@ -630,7 +751,7 @@ const AdminDashboard = () => {
                 <InstallPWA />
 
                 {/* Glass Header */}
-                <header className="sticky top-0 z-30 bg-black/60 border-b border-white/5 px-4 sm:px-8 flex items-center h-20 backdrop-blur-xl">
+                <header className="sticky top-0 z-30 bg-black/60 border-b border-white/5 px-4 sm:px-8 flex flex-col justify-center h-24 backdrop-blur-xl">
                     <div className="flex justify-between items-center w-full max-w-7xl mx-auto">
                         <div className="flex items-center gap-4">
                             {/* Mobile Hamburger */}
@@ -641,17 +762,22 @@ const AdminDashboard = () => {
                                 <MenuIcon size={24} />
                             </button>
 
-                            <div>
+                            <div className="flex flex-col">
+                                {/* [NEW] Breadcrumbs */}
+                                <div className="flex items-center gap-2 text-[10px] text-gray-500 uppercase tracking-widest mb-1.5 font-bold">
+                                    <Link to="/admin" className="hover:text-[#D4AF37] transition-colors">Admin</Link>
+                                    {location.pathname !== '/admin' && (
+                                        <>
+                                            <ChevronRight size={10} />
+                                            <span className="text-gray-300">
+                                                {menuItems.find(i => i.path !== '/admin' && location.pathname.includes(i.path))?.label || 'Detalhes'}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
                                 <h2 className="text-xl sm:text-2xl font-serif font-bold text-white tracking-wide truncate max-w-[150px] sm:max-w-none">
-                                    {menuItems.find(i => isActive(i.path) || (location.pathname === '/admin' && i.path === '/admin'))?.label || 'Visão Geral'}
+                                    {menuItems.find(i => (i.path === '/admin' ? location.pathname === '/admin' : isActive(i.path)))?.label || 'Visão Geral'}
                                 </h2>
-                                <p className="text-gray-400 text-[10px] sm:text-xs mt-0.5 flex items-center gap-2">
-                                    <span className="flex h-1.5 w-1.5 relative">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
-                                    </span>
-                                    <span className="truncate max-w-[100px] sm:max-w-none">{restaurant?.name || 'A Carregar...'}</span>
-                                </p>
                             </div>
                         </div>
 
@@ -678,38 +804,30 @@ const AdminDashboard = () => {
 
                 <div className="p-8 max-w-7xl mx-auto pb-24">
                     <Routes>
-                        <Route path="/" element={<DashboardStats restaurantId={restaurant?.id} />} />
-                        <Route path="/menu" element={<MenuManager categories={categories} restaurantId={restaurant?.id} onUpdate={handleMenuUpdate} />} />
+                        <Route path="/" element={
+                            <DashboardStats restaurantId={restaurant?.id} features={features} />
+                        } /><Route path="/menu" element={<MenuManager categories={categories} restaurantId={restaurant?.id} onUpdate={handleMenuUpdate} />} />
 
                         <Route path="/orders" element={
                             features.canUseKDS ? (
                                 <KitchenBoard restaurantId={restaurant?.id} config={config} restaurantName={restaurant?.name} />
                             ) : (
-                                <UpgradePrompt
-                                    title="Painel de Cozinha (KDS)"
-                                    requiredPlan="Business"
-                                    features={[
-                                        "Receber pedidos em tempo real num ecrã na cozinha",
-                                        "Gerir estados (Pendente, Preparando, Pronto)",
-                                        "Avisos sonoros a cada novo pedido",
-                                        "Chega de confusão no WhatsApp pessoal"
-                                    ]}
-                                />
+                                <OrderHistory restaurantId={restaurant?.id} />
                             )
                         } />
 
-                        <Route path="/clients" element={
+                        <Route path="/staff" element={
                             features.canManageStaff ? (
-                                <ClientManager restaurantId={restaurant?.id} />
+                                <StaffManager restaurantId={restaurant?.id} />
                             ) : (
                                 <UpgradePrompt
                                     title="Gestão de Staff & Garçons"
                                     requiredPlan="Business"
                                     features={[
-                                        "Criar PINs de acesso para os seus Garçons",
-                                        "Garçons registam pedidos rapidamente nas mesas",
-                                        "Identificar qual garçom atendeu qual mesa",
-                                        "Até 5 garçons em simultâneo no plano Business"
+                                        "Criar sub-contas para a sua equipa",
+                                        "Atribuir funções (Cozinha, Receção, etc.)",
+                                        "Acesso rápido via PIN para tablets",
+                                        "Segurança e controlo de permissões"
                                     ]}
                                 />
                             )
@@ -732,11 +850,69 @@ const AdminDashboard = () => {
                             )
                         } />
 
+                        <Route path="/loyalty" element={
+                            features.canCollectClientData ? (
+                                <LoyaltyManager restaurantId={restaurant?.id} />
+                            ) : (
+                                <UpgradePrompt
+                                    title="Hub de Fidelização"
+                                    requiredPlan="Corporate"
+                                    features={[
+                                        "Meta de pedidos personalizada",
+                                        "Recompensas automáticas para clientes fiéis",
+                                        "Cartão VIP digital no checkout",
+                                        "Aumento de taxa de recorrência"
+                                    ]}
+                                />
+                            )
+                        } />
+
+                        <Route path="/reservations" element={
+                            <ReservationManager restaurantId={restaurant?.id} />
+                        } />
+
+                        <Route path="/info" element={
+                            features.canCollectClientData ? (
+                                <BusinessInfoManager
+                                    info={businessInfo}
+                                    onSave={handleBusinessInfoSave}
+                                    isLoading={loading}
+                                />
+                            ) : (
+                                <UpgradePrompt
+                                    title="Horários & Contactos"
+                                    requiredPlan="Business"
+                                    features={[
+                                        "Configuração de horário de funcionamento",
+                                        "Controlo automático de loja aberta/fechada",
+                                        "Localização com Link Google Maps",
+                                        "Redes Sociais prontas no menu"
+                                    ]}
+                                />
+                            )
+                        } />
+
+                        <Route path="/marketing" element={
+                            features.canUseKDS ? (
+                                <CouponManager restaurantId={restaurant?.id} />
+                            ) : (
+                                <UpgradePrompt
+                                    title="Marketing & Cupões"
+                                    requiredPlan="Business"
+                                    features={[
+                                        "Criar códigos de desconto personalizados",
+                                        "Limitar uso por data ou quantidade",
+                                        "Atrair clientes via Redes Sociais",
+                                        "Aumentar faturação em dias calmos"
+                                    ]}
+                                />
+                            )
+                        } />
+
                         <Route path="/chat" element={<ChatAdminPanel categories={categories} onUpdate={handleMenuUpdate} restaurantId={restaurant?.id} />} />
                         <Route path="/qrcode" element={<QRCodeGenerator url={`${window.location.origin}/${restaurant?.slug}`} restaurantName={restaurant?.slug} />} />
                         <Route path="/settings" element={
                             <div className="space-y-6">
-                                {/* Style Controls with Name Editor */}
                                 <StyleControls
                                     config={config}
                                     setConfig={handleConfigChange}
@@ -746,16 +922,15 @@ const AdminDashboard = () => {
                                     onSlugChange={handleSlugUpdate}
                                     onReset={() => { }}
                                     onLogoUpload={handleLogoUpload}
+                                    onHeaderBgUpload={handleHeaderBgUpload}
                                 />
 
-                                {features.hasDeliveryCalculator && (
-                                    <DeliverySettings
-                                        restaurantId={restaurant?.id}
-                                        initialConfig={restaurant?.delivery_config}
-                                    />
-                                )}
+                                <DeliverySettings
+                                    restaurantId={restaurant?.id}
+                                    initialConfig={restaurant?.delivery_config}
+                                    features={features}
+                                />
 
-                                {/* Category Manager Button & Modal */}
                                 <div className="p-6 sm:p-8 bg-white/90 dark:bg-[#141414]/90 backdrop-blur-md rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 flex justify-between items-center transition-all hover:shadow-md">
                                     <div>
                                         <h3 className="text-xl font-bold text-gray-800 dark:text-white">Menu e Categorias</h3>
@@ -782,6 +957,22 @@ const AdminDashboard = () => {
                         } />
                     </Routes>
                 </div>
+
+                {/* [NEW] Floating Action Button: View Menu */}
+                {restaurant?.slug && (
+                    <a
+                        href={`/${restaurant.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="fixed bottom-8 left-1/2 -translate-x-1/2 sm:left-auto sm:right-8 sm:translate-x-0 z-40 bg-white text-black px-6 py-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-white/20 hover:scale-105 active:scale-95 hover:bg-[#D4AF37] transition-all flex items-center gap-3 font-bold group"
+                    >
+                        <Eye size={20} className="group-hover:animate-pulse" />
+                        <span className="whitespace-nowrap">Ver Ementa Pública</span>
+                        <ExternalLink size={16} className="opacity-50" />
+                    </a>
+                )}
+
+                <Toaster position="top-right" />
             </main>
         </div>
     );

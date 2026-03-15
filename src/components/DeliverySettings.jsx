@@ -3,7 +3,7 @@ import { Truck, Plus, Trash2, Save, MapPin } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'react-hot-toast';
 
-const DeliverySettings = ({ restaurantId, initialConfig = {} }) => {
+const DeliverySettings = ({ restaurantId, initialConfig = {}, features = {} }) => {
     const [config, setConfig] = useState({
         enabled: false,
         type: 'zone',
@@ -13,9 +13,13 @@ const DeliverySettings = ({ restaurantId, initialConfig = {} }) => {
     const [isSaving, setIsSaving] = useState(false);
 
     const addZone = () => {
+        if (!features.hasDeliveryCalculator && config.zones.length >= 1) {
+            toast.error("O Plano Start permite apenas 1 Taxa Fixa. Upgrade para Corporate para zonas ilimitadas.");
+            return;
+        }
         setConfig(prev => ({
             ...prev,
-            zones: [...prev.zones, { name: '', fee: 0 }]
+            zones: [...prev.zones, { name: 'Taxa Fixa (Geral)', fee: 0 }]
         }));
     };
 
@@ -57,12 +61,18 @@ const DeliverySettings = ({ restaurantId, initialConfig = {} }) => {
                         <Truck size={24} />
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Calculador de Entregas</h3>
-                        <p className="text-sm text-gray-500">Configure taxas dinâmicas por bairro/zona.</p>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Taxa de Entrega</h3>
+                        <p className="text-sm text-gray-500">
+                            {features.hasDeliveryCalculator
+                                ? "Configure taxas dinâmicas por bairro/zona."
+                                : "Defina uma taxa fixa para todas as suas entregas."}
+                        </p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-lg uppercase tracking-wider">Corporate</span>
+                    <span className={`text-xs font-bold px-2 py-1 rounded-lg uppercase tracking-wider ${features.hasDeliveryCalculator ? 'text-amber-500 bg-amber-500/10' : 'text-blue-500 bg-blue-500/10'}`}>
+                        {features.hasDeliveryCalculator ? 'Corporate' : 'Start/Business'}
+                    </span>
                     <label className="relative inline-flex items-center cursor-pointer ml-4">
                         <input
                             type="checkbox"
@@ -79,7 +89,9 @@ const DeliverySettings = ({ restaurantId, initialConfig = {} }) => {
                 <div className="space-y-6 animate-fade-in">
                     <div className="flex flex-col gap-4">
                         <div className="flex items-center justify-between">
-                            <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Zonas de Entrega (Bairros)</label>
+                            <label className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                                {features.hasDeliveryCalculator ? "Zonas de Entrega (Bairros)" : "Configuração de Taxa Única"}
+                            </label>
                             <button
                                 onClick={addZone}
                                 className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-700 font-bold"

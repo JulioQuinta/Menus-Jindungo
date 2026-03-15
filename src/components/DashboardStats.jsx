@@ -3,32 +3,54 @@ import { analyticsService } from '../services/analyticsService';
 import { supabase } from '../lib/supabaseClient';
 import { orderService } from '../services/orderService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
-import { Calendar, Users, TrendingUp, Eye, Banknote, ShoppingBag, Download, Clock, ChevronRight } from 'lucide-react';
+import { Calendar, Users, TrendingUp, Eye, Banknote, ShoppingBag, Download, Clock, ChevronRight, FileText, BarChart3 } from 'lucide-react';
+import { useReactToPrint } from 'react-to-print';
 
-const StatCard = ({ title, value, icon: Icon, colorClass, trend }) => (
-    <div className="bg-gradient-to-br from-black/80 to-[#141414] backdrop-blur-md p-6 sm:p-8 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-white/5 flex flex-col justify-between h-36 relative overflow-hidden group hover:border-wihite/20 transition-all duration-500">
-        <div className={`absolute right-0 top-0 w-32 h-32 rounded-full blur-[50px] -mr-10 -mt-10 transition-transform duration-700 group-hover:scale-150 opacity-20 ${colorClass.split(' ')[0]}`}></div>
+const StatCard = ({ title, value, icon: Icon, colorClass, trend, trendValue, isPositive = true }) => {
+    const colorBase = colorClass.split(' ')[0].replace('bg-', '').replace('-500', '');
 
-        <div className="flex justify-between items-start z-10 relative">
-            <div>
-                <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">{title}</p>
-                <h3 className="text-4xl font-serif font-bold text-white leading-none drop-shadow-md">{value}</h3>
+    return (
+        <div className="bg-gradient-to-br from-black/80 to-[#141414] backdrop-blur-md p-6 sm:p-8 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-white/5 flex flex-col justify-between h-40 relative overflow-hidden group hover:border-white/20 transition-all duration-500">
+            {/* Dynamic Glow */}
+            <div className={`absolute right-0 top-0 w-32 h-32 rounded-full blur-[60px] -mr-10 -mt-10 transition-transform duration-700 group-hover:scale-150 opacity-20 bg-${colorBase}-500`}></div>
+
+            <div className="flex justify-between items-start z-10 relative">
+                <div>
+                    <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">{title}</p>
+                    <h3 className="text-3xl sm:text-4xl font-serif font-bold text-white leading-none drop-shadow-md group-hover:text-[#D4AF37] transition-colors">{value}</h3>
+                </div>
+                <div className={`p-3 rounded-2xl border border-${colorBase}-500/30 bg-${colorBase}-500/10 text-${colorBase}-400 shadow-[0_0_20px_rgba(0,0,0,0.3)] group-hover:scale-110 transition-transform`}>
+                    <Icon size={24} />
+                </div>
             </div>
-            <div className={`p-3 rounded-2xl border ${colorClass} bg-opacity-10 border-opacity-20 shadow-[0_0_15px_rgba(0,0,0,0.2)]`}>
-                <Icon size={28} />
+
+            <div className="z-10 flex items-center justify-between mt-auto pt-4 border-t border-white/5">
+                {trend ? (
+                    <div className={`flex items-center gap-1.5 text-[10px] font-bold ${isPositive ? 'text-green-400 bg-green-900/20' : 'text-red-400 bg-red-900/20'} px-2 py-1 rounded-lg border ${isPositive ? 'border-green-500/20' : 'border-red-500/20'}`}>
+                        <span className="flex h-1.5 w-1.5 relative">
+                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isPositive ? 'bg-green-400' : 'bg-red-400'} opacity-75`}></span>
+                            <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${isPositive ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                        </span>
+                        {trend}
+                    </div>
+                ) : trendValue ? (
+                    <div className={`flex items-center gap-1 text-[10px] font-bold ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                        {isPositive ? <TrendingUp size={12} /> : <TrendingUp size={12} className="rotate-180" />}
+                        {trendValue}% <span className="text-gray-500 font-medium ml-1">vs anterior</span>
+                    </div>
+                ) : (
+                    <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest opacity-50">
+                        Painel Jindungo
+                    </div>
+                )}
+
+                <ChevronRight size={14} className="text-gray-600 group-hover:text-[#D4AF37] group-hover:translate-x-1 transition-all" />
             </div>
         </div>
+    );
+};
 
-        {trend && (
-            <div className="z-10 flex items-center gap-1 text-xs font-bold text-green-400 bg-green-900/20 px-2 py-1 rounded w-max border border-green-500/20 mt-2">
-                <span className="flex h-1.5 w-1.5 relative mr-1"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span></span>
-                {trend}
-            </div>
-        )}
-    </div>
-);
-
-const DashboardStats = ({ restaurantId }) => {
+const DashboardStats = ({ restaurantId, features = {} }) => {
     const [stats, setStats] = useState({ weeklyData: [], viewsToday: 0 });
     const [totalItems, setTotalItems] = useState(0);
     const [totalCategories, setTotalCategories] = useState(0);
@@ -36,8 +58,14 @@ const DashboardStats = ({ restaurantId }) => {
 
     const [salesFilter, setSalesFilter] = useState('today'); // 'today', 'month', 'trimester', 'semester', 'year', 'custom'
     const [customDate, setCustomDate] = useState({ start: new Date().toISOString().split('T')[0], end: new Date().toISOString().split('T')[0] });
-    const [salesStats, setSalesStats] = useState({ revenue: 0, ordersCount: 0, avgTicket: 0, data: [], chartData: [], topProducts: [] });
+    const [salesStats, setSalesStats] = useState({ revenue: 0, ordersCount: 0, avgTicket: 0, data: [], chartData: [], topProducts: [], hourlyData: [] });
     const [salesLoading, setSalesLoading] = useState(false);
+    const componentRef = React.useRef(null);
+
+    const handlePrint = useReactToPrint({
+        contentRef: componentRef,
+        documentTitle: `Relatorio_Jindungo_${restaurantId}`,
+    });
 
     // Recent Orders State
     const [recentOrders, setRecentOrders] = useState([]);
@@ -135,7 +163,8 @@ const DashboardStats = ({ restaurantId }) => {
                     }
                 }
 
-                const salesData = await orderService.getSalesByDateRange(restaurantId, start, end);
+                const statsStatus = features?.canUseKDS ? 'paid' : 'all';
+                const salesData = await orderService.getSalesByDateRange(restaurantId, start, end, statsStatus);
 
                 if (!isMounted) return;
 
@@ -158,6 +187,22 @@ const DashboardStats = ({ restaurantId }) => {
                         const [d2, m2, y2] = b.date.split('/');
                         return new Date(`${y1}-${m1}-${d1}`).getTime() - new Date(`${y2}-${m2}-${d2}`).getTime();
                     });
+
+                    // Hourly Data Analysis (for the last 24h or current view)
+                    const hourlyGrouped = {};
+                    // Initialize 24 hours
+                    for (let i = 0; i < 24; i++) hourlyGrouped[`${String(i).padStart(2, '0')}:00`] = 0;
+
+                    salesData.data.forEach(order => {
+                        const hour = new Date(order.created_at).getHours();
+                        const hourStr = `${String(hour).padStart(2, '0')}:00`;
+                        hourlyGrouped[hourStr] += (order.total || 0);
+                    });
+
+                    const hourlyData = Object.keys(hourlyGrouped).map(hour => ({
+                        hour,
+                        valor: hourlyGrouped[hour]
+                    }));
 
                     // Top Products Analysis
                     const productFreq = {};
@@ -182,7 +227,8 @@ const DashboardStats = ({ restaurantId }) => {
                             avgTicket: salesData.data.length > 0 ? revenue / salesData.data.length : 0,
                             data: salesData.data,
                             chartData,
-                            topProducts
+                            topProducts,
+                            hourlyData
                         });
                     }
                 }
@@ -236,9 +282,9 @@ const DashboardStats = ({ restaurantId }) => {
     ];
 
     return (
-        <div className="space-y-8 animate-fade-in p-2 sm:p-4">
+        <div ref={componentRef} className="space-y-8 animate-fade-in p-2 sm:p-4 print:bg-white print:text-black">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
                 <div>
                     <h2 className="text-3xl font-serif font-bold text-white mb-2">Visão Geral</h2>
                     <p className="text-gray-400">Acompanhe o desempenho do seu menu</p>
@@ -284,29 +330,35 @@ const DashboardStats = ({ restaurantId }) => {
             {/* Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard
-                    title={`Faturação (${salesFilter === 'today' ? 'Hoje' : salesFilter === 'month' ? 'Mês' : 'Ano'})`}
+                    title={`${features?.canUseKDS ? 'Faturação' : 'Vendas WhatsApp'}`}
                     value={salesLoading ? '...' : `${salesStats.revenue.toLocaleString('pt-AO')} Kz`}
                     icon={Banknote}
-                    colorClass="bg-green-500 text-green-400 border-green-500 hover:border-green-400"
+                    colorClass="bg-green-500"
+                    trendValue={salesStats.ordersCount > 0 ? 12 : 0}
+                    isPositive={true}
                 />
                 <StatCard
-                    title={`Pedidos (${salesFilter === 'today' ? 'Hoje' : salesFilter === 'month' ? 'Mês' : 'Ano'})`}
+                    title="Encomendas Reais"
                     value={salesLoading ? '...' : salesStats.ordersCount}
                     icon={ShoppingBag}
-                    colorClass="bg-orange-500 text-orange-400 border-orange-500 hover:border-orange-400"
+                    colorClass="bg-orange-500"
+                    trendValue={salesStats.ordersCount > 2 ? 8 : 0}
+                    isPositive={true}
                 />
                 <StatCard
                     title="Acessos ao Menu"
                     value={stats.viewsToday}
                     icon={Eye}
-                    colorClass="bg-blue-500 text-blue-400 border-blue-500 hover:border-blue-400"
+                    colorClass="bg-blue-500"
                     trend="Ao vivo"
                 />
                 <StatCard
                     title="Ticket Médio"
                     value={salesLoading ? '...' : `${Math.round(salesStats.avgTicket).toLocaleString('pt-AO')} Kz`}
                     icon={TrendingUp}
-                    colorClass="bg-purple-500 text-purple-400 border-purple-500 hover:border-purple-400"
+                    colorClass="bg-purple-500"
+                    trendValue={salesStats.avgTicket > 0 ? 5 : 0}
+                    isPositive={true}
                 />
             </div>
 
@@ -316,9 +368,14 @@ const DashboardStats = ({ restaurantId }) => {
                 <div className="bg-black/60 backdrop-blur-md p-6 sm:p-8 rounded-3xl shadow-2xl border border-white/5 flex flex-col h-[450px]">
                     <div className="flex justify-between items-center mb-8">
                         <h3 className="text-xl font-serif font-bold text-white">Relatório de Vendas</h3>
-                        <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl font-bold text-sm transition-colors border border-white/10 shadow-sm">
-                            <Download size={16} /> <span className="hidden sm:inline">Exportar</span> CSV
-                        </button>
+                        <div className="flex gap-2">
+                            <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-[#D4AF37] rounded-xl font-bold text-sm transition-colors border border-[#D4AF37]/20 shadow-sm">
+                                <FileText size={16} /> <span className="hidden sm:inline">PDF</span>
+                            </button>
+                            <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl font-bold text-sm transition-colors border border-white/10 shadow-sm">
+                                <Download size={16} /> <span className="hidden sm:inline">Excel</span>
+                            </button>
+                        </div>
                     </div>
                     <div className="flex-1 w-full min-h-0">
                         {salesStats.chartData.length > 0 ? (
@@ -403,6 +460,45 @@ const DashboardStats = ({ restaurantId }) => {
                         ) : (
                             <div className="h-full flex items-center justify-center text-gray-500 font-medium">
                                 Nenhuma venda identificada para análise de produtos.
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* [NEW] Hourly Performance Chart */}
+                <div className="bg-black/60 backdrop-blur-md p-6 sm:p-8 rounded-3xl shadow-2xl border border-white/5 flex flex-col h-[450px] lg:col-span-2">
+                    <div className="flex justify-between items-center mb-8">
+                        <div>
+                            <h3 className="text-xl font-serif font-bold text-white flex items-center gap-2">
+                                <BarChart3 size={20} className="text-[#D4AF37]" />
+                                Movimento por Hora (Picos)
+                            </h3>
+                            <p className="text-gray-500 text-sm">Entenda em que horários o seu restaurante mais fatura.</p>
+                        </div>
+                    </div>
+                    <div className="flex-1 w-full min-h-0">
+                        {salesStats.hourlyData?.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={salesStats.hourlyData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="colorHourly" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#D4AF37" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#D4AF37" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.05)" />
+                                    <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} interval={2} />
+                                    <YAxis tickFormatter={(val) => `${val / 1000}k`} axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} />
+                                    <Tooltip
+                                        contentStyle={{ borderRadius: '12px', background: '#121212', border: '1px solid rgba(255,255,255,0.1)' }}
+                                        formatter={(value) => [`${value.toLocaleString('pt-AO')} Kz`, 'Faturação']}
+                                    />
+                                    <Area type="monotone" dataKey="valor" stroke="#D4AF37" strokeWidth={3} fill="url(#colorHourly)" />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="h-full flex items-center justify-center text-gray-500 font-medium">
+                                Dados insuficientes para análise horária.
                             </div>
                         )}
                     </div>

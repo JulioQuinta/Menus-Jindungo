@@ -11,12 +11,14 @@ import LandingPage from './components/LandingPage';
 import PublicMenu from './pages/PublicMenu';
 import UpdatePassword from './pages/UpdatePassword';
 import ForgotPassword from './pages/ForgotPassword';
+import Explorar from './pages/Explorar';
 
 const Router = () => {
     return (
         <Routes>
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
+            <Route path="/explorar" element={<Explorar />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />

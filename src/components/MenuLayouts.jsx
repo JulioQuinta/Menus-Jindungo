@@ -4,7 +4,7 @@ import Skeleton from './Skeleton';
 import { Plus, Minus } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
-const QuantityControls = ({ item, isEditing, primaryColor, darkMode }) => {
+const QuantityControls = ({ item, isEditing, primaryColor, darkMode, restaurantClosed }) => {
     const { getItemQuantity, addToCart, removeFromCart } = useCart();
     const quantity = getItemQuantity(item.id);
     const [showVariants, setShowVariants] = React.useState(false);
@@ -17,6 +17,14 @@ const QuantityControls = ({ item, isEditing, primaryColor, darkMode }) => {
         return (
             <div className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1 ${darkMode ? 'bg-red-900/40 text-red-400 border border-red-800/50' : 'bg-red-50 text-red-600 border border-red-100'}`}>
                 <span className="text-[10px]">🚫</span> Esgotado
+            </div>
+        );
+    }
+
+    if (restaurantClosed) {
+        return (
+            <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${darkMode ? 'bg-gray-800 text-gray-500' : 'bg-gray-100 text-gray-400'}`}>
+                Pedidos Suspensos
             </div>
         );
     }
@@ -35,18 +43,20 @@ const QuantityControls = ({ item, isEditing, primaryColor, darkMode }) => {
             <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-1 shadow-sm border border-gray-100">
                 <button
                     onClick={(e) => { e.stopPropagation(); removeFromCart(item.id); }}
-                    className="w-8 h-8 flex items-center justify-center rounded-md bg-white text-gray-600 shadow-sm hover:bg-gray-100 disabled:opacity-30 transition-all active:scale-90"
+                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white text-gray-600 shadow-sm hover:bg-gray-100 disabled:opacity-30 transition-all duration-200 active:scale-90"
                     disabled={quantity === 0}
                 >
-                    <Minus size={16} />
+                    <Minus size={18} />
                 </button>
-                <span className="font-bold text-gray-800 min-w-[24px] text-center">{quantity}</span>
+                <span className="font-bold text-gray-800 min-w-[28px] text-center text-lg">{quantity}</span>
                 <button
                     onClick={handleAddClick}
-                    className="w-8 h-8 flex items-center justify-center rounded-md text-white shadow-md hover:opacity-90 transition-all active:scale-90 active:shadow-none"
+                    className="w-10 h-10 flex items-center justify-center rounded-xl text-white shadow-lg hover:brightness-110 transition-all duration-200 active:scale-90 active:shadow-inner relative group overflow-hidden"
                     style={{ backgroundColor: primaryColor }}
                 >
-                    <Plus size={16} />
+                    {/* Haptic Glow Effect */}
+                    <span className="absolute inset-0 bg-white/20 opacity-0 group-active:opacity-100 transition-opacity" />
+                    <Plus size={18} strokeWidth={3} />
                 </button>
             </div>
 
@@ -121,7 +131,7 @@ const getTrans = (item, lang, field) => {
     return item.translations[lang.toLowerCase()][field] || item[field];
 };
 
-export const GridLayout = ({ items = [], primaryColor, isEditing, darkMode, selectedLanguage = 'PT', customBgInfo }) => {
+export const GridLayout = ({ items = [], primaryColor, isEditing, darkMode, selectedLanguage = 'PT', customBgInfo, restaurantClosed }) => {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map(item => (
@@ -162,7 +172,7 @@ export const GridLayout = ({ items = [], primaryColor, isEditing, darkMode, sele
                         </div>
 
                         <div className="flex justify-end mt-2 pt-4 border-t border-dashed border-gray-700/20">
-                            <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} />
+                            <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} restaurantClosed={restaurantClosed} />
                         </div>
                     </div>
                 </div>
@@ -171,7 +181,7 @@ export const GridLayout = ({ items = [], primaryColor, isEditing, darkMode, sele
     );
 };
 
-export const ListLayout = ({ items = [], primaryColor, isEditing, darkMode, selectedLanguage = 'PT', customBgInfo }) => {
+export const ListLayout = ({ items = [], primaryColor, isEditing, darkMode, selectedLanguage = 'PT', customBgInfo, restaurantClosed }) => {
     return (
         <div className="flex flex-col gap-4">
             {items.map(item => (
@@ -205,7 +215,7 @@ export const ListLayout = ({ items = [], primaryColor, isEditing, darkMode, sele
                         </div>
 
                         <div className="flex justify-end mt-2">
-                            <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} />
+                            <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} restaurantClosed={restaurantClosed} />
                         </div>
                     </div>
                 </div>
@@ -214,7 +224,7 @@ export const ListLayout = ({ items = [], primaryColor, isEditing, darkMode, sele
     );
 };
 
-export const MinimalLayout = ({ items = [], primaryColor, fontFamily, isEditing, darkMode, selectedLanguage = 'PT', customBgInfo }) => {
+export const MinimalLayout = ({ items = [], primaryColor, fontFamily, isEditing, darkMode, selectedLanguage = 'PT', customBgInfo, restaurantClosed }) => {
     return (
         <div className={`flex flex-col divide-y divide-dashed ${darkMode ? 'divide-gray-800' : 'divide-gray-200'}`}>
             {items.map(item => (
@@ -237,7 +247,7 @@ export const MinimalLayout = ({ items = [], primaryColor, fontFamily, isEditing,
                     </div>
 
                     <div>
-                        <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} />
+                        <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} restaurantClosed={restaurantClosed} />
                     </div>
                 </div>
             ))}
@@ -245,30 +255,51 @@ export const MinimalLayout = ({ items = [], primaryColor, fontFamily, isEditing,
     );
 };
 
-export const GridLayoutSkeleton = () => (
+export const GridLayoutSkeleton = ({ darkMode }) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-100 h-80">
-                <Skeleton height="200px" />
-                <div className="p-4 space-y-3">
-                    <Skeleton height="24px" width="70%" />
-                    <Skeleton height="16px" width="100%" />
-                    <Skeleton height="16px" width="60%" />
+            <div key={i} className={`rounded-xl overflow-hidden border ${darkMode ? 'bg-[#1E1E1E] border-white/5' : 'bg-white border-gray-100'} h-80`}>
+                <Skeleton height="200px" darkMode={darkMode} className="rounded-none" />
+                <div className="p-5 space-y-4">
+                    <Skeleton height="24px" width="70%" darkMode={darkMode} />
+                    <div className="space-y-2">
+                        <Skeleton height="14px" width="100%" darkMode={darkMode} />
+                        <Skeleton height="14px" width="60%" darkMode={darkMode} />
+                    </div>
                 </div>
             </div>
         ))}
     </div>
 );
 
-export const ListLayoutSkeleton = () => (
+export const ListLayoutSkeleton = ({ darkMode }) => (
     <div className="flex flex-col gap-4">
         {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white rounded-xl border border-gray-100 p-3 flex gap-4 h-32">
-                <Skeleton width="128px" height="100%" />
-                <div className="flex-1 py-1 space-y-2">
-                    <Skeleton height="20px" width="60%" />
-                    <Skeleton height="14px" width="90%" />
-                    <Skeleton height="14px" width="80%" />
+            <div key={i} className={`rounded-2xl border p-3 flex gap-4 h-32 ${darkMode ? 'bg-[#1E1E1E] border-white/5' : 'bg-white border-gray-100'}`}>
+                <Skeleton width="128px" height="100%" darkMode={darkMode} className="rounded-xl" />
+                <div className="flex-1 py-1 space-y-3">
+                    <div className="flex justify-between items-start">
+                        <Skeleton height="20px" width="50%" darkMode={darkMode} />
+                        <Skeleton height="20px" width="20%" darkMode={darkMode} />
+                    </div>
+                    <Skeleton height="14px" width="90%" darkMode={darkMode} />
+                    <Skeleton height="14px" width="70%" darkMode={darkMode} />
+                </div>
+            </div>
+        ))}
+    </div>
+);
+
+export const MinimalLayoutSkeleton = ({ darkMode }) => (
+    <div className="flex flex-col divide-y divide-dashed divide-gray-200">
+        {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="py-5 flex justify-between items-center gap-4 px-3">
+                <div className="flex-1 space-y-2">
+                    <div className="flex justify-between items-baseline">
+                        <Skeleton height="20px" width="40%" darkMode={darkMode} />
+                        <Skeleton height="20px" width="15%" darkMode={darkMode} />
+                    </div>
+                    <Skeleton height="12px" width="60%" darkMode={darkMode} />
                 </div>
             </div>
         ))}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { orderService } from '../services/orderService';
-import { Clock, CheckCircle, ChefHat, Truck, XCircle, AlertCircle, Banknote, Printer } from 'lucide-react';
+import { Clock, CheckCircle, ChefHat, Truck, XCircle, AlertCircle, Banknote, Printer, Ticket } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import TableBillTemplate from './TableBillTemplate';
 
@@ -58,6 +58,16 @@ const OrderCard = ({ order, onStatusChange, onPrint, enablePrint }) => {
                 ))}
             </div>
 
+            {/* [NEW] Coupon/Discount Display */}
+            {order.coupon_discount > 0 && (
+                <div className="mb-4 text-[10px] font-bold text-green-400 bg-green-500/10 px-3 py-1.5 rounded-lg border border-green-500/20 flex justify-between items-center tracking-tight">
+                    <span className="flex items-center gap-1">
+                        <Ticket size={10} /> Cupão: {order.coupon_code}
+                    </span>
+                    <span>-{new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(order.coupon_discount).replace('AOA', 'Kz')}</span>
+                </div>
+            )}
+
             {/* Actions */}
             <div className="flex gap-2 mt-4">
                 {order.status === 'pending' && (
@@ -106,11 +116,17 @@ const OrderCard = ({ order, onStatusChange, onPrint, enablePrint }) => {
                     </button>
                 )}
 
+                {/* Rejeitar Button */}
                 {order.status === 'pending' && (
                     <button
-                        onClick={() => { if (window.confirm('Cancelar este pedido?')) onStatusChange(order.id, 'cancelled'); }}
+                        onClick={() => {
+                            const reason = window.prompt("Motivo da rejeição (ex: Fora de hora, Sem stock, Restaurante cheio):", "Fora de hora");
+                            if (reason !== null) {
+                                onStatusChange(order.id, 'cancelled', reason);
+                            }
+                        }}
                         className="p-2.5 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-xl transition-colors border border-transparent hover:border-red-500/30 ml-1"
-                        title="Cancelar"
+                        title="Rejeitar Pedido"
                     >
                         <XCircle size={18} />
                     </button>
@@ -169,12 +185,12 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
         };
     }, [restaurantId]);
 
-    const handleStatusUpdate = async (id, status) => {
+    const handleStatusUpdate = async (id, status, reason = null) => {
         // Optimistic update
-        setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+        setOrders(prev => prev.map(o => o.id === id ? { ...o, status, rejection_reason: reason } : o));
 
         // API Call
-        await orderService.updateOrderStatus(id, status);
+        await orderService.updateOrderStatus(id, status, reason);
 
         // Remove from list if delivered/cancelled after animation? 
         // For now we keep them until refresh or filter logic if needed, but getActiveOrders filters them.

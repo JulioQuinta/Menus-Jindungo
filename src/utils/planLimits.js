@@ -29,7 +29,7 @@ export const getPlanFeatures = (planString) => {
         canUseKDS: hasBusiness,          // Aba Pedidos (Cozinha) no Painel
         canManageStaff: hasBusiness,     // Aba Clientes/Staff no Painel
         canCallWaiter: hasBusiness,      // Botão "Chamar Garçom" no Menu Público
-        canMarkSoldOut: hasBusiness,     // Botão Esgotar no Gestor de Menu
+        canMarkSoldOut: true,            // Botão Esgotar no Gestor de Menu
         hasTableQR: hasBusiness,         // Gera QR codes pré-associados com a mesa
         hasPrivateFeedback: hasBusiness, // Sistema de estrelas 1-5 escondido do Google
         hasUpsell: hasBusiness,          // "Sugestão do chefe" ao ir para o carrinho
@@ -40,7 +40,7 @@ export const getPlanFeatures = (planString) => {
         maxStaff: hasCorporate ? Infinity : (hasBusiness ? 5 : 0),
 
         // --- 3. Customização Visual ---
-        canUploadLogo: hasBusiness,      // Submeter imagem/logo próprio
+        canUploadLogo: true,             // Submeter imagem/logo próprio
         canUseCustomBackground: hasBusiness, // Alterar cor de fundo 
         canHideBranding: hasCorporate,   // Remoção de "Feito por Jindungo Menus" e do botão WhatsApp
 

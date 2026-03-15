@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { GridLayout, ListLayout, MinimalLayout, GridLayoutSkeleton, ListLayoutSkeleton } from './MenuLayouts';
 import StickyCategoryNav from './StickyCategoryNav';
 import HighlightsCarousel from './HighlightsCarousel'; // Assuming these exist or will be uncommented
-import { getContrastColor } from '../utils/colorUtils';
+import { getContrastColor, darkenColor } from '../utils/colorUtils';
 
 import { Search, X, Globe } from 'lucide-react';
 // import SearchBar from './SearchBar';
@@ -119,22 +119,94 @@ const CategoryCarousel = ({ categories, activeCategory, onSelect, primaryColor }
     );
 };
 
+const CategorySection = ({ cat, Layout, commonProps, fontFamily, onVisible }) => {
+    const sectionRef = React.useRef(null);
+    const subcategories = [...new Set(cat.items.map(i => i.subcategory).filter(Boolean))];
+    const [activeSub, setActiveSub] = React.useState('Todos');
+
+    React.useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    onVisible(cat.id);
+                }
+            },
+            { threshold: 0.2, rootMargin: "-20% 0px -70% 0px" }
+        );
+
+        if (sectionRef.current) observer.observe(sectionRef.current);
+        return () => observer.disconnect();
+    }, [cat.id, onVisible]);
+
+    const filteredItems = activeSub === 'Todos'
+        ? cat.items
+        : cat.items.filter(i => i.subcategory === activeSub);
+
+    if (filteredItems.length === 0 && activeSub !== 'Todos') return null;
+
+    return (
+        <div id={`category-${cat.id}`} ref={sectionRef} className="mb-8 scroll-mt-32">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: commonProps.primaryColor }}>
+                <span className="w-1 h-6 rounded-full bg-current block"></span>
+                {cat.label}
+            </h2>
+
+            {subcategories.length > 0 && (
+                <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
+                    <button
+                        onClick={() => setActiveSub('Todos')}
+                        className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeSub === 'Todos'
+                            ? 'text-white shadow-md'
+                            : 'bg-white/5 text-gray-500 hover:bg-white/10'
+                            }`}
+                        style={{ backgroundColor: activeSub === 'Todos' ? commonProps.primaryColor : undefined }}
+                    >
+                        Todos
+                    </button>
+                    {subcategories.map(sub => (
+                        <button
+                            key={sub}
+                            onClick={() => setActiveSub(sub)}
+                            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${activeSub === sub
+                                ? 'text-white shadow-md'
+                                : 'bg-white/5 text-gray-500 hover:bg-white/10'
+                                }`}
+                            style={{ backgroundColor: activeSub === sub ? commonProps.primaryColor : undefined }}
+                        >
+                            {sub}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            <Layout items={filteredItems} {...commonProps} fontFamily={fontFamily} />
+        </div>
+    );
+};
+
 const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, restaurantId, features = {} }) => {
     const { layoutMode, primaryColor, fontFamily, backgroundImage, darkMode, backgroundColor } = config;
     const [selectedLanguage, setSelectedLanguage] = React.useState('PT');
     const [activeCategory, setActiveCategory] = React.useState(categories?.[0]?.id);
     const [searchTerm, setSearchTerm] = React.useState('');
+    const [showSearch, setShowSearch] = React.useState(false);
+
+    const effectivePrimaryColor = primaryColor || '#D4AF37';
+    // If background is not set, use a very light tint of the primary color for a themed look
+    const defaultLightBg = darkenColor(effectivePrimaryColor, -92).slice(0, 7);
+    const effectiveBgColor = backgroundColor || (darkMode ? '#121212' : defaultLightBg);
+    const effectiveTextColor = backgroundColor ? getContrastColor(effectiveBgColor) : (darkMode ? '#ffffff' : '#1a1a1a');
 
     const translations = {
         PT: { welcome: 'Bem-vindo ao', searchPlaceholder: 'Pesquisar no menu...', noResults: 'Nenhum resultado para', waitMsg: 'O garçom está a caminho!', tech: 'Tecnologia' },
         EN: { welcome: 'Welcome to', searchPlaceholder: 'Search menu...', noResults: 'No results for', waitMsg: 'The waiter is coming!', tech: 'Technology' },
-        FR: { welcome: 'Bienvenue à', searchPlaceholder: 'Chercher au menu...', noResults: 'Aucun résultat pour', waitMsg: 'Le serveur arrive!', tech: 'Technologie' },
+        FR: { welcome: 'Bienvenue à', searchPlaceholder: 'Chercher au menu...', noResults: 'Aucun résultat para', waitMsg: 'Le serveur arrive!', tech: 'Technologie' },
         ES: { welcome: 'Bienvenido a', searchPlaceholder: 'Buscar en el menú...', noResults: 'No hay resultados para', waitMsg: '¡El camarero viene!', tech: 'Tecnología' }
     };
 
     const renderLayout = () => {
         if (isLoading) {
-            return layoutMode === 'grid' ? <GridLayoutSkeleton /> : <ListLayoutSkeleton />;
+            return layoutMode === 'grid' ? <GridLayoutSkeleton darkMode={darkMode} /> : <ListLayoutSkeleton darkMode={darkMode} />;
         }
 
         if (!categories || categories.length === 0) {
@@ -145,8 +217,6 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
             );
         }
 
-        const effectiveBgColor = backgroundColor || (darkMode ? '#121212' : '#f8f9fa');
-        const effectiveTextColor = backgroundColor ? getContrastColor(effectiveBgColor) : (darkMode ? '#ffffff' : '#1a1a1a');
         const isCustomBg = !!backgroundColor;
 
         const filteredCategories = categories.map(cat => {
@@ -171,79 +241,25 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
             );
         }
 
-        const commonProps = { primaryColor, isEditing, darkMode, selectedLanguage, customBgInfo: { isCustom: isCustomBg, textColor: effectiveTextColor, bgColor: effectiveBgColor } };
+        const commonProps = { primaryColor, isEditing, darkMode, selectedLanguage, restaurantClosed: config.isOpen === false, customBgInfo: { isCustom: isCustomBg, textColor: effectiveTextColor, bgColor: effectiveBgColor } };
 
         const targetCategories = searchTerm ? filteredCategories : categories;
 
         switch (layoutMode) {
             case 'grid':
                 return targetCategories.map(cat => (
-                    <CategorySection key={cat.id} cat={cat} Layout={GridLayout} commonProps={commonProps} />
+                    <CategorySection key={cat.id} cat={cat} Layout={GridLayout} commonProps={commonProps} onVisible={setActiveCategory} />
                 ));
             case 'minimal':
                 return targetCategories.map(cat => (
-                    <CategorySection key={cat.id} cat={cat} Layout={MinimalLayout} commonProps={commonProps} fontFamily={fontFamily} />
+                    <CategorySection key={cat.id} cat={cat} Layout={MinimalLayout} commonProps={commonProps} fontFamily={fontFamily} onVisible={setActiveCategory} />
                 ));
             case 'list':
             default:
                 return targetCategories.map(cat => (
-                    <CategorySection key={cat.id} cat={cat} Layout={ListLayout} commonProps={commonProps} />
+                    <CategorySection key={cat.id} cat={cat} Layout={ListLayout} commonProps={commonProps} onVisible={setActiveCategory} />
                 ));
         }
-    };
-
-    // [NEW] Helper Component for Category Section with Subcategory Tabs
-    const CategorySection = ({ cat, Layout, commonProps, fontFamily }) => {
-        // Extract unique subcategories
-        const subcategories = [...new Set(cat.items.map(i => i.subcategory).filter(Boolean))];
-        const [activeSub, setActiveSub] = React.useState('Todos');
-
-        // Filter items based on active subcategory
-        const filteredItems = activeSub === 'Todos'
-            ? cat.items
-            : cat.items.filter(i => i.subcategory === activeSub);
-
-        if (filteredItems.length === 0 && activeSub !== 'Todos') return null;
-
-        return (
-            <div id={`category-${cat.id}`} className="mb-8 scroll-mt-32">
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: commonProps.primaryColor }}>
-                    <span className="w-1 h-6 rounded-full bg-current block"></span>
-                    {cat.label}
-                </h2>
-
-                {/* Subcategory Tabs */}
-                {subcategories.length > 0 && (
-                    <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
-                        <button
-                            onClick={() => setActiveSub('Todos')}
-                            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeSub === 'Todos'
-                                ? 'text-white shadow-md'
-                                : 'bg-white/5 text-gray-500 hover:bg-white/10'
-                                }`}
-                            style={{ backgroundColor: activeSub === 'Todos' ? commonProps.primaryColor : undefined }}
-                        >
-                            Todos
-                        </button>
-                        {subcategories.map(sub => (
-                            <button
-                                key={sub}
-                                onClick={() => setActiveSub(sub)}
-                                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${activeSub === sub
-                                    ? 'text-white shadow-md'
-                                    : 'bg-white/5 text-gray-500 hover:bg-white/10'
-                                    }`}
-                                style={{ backgroundColor: activeSub === sub ? commonProps.primaryColor : undefined }}
-                            >
-                                {sub}
-                            </button>
-                        ))}
-                    </div>
-                )}
-
-                <Layout items={filteredItems} {...commonProps} fontFamily={fontFamily} />
-            </div>
-        );
     };
 
     const scrollToCategory = (id) => {
@@ -252,8 +268,6 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
         if (el) el.scrollIntoView({ behavior: 'smooth' });
     };
 
-    const effectiveBgColor = backgroundColor || (darkMode ? '#121212' : '#f8f9fa');
-    const effectiveTextColor = backgroundColor ? getContrastColor(effectiveBgColor) : (darkMode ? '#ffffff' : '#1a1a1a');
 
     return (
         <div className={`min-h-screen ${isFullPage ? '' : 'rounded-3xl overflow-hidden border border-gray-800'}`}
@@ -266,8 +280,26 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
             }}>
 
             {/* Header / Hero */}
-            <div className={`relative p-8 pt-12 pb-10 flex flex-col items-center ${darkMode ? 'bg-gradient-to-b from-[#2E0000] to-[#1A0000]' : 'bg-gradient-to-b from-[#4A0404] via-[#2E0202] to-[#1A0000]'}`}>
-                <div className="flex flex-col items-center justify-center mb-4 text-center animate-fade-in">
+            <div
+                className="relative p-8 pt-16 pb-14 flex flex-col items-center transition-all duration-700 overflow-hidden min-h-[300px] justify-center"
+                style={{
+                    backgroundColor: effectivePrimaryColor,
+                    backgroundImage: config.headerBgUrl
+                        ? `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.6)), url(${config.headerBgUrl})`
+                        : (darkMode
+                            ? `linear-gradient(to bottom, ${darkenColor(effectivePrimaryColor, 60)}, ${darkenColor(effectivePrimaryColor, 80)})`
+                            : `linear-gradient(to bottom, ${darkenColor(effectivePrimaryColor, 35)}, ${darkenColor(effectivePrimaryColor, 60)})`),
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat'
+                }}
+            >
+                {/* Background Overlay - Subtle blur only for images, pointer-events-none to prevent blocking */}
+                {config.headerBgUrl && (
+                    <div className="absolute inset-0 z-0 backdrop-blur-[0.5px] pointer-events-none bg-black/10"></div>
+                )}
+
+                <div className="relative z-10 flex flex-col items-center justify-center mb-4 text-center animate-fade-in w-full">
                     {/* Logo Section - Vertical Stack like reference image */}
                     <div className="flex flex-col items-center gap-1 mb-2 transform hover:scale-105 transition-transform duration-500">
                         {/* Dynamic Logo or Fallback Icon */}
@@ -298,32 +330,46 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
 
 
                 {/* Welcome Text */}
-                <div className="text-center">
-                    <p className={`text-sm font-medium tracking-widest uppercase mb-6 ${darkMode ? 'text-white/80' : 'text-white/90'}`}>
+                <div className="text-center relative z-10">
+                    <p className={`text-sm font-bold tracking-widest uppercase mb-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] ${darkMode ? 'text-white' : 'text-white'}`}>
                         {translations[selectedLanguage].welcome} {config.restaurantName || 'Jindungo'}
                     </p>
                 </div>
 
-                {/* Corporate Feature: Dynamic Search */}
+                {/* Corporate Feature: Search Toggle & Bar */}
                 {features.hasDynamicSearch && (
-                    <div className="w-full max-w-sm relative animate-fade-in">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50">
-                            <Search size={18} />
-                        </div>
-                        <input
-                            type="text"
-                            placeholder={translations[selectedLanguage].searchPlaceholder}
-                            className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl py-3.5 pl-12 pr-12 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 transition-all text-sm"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                        {searchTerm && (
+                    <div className="w-full flex flex-col items-center relative z-20">
+                        {!showSearch ? (
                             <button
-                                onClick={() => setSearchTerm('')}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
+                                onClick={() => setShowSearch(true)}
+                                className={`flex items-center gap-2 px-6 py-2 rounded-full border transition-all active:scale-95 shadow-[0_4px_20px_rgba(0,0,0,0.4)] ${config.headerBgUrl ? 'bg-black/70 border-white/30 text-white' : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10'}`}
                             >
-                                <X size={18} />
+                                <Search size={16} />
+                                <span className="text-xs font-bold uppercase tracking-widest">Pesquisar no Menu</span>
                             </button>
+                        ) : (
+                            <div className="w-full max-w-sm relative animate-in slide-in-from-top-4 duration-300">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white">
+                                    <Search size={18} />
+                                </div>
+                                <input
+                                    autoFocus
+                                    type="text"
+                                    placeholder={translations[selectedLanguage].searchPlaceholder}
+                                    className={`w-full rounded-2xl py-3.5 pl-12 pr-12 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] transition-all text-sm font-medium ${config.headerBgUrl ? 'bg-black/80 border-white/40 shadow-2xl' : 'bg-white/10 border-white/20'}`}
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                                <button
+                                    onClick={() => {
+                                        setSearchTerm('');
+                                        setShowSearch(false);
+                                    }}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white p-1 hover:bg-white/10 rounded-full"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
                         )}
                     </div>
                 )}
@@ -331,17 +377,23 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
 
             {/* Sticky Category Carousel */}
             {!isLoading && categories.length > 0 && (
-                <div className={`sticky top-0 z-40 py-3 transition-all border-b ${darkMode ? 'bg-[#121212]/95 backdrop-blur-md border-white/5' : 'bg-white/95 backdrop-blur-md border-gray-100'}`}>
+                <div
+                    className="sticky top-0 z-[60] py-3 transition-all border-b border-white/5 backdrop-blur-xl"
+                    style={{
+                        backgroundColor: `${effectiveBgColor}f2`, // Adding slight transparency (f2 = 95%)
+                        borderBottomColor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+                    }}
+                >
                     <CategoryCarousel
                         categories={categories}
                         activeCategory={activeCategory}
                         onSelect={scrollToCategory}
-                        primaryColor="#D4AF37" // Always Gold for premium feel
+                        primaryColor={effectivePrimaryColor}
                     />
                 </div>
             )}
 
-            <div className="p-4 pb-32 space-y-2">
+            <div key={searchTerm ? 'search' : activeCategory} className="p-4 pb-32 space-y-2 animate-fade-in-up">
                 {renderLayout()}
             </div>
 
@@ -350,7 +402,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
                 <div className="pb-8 pt-4 text-center opacity-50 flex flex-col items-center justify-center pointer-events-none">
                     <span className="text-[10px] uppercase tracking-widest font-bold mb-1">Tecnologia</span>
                     <div className="flex items-center gap-1.5 grayscale">
-                        <div className="w-5 h-5 bg-black rounded flex items-center justify-center text-[10px] text-[#D4AF37] font-serif border border-gray-800">M</div>
+                        <img src="/jindungo_logo_v3.png" className="w-12 h-12 object-contain" alt="Logo" />
                         <span className="font-serif font-bold text-sm tracking-tight">JindungoMenus</span>
                     </div>
                 </div>

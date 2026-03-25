@@ -3,8 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { Lock, User, ChefHat, Briefcase } from 'lucide-react'; // Using icons for visual cues
+import { useSettings } from './context/SettingsContext';
 
-const Login = () => {
+const LoginPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -13,6 +14,7 @@ const Login = () => {
     const [errorShake, setErrorShake] = useState(false);
     const { signIn, user, role } = useAuth();
     const navigate = useNavigate();
+    const { logoUrl } = useSettings();
 
     useEffect(() => {
         setMounted(true);
@@ -63,14 +65,14 @@ const Login = () => {
             {/* Login Card */}
             <div className={`relative z-10 w-full max-w-md px-6 transition-all duration-1000 ease-out transform ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
 
-                <div className="glass-dark border border-white/10 rounded-3xl p-8 sm:p-10 shadow-2xl relative overflow-hidden backdrop-blur-xl">
+                <div className="glass-dark border border-white/10 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden backdrop-blur-xl">
 
                     {/* Header */}
-                    <div className="text-center mb-10">
-                        <div className="inline-block p-1 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 mb-6 border border-primary/20 shadow-[0_10px_40px_rgba(212,175,55,0.2)] overflow-hidden">
-                            <img src="/jindungo_logo_v3.png" className="w-36 h-36 object-contain" alt="Jindungo Logo" />
+                    <div className="text-center mb-8 sm:mb-10">
+                        <div className="inline-block p-1 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 mb-4 sm:mb-6 border border-primary/20 shadow-[0_10px_40px_rgba(212,175,55,0.2)] overflow-hidden">
+                            <img src={logoUrl || "/jindungo_logo_v3.png"} className="w-20 h-20 sm:w-28 sm:h-28 object-contain transition-all" alt="Jindungo Logo Global" />
                         </div>
-                        <h2 className="text-4xl font-serif font-black text-white tracking-tighter mb-2 scale-y-105">
+                        <h2 className="text-3xl sm:text-4xl font-serif font-black text-white tracking-tighter mb-2 scale-y-105 transition-all">
                             Menús Jindungo
                         </h2>
                         <div className="flex items-center justify-center gap-3">
@@ -132,7 +134,7 @@ const Login = () => {
                                 <input
                                     type="email"
                                     required
-                                    className="block w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-primary focus:ring-1 focus:ring-primary focus:shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-all duration-300"
+                                    className="block w-full pl-12 pr-4 py-3 sm:py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-primary focus:ring-1 focus:ring-primary focus:shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-all duration-300"
                                     placeholder={loginType === 'restaurant' ? "email@restaurante.com" : "admin@jindungo.com"}
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -147,7 +149,7 @@ const Login = () => {
                                 <input
                                     type="password"
                                     required
-                                    className="block w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-primary focus:ring-1 focus:ring-primary focus:shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-all duration-300"
+                                    className="block w-full pl-12 pr-4 py-3 sm:py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-primary focus:ring-1 focus:ring-primary focus:shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-all duration-300"
                                     placeholder="Sua senha"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
@@ -168,7 +170,7 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-4 px-4 rounded-xl font-bold text-black bg-gradient-to-r from-[#D4AF37] to-[#F1C40F] shadow-[0_4px_20px_rgba(212,175,55,0.3)] hover:shadow-[0_6px_25px_rgba(212,175,55,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none mt-2 uppercase tracking-wide text-sm"
+                            className="w-full py-3.5 sm:py-4 px-4 rounded-xl font-bold text-black bg-gradient-to-r from-[#D4AF37] to-[#F1C40F] shadow-[0_4px_20px_rgba(212,175,55,0.3)] hover:shadow-[0_6px_25px_rgba(212,175,55,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none mt-2 uppercase tracking-wide text-sm"
                         >
                             {loading ? 'Acessando...' : 'Entrar na Plataforma'}
                         </button>
@@ -189,4 +191,4 @@ const Login = () => {
     );
 };
 
-export default Login;
+export default LoginPage;

@@ -26,10 +26,6 @@ export const couponService = {
                 return { valid: false, message: 'Este cupão expirou' };
             }
 
-            if (data.valid_from && new Date(data.valid_from) > now) {
-                return { valid: false, message: 'Este cupão ainda não está ativo' };
-            }
-
             // Verificar limites de uso
             if (data.usage_limit && data.usage_count >= data.usage_limit) {
                 return { valid: false, message: 'Este cupão atingiu o limite de utilizações' };

@@ -3,9 +3,9 @@ import React, { useMemo } from 'react';
 const SimpleAnalytics = ({ items = [] }) => {
     // Mock data generation if no real data exists, memoized to prevent re-renders
     const data = useMemo(() => {
-        return items.slice(0, 5).map(item => ({
+        return items.slice(0, 5).map((item, i) => ({
             name: item.name,
-            views: Math.floor(Math.random() * 50) + 10 // Mock views
+            views: 20 + (i * 5) // Stable mock views
         }));
     }, [items.length]);
 

@@ -1,0 +1,8 @@
+﻿[dotenv@17.2.4] injecting env (2) from .env -- tip: ­ƒöä add secrets lifecycle management: https://dotenvx.com/ops
+--- ALL RESTAURANTS ---
+NAME: [Jindungo Demo] -> SLUG: [demo]
+NAME: [Quinta das Quinta] -> SLUG: [comida-bebida]
+NAME: [Restaurante Demo] -> SLUG: [demo-restaurant]
+NAME: [Restaurante Dikuzimba] -> SLUG: [meu-restaurante-dikuzimba]
+NAME: [Comidas da Terra] -> SLUG: [novo-restaurante-comidas-da-terra]
+------------------------

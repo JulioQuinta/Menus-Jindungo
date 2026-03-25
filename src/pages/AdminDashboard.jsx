@@ -1,28 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import toast, { Toaster } from 'react-hot-toast';
 import { compressImage } from '../lib/imageUtils';
-import {
-    LayoutDashboard,
-    UtensilsCrossed,
-    ClipboardList,
-    Users,
-    Settings,
-    LogOut,
-    QrCode,
-    Menu as MenuIcon,
-    MessageSquare,
-    User,
-    Ticket,
-    Award,
-    Info,
-    Share2,
-    Calendar,
-    ExternalLink,
-    ChevronRight,
-    Eye
-} from 'lucide-react';
+import { QrCode, ClipboardList, TrendingUp, Settings, LogOut, ChevronRight, Menu, Bell, LinkIcon, MapPin, Search, Star, Utensils, MonitorSmartphone, Mail, Smartphone, Eye, Calendar, Tag, Info, UserX, MessageSquare, Volume2, Shield, LayoutDashboard, UtensilsCrossed, User, Award, Ticket, Users, ExternalLink } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 // Components
@@ -41,12 +23,20 @@ import OrderHistory from '../components/OrderHistory';
 import LoyaltyManager from '../components/LoyaltyManager';
 import BusinessInfoManager from '../components/BusinessInfoManager';
 import ReservationManager from '../components/ReservationManager';
+import FeedbackManager from '../components/FeedbackManager';
 import CouponManager from '../components/CouponManager';
 import UpgradePrompt from '../components/UpgradePrompt';
 import { getPlanFeatures } from '../utils/planLimits';
 
+// Refactored Sub-components
+import AdminSidebar from '../components/dashboard/AdminSidebar';
+import AdminHeader from '../components/dashboard/AdminHeader';
+import AdminAlerts from '../components/dashboard/AdminAlerts';
+import MasqueradeBanner from '../components/dashboard/MasqueradeBanner';
+
 const AdminDashboard = () => {
-    const { signOut, user } = useAuth();
+    const { user, signOut, loading: authLoading } = useAuth();
+    const { logoUrl: globalLogoUrl } = useSettings();
     const navigate = useNavigate();
     const location = useLocation();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -503,8 +493,6 @@ const AdminDashboard = () => {
         fetchRestaurantData(); // Refresh data
     };
 
-    const isActive = (path) => location.pathname.includes(path);
-
     const menuItems = [
         { icon: LayoutDashboard, label: 'Visão Geral', path: '/admin' },
         { icon: MessageSquare, label: 'Assistente IA', path: '/admin/chat' },
@@ -512,6 +500,7 @@ const AdminDashboard = () => {
         { icon: ClipboardList, label: 'Pedidos (Cozinha)', path: '/admin/orders' },
         { icon: Calendar, label: 'Reservas', path: '/admin/reservations' },
         { icon: User, label: 'CRM Clientes', path: '/admin/crm', feature: 'canCollectClientData' },
+        { icon: MessageSquare, label: 'Avaliações', path: '/admin/feedbacks', feature: 'canCollectClientData' },
         { icon: Award, label: 'Fidelização', path: '/admin/loyalty', feature: 'canCollectClientData' },
         { icon: Info, label: 'Horários & Info', path: '/admin/info', feature: 'canCollectClientData' },
         { icon: Ticket, label: 'Marketing', path: '/admin/marketing' },
@@ -600,7 +589,7 @@ const AdminDashboard = () => {
     }
 
     return (
-        <div className="flex h-screen bg-[#121212] text-gray-100 overflow-hidden font-sans">
+        <div className="flex h-screen bg-[#121212] text-gray-100 overflow-hidden max-w-[100vw] font-sans">
             {/* Ambient Background */}
             <div className="absolute inset-0 z-0 pointer-events-none">
                 <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[150px]"></div>
@@ -615,113 +604,26 @@ const AdminDashboard = () => {
                 />
             )}
 
-            {/* Sidebar */}
-            <aside className={`fixed lg:relative z-50 glass-dark border-r border-white/5 transition-all duration-500 ease-spring h-screen flex flex-col shadow-2xl
-                ${isMobileMenuOpen ? 'left-0 w-72' : '-left-full lg:left-0'} 
-                ${isSidebarOpen ? 'lg:w-72' : 'lg:w-24'}`}>
-
-                <div className="p-8 border-b border-white/5 flex items-center justify-between">
-                    <div className={`flex items-center gap-3 transition-opacity duration-300 ${isSidebarOpen || isMobileMenuOpen ? 'opacity-100' : 'lg:opacity-0 lg:hidden'}`}>
-                        <div className="w-16 h-16 rounded-2xl overflow-hidden bg-white/10 flex items-center justify-center shadow-[0_0_20px_rgba(212,175,55,0.3)] transform hover:scale-105 transition-transform cursor-pointer border border-[#D4AF37]/30">
-                            <img src="/jindungo_logo_v3.png" className="w-full h-full object-cover" alt="Logo" />
-                        </div>
-                        <span className="font-serif text-2xl font-bold text-white tracking-tight cursor-pointer">
-                            Jindu<span className="text-[#D4AF37]">ngo</span>
-                        </span>
-                    </div>
-                    <button
-                        onClick={() => {
-                            if (window.innerWidth < 1024) setIsMobileMenuOpen(false);
-                            else setIsSidebarOpen(!isSidebarOpen);
-                        }}
-                        className={`p-2 hover:bg-white/10 rounded-xl transition-all ${(!isSidebarOpen && !isMobileMenuOpen) && 'mx-auto'}`}
-                    >
-                        <MenuIcon size={20} className="text-gray-400 hover:text-white" />
-                    </button>
-                </div>
-
-                <nav className="p-4 space-y-2 flex-1 overflow-y-auto scrollbar-hide mt-4">
-                    {menuItems.map((item) => {
-                        const active = item.path === '/admin' ? location.pathname === '/admin' : isActive(item.path);
-                        return (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className={`group flex items-center gap-4 px-4 py-4 rounded-xl transition-all duration-300 relative overflow-hidden ${active
-                                    ? 'bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 shadow-[0_4px_20px_rgba(212,175,55,0.1)]'
-                                    : 'text-gray-400 hover:bg-white/5 hover:text-white hover:pl-6'
-                                    }`}
-                            >
-                                <div className={`relative z-10 transition-transform duration-300 ${active ? 'scale-110 drop-shadow-[0_0_8px_rgba(212,175,55,0.5)]' : 'group-hover:scale-110'}`}>
-                                    <item.icon size={22} className={active ? "" : ""} />
-                                </div>
-                                <span className={`font-medium tracking-wide whitespace-nowrap transition-all duration-300 ${(isSidebarOpen || isMobileMenuOpen) ? 'opacity-100 translate-x-0' : 'lg:opacity-0 lg:-translate-x-10 lg:absolute'}`}>
-                                    {item.label}
-                                </span>
-                                {active && (
-                                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-[#D4AF37] rounded-l-full shadow-[0_0_10px_rgba(212,175,55,0.8)]"></div>
-                                )}
-                            </Link>
-                        )
-                    })}
-                </nav>
-
-                <div className="p-4 border-t border-white/5 mt-auto">
-                    <button
-                        onClick={signOut}
-                        className={`w-full flex items-center gap-4 px-4 py-4 rounded-xl text-gray-500 hover:bg-red-500/10 hover:text-red-400 hover:border hover:border-red-500/20 transition-all group ${(!isSidebarOpen && !isMobileMenuOpen) && 'justify-center border border-transparent'}`}
-                    >
-                        <LogOut size={22} className="group-hover:-translate-x-1 transition-transform" />
-                        <span className={`${(isSidebarOpen || isMobileMenuOpen) ? 'block' : 'hidden'} font-medium`}>Terminar Sessão</span>
-                    </button>
-                </div>
-            </aside>
+            <AdminSidebar 
+                isSidebarOpen={isSidebarOpen}
+                isMobileMenuOpen={isMobileMenuOpen}
+                setIsSidebarOpen={setIsSidebarOpen}
+                setIsMobileMenuOpen={setIsMobileMenuOpen}
+                menuItems={menuItems}
+                location={location}
+                globalLogoUrl={globalLogoUrl}
+                signOut={signOut}
+            />
 
             {/* Main Content */}
             <main className="flex-1 overflow-y-auto relative z-10 bg-[#121212]">
 
 
                 {/* [NEW] Waiter & Order Alerts Section */}
-                <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 w-80 pointer-events-none">
-                    {/* We make the container pointer-events-none so it doesn't block clicks, but children will be auto */}
-                    {activeAlerts.map(alert => (
-                        <div key={alert.id} className={`pointer-events-auto text-white p-4 rounded-xl shadow-2xl border-2 animate-bounce flex items-center justify-between ${alert.isOrder ? 'bg-green-600 border-green-400' : 'bg-red-600 border-red-400'}`}>
-                            <div>
-                                <h4 className="font-bold text-lg flex items-center gap-2">
-                                    {alert.isOrder ? '🛍️ Novo Pedido' : `🔔 Mesa ${alert.mesa_id}`}
-                                </h4>
-                                <p className={`text-xs ${alert.isOrder ? 'text-green-100' : 'text-red-100'}`}>
-                                    {alert.isOrder ? alert.request_type : 'Chamou o garçom!'}
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => handleDismissAlert(alert.id)}
-                                className={`bg-white px-3 py-1 rounded-lg font-bold text-sm hover:bg-opacity-90 transition-colors shadow-sm ${alert.isOrder ? 'text-green-600' : 'text-red-600'}`}
-                            >
-                                {alert.isOrder ? 'Ver' : 'Atendido'}
-                            </button>
-                        </div>
-                    ))}
-                </div>
+                <AdminAlerts activeAlerts={activeAlerts} onDismiss={handleDismissAlert} />
 
                 {/* [NEW] Masquerade Warning Banner */}
-                {localStorage.getItem('masquerade_restaurant_id') && (
-                    <div className="bg-red-600/90 text-white px-4 py-2 flex items-center justify-between shadow-lg sticky top-0 z-40 backdrop-blur-md border-b border-red-500/50">
-                        <div className="flex items-center gap-2 text-sm font-bold">
-                            <span className="text-xl">🕵️‍♂️</span> Você está no MODO FANTASMA - A ver o painel de: {restaurant?.name}
-                        </div>
-                        <button
-                            onClick={() => {
-                                localStorage.removeItem('masquerade_restaurant_id');
-                                window.location.href = '/super-admin';
-                            }}
-                            className="bg-white text-red-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-gray-100 transition-colors shadow-sm"
-                        >
-                            Sair e Voltar ao Super Admin
-                        </button>
-                    </div>
-                )}
+                <MasqueradeBanner restaurantName={restaurant?.name} />
 
                 {/* [NEW] Global Notifications Banner */}
                 {globalNotifications.map(notif => (
@@ -747,60 +649,15 @@ const AdminDashboard = () => {
                     </div>
                 ))}
 
-                {/* [NEW] Install PWA Prompt at Global Level */}
-                <InstallPWA />
+                {/* Removed InstallPWA from here since it is now global in App.jsx */}
 
                 {/* Glass Header */}
-                <header className="sticky top-0 z-30 bg-black/60 border-b border-white/5 px-4 sm:px-8 flex flex-col justify-center h-24 backdrop-blur-xl">
-                    <div className="flex justify-between items-center w-full max-w-7xl mx-auto">
-                        <div className="flex items-center gap-4">
-                            {/* Mobile Hamburger */}
-                            <button
-                                onClick={() => setIsMobileMenuOpen(true)}
-                                className="lg:hidden p-2 text-gray-400 hover:bg-white/10 rounded-lg transition-all"
-                            >
-                                <MenuIcon size={24} />
-                            </button>
-
-                            <div className="flex flex-col">
-                                {/* [NEW] Breadcrumbs */}
-                                <div className="flex items-center gap-2 text-[10px] text-gray-500 uppercase tracking-widest mb-1.5 font-bold">
-                                    <Link to="/admin" className="hover:text-[#D4AF37] transition-colors">Admin</Link>
-                                    {location.pathname !== '/admin' && (
-                                        <>
-                                            <ChevronRight size={10} />
-                                            <span className="text-gray-300">
-                                                {menuItems.find(i => i.path !== '/admin' && location.pathname.includes(i.path))?.label || 'Detalhes'}
-                                            </span>
-                                        </>
-                                    )}
-                                </div>
-                                <h2 className="text-xl sm:text-2xl font-serif font-bold text-white tracking-wide truncate max-w-[150px] sm:max-w-none">
-                                    {menuItems.find(i => (i.path === '/admin' ? location.pathname === '/admin' : isActive(i.path)))?.label || 'Visão Geral'}
-                                </h2>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 sm:gap-6">
-                            <button className="relative p-2 text-gray-400 hover:text-[#D4AF37] transition-colors group">
-                                <MessageSquare size={20} className="sm:size-[22px] group-hover:scale-110 transition-transform" />
-                                <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-black animate-pulse"></span>
-                            </button>
-
-                            <div className="h-8 w-[1px] bg-white/10 hidden sm:block"></div>
-
-                            <div className="flex items-center gap-2 sm:gap-4 pl-0 sm:pl-2 cursor-pointer group">
-                                <div className="text-right hidden sm:block">
-                                    <p className="text-sm font-bold text-white group-hover:text-[#D4AF37] transition-colors">{user?.email?.split('@')[0]}</p>
-                                    <p className="text-[10px] text-gray-500 mt-0.5 uppercase tracking-wider">Gestor</p>
-                                </div>
-                                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] font-bold shadow-lg group-hover:bg-[#D4AF37] group-hover:text-black transition-all transform group-hover:scale-105">
-                                    {user?.email?.charAt(0).toUpperCase()}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </header>
+                <AdminHeader 
+                    setIsMobileMenuOpen={setIsMobileMenuOpen}
+                    location={location}
+                    menuItems={menuItems}
+                    user={user}
+                />
 
                 <div className="p-8 max-w-7xl mx-auto pb-24">
                     <Routes>
@@ -845,6 +702,22 @@ const AdminDashboard = () => {
                                         "Ver quem são os seus clientes mais fiéis",
                                         "Exportar lista para campanhas de marketing",
                                         "Análise de Ticket Médio por cliente"
+                                    ]}
+                                />
+                            )
+                        } />
+
+                        <Route path="/feedbacks" element={
+                            features.canCollectClientData ? (
+                                <FeedbackManager restaurantId={restaurant?.id} />
+                            ) : (
+                                <UpgradePrompt
+                                    title="Avaliações e Feedback"
+                                    requiredPlan="Corporate"
+                                    features={[
+                                        "Receber avaliações diretas dos clientes (1 a 5 estrelas)",
+                                        "Ver comentários privados sobre o serviço",
+                                        "Melhorar a qualidade baseada em opiniões reais"
                                     ]}
                                 />
                             )
@@ -910,7 +783,7 @@ const AdminDashboard = () => {
                         } />
 
                         <Route path="/chat" element={<ChatAdminPanel categories={categories} onUpdate={handleMenuUpdate} restaurantId={restaurant?.id} />} />
-                        <Route path="/qrcode" element={<QRCodeGenerator url={`${window.location.origin}/${restaurant?.slug}`} restaurantName={restaurant?.slug} />} />
+                        <Route path="/qrcode" element={<QRCodeGenerator url={`${window.location.origin}/${restaurant?.slug}`} restaurantName={restaurant?.name || restaurant?.slug} logoUrl={config?.logoUrl} />} />
                         <Route path="/settings" element={
                             <div className="space-y-6">
                                 <StyleControls

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Award, Save, RefreshCw, CheckCircle2, Info, Star } from 'lucide-react';
 import { loyaltyService } from '../services/loyaltyService';
 import toast from 'react-hot-toast';
@@ -12,13 +12,7 @@ const LoyaltyManager = ({ restaurantId }) => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    useEffect(() => {
-        if (restaurantId) {
-            fetchConfig();
-        }
-    }, [restaurantId]);
-
-    const fetchConfig = async () => {
+    const fetchConfig = useCallback(async () => {
         setLoading(true);
         const { data, error } = await loyaltyService.getConfig(restaurantId);
         if (data) {
@@ -29,7 +23,13 @@ const LoyaltyManager = ({ restaurantId }) => {
             });
         }
         setLoading(false);
-    };
+    }, [restaurantId]);
+
+    useEffect(() => {
+        if (restaurantId) {
+            fetchConfig();
+        }
+    }, [fetchConfig]);
 
     const handleSave = async () => {
         setSaving(true);

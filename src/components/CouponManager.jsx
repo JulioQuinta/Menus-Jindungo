@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { couponService } from '../services/couponService';
 import { Ticket, Plus, Trash2, Calendar, Tag, Percent, Banknote, AlertCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -16,11 +16,7 @@ const CouponManager = ({ restaurantId }) => {
         usage_limit: ''
     });
 
-    useEffect(() => {
-        fetchCoupons();
-    }, [restaurantId]);
-
-    const fetchCoupons = async () => {
+    const fetchCoupons = useCallback(async () => {
         setLoading(true);
         const { data, error } = await couponService.getRestaurantCoupons(restaurantId);
         if (error) {
@@ -29,7 +25,11 @@ const CouponManager = ({ restaurantId }) => {
             setCoupons(data || []);
         }
         setLoading(false);
-    };
+    }, [restaurantId]);
+
+    useEffect(() => {
+        fetchCoupons();
+    }, [fetchCoupons]);
 
     const handleSave = async (e) => {
         e.preventDefault();
@@ -119,8 +119,8 @@ const CouponManager = ({ restaurantId }) => {
                                 value={newCoupon.discount_type}
                                 onChange={e => setNewCoupon({ ...newCoupon, discount_type: e.target.value })}
                             >
-                                <option value="percentage">Percentual (%)</option>
-                                <option value="fixed">Valor Fixo (Kz)</option>
+                                <option value="percentage" className="bg-gray-800 text-white">Percentual (%)</option>
+                                <option value="fixed" className="bg-gray-800 text-white">Valor Fixo (Kz)</option>
                             </select>
                         </div>
 

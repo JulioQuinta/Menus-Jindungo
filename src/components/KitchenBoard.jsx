@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { orderService } from '../services/orderService';
-import { Clock, CheckCircle, ChefHat, Truck, XCircle, AlertCircle, Banknote, Printer, Ticket } from 'lucide-react';
+import { Clock, CheckCircle, ChefHat, Truck, XCircle, AlertCircle, Banknote, Printer, Ticket, Smartphone, Volume2, VolumeX, Award } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { generateWhatsAppLink } from '../utils/whatsappGenerator';
 import TableBillTemplate from './TableBillTemplate';
 
-const OrderCard = ({ order, onStatusChange, onPrint, enablePrint }) => {
+const OrderCard = ({ order, onStatusChange, onPrint, enablePrint, restaurantName }) => {
     // Calculate waiting time
     const [elapsed, setElapsed] = useState('');
 
@@ -68,6 +69,16 @@ const OrderCard = ({ order, onStatusChange, onPrint, enablePrint }) => {
                 </div>
             )}
 
+            {/* Loyalty Reward Display */}
+            {order.is_loyalty_redemption && (
+                <div className="mb-4 text-[10px] font-bold text-[#D4AF37] bg-[#D4AF37]/10 px-3 py-1.5 rounded-lg border border-[#D4AF37]/20 flex justify-between items-center tracking-tight">
+                    <span className="flex items-center gap-1">
+                        <Award size={10} /> RECOMPENSA FIDELIZAÇÃO
+                    </span>
+                    <span>{order.loyalty_reward_text}</span>
+                </div>
+            )}
+
             {/* Actions */}
             <div className="flex gap-2 mt-4">
                 {order.status === 'pending' && (
@@ -89,20 +100,44 @@ const OrderCard = ({ order, onStatusChange, onPrint, enablePrint }) => {
                 )}
 
                 {order.status === 'ready' && (
-                    <>
-                        <button
-                            onClick={() => onStatusChange(order.id, 'delivered')}
-                            className="flex-1 bg-white/10 hover:bg-white/20 text-white py-2.5 rounded-xl font-bold text-sm flex justify-center items-center gap-2 transition-all border border-white/10 hover:border-white/30"
-                        >
-                            <Truck size={16} /> Entregue
-                        </button>
-                        <button
-                            onClick={() => { if (window.confirm('Recebeu o pagamento e deseja fechar esta conta?')) onStatusChange(order.id, 'paid'); }}
-                            className="flex-1 bg-gradient-to-r from-[#D4AF37] to-yellow-600 hover:brightness-110 text-black py-2.5 rounded-xl font-bold text-sm flex justify-center items-center gap-2 transition-all shadow-lg hover:shadow-yellow-500/25"
-                        >
-                            <Banknote size={16} /> Pago
-                        </button>
-                    </>
+                    <div className="flex flex-col gap-2 w-full">
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => onStatusChange(order.id, 'delivered')}
+                                className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-white py-2.5 rounded-xl font-bold text-sm flex justify-center items-center gap-2 transition-all shadow-lg hover:shadow-blue-500/25"
+                            >
+                                <Truck size={16} /> Entregue
+                            </button>
+                            <button
+                                onClick={() => { if (window.confirm('Recebeu o pagamento e deseja fechar esta conta?')) onStatusChange(order.id, 'paid'); }}
+                                className="flex-1 bg-gradient-to-r from-[#D4AF37] to-yellow-600 hover:brightness-110 text-black py-2.5 rounded-xl font-bold text-sm flex justify-center items-center gap-2 transition-all shadow-lg hover:shadow-yellow-500/25"
+                            >
+                                <Banknote size={16} /> Pago
+                            </button>
+                        </div>
+                        
+                        {order.customer_phone && (
+                            <button
+                                onClick={() => {
+                                    let message = `Olá ${order.customer_name || ''}! O seu pedido no *${restaurantName || 'Restaurante'}* já está pronto 🍽️!\n\n`;
+                                    message += `*Valor a Pagar:* ${new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(order.total).replace('AOA', 'Kz')}\n`;
+                                    if (order.coupon_code) {
+                                        message += `_Inclui desconto (Cupão: ${order.coupon_code}) ✅_\n`;
+                                    }
+                                    if (order.is_loyalty_redemption) {
+                                        message += `_Inclui recompensa: ${order.loyalty_reward_text} 🎁_\n`;
+                                    }
+                                    message += `\nEsperamos por si!`;
+                                    let phone = order.customer_phone.replace(/\D/g, '');
+                                    if (phone.length === 9) phone = '244' + phone;
+                                    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+                                }}
+                                className="flex-1 bg-white/5 border border-green-500/30 text-green-400 py-2 rounded-xl font-bold text-[10px] flex justify-center items-center gap-2 hover:bg-green-500/10 transition-all uppercase"
+                            >
+                                <Smartphone size={14} /> Avisar no WhatsApp
+                            </button>
+                        )}
+                    </div>
                 )}
 
                 {/* Print Button (Optional via Settings) */}
@@ -139,9 +174,23 @@ const OrderCard = ({ order, onStatusChange, onPrint, enablePrint }) => {
 const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isAudioEnabled, setIsAudioEnabled] = useState(false);
 
     // Native Printing State
     const [printingOrder, setPrintingOrder] = useState(null);
+
+    const toggleAudio = () => {
+        if (!isAudioEnabled) {
+            // Unlock audio on most browsers
+            const audio = new Audio('/bell.mp3');
+            audio.volume = 0.1;
+            audio.play().then(() => {
+                setIsAudioEnabled(true);
+            }).catch(e => console.log("Audio unlock failed", e));
+        } else {
+            setIsAudioEnabled(false);
+        }
+    };
 
     const handlePrintOrder = (order) => {
         setPrintingOrder(order);
@@ -165,12 +214,14 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
         // 2. Realtime Subscription
         const channel = orderService.subscribeToOrders(restaurantId, (payload) => {
             if (payload.eventType === 'INSERT') {
-                // Play Sound Safely
-                try {
-                    const audio = new Audio('/bell.mp3'); // Local bell
-                    audio.play().catch(e => console.log('Audio blocked', e));
-                } catch (err) {
-                    console.log('Audio error', err);
+                // Play Sound Safely only if enabled
+                if (isAudioEnabled) {
+                    try {
+                        const audio = new Audio('/bell.mp3');
+                        audio.play().catch(e => console.log('Audio blocked', e));
+                    } catch (err) {
+                        console.log('Audio error', err);
+                    }
                 }
 
                 setOrders(prev => [...prev, payload.new]);
@@ -209,6 +260,33 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
 
     return (
         <div className="h-full flex flex-col p-4 sm:p-6 bg-transparent overflow-hidden relative">
+            <div className="flex justify-between items-center mb-6">
+                <div>
+                    <h2 className="text-2xl font-black text-white tracking-tight">Cozinha: {restaurantName}</h2>
+                    <p className="text-gray-400 text-[10px] uppercase font-bold tracking-widest mt-1">Quadro de Pedidos em Tempo Real</p>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={toggleAudio}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs transition-all ${
+                            isAudioEnabled 
+                                ? 'bg-green-500/10 text-green-400 border border-green-500/30' 
+                                : 'bg-red-500/10 text-red-500 border border-red-500/30'
+                        }`}
+                    >
+                        {isAudioEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                        {isAudioEnabled ? 'SOM ATIVO' : 'CLIQUE P/ ATIVAR SOM'}
+                    </button>
+
+                    <div className="flex bg-black/40 border border-white/5 p-1 rounded-2xl backdrop-blur-md">
+                        <div className="px-4 py-2 text-center border-r border-white/5 last:border-0">
+                            <div className="text-xs font-black text-white">{orders.length}</div>
+                            <div className="text-[8px] uppercase font-bold text-gray-500 tracking-tighter">Total</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             {/* Global Print Styles to hide the rest of the UI and only show the print container */}
             <style>
@@ -264,7 +342,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                         </div>
                         <div className="flex-1 overflow-y-auto pr-2 space-y-4 pt-1 custom-scrollbar z-10">
                             {pendingOrders.map(order => (
-                                <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} />
+                                <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} restaurantName={restaurantName} />
                             ))}
                         </div>
                     </div>
@@ -281,7 +359,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                         </div>
                         <div className="flex-1 overflow-y-auto pr-2 space-y-4 pt-1 custom-scrollbar z-10">
                             {preparingOrders.map(order => (
-                                <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} />
+                                <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} restaurantName={restaurantName} />
                             ))}
                         </div>
                     </div>
@@ -298,7 +376,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                         </div>
                         <div className="flex-1 overflow-y-auto pr-2 space-y-4 pt-1 custom-scrollbar z-10">
                             {readyOrders.map(order => (
-                                <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} />
+                                <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} restaurantName={restaurantName} />
                             ))}
                         </div>
                     </div>

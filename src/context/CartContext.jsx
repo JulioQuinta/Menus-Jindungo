@@ -5,19 +5,18 @@ const CartContext = createContext();
 export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
-    const [cartItems, setCartItems] = useState([]);
-
-    // Optional: Load from local storage to persist across reloads
-    useEffect(() => {
+    const [cartItems, setCartItems] = useState(() => {
+        // Optional: Load from local storage to persist across reloads
         const savedCart = localStorage.getItem('jindungo_cart');
         if (savedCart) {
             try {
-                setCartItems(JSON.parse(savedCart));
+                return JSON.parse(savedCart);
             } catch (e) {
                 console.error("Failed to load cart", e);
             }
         }
-    }, []);
+        return [];
+    });
 
     useEffect(() => {
         localStorage.setItem('jindungo_cart', JSON.stringify(cartItems));

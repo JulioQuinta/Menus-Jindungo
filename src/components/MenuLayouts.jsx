@@ -133,12 +133,14 @@ const getTrans = (item, lang, field) => {
 
 export const GridLayout = ({ items = [], primaryColor, isEditing, darkMode, selectedLanguage = 'PT', customBgInfo, restaurantClosed }) => {
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {items.map(item => (
                 <div
                     key={item.id}
-                    className={`rounded-xl shadow-lg transition-all duration-300 overflow-hidden border flex flex-col h-full group animate-fade-in-up ${getCardStyle(darkMode, customBgInfo)} hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] hover:border-[#D4AF37]/50`}
-                    style={{ boxShadow: darkMode ? '0 10px 30px -10px rgba(0,0,0,0.5)' : '0 10px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                    className={`rounded-xl shadow-md transition-all duration-300 overflow-hidden border flex flex-col h-full group animate-fade-in-up ${getCardStyle(darkMode, customBgInfo)} 
+                        ${item.available === false ? 'opacity-60 grayscale-[0.8] cursor-not-allowed' : 'hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(212,175,55,0.2)] hover:border-[#D4AF37]/50'}
+                    `}
+                    style={{ boxShadow: darkMode ? '0 5px 15px -5px rgba(0,0,0,0.5)' : '0 5px 15px -5px rgba(0, 0, 0, 0.1)' }}
                 >
                     {/* Image Section */}
                     <div className="relative aspect-[4/3] overflow-hidden rounded-t-xl">
@@ -156,22 +158,22 @@ export const GridLayout = ({ items = [], primaryColor, isEditing, darkMode, sele
                     </div>
 
                     {/* Content Section */}
-                    <div className="p-5 flex-1 flex flex-col justify-between relative">
+                    <div className="p-3 sm:p-5 flex-1 flex flex-col justify-between relative">
                         <div>
-                            <div className="flex justify-between items-start mb-2">
-                                <h3 className={`font-bold text-xl leading-tight line-clamp-2 ${getTextStyle(darkMode, customBgInfo)}`}>
+                            <div className="flex flex-col mb-1">
+                                <h3 className={`font-bold text-sm sm:text-xl leading-tight line-clamp-2 ${getTextStyle(darkMode, customBgInfo)}`}>
                                     {getTrans(item, selectedLanguage, 'name')}
                                 </h3>
-                                <span className="font-bold text-lg whitespace-nowrap ml-2" style={{ color: primaryColor }}>
+                                <span className="font-bold text-sm sm:text-lg mt-1" style={{ color: primaryColor }}>
                                     {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(Number(String(item.price).replace(/[^0-9.]/g, '')) || 0)}
                                 </span>
                             </div>
-                            <p className={`text-sm line-clamp-2 mb-4 font-light ${getSubTextStyle(darkMode, customBgInfo)}`}>
+                            <p className={`text-[10px] sm:text-sm line-clamp-2 mb-2 font-light ${getSubTextStyle(darkMode, customBgInfo)}`}>
                                 {getTrans(item, selectedLanguage, 'desc')}
                             </p>
                         </div>
 
-                        <div className="flex justify-end mt-2 pt-4 border-t border-dashed border-gray-700/20">
+                        <div className="flex justify-end mt-1 pt-2 border-t border-dashed border-gray-700/20">
                             <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} restaurantClosed={restaurantClosed} />
                         </div>
                     </div>
@@ -187,7 +189,9 @@ export const ListLayout = ({ items = [], primaryColor, isEditing, darkMode, sele
             {items.map(item => (
                 <div
                     key={item.id}
-                    className={`rounded-2xl shadow-sm border p-3 flex gap-4 transition-all hover:shadow-lg hover:translate-x-1 animate-fade-in-up ${getCardStyle(darkMode, customBgInfo)}`}
+                    className={`rounded-2xl shadow-sm border p-3 flex gap-4 transition-all animate-fade-in-up ${getCardStyle(darkMode, customBgInfo)}
+                        ${item.available === false ? 'opacity-60 grayscale-[0.8] cursor-not-allowed' : 'hover:shadow-lg hover:translate-x-1'}
+                    `}
                 >
                     {/* Image */}
                     <div className="w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 rounded-xl overflow-hidden relative group">
@@ -228,7 +232,9 @@ export const MinimalLayout = ({ items = [], primaryColor, fontFamily, isEditing,
     return (
         <div className={`flex flex-col divide-y divide-dashed ${darkMode ? 'divide-gray-800' : 'divide-gray-200'}`}>
             {items.map(item => (
-                <div key={item.id} className="py-5 flex justify-between items-center gap-4 hover:bg-white/5 rounded-lg px-3 transition-colors group animate-fade-in-up">
+                <div key={item.id} className={`py-5 flex justify-between items-center gap-4 rounded-lg px-3 transition-colors group animate-fade-in-up 
+                    ${item.available === false ? 'opacity-50 grayscale-50' : 'hover:bg-white/5'}
+                `}>
                     <div className="flex-1">
                         <div className="flex items-baseline justify-between mb-1">
                             <h3 className={`font-medium text-lg group-hover:text-primary transition-colors ${getTextStyle(darkMode, customBgInfo)}`}>
@@ -256,10 +262,10 @@ export const MinimalLayout = ({ items = [], primaryColor, fontFamily, isEditing,
 };
 
 export const GridLayoutSkeleton = ({ darkMode }) => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className={`rounded-xl overflow-hidden border ${darkMode ? 'bg-[#1E1E1E] border-white/5' : 'bg-white border-gray-100'} h-80`}>
-                <Skeleton height="200px" darkMode={darkMode} className="rounded-none" />
+            <div key={i} className={`rounded-xl overflow-hidden border ${darkMode ? 'bg-[#1E1E1E] border-white/5' : 'bg-white border-gray-100'} h-64`}>
+                <Skeleton height="120px" darkMode={darkMode} className="rounded-none" />
                 <div className="p-5 space-y-4">
                     <Skeleton height="24px" width="70%" darkMode={darkMode} />
                     <div className="space-y-2">

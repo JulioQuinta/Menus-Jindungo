@@ -1,0 +1,491 @@
+﻿
+> menus-jindungos@0.0.0 lint
+> eslint .
+
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_buckets.js
+  6:21  error  'process' is not defined  no-undef
+  7:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_categories.js
+  5:21  error  'process' is not defined  no-undef
+  6:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_cols.js
+  5:21  error  'process' is not defined  no-undef
+  6:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_config.js
+  6:21  error  'process' is not defined  no-undef
+  7:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_db.js
+  5:7   error  'supabase' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  5:31  error  'process' is not defined                                                                  no-undef
+  5:62  error  'process' is not defined                                                                  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_demo_logo.js
+  5:21  error  'process' is not defined  no-undef
+  6:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_env.js
+   5:21  error  'process' is not defined                                                                  no-undef
+   6:21  error  'process' is not defined                                                                  no-undef
+   6:67  error  'process' is not defined                                                                  no-undef
+   7:7   error  'supabase' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  11:17  error  'process' is not defined                                                                  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_fk.js
+  5:21  error  'process' is not defined                                                                  no-undef
+  6:21  error  'process' is not defined                                                                  no-undef
+  7:7   error  'supabase' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_login_error.js
+   6:21  error  'process' is not defined                                                              no-undef
+   7:21  error  'process' is not defined                                                              no-undef
+  13:13  error  'data' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_logo_full.js
+  5:31  error  'process' is not defined  no-undef
+  5:62  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_orders.js
+  6:31  error  'process' is not defined  no-undef
+  6:62  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_orders_rls.js
+   5:21  error  'process' is not defined                                                            no-undef
+   6:21  error  'process' is not defined                                                            no-undef
+  13:19  error  'd2' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_orders_schema.js
+  6:21  error  'process' is not defined  no-undef
+  7:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_policies.js
+   5:14  error  'global' is not defined                                                                   no-undef
+   7:21  error  'process' is not defined                                                                  no-undef
+   8:21  error  'process' is not defined                                                                  no-undef
+   9:7   error  'supabase' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  14:24  error  'process' is not defined                                                                  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_profiles.js
+  6:31  error  'process' is not defined  no-undef
+  6:62  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_profiles_columns.js
+  5:14  error  'global' is not defined   no-undef
+  7:21  error  'process' is not defined  no-undef
+  8:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_public_rls.js
+  5:21  error  'process' is not defined  no-undef
+  6:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_restaurants.js
+  5:21  error  'process' is not defined  no-undef
+  6:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_restaurants2.js
+  5:21  error  'process' is not defined  no-undef
+  6:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_restaurants_schema.js
+  6:21  error  'process' is not defined  no-undef
+  7:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_saas_columns.js
+  5:21  error  'process' is not defined  no-undef
+  6:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_schema.js
+  5:21  error  'process' is not defined  no-undef
+  6:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_schema2.js
+  5:14  error  'global' is not defined   no-undef
+  7:21  error  'process' is not defined  no-undef
+  8:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_schema3.js
+  5:14  error  'global' is not defined   no-undef
+  7:21  error  'process' is not defined  no-undef
+  8:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_schema4.js
+  5:14  error  'global' is not defined   no-undef
+  7:21  error  'process' is not defined  no-undef
+  8:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_slugs.js
+  2:26  error  'require' is not defined  no-undef
+  3:1   error  'require' is not defined  no-undef
+  5:31  error  'process' is not defined  no-undef
+  5:62  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_slugs2.js
+  6:21  error  'process' is not defined  no-undef
+  7:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_sobremesas.js
+  15:9   error  'process' is not defined  no-undef
+  19:21  error  'process' is not defined  no-undef
+  20:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_stats.js
+  5:21  error  'process' is not defined  no-undef
+  6:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_upsell_items.js
+  5:31  error  'process' is not defined  no-undef
+  5:62  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\check_users.js
+   6:21  error  'process' is not defined                                                                   no-undef
+   7:21  error  'process' is not defined                                                                   no-undef
+  15:23  error  'authUsers' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\create_fallback_menu.js
+  6:31  error  'process' is not defined  no-undef
+  6:62  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\create_menus_bucket.js
+  1:10  error  'createClient' is defined but never used. Allowed unused vars must match /^[A-Z_]/u          no-unused-vars
+  5:7   error  'supabaseUrl' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  5:21  error  'process' is not defined                                                                     no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\debug_storage_final.js
+   4:8   error  'fs' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+   7:21  error  'process' is not defined                                                   no-undef
+   8:21  error  'process' is not defined                                                   no-undef
+  24:23  error  'Buffer' is not defined                                                    no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\debug_update_config.js
+  6:21  error  'process' is not defined  no-undef
+  7:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\dump_profiles.js
+  7:31  error  'process' is not defined  no-undef
+  7:62  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\ensure_valid_slug.js
+  5:21  error  'process' is not defined  no-undef
+  6:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\find_r_slug.js
+  6:31  error  'process' is not defined  no-undef
+  6:62  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\fix_availability.js
+  5:31  error  'process' is not defined  no-undef
+  5:62  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\fix_owner_script.js
+  2:10  error  'createClient' is defined but never used. Allowed unused vars must match /^[A-Z_]/u          no-unused-vars
+  6:7   error  'supabaseUrl' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  6:21  error  'process' is not defined                                                                     no-undef
+  7:7   error  'supabaseKey' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  7:21  error  'process' is not defined                                                                     no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\fix_owner_via_api.js
+   4:8   error  'path' is defined but never used. Allowed unused vars must match /^[A-Z_]/u           no-unused-vars
+   5:10  error  'fileURLToPath' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  12:21  error  'process' is not defined                                                              no-undef
+  13:21  error  'process' is not defined                                                              no-undef
+  17:5   error  'process' is not defined                                                              no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\fix_storage_direct.js
+  26:18  error  'e' is defined but never used  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\force_update_logo_node.js
+  6:21  error  'process' is not defined  no-undef
+  7:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\list_all_slugs.js
+  6:31  error  'process' is not defined  no-undef
+  6:62  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\list_logos.js
+  6:21  error  'process' is not defined  no-undef
+  7:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\list_restaurants.js
+  6:21  error  'process' is not defined  no-undef
+  7:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\promote_to_admin.js
+  6:31  error  'process' is not defined  no-undef
+  6:62  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\restore_sobremesas.js
+  16:9   error  'process' is not defined                                                                no-undef
+  20:21  error  'process' is not defined                                                                no-undef
+  21:21  error  'process' is not defined                                                                no-undef
+  25:5   error  'process' is not defined                                                                no-undef
+  48:38  error  'cError' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  75:27  error  'iError' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\run_migration.js
+   3:8   error  'fs' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                 no-unused-vars
+  12:21  error  'process' is not defined                                                                  no-undef
+  13:21  error  'process' is not defined                                                                  no-undef
+  14:7   error  'supabase' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\run_sql.js
+   7:21  error  'process' is not defined                                                                  no-undef
+   8:28  error  'process' is not defined                                                                  no-undef
+  12:5   error  'process' is not defined                                                                  no-undef
+  15:7   error  'supabase' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  18:11  error  'sql' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u       no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\run_sql_by_statements.js
+   6:27  error  'process' is not defined            no-undef
+  18:34  error  'reject' is defined but never used  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\set_super_admin.js
+  6:31  error  'process' is not defined                                                              no-undef
+  6:62  error  'process' is not defined                                                              no-undef
+  9:13  error  'data' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\ChatAdminPanel.jsx
+   60:26  error  'e' is defined but never used  no-unused-vars
+  104:18  error  'e' is defined but never used  no-unused-vars
+  126:18  error  'e' is defined but never used  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\CheckoutModal.jsx
+  135:11  error  'isSystemOrder' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\CouponManager.jsx
+  31:9  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  29 |
+  30 |     useEffect(() => {
+> 31 |         fetchCoupons();
+     |         ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  32 |     }, [restaurantId]);
+  33 |
+  34 |     const handleSave = async (e) => {  react-hooks/set-state-in-effect
+  32:8  warning  React Hook useEffect has a missing dependency: 'fetchCoupons'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          react-hooks/exhaustive-deps
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\CustomerManager.jsx
+  15:8  warning  React Hook useEffect has a missing dependency: 'fetchCustomers'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\DashboardStats.jsx
+    9:41  error    'Icon' is defined but never used                                                                                        no-unused-vars
+   55:12  error    'totalItems' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                              no-unused-vars
+   56:12  error    'totalCategories' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                         no-unused-vars
+  243:8   warning  React Hook useEffect has a missing dependency: 'features?.canUseKDS'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\DeliverySettings.jsx
+  1:27  error  'useEffect' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\EmptyState.jsx
+  5:11  error  'Icon' is assigned a value but never used  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\HighlightsCarousel.jsx
+  11:13  error  'scrollAmount' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\LandingPage.jsx
+  7:11  error  'navigate' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\LivePreview.jsx
+    2:10  error  'supabase' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                  no-unused-vars
+   63:67  error  'primaryColor' is defined but never used                                                         no-unused-vars
+  122:33  error  'Layout' is defined but never used                                                               no-unused-vars
+  187:78  error  'restaurantId' is defined but never used                                                         no-unused-vars
+  188:51  error  'backgroundImage' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\LoyaltyManager.jsx
+  17:23  error    'error' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          no-unused-vars
+  30:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  28 |     useEffect(() => {
+  29 |         if (restaurantId) {
+> 30 |             fetchConfig();
+     |             ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  31 |         }
+  32 |     }, [restaurantId]);
+  33 |  react-hooks/set-state-in-effect
+  32:8   warning  React Hook useEffect has a missing dependency: 'fetchConfig'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 react-hooks/exhaustive-deps
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\LoyaltyWidget.jsx
+  10:12  error    'loading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    no-unused-vars
+  10:21  error    'setLoading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-unused-vars
+  22:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  20 |     useEffect(() => {
+  21 |         if (restaurantId) {
+> 22 |             fetchLoyaltyConfig();
+     |             ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  23 |         }
+  24 |         // Try to load saved phone
+  25 |         const savedPhone = localStorage.getItem('customer_phone');  react-hooks/set-state-in-effect
+  27:8   warning  React Hook useEffect has a missing dependency: 'fetchLoyaltyConfig'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react-hooks/exhaustive-deps
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\MenuLayouts.jsx
+  227:59  error  'fontFamily' is defined but never used  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\OrderStatusView.jsx
+    7:60  error  'onClose' is defined but never used                                                                  no-unused-vars
+    8:12  error  'order' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                no-unused-vars
+    9:12  error  'loading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u              no-unused-vars
+    9:21  error  'setLoading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u           no-unused-vars
+   43:11  error  'getStatusInfo' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u        no-unused-vars
+  113:11  error  'handleWhatsAppClick' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\QRCodeShare.jsx
+  5:30  error  'restaurantName' is defined but never used  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\ReservationManager.jsx
+  39:8   warning  React Hook useEffect has a missing dependency: 'fetchReservations'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  60:11  error    'fetchTableMap' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                         no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\SimpleAnalytics.jsx
+   5:26  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `items`, but the source dependencies were [items.length]. Inferred less specific property than source.
+
+   3 | const SimpleAnalytics = ({ items = [] }) => {
+   4 |     // Mock data generation if no real data exists, memoized to prevent re-renders
+>  5 |     const data = useMemo(() => {
+     |                          ^^^^^^^
+>  6 |         return items.slice(0, 5).map((item, i) => ({
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  7 |             name: item.name,
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  8 |             views: 20 + (i * 5) // Stable mock views
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  9 |         }));
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 10 |     }, [items.length]);
+     | ^^^^^^ Could not preserve existing manual memoization
+  11 |
+  12 |     const maxViews = Math.max(1, ...data.map(d => d.views));
+  13 |  react-hooks/preserve-manual-memoization
+  10:8   warning  React Hook useMemo has a missing dependency: 'items'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             react-hooks/exhaustive-deps
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\SmartImage.jsx
+  27:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  25 |         }
+  26 |
+> 27 |         setFinalSrc(targetUrl);
+     |         ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  28 |     }, [src, isLowEnd]);
+  29 |
+  30 |     return (  react-hooks/set-state-in-effect
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\StaffManager.jsx
+  25:8  warning  React Hook useEffect has a missing dependency: 'fetchStaff'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\UpgradePrompt.jsx
+  3:10  error  'generateWhatsAppLink' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\context\AuthContext.jsx
+  6:14  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\context\CartContext.jsx
+   5:14  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        react-refresh/only-export-components
+  15:17  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  13 |         if (savedCart) {
+  14 |             try {
+> 15 |                 setCartItems(JSON.parse(savedCart));
+     |                 ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  16 |             } catch (e) {
+  17 |                 console.error("Failed to load cart", e);
+  18 |             }  react-hooks/set-state-in-effect
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\context\SettingsContext.jsx
+  1:32  error  'useContext' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                               no-unused-vars
+  5:14  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\pages\AdminDashboard.jsx
+   31:37  error    'authLoading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                             no-unused-vars
+  247:8   warning  React Hook useEffect has a missing dependency: 'fetchRestaurantData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\pages\Explorar.jsx
+  14:12  error  'selectedCategory' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u     no-unused-vars
+  14:30  error  'setSelectedCategory' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\pages\PublicMenu.jsx
+  5:10  error  'menuService' is defined but never used. Allowed unused vars must match /^[A-Z_]/u   no-unused-vars
+  6:10  error  'themeService' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\pages\SuperAdminDashboard.jsx
+   11:13  error  'user' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u         no-unused-vars
+   11:37  error  'authLoading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+   90:47  error  'itemsError' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u   no-unused-vars
+  302:18  error  'error' is defined but never used                                                            no-unused-vars
+  327:18  error  'error' is defined but never used                                                            no-unused-vars
+  375:18  error  'error' is defined but never used                                                            no-unused-vars
+  391:18  error  'error' is defined but never used                                                            no-unused-vars
+  671:58  error  'err' is defined but never used                                                              no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\services\analyticsService.js
+  48:18  error  'err' is defined but never used  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\tailwind.config.js
+  53:1  error  Parsing error: Unexpected token
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\test_bucket_upload.js
+  3:8   error  'fs' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  6:21  error  'process' is not defined                                                   no-undef
+  7:21  error  'process' is not defined                                                   no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\test_insert.js
+   5:21  error  'process' is not defined                                                                   no-undef
+   6:21  error  'process' is not defined                                                                   no-undef
+  12:19  error  'authData' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u   no-unused-vars
+  19:23  error  'authData2' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\test_menu_creation.js
+  5:21  error  'process' is not defined  no-undef
+  6:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\test_signup.js
+  5:21  error  'process' is not defined  no-undef
+  6:21  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\test_superadmin_queries.js
+   5:21  error  'process' is not defined                                                               no-undef
+   6:21  error  'process' is not defined                                                               no-undef
+  13:11  error  'email' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\verify_and_create_bucket.js
+  13:21  error  'process' is not defined  no-undef
+  14:21  error  'process' is not defined  no-undef
+
+Ô£û 219 problems (210 errors, 9 warnings)
+
+

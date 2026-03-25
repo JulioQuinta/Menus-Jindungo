@@ -14,7 +14,7 @@ async function checkCols() {
         price: '1',
         desc_text: 'test',
         subcategory: 'test',
-        available: true,
+        is_available: true,
         img_url: 'test',
         translations: { variants: ['a'] }
     }]);

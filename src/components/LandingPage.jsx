@@ -1,7 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Star, Clock, Utensils, Search, Calendar, MapPin, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 
 const LandingPage = () => {
+    const navigate = useNavigate();
+    const { logoUrl } = useSettings();
     return (
         <div style={{
             height: '100vh',
@@ -19,9 +23,9 @@ const LandingPage = () => {
             <div style={{ position: 'absolute', top: '-10%', left: '-10%', width: '40%', height: '40%', background: 'rgba(212,175,55,0.1)', borderRadius: '50%', filter: 'blur(100px)' }}></div>
             <div style={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '40%', height: '40%', background: 'rgba(255,255,255,0.05)', borderRadius: '50%', filter: 'blur(100px)' }}></div>
 
-            <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <img src="/jindungo_logo_v3.png" style={{ width: '160px', height: '160px', objectFit: 'contain', borderRadius: '50%' }} alt="Logo" />
-                <h1 style={{ fontSize: '3.5rem', margin: 0, fontFamily: 'Playfair Display, serif', fontWeight: 'bold' }}>
+            <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexDirection: 'column' }}>
+                <img src={logoUrl || "/jindungo_logo_v3.png"} style={{ width: '100px', height: '100px', objectFit: 'contain', borderRadius: '50%' }} alt="Logo Global" />
+                <h1 style={{ fontSize: '3rem', margin: 0, fontFamily: 'Playfair Display, serif', fontWeight: 'bold' }}>
                     <span style={{ color: '#D4AF37' }}>Jindungo</span>
                 </h1>
             </div>

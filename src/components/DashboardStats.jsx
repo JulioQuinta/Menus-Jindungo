@@ -3,7 +3,7 @@ import { analyticsService } from '../services/analyticsService';
 import { supabase } from '../lib/supabaseClient';
 import { orderService } from '../services/orderService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
-import { Calendar, Users, TrendingUp, Eye, Banknote, ShoppingBag, Download, Clock, ChevronRight, FileText, BarChart3 } from 'lucide-react';
+import { Calendar, Users, TrendingUp, Eye, Banknote, ShoppingBag, Download, Clock, ChevronRight, FileText, BarChart3, Ticket } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 
 const StatCard = ({ title, value, icon: Icon, colorClass, trend, trendValue, isPositive = true }) => {
@@ -58,7 +58,7 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
 
     const [salesFilter, setSalesFilter] = useState('today'); // 'today', 'month', 'trimester', 'semester', 'year', 'custom'
     const [customDate, setCustomDate] = useState({ start: new Date().toISOString().split('T')[0], end: new Date().toISOString().split('T')[0] });
-    const [salesStats, setSalesStats] = useState({ revenue: 0, ordersCount: 0, avgTicket: 0, data: [], chartData: [], topProducts: [], hourlyData: [] });
+    const [salesStats, setSalesStats] = useState({ revenue: 0, discounts: 0, ordersCount: 0, avgTicket: 0, data: [], chartData: [], topProducts: [], hourlyData: [] });
     const [salesLoading, setSalesLoading] = useState(false);
     const componentRef = React.useRef(null);
 
@@ -170,6 +170,7 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
 
                 if (salesData && salesData.data) {
                     const revenue = salesData.data.reduce((sum, order) => sum + (order.total || 0), 0);
+                    const totalDiscounts = salesData.data.reduce((sum, order) => sum + (order.coupon_discount || 0), 0);
 
                     // Build chart data
                     const grouped = {};
@@ -223,6 +224,7 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
                     if (isMounted) {
                         setSalesStats({
                             revenue,
+                            discounts: totalDiscounts,
                             ordersCount: salesData.data.length,
                             avgTicket: salesData.data.length > 0 ? revenue / salesData.data.length : 0,
                             data: salesData.data,
@@ -328,7 +330,7 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
             )}
 
             {/* Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 <StatCard
                     title={`${features?.canUseKDS ? 'Faturação' : 'Vendas WhatsApp'}`}
                     value={salesLoading ? '...' : `${salesStats.revenue.toLocaleString('pt-AO')} Kz`}
@@ -336,6 +338,14 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
                     colorClass="bg-green-500"
                     trendValue={salesStats.ordersCount > 0 ? 12 : 0}
                     isPositive={true}
+                />
+                <StatCard
+                    title="Descontos (Marketing)"
+                    value={salesLoading ? '...' : `${salesStats.discounts ? salesStats.discounts.toLocaleString('pt-AO') : '0'} Kz`}
+                    icon={Ticket}
+                    colorClass="bg-pink-500"
+                    trendValue={0}
+                    isPositive={false}
                 />
                 <StatCard
                     title="Encomendas Reais"
@@ -546,7 +556,12 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
                                             <div className="text-xs text-gray-500 mt-1 truncate max-w-[150px]">{order.items?.length || 0} Itens</div>
                                         </td>
                                         <td className="py-4 px-4 font-bold text-[#D4AF37] whitespace-nowrap">
-                                            {order.total?.toLocaleString('pt-AO')} <span className="text-xs text-gray-500">Kz</span>
+                                            <div>{order.total?.toLocaleString('pt-AO')} <span className="text-xs text-gray-500">Kz</span></div>
+                                            {order.coupon_code && (
+                                                <div className="text-[10px] text-green-500 mt-1 whitespace-nowrap">
+                                                    Cupão: {order.coupon_code} <br/>(-{order.coupon_discount} Kz)
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="py-4 px-4">
                                             <span className={`px-4 py-1.5 text-xs font-bold rounded-xl border ${order.status === 'pending' ? 'bg-yellow-900/20 text-yellow-400 border-yellow-900/50' : 'bg-blue-900/20 text-blue-400 border-blue-900/50'}`}>

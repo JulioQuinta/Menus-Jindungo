@@ -1,3 +1,6 @@
+-- Add is_super_admin column to profiles if it doesn't exist
+ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS is_super_admin BOOLEAN DEFAULT false;
+
 -- Create staff members table for waiter management
 CREATE TABLE IF NOT EXISTS public.staff_members (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { orderService } from '../services/orderService';
-import { CheckCircle, Clock, ChefHat, Truck } from 'lucide-react';
+import { CheckCircle, Clock, ChefHat, Truck, XCircle } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
+import { generateWhatsAppLink } from '../utils/whatsappGenerator';
 
 const OrderStatusModal = ({ orderId, restaurantId, isOpen, onClose }) => {
     const [order, setOrder] = useState(null);
@@ -183,6 +185,31 @@ export const OrderStatusView = ({ order, status, whatsappNumber }) => {
                         <span className="font-bold text-gray-800 dark:text-gray-100">{item.price}</span>
                     </div>
                 ))}
+                
+                {order?.coupon_code && (
+                    <div className="mt-3 pt-3 border-t border-dashed border-gray-200 dark:border-white/10">
+                        <div className="flex justify-between text-xs text-green-600 dark:text-green-400 font-bold">
+                            <span>Cupão: {order.coupon_code}</span>
+                            <span>-{order.coupon_discount} Kz</span>
+                        </div>
+                    </div>
+                )}
+
+                {order?.is_loyalty_redemption && (
+                    <div className="mt-2 pt-2 border-t border-dashed border-gray-100 dark:border-white/5">
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-[#D4AF37]">
+                            <Award size={12} />
+                            <span>RECOMPENSA FIDELIZAÇÃO: {order.loyalty_reward_text}</span>
+                        </div>
+                    </div>
+                )}
+                
+                <div className="mt-2 pt-2 flex justify-between items-center">
+                    <span className="text-xs font-bold text-gray-500 uppercase">Total Final</span>
+                    <span className="text-lg font-black text-[#D4AF37]">
+                        {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(order?.total).replace('AOA', 'Kz')}
+                    </span>
+                </div>
             </div>
 
             <p className="mt-6 text-[10px] text-gray-400 uppercase tracking-tighter">

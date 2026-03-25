@@ -46,8 +46,8 @@ export const getPlanFeatures = (planString) => {
 
         // --- 4. Inteligência & Dados de Topo (CRM & Logística) ---
         canCollectClientData: hasCorporate, // Guarda clientes recorrentes / Contactos WhatsApp
-        hasDynamicSearch: hasCorporate,     // SearchBar dinâmica no menu
-        isMultilingual: hasCorporate,       // Selector de idiomas
+        hasDynamicSearch: hasBusiness,          // SearchBar dinâmica no menu (Business+)
+        isMultilingual: true,                    // Selector de idiomas disponível para todos
         hasDeliveryCalculator: hasCorporate,// Taxa de entrega fixa/dinâmica consoante bairro
         hasAdvancedAnalytics: hasCorporate  // Relatórios de vendas profundos
     };

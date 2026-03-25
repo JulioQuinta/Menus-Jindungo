@@ -1,13 +1,14 @@
 import React, { useRef } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 
-const QRCodeGenerator = ({ url, restaurantName }) => {
+const QRCodeGenerator = ({ url, restaurantName, logoUrl }) => {
     const qrRef = useRef();
     const [tableNumber, setTableNumber] = React.useState('');
 
     // Generate URL with optional table parameter
     const finalUrl = tableNumber ? `${url}?mesa=${tableNumber}` : url;
     const isLocalhost = url.includes('localhost') || url.includes('127.0.0.1');
+    const qrLogoSrc = logoUrl || '/jindungo_icon.png';
 
     const downloadQRCode = () => {
         const canvas = qrRef.current.querySelector('canvas');
@@ -33,11 +34,11 @@ const QRCodeGenerator = ({ url, restaurantName }) => {
                     level={"H"}
                     includeMargin={true}
                     imageSettings={{
-                        src: "/jindungo_icon.png",
+                        src: qrLogoSrc,
                         x: undefined,
                         y: undefined,
-                        height: 30,
-                        width: 30,
+                        height: logoUrl ? 40 : 30,
+                        width: logoUrl ? 40 : 30,
                         excavate: true,
                     }}
                 />

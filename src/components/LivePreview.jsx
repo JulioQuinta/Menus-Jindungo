@@ -20,7 +20,7 @@ const FlagSelector = ({ selected, onSelect }) => {
     const current = languages.find(l => l.code === selected) || languages[0];
 
     return (
-        <div className="absolute top-6 right-6 z-50">
+        <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
             <div className="relative">
                 <button
                     onClick={() => setIsOpen(!isOpen)}
@@ -63,15 +63,29 @@ const FlagSelector = ({ selected, onSelect }) => {
 const CategoryCarousel = ({ categories, activeCategory, onSelect, primaryColor }) => {
     // Auto-scroll the active category into view
     const scrollRef = React.useRef(null);
+    
+    // Triple the categories for a "loop" feel - we'll repeat them enough to fill the scroll
+    const loopedCategories = [...categories, ...categories, ...categories];
 
     React.useEffect(() => {
-        if (scrollRef.current) {
-            const activeBtn = scrollRef.current.querySelector('[data-active="true"]');
+        if (scrollRef.current && activeCategory) {
+            // Find the center instance of the active category to scroll to
+            const buttons = scrollRef.current.querySelectorAll(`[data-catid="${activeCategory}"]`);
+            const activeBtn = buttons[Math.floor(buttons.length / 2)];
             if (activeBtn) {
                 activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
             }
         }
     }, [activeCategory]);
+
+    // Initial scroll to middle
+    React.useEffect(() => {
+        if (scrollRef.current && categories.length > 0) {
+            const container = scrollRef.current;
+            const scrollWidth = container.scrollWidth;
+            container.scrollLeft = scrollWidth / 3;
+        }
+    }, [categories.length]);
 
     return (
         <div className="relative group">
@@ -83,9 +97,10 @@ const CategoryCarousel = ({ categories, activeCategory, onSelect, primaryColor }
                 ref={scrollRef}
                 className="flex overflow-x-auto gap-3 p-4 scrollbar-hide snap-x"
             >
-                {categories.map(cat => (
+                {loopedCategories.map((cat, idx) => (
                     <button
-                        key={cat.id}
+                        key={`${cat.id}-${idx}`}
+                        data-catid={cat.id}
                         data-active={activeCategory === cat.id}
                         onClick={() => onSelect(cat.id)}
                         className={`flex-shrink-0 flex flex-col items-center gap-1.5 p-2 min-w-[72px] rounded-xl transition-all border snap-start active:scale-95 ${activeCategory === cat.id
@@ -112,31 +127,14 @@ const CategoryCarousel = ({ categories, activeCategory, onSelect, primaryColor }
                         </span>
                     </button>
                 ))}
-                {/* Spacer to allow scrolling far right */}
-                <div className="min-w-[20px]" />
             </div>
         </div>
     );
 };
 
-const CategorySection = ({ cat, Layout, commonProps, fontFamily, onVisible }) => {
-    const sectionRef = React.useRef(null);
+const CategorySection = ({ cat, Layout, commonProps, fontFamily }) => {
     const subcategories = [...new Set(cat.items.map(i => i.subcategory).filter(Boolean))];
     const [activeSub, setActiveSub] = React.useState('Todos');
-
-    React.useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    onVisible(cat.id);
-                }
-            },
-            { threshold: 0.2, rootMargin: "-20% 0px -70% 0px" }
-        );
-
-        if (sectionRef.current) observer.observe(sectionRef.current);
-        return () => observer.disconnect();
-    }, [cat.id, onVisible]);
 
     const filteredItems = activeSub === 'Todos'
         ? cat.items
@@ -145,7 +143,7 @@ const CategorySection = ({ cat, Layout, commonProps, fontFamily, onVisible }) =>
     if (filteredItems.length === 0 && activeSub !== 'Todos') return null;
 
     return (
-        <div id={`category-${cat.id}`} ref={sectionRef} className="mb-8 scroll-mt-32">
+        <div id={`category-${cat.id}`} className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: commonProps.primaryColor }}>
                 <span className="w-1 h-6 rounded-full bg-current block"></span>
                 {cat.label}
@@ -191,6 +189,13 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
     const [searchTerm, setSearchTerm] = React.useState('');
     const [showSearch, setShowSearch] = React.useState(false);
 
+    // Auto-initialize active category once loaded
+    React.useEffect(() => {
+        if (!activeCategory && categories.length > 0) {
+            setActiveCategory(categories[0].id);
+        }
+    }, [categories, activeCategory]);
+
     const effectivePrimaryColor = primaryColor || '#D4AF37';
     // If background is not set, use a very light tint of the primary color for a themed look
     const defaultLightBg = darkenColor(effectivePrimaryColor, -92).slice(0, 7);
@@ -224,7 +229,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
                 const searchLower = searchTerm.toLowerCase();
                 return (
                     item.name.toLowerCase().includes(searchLower) ||
-                    (item.description && item.description.toLowerCase().includes(searchLower))
+                    (item.desc && item.desc.toLowerCase().includes(searchLower))
                 );
             });
             return { ...cat, items: filteredItems };
@@ -243,29 +248,38 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
 
         const commonProps = { primaryColor, isEditing, darkMode, selectedLanguage, restaurantClosed: config.isOpen === false, customBgInfo: { isCustom: isCustomBg, textColor: effectiveTextColor, bgColor: effectiveBgColor } };
 
-        const targetCategories = searchTerm ? filteredCategories : categories;
+        // If searching, show all matching categories. If not, only show the active category.
+        const targetCategories = searchTerm 
+            ? filteredCategories 
+            : categories.filter(cat => cat.id === activeCategory);
+
+        // Fallback: if no active category (e.g. initial load before state), show first
+        const displayCategories = targetCategories.length > 0 
+            ? targetCategories 
+            : (categories.length > 0 ? [categories[0]] : []);
 
         switch (layoutMode) {
             case 'grid':
-                return targetCategories.map(cat => (
-                    <CategorySection key={cat.id} cat={cat} Layout={GridLayout} commonProps={commonProps} onVisible={setActiveCategory} />
+                return displayCategories.map(cat => (
+                    <CategorySection key={cat.id} cat={cat} Layout={GridLayout} commonProps={commonProps} />
                 ));
             case 'minimal':
-                return targetCategories.map(cat => (
-                    <CategorySection key={cat.id} cat={cat} Layout={MinimalLayout} commonProps={commonProps} fontFamily={fontFamily} onVisible={setActiveCategory} />
+                return displayCategories.map(cat => (
+                    <CategorySection key={cat.id} cat={cat} Layout={MinimalLayout} commonProps={commonProps} fontFamily={fontFamily} />
                 ));
             case 'list':
             default:
-                return targetCategories.map(cat => (
-                    <CategorySection key={cat.id} cat={cat} Layout={ListLayout} commonProps={commonProps} onVisible={setActiveCategory} />
+                return displayCategories.map(cat => (
+                    <CategorySection key={cat.id} cat={cat} Layout={ListLayout} commonProps={commonProps} />
                 ));
         }
     };
 
-    const scrollToCategory = (id) => {
+    const handleCategorySelect = (id) => {
         setActiveCategory(id);
-        const el = document.getElementById(`category-${id}`);
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
+        // Scroll the closest scrollable parent to top
+        const scrollContainer = document.querySelector('.overflow-y-auto') || window;
+        scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
 
@@ -281,7 +295,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
 
             {/* Header / Hero */}
             <div
-                className="relative p-8 pt-16 pb-14 flex flex-col items-center transition-all duration-700 overflow-hidden min-h-[300px] justify-center"
+                className="relative p-4 sm:p-8 pt-16 pb-8 sm:pb-14 flex flex-col items-center transition-all duration-700 overflow-hidden min-h-[300px] justify-center"
                 style={{
                     backgroundColor: effectivePrimaryColor,
                     backgroundImage: config.headerBgUrl
@@ -307,7 +321,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
                             <img
                                 src={config.logoUrl}
                                 alt={config.restaurantName || "Logotipo"}
-                                className="w-32 h-32 object-contain filter drop-shadow-2xl mb-2"
+                                className="w-24 h-24 sm:w-32 sm:h-32 object-contain filter drop-shadow-2xl mb-2 transition-all"
                             />
                         ) : (
                             <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mb-2 border-2 border-[#D4AF37]">
@@ -317,7 +331,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
 
                         {/* Text Stack - Only Restaurant Name */}
                         <div className="flex flex-col items-center leading-tight">
-                            <span className="text-4xl font-serif font-bold text-[#D4AF37] drop-shadow-md tracking-wider text-center px-4">
+                            <span className="text-3xl sm:text-4xl font-serif font-bold text-[#D4AF37] drop-shadow-md tracking-wider text-center px-4 transition-all">
                                 {config.restaurantName || 'Restaurante'}
                             </span>
                         </div>
@@ -336,7 +350,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
                     </p>
                 </div>
 
-                {/* Corporate Feature: Search Toggle & Bar */}
+                {/* Search Toggle & Bar - Available for all plans now */}
                 {features.hasDynamicSearch && (
                     <div className="w-full flex flex-col items-center relative z-20">
                         {!showSearch ? (
@@ -386,8 +400,8 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
                 >
                     <CategoryCarousel
                         categories={categories}
-                        activeCategory={activeCategory}
-                        onSelect={scrollToCategory}
+                        activeCategory={activeCategory || categories?.[0]?.id}
+                        onSelect={handleCategorySelect}
                         primaryColor={effectivePrimaryColor}
                     />
                 </div>

@@ -5,10 +5,9 @@ import Skeleton from './Skeleton';
 const SmartImage = ({ src, alt, className = '', style = {}, borderRadius = '0' }) => {
     const { isLowEnd } = useNetworkStatus();
     const [loaded, setLoaded] = useState(false);
-    const [finalSrc, setFinalSrc] = useState('');
 
-    useEffect(() => {
-        if (!src) return;
+    const finalSrc = React.useMemo(() => {
+        if (!src) return '';
 
         let targetUrl = src;
 
@@ -16,15 +15,11 @@ const SmartImage = ({ src, alt, className = '', style = {}, borderRadius = '0' }
         if (isLowEnd) {
             // If it's Unsplash, use their API
             if (src.includes('images.unsplash.com')) {
-                targetUrl = src.replace('w=400', 'w=200&q=40');
+                return src.replace('w=400', 'w=200&q=40');
             }
-            // If Supabase (checking by common pattern or domain if known), 
-            // supabase storage doesn't have on-the-fly transformations unless using specific resizing proxy,
-            // but we can simulate logic or add query params if we had a transformer. 
-            // For now, we assume Unsplash or standard serving.
         }
 
-        setFinalSrc(targetUrl);
+        return targetUrl;
     }, [src, isLowEnd]);
 
     return (

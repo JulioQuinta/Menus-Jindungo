@@ -11,7 +11,7 @@ import { couponService } from '../services/couponService';
 import { Ticket, X, CheckCircle2, Award, Star, UtensilsCrossed, Bike, User, Smartphone, MapPin, Banknote, CreditCard, ChevronRight } from 'lucide-react';
 import { loyaltyService } from '../services/loyaltyService';
 
-const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features = {}, initialTable = '', deliveryConfig = {} }) => {
+const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features = {}, initialTable = '', deliveryConfig = {}, activeStaff = null }) => {
     const { cartItems, getCartTotal, clearCart } = useCart();
 
     // Form State
@@ -20,6 +20,14 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
     const [showUpsell, setShowUpsell] = useState(true);
+
+    // Initial load from localStorage
+    useEffect(() => {
+        const savedPhone = localStorage.getItem('customer_phone');
+        if (savedPhone) setCustomerPhone(savedPhone);
+        const savedName = localStorage.getItem('customer_name');
+        if (savedName) setCustomerName(savedName);
+    }, []);
 
     // Dine-in fields
     const [tableNumber, setTableNumber] = useState(initialTable);
@@ -31,6 +39,32 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
 
     // Delivery fields
     const [address, setAddress] = useState('');
+    const [addressReference, setAddressReference] = useState('');
+    const [gpsCoords, setGpsCoords] = useState(null);
+    const [isGettingLocation, setIsGettingLocation] = useState(false);
+
+    const handleGetLocation = () => {
+        if (!navigator.geolocation) {
+            toast.error('O seu dispositivo não suporta geolocalização.');
+            return;
+        }
+        setIsGettingLocation(true);
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                setGpsCoords(coords);
+                setAddress(`GPS: ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`);
+                setIsGettingLocation(false);
+                toast.success('Localização obtida com sucesso!');
+            },
+            (err) => {
+                console.error(err);
+                setIsGettingLocation(false);
+                toast.error('Não foi possível obter a localização. Escreva o endereço manualmente.');
+            },
+            { timeout: 10000 }
+        );
+    };
 
     // Payment fields
     const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' | 'multicaixa'
@@ -49,6 +83,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
     // Loyalty State
     const [loyaltyConfig, setLoyaltyConfig] = useState(null);
     const [loyaltyPoints, setLoyaltyPoints] = useState(null);
+    const [isRedeemingLoyalty, setIsRedeemingLoyalty] = useState(false);
 
     useEffect(() => {
         if (isOpen && createdOrder && restaurantId) {
@@ -83,6 +118,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
             return () => clearTimeout(timer);
         } else {
             setLoyaltyPoints(null);
+            setIsRedeemingLoyalty(false);
         }
     }, [customerPhone, loyaltyConfig, restaurantId]);
 
@@ -141,7 +177,9 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
         setIsSending(true);
 
         const zoneInfo = (orderType === 'delivery' && selectedZone) ? `(${selectedZone.name} +${selectedZone.fee}Kz)` : '';
-        const baseTableOrAddress = orderType === 'dine-in' ? tableNumber : `Entrega: ${address} ${zoneInfo}`;
+        const mapsLink = gpsCoords ? ` | Maps: https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : '';
+        const refNote = addressReference ? ` | Ref: ${addressReference}` : '';
+        const baseTableOrAddress = orderType === 'dine-in' ? tableNumber : `Entrega: ${address}${refNote}${mapsLink} ${zoneInfo}`;
         const paymentInfo = paymentMethod === 'cash' ? 'Dinheiro' : 'Multicaixa';
 
         const orderData = {
@@ -154,7 +192,11 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
             table_number: `${baseTableOrAddress} | Pgto: ${paymentInfo}`,
             coupon_id: appliedCoupon?.id || null,
             coupon_code: appliedCoupon?.code || null,
-            coupon_discount: discount
+            coupon_discount: discount,
+            is_loyalty_redemption: isRedeemingLoyalty,
+            loyalty_reward_text: isRedeemingLoyalty ? loyaltyConfig?.reward_text : null,
+            staff_member_id: activeStaff ? activeStaff.id : null,
+            staff_member_name: activeStaff ? activeStaff.name : null
         };
 
         try {
@@ -166,6 +208,10 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                 newOrder = data;
                 setCreatedOrder(newOrder);
                 clearCart();
+                
+                // Save customer info for future visits
+                localStorage.setItem('customer_phone', customerPhone);
+                localStorage.setItem('customer_name', customerName);
             }
 
             // 2. Track Analytics
@@ -179,7 +225,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                 }
                 const link = generateWhatsAppLink(cartItems, total, orderType, { ...orderData, paymentMethod, changeFor }, whatsappNumber);
                 const cacheBusterLink = link + (link.includes('?') ? '&' : '?') + 't=' + Date.now();
-                window.open(cacheBusterLink, '_blank');
+                window.location.href = cacheBusterLink;
 
                 // If it's a real restaurant but no KDS, we can still close since WhatsApp is the main channel
                 if (!features?.canUseKDS && restaurantId) {
@@ -198,6 +244,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
 
     const closeAndReset = () => {
         setCreatedOrder(null);
+        setIsRedeemingLoyalty(false);
         onClose();
         // Cart is cleared on success, so user starts fresh
     };
@@ -230,24 +277,19 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
             background: 'rgba(0,0,0,0.5)', zIndex: 9999,
             display: 'flex', alignItems: 'center', justifyContent: 'center', // Centered
-            padding: '20px', backdropFilter: 'blur(2px)' // Add padding to avoid touching edges
+            padding: '16px', backdropFilter: 'blur(2px)' // Add padding to avoid touching edges
         }} onClick={onClose}>
-            <div style={{
-                background: 'var(--bg-card, white)',
-                width: '100%',
-                maxWidth: '400px', // Constrain width
-                borderRadius: '24px', // Rounded all around
-                padding: '1.5rem',
+            <div className="w-full max-w-md rounded-3xl p-5 sm:p-6 shadow-2xl relative text-gray-800" style={{
+                background: 'white',
                 animation: 'slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)', // Much faster, snappy slide
                 maxHeight: '85vh',
-                overflowY: 'auto',
-                boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+                overflowY: 'auto'
             }} onClick={e => e.stopPropagation()}>
 
                 <div style={{ height: '4px', width: '40px', background: '#cbd5e0', borderRadius: '2px', margin: '0 auto 1.5rem' }} />
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h2 style={{ fontSize: '1.2rem', margin: 0, color: 'var(--text-primary)' }}>
+                    <h2 style={{ fontSize: '1.2rem', margin: 0, color: '#1a202c', fontWeight: 'bold' }}>
                         {features?.hasUpsell && showUpsell ? 'Quase lá...' : 'Finalizar Pedido'}
                     </h2>
                     <button onClick={onClose} style={{ background: 'transparent', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#a0aec0' }}>&times;</button>
@@ -282,18 +324,18 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', marginBottom: '1.5rem' }}>
                             {cartItems.map(item => (
-                                <div key={item.cartItemId || item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                                <div key={item.cartItemId || item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#4a5568' }}>
                                     <span>{item.quantity}x {item.name} {item.selectedVariant ? `(${item.selectedVariant})` : ''}</span>
-                                    <span style={{ fontWeight: 'bold' }}>{item.price}</span>
+                                    <span style={{ fontWeight: 'bold', color: '#1a202c' }}>{item.price}</span>
                                 </div>
                             ))}
-                            {(cartItems.length === 0) && <p> Carrinho vazio.</p>}
+                            {(cartItems.length === 0) && <p className="text-gray-500"> Carrinho vazio.</p>}
                         </div>
 
-                        <div style={{ borderTop: '1px dashed var(--border-color)', margin: '1rem 0' }} />
+                        <div style={{ borderTop: '1px dashed #e2e8f0', margin: '1rem 0' }} />
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1.5rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', color: 'var(--text-secondary)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', color: '#4a5568' }}>
                                 <span>Subtotal</span>
                                 <span>{new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(subtotal).replace('AOA', 'Kz')}</span>
                             </div>
@@ -309,9 +351,9 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                     <span>-{discount} Kz</span>
                                 </div>
                             )}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', fontWeight: 'bold', marginTop: '0.5rem', color: 'var(--text-primary)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', fontWeight: 'bold', marginTop: '0.5rem', color: '#1a202c' }}>
                                 <span>Total Final</span>
-                                <span style={{ color: 'var(--color-primary)' }}>
+                                <span style={{ color: '#D4AF37' }}>
                                     {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(total).replace('AOA', 'Kz')}
                                 </span>
                             </div>
@@ -328,7 +370,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                     <input
                                         type="text"
                                         placeholder="Tens um código?"
-                                        className="input-text"
+                                        className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900 bg-white"
                                         style={{ margin: 0, textTransform: 'uppercase' }}
                                         value={couponCode}
                                         onChange={e => setCouponCode(e.target.value)}
@@ -358,7 +400,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                             )}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                             <div className="space-y-2">
                                 <label className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider">
                                     <User size={12} className="text-gray-400" />
@@ -369,7 +411,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                     value={customerName}
                                     onChange={e => setCustomerName(e.target.value)}
                                     placeholder="Ex: Ana Silva"
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm font-medium"
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37] outline-none transition-all text-sm font-medium text-gray-900 placeholder-gray-400"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -382,7 +424,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                     value={customerPhone}
                                     onChange={e => setCustomerPhone(e.target.value)}
                                     placeholder="9xx xxx xxx"
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm font-medium"
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37] outline-none transition-all text-sm font-medium text-gray-900 placeholder-gray-400"
                                 />
                             </div>
                         </div>
@@ -435,49 +477,115 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                         : `Faltam ${loyaltyConfig.goal - loyaltyPoints} pedidos para o seu prémio!`
                                     }
                                 </p>
+
+                                {loyaltyPoints >= loyaltyConfig.goal && (
+                                    <div className="mt-4 p-4 bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-2xl flex items-center justify-between shadow-sm animate-bounce-short">
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-[#D4AF37] p-2 rounded-full text-black">
+                                                <Award size={18} />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold text-gray-800">Usar Recompensa agora?</p>
+                                                <p className="text-[10px] text-gray-500">{loyaltyConfig.reward_text}</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => setIsRedeemingLoyalty(!isRedeemingLoyalty)}
+                                            className={`w-12 h-6 rounded-full transition-all relative ${isRedeemingLoyalty ? 'bg-[#38a169]' : 'bg-gray-300'}`}
+                                        >
+                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isRedeemingLoyalty ? 'left-7' : 'left-1'}`} />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
 
                         {orderType === 'dine-in' ? (
                             <div style={{ marginBottom: '1.5rem', animation: 'fadeIn 0.3s' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                    <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Mesa (Número, Nome ou Letra)</label>
+                                    <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>Mesa (Número, Nome ou Letra)</label>
                                     {initialTable && tableNumber === initialTable && (
                                         <span style={{ fontSize: '0.7rem', background: '#e6fffa', color: '#2c7a7b', padding: '2px 8px', borderRadius: '10px', fontWeight: 'bold', border: '1px solid #b2f5ea' }}>
                                             ✓ Detectada via QR Code
                                         </span>
                                     )}
                                 </div>
-                                <input type="text" value={tableNumber} onChange={e => setTableNumber(e.target.value)} placeholder="Ex: Mesa 4, Esplanada A..." className="input-text" />
+                                <input type="text" value={tableNumber} onChange={e => setTableNumber(e.target.value)} placeholder="Ex: Mesa 4, Esplanada A..." className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900 placeholder-gray-400" />
                             </div>
                         ) : (
                             <div style={{ marginBottom: '1.5rem', animation: 'fadeIn 0.3s' }}>
                                 {deliveryConfig?.enabled && deliveryConfig?.zones?.length > 0 && (
                                     <div style={{ marginBottom: '1rem' }}>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Bairro / Zona de Entrega</label>
+                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>Bairro / Zona de Entrega</label>
                                         <select
-                                            className="input-text"
+                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900"
                                             value={selectedZone ? JSON.stringify(selectedZone) : ''}
                                             onChange={(e) => setSelectedZone(e.target.value ? JSON.parse(e.target.value) : null)}
-                                            style={{ appearance: 'none', background: 'white url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E") no-repeat right .7em top 50% / .65em auto' }}
+                                            style={{ appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23000000%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right .7em top 50%', backgroundSize: '.65em auto' }}
                                         >
-                                            <option value="">Selecione o seu bairro...</option>
+                                            <option value="" className="text-gray-500">Selecione o seu bairro...</option>
                                             {deliveryConfig.zones.map((zone, idx) => (
-                                                <option key={idx} value={JSON.stringify(zone)}>
+                                                <option key={idx} value={JSON.stringify(zone)} className="text-gray-900">
                                                     {zone.name} (+{zone.fee} Kz)
                                                 </option>
                                             ))}
                                         </select>
                                     </div>
                                 )}
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Endereço Detalhado</label>
-                                <textarea value={address} onChange={e => setAddress(e.target.value)} placeholder="Rua, Prédio, Apartamento..." className="input-text" rows={2} style={{ resize: 'none' }} />
+                                {/* GPS Location Button */}
+                                <button
+                                    type="button"
+                                    onClick={handleGetLocation}
+                                    disabled={isGettingLocation}
+                                    className={`w-full flex items-center justify-center gap-2 py-3 px-4 mb-3 rounded-xl border-2 font-bold text-sm transition-all ${
+                                        gpsCoords 
+                                            ? 'bg-green-50 border-green-400 text-green-700' 
+                                            : 'bg-blue-50 border-blue-200 text-blue-600 hover:border-blue-400'
+                                    } disabled:opacity-60`}
+                                >
+                                    <MapPin size={16} />
+                                    {isGettingLocation ? 'A obter localização...' : gpsCoords ? '✓ Localização Obtida (GPS)' : 'Usar a Minha Localização (GPS)'}
+                                </button>
+
+                                {gpsCoords && (
+                                    <a
+                                        href={`https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-2 text-xs text-blue-500 hover:text-blue-700 mb-3 font-medium"
+                                    >
+                                        <MapPin size={12} /> Ver no Google Maps
+                                    </a>
+                                )}
+
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>
+                                    Endereço / Bairro
+                                </label>
+                                <textarea
+                                    value={address}
+                                    onChange={e => setAddress(e.target.value)}
+                                    placeholder="Ex: Talatona, Bloco C, Rua 28..."
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900 placeholder-gray-400"
+                                    rows={2}
+                                    style={{ resize: 'none' }}
+                                />
+
+                                <label style={{ display: 'block', margin: '0.75rem 0 0.5rem', fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>
+                                    Ponto de Referência
+                                </label>
+                                <input
+                                    type="text"
+                                    value={addressReference}
+                                    onChange={e => setAddressReference(e.target.value)}
+                                    placeholder="Ex: Perto do Shoprite, Em frente ao Banco BFA…"
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900 placeholder-gray-400"
+                                />
                             </div>
                         )}
 
-                        <div className="mb-8 p-5 bg-gray-50 rounded-[24px] border border-gray-100 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        <div className="mb-6 sm:mb-8 p-4 sm:p-5 bg-gray-50 rounded-2xl sm:rounded-[24px] border border-gray-100 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
                             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Forma de Pagamento</label>
-                            <div className="grid grid-cols-2 gap-3 mb-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                                 <button
                                     onClick={() => setPaymentMethod('cash')}
                                     className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${paymentMethod === 'cash' ? 'bg-green-50 border-green-500 text-green-700 shadow-sm' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300'}`}
@@ -498,7 +606,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                     <input
                                         type="number"
                                         placeholder="Troco para que valor?"
-                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-100 focus:border-green-400 outline-none transition-all text-sm font-medium"
+                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-100 focus:border-green-400 outline-none transition-all text-sm font-medium text-gray-900 placeholder-gray-400"
                                         value={changeFor}
                                         onChange={e => setChangeFor(e.target.value)}
                                     />
@@ -509,15 +617,13 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                         <button
                             onClick={handleSendOrder}
                             disabled={cartItems.length === 0 || isSending}
+                            className={`w-full p-4 rounded-2xl font-bold text-lg text-black transition-all ${cartItems.length === 0 || isSending ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02] active:scale-[0.98]'}`}
                             style={{
-                                width: '100%', padding: '1rem', borderRadius: '16px',
-                                background: 'var(--color-primary)', color: 'white',
-                                border: 'none', fontWeight: 'bold', fontSize: '1rem',
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                                cursor: 'pointer', opacity: (cartItems.length === 0 || isSending) ? 0.5 : 1
+                                background: 'linear-gradient(135deg, #D4AF37 0%, #F1C40F 100%)',
+                                boxShadow: '0 8px 20px rgba(212,175,55,0.3)',
                             }}
                         >
-                            {isSending ? 'Enviando...' : ((features?.canUseKDS && restaurantId) ? 'Enviar para Cozinha 👨‍🍳' : 'Enviar Pedido Via WhatsApp 🟢')}
+                            {isSending ? 'Processando pedido...' : ((features?.canUseKDS && restaurantId) ? 'Enviar para Cozinha 👨‍🍳' : 'Fechar Pedido no WhatsApp 🟢')}
                         </button>
                     </>
                 )}

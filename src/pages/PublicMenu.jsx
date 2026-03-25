@@ -12,8 +12,9 @@ import CartFloatingButton from '../components/CartFloatingButton';
 import CheckoutModal from '../components/CheckoutModal';
 import LoyaltyWidget from '../components/LoyaltyWidget';
 import BookingModal from '../components/BookingModal';
+import StaffPinModal from '../components/StaffPinModal';
 import { getPlanFeatures } from '../utils/planLimits';
-import { Info, Share2, MapPin, Clock, Instagram, Facebook, Phone, X, Calendar, BellRing } from 'lucide-react';
+import { Info, Share2, MapPin, Clock, Instagram, Facebook, Phone, X, Calendar, BellRing, Lock } from 'lucide-react';
 
 const DEFAULT_CONFIG = {
     primaryColor: '#ff6b6b',
@@ -39,6 +40,19 @@ const PublicMenu = () => {
     const [isCurrentlyClosed, setIsCurrentlyClosed] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
     const [showBookingModal, setShowBookingModal] = useState(false);
+    const [showStaffModal, setShowStaffModal] = useState(false);
+    const [activeStaff, setActiveStaff] = useState(null);
+
+    // Initial check for active staff session
+    useEffect(() => {
+        if (restaurant?.id) {
+            const savedName = localStorage.getItem(`jindungo_staff_name_${restaurant.id}`);
+            const savedId = localStorage.getItem(`jindungo_staff_id_${restaurant.id}`);
+            if (savedName && savedId) {
+                setActiveStaff({ id: savedId, name: savedName });
+            }
+        }
+    }, [restaurant?.id]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -103,7 +117,6 @@ const PublicMenu = () => {
                     id: cat.id,
                     label: cat.label,
                     items: (cat.menu_items || [])
-                        .filter(item => item.available)
                         .map(item => ({
                             id: item.id,
                             name: item.name,
@@ -151,13 +164,12 @@ const PublicMenu = () => {
         fetchData();
     }, [slug]);
 
-    // [NEW] Dynamic Title & Meta Tags for SEO/Social Share
+    // [DYNAMIC FAVICON] Changes browser tab icon to the restaurant's logo
     useEffect(() => {
         if (!restaurant) return;
 
-        // Update Document Title
         const originalTitle = document.title;
-        document.title = `${restaurant.name} | Menu Digital Jindungo`;
+        document.title = `${restaurant.name} | Menu Digital`;
 
         // Update/Create Meta Tags
         const updateMeta = (name, content, isProperty = false) => {
@@ -176,6 +188,22 @@ const PublicMenu = () => {
         if (config?.logoUrl) updateMeta('og:image', config.logoUrl, true);
         updateMeta('og:url', window.location.href, true);
         updateMeta('og:type', 'website', true);
+
+        // Dynamic Favicon: switch to restaurant logo if available
+        if (config?.logoUrl) {
+            const favicon = document.querySelector('link[rel="icon"]') || document.createElement('link');
+            favicon.rel = 'icon';
+            favicon.type = 'image/png';
+            const originalHref = favicon.href;
+            favicon.href = config.logoUrl;
+            if (!document.querySelector('link[rel="icon"]')) {
+                document.head.appendChild(favicon);
+            }
+            return () => {
+                favicon.href = originalHref;
+                document.title = originalTitle;
+            };
+        }
 
         return () => {
             document.title = originalTitle;
@@ -260,20 +288,63 @@ const PublicMenu = () => {
     }
 
     if (loading) {
+        // Branded splash screen with the restaurant's logo (if already known) or a generic elegant loader
+        const splashLogo = config?.logoUrl;
+        const splashName = restaurant?.name;
+        const splashColor = config?.primaryColor || '#D4AF37';
+        const splashDark = config?.darkMode;
+
         return (
-            <div className="min-h-screen flex items-center justify-center bg-white">
-                <div className="animate-pulse flex flex-col items-center">
-                    <div className="h-12 w-12 bg-gray-200 rounded-full mb-4"></div>
-                    <div className="h-4 w-32 bg-gray-200 rounded"></div>
+            <div
+                className="min-h-screen flex flex-col items-center justify-center"
+                style={{ background: splashDark ? '#111' : '#f9f9f9' }}
+            >
+                {/* Animated ring behind logo */}
+                <div className="relative flex items-center justify-center mb-6">
+                    <span
+                        className="absolute animate-ping rounded-full opacity-30"
+                        style={{ width: 110, height: 110, backgroundColor: splashColor }}
+                    />
+                    <span
+                        className="absolute animate-pulse rounded-full opacity-20"
+                        style={{ width: 90, height: 90, backgroundColor: splashColor }}
+                    />
+
+                    {splashLogo ? (
+                        <img
+                            src={splashLogo}
+                            alt={splashName || 'Logo'}
+                            className="w-20 h-20 rounded-full object-cover border-4 shadow-2xl relative z-10"
+                            style={{ borderColor: splashColor }}
+                        />
+                    ) : (
+                        <div
+                            className="w-20 h-20 rounded-full flex items-center justify-center text-4xl border-4 shadow-2xl relative z-10"
+                            style={{ borderColor: splashColor, backgroundColor: splashDark ? '#222' : '#fff' }}
+                        >
+                            🍽️
+                        </div>
+                    )}
                 </div>
+
+                {/* Restaurant name or generic text */}
+                <p
+                    className="text-lg font-bold tracking-widest animate-pulse"
+                    style={{ color: splashColor }}
+                >
+                    {splashName || 'A carregar menu...'}
+                </p>
+                <p className="text-xs mt-2 opacity-40" style={{ color: splashDark ? '#aaa' : '#555' }}>
+                    Menu Digital
+                </p>
             </div>
         );
     }
 
     return (
         <CartProvider>
-            <div className="min-h-screen bg-gray-100 flex justify-center sm:py-8">
-                <div className="w-full sm:max-w-[480px] bg-white sm:rounded-[30px] sm:shadow-2xl overflow-hidden min-h-screen sm:min-h-0 sm:h-[850px] relative ring-1 ring-gray-900/5 flex flex-col">
+            <div className="min-h-screen bg-gray-100 flex justify-center sm:py-8 overflow-x-hidden w-full max-w-[100vw]">
+                <div className="w-full sm:max-w-[480px] bg-white sm:rounded-[30px] sm:shadow-2xl overflow-hidden min-h-screen sm:min-h-0 sm:h-[850px] relative ring-1 ring-gray-900/5 flex flex-col max-w-[100vw]">
 
                     {/* [NEW] Closed Banner */}
                     {(isCurrentlyClosed || config.isOpen === false) && (
@@ -380,6 +451,15 @@ const PublicMenu = () => {
                                 >
                                     <Calendar size={22} strokeWidth={2.5} />
                                 </button>
+                                {features.canManageStaff && (
+                                    <button
+                                        onClick={() => setShowStaffModal(true)}
+                                        className={`w-12 h-12 flex items-center justify-center transition-all active:scale-95 border-b border-white/10 ${activeStaff ? 'text-green-400 bg-green-400/10' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
+                                        title={activeStaff ? `Sessão: ${activeStaff.name}` : 'Acesso Equipa / PDV'}
+                                    >
+                                        <Lock size={22} strokeWidth={2.5} />
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => setShowInfo(true)}
                                     className="w-12 h-12 flex items-center justify-center text-white hover:bg-white/10 transition-all active:scale-95 border-b border-white/10"
@@ -415,6 +495,7 @@ const PublicMenu = () => {
                         features={features}
                         initialTable={initialTable}
                         deliveryConfig={restaurant?.delivery_config}
+                        activeStaff={activeStaff}
                     />
 
                     <BookingModal
@@ -422,6 +503,13 @@ const PublicMenu = () => {
                         onClose={() => setShowBookingModal(false)}
                         restaurantId={restaurant?.id}
                         restaurantName={restaurant?.name}
+                    />
+
+                    <StaffPinModal
+                        isOpen={showStaffModal}
+                        onClose={() => setShowStaffModal(false)}
+                        restaurantId={restaurant?.id}
+                        onLogin={(staff) => setActiveStaff(staff)}
                     />
 
                     {/* [NEW] Info Overlay */}

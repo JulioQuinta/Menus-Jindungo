@@ -15,6 +15,8 @@ export default defineConfig({
         description: 'Menu Digital Premium para Restaurantes',
         theme_color: '#4A0404',
         background_color: '#121212',
+        display: 'standalone',
+        start_url: '/',
         icons: [
           {
             src: '/jindungo_logo_v3.png',
@@ -24,7 +26,8 @@ export default defineConfig({
           {
             src: '/jindungo_logo_v3.png',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       },

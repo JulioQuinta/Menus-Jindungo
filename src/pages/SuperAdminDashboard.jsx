@@ -3,11 +3,13 @@ import { supabase } from '../lib/supabaseClient';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import { populateDemoData } from '../utils/populateDemoData';
 
 const SuperAdminDashboard = () => {
     const navigate = useNavigate();
-    const { signOut } = useAuth();
+    const { user, signOut, loading: authLoading } = useAuth();
+    const { logoUrl: globalLogoUrl, updateLogoUrl } = useSettings();
     const [activeTab, setActiveTab] = useState('overview'); // overview, restaurants, users
     const [loading, setLoading] = useState(true);
 
@@ -586,7 +588,8 @@ const SuperAdminDashboard = () => {
                         { id: 'restaurants', label: 'Clientes', icon: '🏪' },
                         { id: 'users', label: 'Acessos', icon: '🔒' },
                         { id: 'finance', label: 'Faturação', icon: '💳' },
-                        { id: 'notifications', label: 'Altifalante', icon: '📢' }
+                        { id: 'notifications', label: 'Altifalante', icon: '📢' },
+                        { id: 'settings', label: 'Plataforma', icon: '⚙️' }
                     ].map(tab => (
                         <button
                             key={tab.id}
@@ -604,6 +607,81 @@ const SuperAdminDashboard = () => {
 
                 {/* Tab Content */}
                 <div className="bg-black/20 rounded-3xl shadow-2xl border border-white/10 overflow-hidden min-h-[500px] backdrop-blur-sm">
+
+                    {/* SETTINGS TAB */}
+                    {activeTab === 'settings' && (
+                        <div className="p-8 animate-fade-in">
+                            <h2 className="text-2xl font-bold mb-6 text-white border-b border-white/5 pb-4">Definições da App & Logótipo</h2>
+                            <div className="bg-black/40 border border-white/5 rounded-2xl p-6 mb-8">
+                                <div className="flex justify-between items-start mb-4">
+                                    <h3 className="text-xl font-bold text-[#D4AF37]">Logótipo Principal</h3>
+                                    <span className="bg-[#D4AF37]/10 text-[#D4AF37] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-[#D4AF37]/20">Proporções Blindadas via CSS</span>
+                                </div>
+                                <p className="text-gray-400 text-sm mb-6 max-w-2xl">
+                                    Substitua a imagem global usada na Landing Page, Marketplace, Login e Admin. A imagem será perfeitamente adaptada sem esticar, mantendo o aspeto premium através de limitações de tamanho CSS predefinidas.
+                                </p>
+
+                                <div className="flex flex-col sm:flex-row items-start gap-8">
+                                    <div className="w-40 h-40 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center overflow-hidden p-6 shadow-inner relative group">
+                                        <img src={globalLogoUrl} alt="Logo Atual" className="w-full h-full object-contain" />
+                                    </div>
+                                    <div className="flex flex-col gap-4">
+                                        <label className="bg-gradient-to-r from-[#D4AF37] to-[#F1C40F] text-black px-8 py-4 rounded-xl font-bold text-sm cursor-pointer hover:scale-105 active:scale-95 transition-all shadow-[0_10px_30px_rgba(212,175,55,0.2)] text-center flex items-center justify-center gap-2">
+                                            <span>Carregar Imagem (Época Festiva)</span>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={async (e) => {
+                                                    const file = e.target.files[0];
+                                                    if (!file) return;
+
+                                                    const loadingToast = toast.loading('A propagar logótipo pelo sistema...');
+                                                    try {
+                                                        const fileExt = file.name.split('.').pop();
+                                                        const fileName = `global_logo_${Date.now()}.${fileExt}`;
+
+                                                        const { error: uploadError } = await supabase.storage
+                                                            .from('logos')
+                                                            .upload(fileName, file);
+
+                                                        if (uploadError) throw uploadError;
+
+                                                        const { data: { publicUrl } } = supabase.storage
+                                                            .from('logos')
+                                                            .getPublicUrl(fileName);
+
+                                                        const res = await updateLogoUrl(publicUrl);
+                                                        if (res.error) throw res.error;
+
+                                                        toast.success('Logótipo atualizado instantaneamente!', { id: loadingToast });
+                                                    } catch (err) {
+                                                        console.error(err);
+                                                        toast.error('Ocorreu um erro na atualização.', { id: loadingToast });
+                                                    }
+                                                }}
+                                            />
+                                        </label>
+                                        <button
+                                            onClick={async () => {
+                                                const loadingToast = toast.loading('A restaurar...');
+                                                try {
+                                                    await updateLogoUrl('/jindungo_logo_v3.png');
+                                                    toast.success('Logótipo Base restaurado.', { id: loadingToast });
+                                                } catch (err) {
+                                                    toast.error('Falhou a restaurar.', { id: loadingToast });
+                                                }
+                                            }}
+                                            className="text-gray-400 hover:text-white text-sm underline transition-colors w-fit"
+                                        >
+                                            Restaurar Padrão
+                                        </button>
+                                        <div className="text-xs text-gray-500 max-w-md mt-2">Formatos Otimizados: PNG, WEBP (Fundo Transparente).</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* RESTAURANTS TAB */}
                     {activeTab === 'restaurants' && (

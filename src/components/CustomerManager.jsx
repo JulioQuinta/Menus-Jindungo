@@ -19,7 +19,7 @@ const CustomerManager = ({ restaurantId }) => {
             setLoading(true);
             const { data: orders, error } = await supabase
                 .from('orders')
-                .select('customer_name, customer_phone, total, created_at')
+                .select('customer_name, customer_phone, total, created_at, is_loyalty_redemption')
                 .eq('restaurant_id', restaurantId)
                 .not('customer_phone', 'is', null)
                 .order('created_at', { ascending: false });
@@ -37,12 +37,16 @@ const CustomerManager = ({ restaurantId }) => {
                         phone: order.customer_phone || 'Sem Telefone',
                         totalOrders: 0,
                         totalSpent: 0,
+                        totalRedemptions: 0,
                         lastOrder: order.created_at
                     };
                 }
 
                 customerMap[key].totalOrders += 1;
                 customerMap[key].totalSpent += (order.total || 0);
+                if (order.is_loyalty_redemption) {
+                    customerMap[key].totalRedemptions += 1;
+                }
             });
 
             const sortedCustomers = Object.values(customerMap).sort((a, b) => b.totalSpent - a.totalSpent);
@@ -63,9 +67,9 @@ const CustomerManager = ({ restaurantId }) => {
     const handleExportCRM = () => {
         if (customers.length === 0) return toast.error("Sem clientes para exportar.");
 
-        const headers = "Nome,Telefone,Total Pedidos,Total Gasto (Kz),Ultimo Pedido\n";
+        const headers = "Nome,Telefone,Total Pedidos,Total Gasto (Kz),Premios Resgatados,Ultimo Pedido\n";
         const rows = customers.map(c =>
-            `"${c.name}","${c.phone}",${c.totalOrders},${c.totalSpent},${new Date(c.lastOrder).toLocaleDateString()}`
+            `"${c.name}","${c.phone}",${c.totalOrders},${c.totalSpent},${c.totalRedemptions},"${new Date(c.lastOrder).toLocaleDateString()}"`
         ).join("\n");
 
         const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
@@ -176,6 +180,7 @@ const CustomerManager = ({ restaurantId }) => {
                                     <th className="px-6 py-4 font-bold border-b border-white/5">Cliente</th>
                                     <th className="px-6 py-4 font-bold border-b border-white/5 text-center">Pedidos</th>
                                     <th className="px-6 py-4 font-bold border-b border-white/5 text-center">Total Gasto</th>
+                                    <th className="px-6 py-4 font-bold border-b border-white/5 text-center">Prêmios</th>
                                     <th className="px-6 py-4 font-bold border-b border-white/5">Última Visita</th>
                                     <th className="px-6 py-4 font-bold border-b border-white/5 text-right">Ações</th>
                                 </tr>
@@ -203,6 +208,15 @@ const CustomerManager = ({ restaurantId }) => {
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <div className="font-bold text-[#D4AF37]">{c.totalSpent.toLocaleString()} Kz</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            {c.totalRedemptions > 0 ? (
+                                                <span className="flex items-center justify-center gap-1 bg-[#D4AF37]/20 text-[#D4AF37] px-2 py-1 rounded-lg text-xs font-bold border border-[#D4AF37]/30">
+                                                    <Award size={12} /> {c.totalRedemptions}
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-600 text-xs">-</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm text-gray-400">{new Date(c.lastOrder).toLocaleDateString()}</div>

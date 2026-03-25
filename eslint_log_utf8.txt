@@ -1,0 +1,278 @@
+﻿
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\LoginPage.jsx
+  194:16  error  'Login' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\ChatAdminPanel.jsx
+   60:26  error  'e' is defined but never used  no-unused-vars
+  104:18  error  'e' is defined but never used  no-unused-vars
+  126:18  error  'e' is defined but never used  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\CheckoutModal.jsx
+  135:11  error  'isSystemOrder' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\CouponManager.jsx
+  20:9  error    Error: Cannot access variable before it is declared
+
+`fetchCoupons` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  18 |
+  19 |     useEffect(() => {
+> 20 |         fetchCoupons();
+     |         ^^^^^^^^^^^^ `fetchCoupons` accessed before it is declared
+  21 |     }, [restaurantId]);
+  22 |
+  23 |     const fetchCoupons = async () => {
+
+  21 |     }, [restaurantId]);
+  22 |
+> 23 |     const fetchCoupons = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 24 |         setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 25 |         const { data, error } = await couponService.getRestaurantCoupons(restaurantId);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 26 |         if (error) {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 27 |             toast.error("Erro ao carregar cup├Áes");
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 28 |         } else {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 29 |             setCoupons(data || []);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 30 |         }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 31 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 32 |     };
+     | ^^^^^^^ `fetchCoupons` is declared here
+  33 |
+  34 |     const handleSave = async (e) => {
+  35 |         e.preventDefault();  react-hooks/immutability
+  21:8  warning  React Hook useEffect has a missing dependency: 'fetchCoupons'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          react-hooks/exhaustive-deps
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\CustomerManager.jsx
+  15:8  warning  React Hook useEffect has a missing dependency: 'fetchCustomers'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\DashboardStats.jsx
+    9:41  error    'Icon' is defined but never used                                                                                        no-unused-vars
+   55:12  error    'totalItems' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                              no-unused-vars
+   56:12  error    'totalCategories' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                         no-unused-vars
+  243:8   warning  React Hook useEffect has a missing dependency: 'features?.canUseKDS'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\DeliverySettings.jsx
+  1:27  error  'useEffect' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\EmptyState.jsx
+  5:11  error  'Icon' is assigned a value but never used  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\ErrorBoundary.jsx
+  39:26  error  'process' is not defined  no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\HighlightsCarousel.jsx
+  11:13  error  'scrollAmount' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\LandingPage.jsx
+  7:11  error  'navigate' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\LivePreview.jsx
+    2:10  error  'supabase' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                  no-unused-vars
+   63:67  error  'primaryColor' is defined but never used                                                         no-unused-vars
+  122:33  error  'Layout' is defined but never used                                                               no-unused-vars
+  187:78  error  'restaurantId' is defined but never used                                                         no-unused-vars
+  188:51  error  'backgroundImage' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\LoyaltyManager.jsx
+  17:13  error    Error: Cannot access variable before it is declared
+
+`fetchConfig` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  15 |     useEffect(() => {
+  16 |         if (restaurantId) {
+> 17 |             fetchConfig();
+     |             ^^^^^^^^^^^ `fetchConfig` accessed before it is declared
+  18 |         }
+  19 |     }, [restaurantId]);
+  20 |
+
+  19 |     }, [restaurantId]);
+  20 |
+> 21 |     const fetchConfig = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |         setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |         const { data, error } = await loyaltyService.getConfig(restaurantId);
+     ÔÇª
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 31 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 32 |     };
+     | ^^^^^^^ `fetchConfig` is declared here
+  33 |
+  34 |     const handleSave = async () => {
+  35 |         setSaving(true);  react-hooks/immutability
+  19:8   warning  React Hook useEffect has a missing dependency: 'fetchConfig'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    react-hooks/exhaustive-deps
+  23:23  error    'error' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\LoyaltyWidget.jsx
+  10:12  error    'loading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              no-unused-vars
+  10:21  error    'setLoading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           no-unused-vars
+  15:13  error    Error: Cannot access variable before it is declared
+
+`fetchLoyaltyConfig` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  13 |     useEffect(() => {
+  14 |         if (restaurantId) {
+> 15 |             fetchLoyaltyConfig();
+     |             ^^^^^^^^^^^^^^^^^^ `fetchLoyaltyConfig` accessed before it is declared
+  16 |         }
+  17 |         // Try to load saved phone
+  18 |         const savedPhone = localStorage.getItem('customer_phone');
+
+  20 |     }, [restaurantId]);
+  21 |
+> 22 |     const fetchLoyaltyConfig = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |         const { data } = await loyaltyService.getConfig(restaurantId);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 24 |         if (data && data.is_active) {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 25 |             setConfig(data);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 26 |         }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 27 |     };
+     | ^^^^^^^ `fetchLoyaltyConfig` is declared here
+  28 |
+  29 |     const checkProgress = async (e) => {
+  30 |         if (e) e.preventDefault();  react-hooks/immutability
+  20:8   warning  React Hook useEffect has a missing dependency: 'fetchLoyaltyConfig'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react-hooks/exhaustive-deps
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\MenuLayouts.jsx
+  227:59  error  'fontFamily' is defined but never used  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\OrderStatusView.jsx
+    5:60  error  'onClose' is defined but never used                                                                  no-unused-vars
+    6:12  error  'order' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                no-unused-vars
+    7:12  error  'loading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u              no-unused-vars
+    7:21  error  'setLoading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u           no-unused-vars
+   41:11  error  'getStatusInfo' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u        no-unused-vars
+   47:66  error  'XCircle' is not defined                                                                             no-undef
+   70:66  error  'XCircle' is not defined                                                                             no-undef
+   90:37  error  'supabase' is not defined                                                                            no-undef
+  111:11  error  'handleWhatsAppClick' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  122:22  error  'generateWhatsAppLink' is not defined                                                                no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\QRCodeShare.jsx
+  5:30  error  'restaurantName' is defined but never used  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\ReservationManager.jsx
+  39:8   warning  React Hook useEffect has a missing dependency: 'fetchReservations'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  60:11  error    'fetchTableMap' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                         no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\SimpleAnalytics.jsx
+   8:31  error    Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+   6 |         return items.slice(0, 5).map(item => ({
+   7 |             name: item.name,
+>  8 |             views: Math.floor(Math.random() * 50) + 10 // Mock views
+     |                               ^^^^^^^^^^^^^ Cannot call impure function
+   9 |         }));
+  10 |     }, [items.length]);
+  11 |  react-hooks/purity
+  10:8   warning  React Hook useMemo has a missing dependency: 'items'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             react-hooks/exhaustive-deps
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\SmartImage.jsx
+  27:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  25 |         }
+  26 |
+> 27 |         setFinalSrc(targetUrl);
+     |         ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  28 |     }, [src, isLowEnd]);
+  29 |
+  30 |     return (  react-hooks/set-state-in-effect
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\StaffManager.jsx
+  25:8  warning  React Hook useEffect has a missing dependency: 'fetchStaff'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\TableBillTemplate.jsx
+  13:56  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  11 |                 <p>Conta de Confer├¬ncia</p>
+  12 |                 <p>Mesa: {order.table_number.replace('Entrega: ', '')}</p>
+> 13 |                 <p>Data: {new Date(order.created_at || Date.now()).toLocaleString('pt-AO')}</p>
+     |                                                        ^^^^^^^^^^ Cannot call impure function
+  14 |                 {order.customer_name && <p>Cliente: {order.customer_name}</p>}
+  15 |             </div>
+  16 |  react-hooks/purity
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\components\UpgradePrompt.jsx
+  3:10  error  'generateWhatsAppLink' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\context\AuthContext.jsx
+  6:14  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\context\CartContext.jsx
+   5:14  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        react-refresh/only-export-components
+  15:17  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  13 |         if (savedCart) {
+  14 |             try {
+> 15 |                 setCartItems(JSON.parse(savedCart));
+     |                 ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  16 |             } catch (e) {
+  17 |                 console.error("Failed to load cart", e);
+  18 |             }  react-hooks/set-state-in-effect
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\context\SettingsContext.jsx
+   6:14  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+  18:27  error  'error' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                           no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\pages\AdminDashboard.jsx
+   31:37  error    'authLoading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                             no-unused-vars
+  247:8   warning  React Hook useEffect has a missing dependency: 'fetchRestaurantData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  492:17  error    'LayoutDashboard' is not defined                                                                                        no-undef
+  494:17  error    'UtensilsCrossed' is not defined                                                                                        no-undef
+  497:17  error    'User' is not defined                                                                                                   no-undef
+  498:17  error    'Award' is not defined                                                                                                  no-undef
+  500:17  error    'Ticket' is not defined                                                                                                 no-undef
+  501:17  error    'Users' is not defined                                                                                                  no-undef
+  503:17  error    'Settings' is not defined                                                                                               no-undef
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\pages\Explorar.jsx
+  14:12  error  'selectedCategory' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u     no-unused-vars
+  14:30  error  'setSelectedCategory' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\pages\PublicMenu.jsx
+  5:10  error  'menuService' is defined but never used. Allowed unused vars must match /^[A-Z_]/u   no-unused-vars
+  6:10  error  'themeService' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Julio Quintas\Documents\Men├║s Jindungos\src\pages\SuperAdminDashboard.jsx
+   11:13  error  'user' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u         no-unused-vars
+   11:37  error  'authLoading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+   90:47  error  'itemsError' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u   no-unused-vars
+  302:18  error  'error' is defined but never used                                                            no-unused-vars
+  327:18  error  'error' is defined but never used                                                            no-unused-vars
+  375:18  error  'error' is defined but never used                                                            no-unused-vars
+  391:18  error  'error' is defined but never used                                                            no-unused-vars
+  671:58  error  'err' is defined but never used                                                              no-unused-vars
+
+Ô£û 75 problems (66 errors, 9 warnings)
+
+

@@ -12,7 +12,7 @@ async function fix() {
         console.log('Fixed restaurant ID:', res.id);
         const { error } = await supabase
             .from('menu_items')
-            .update({ is_available: true })
+            .update({ available: true })
             .eq('restaurant_id', res.id);
 
         if (error) console.error('Error:', error);

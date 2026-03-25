@@ -10,7 +10,7 @@ const TableBillTemplate = React.forwardRef(({ order, restaurantName }, ref) => {
                 <h2 className="text-lg font-bold uppercase">{restaurantName || 'Jindungo'}</h2>
                 <p>Conta de Conferência</p>
                 <p>Mesa: {order.table_number.replace('Entrega: ', '')}</p>
-                <p>Data: {new Date(order.created_at || Date.now()).toLocaleString('pt-AO')}</p>
+                <p>Data: {new Date(order.created_at || new Date().toISOString()).toLocaleString('pt-AO')}</p>
                 {order.customer_name && <p>Cliente: {order.customer_name}</p>}
             </div>
 

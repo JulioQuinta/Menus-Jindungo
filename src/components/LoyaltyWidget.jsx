@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Award, Star, CheckCircle2, ChevronRight, X, Phone } from 'lucide-react';
 import { loyaltyService } from '../services/loyaltyService';
 
@@ -6,25 +6,28 @@ const LoyaltyWidget = ({ restaurantId, primaryColor, darkMode }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [config, setConfig] = useState(null);
     const [phone, setPhone] = useState('');
+    const [name, setName] = useState('');
     const [points, setPoints] = useState(null);
     const [loading, setLoading] = useState(false);
     const [checking, setChecking] = useState(false);
+
+    const fetchLoyaltyConfig = useCallback(async () => {
+        const { data } = await loyaltyService.getConfig(restaurantId);
+        if (data && data.is_active) {
+            setConfig(data);
+        }
+    }, [restaurantId]);
 
     useEffect(() => {
         if (restaurantId) {
             fetchLoyaltyConfig();
         }
-        // Try to load saved phone
+        // Try to load saved phone and name
         const savedPhone = localStorage.getItem('customer_phone');
         if (savedPhone) setPhone(savedPhone);
-    }, [restaurantId]);
-
-    const fetchLoyaltyConfig = async () => {
-        const { data } = await loyaltyService.getConfig(restaurantId);
-        if (data && data.is_active) {
-            setConfig(data);
-        }
-    };
+        const savedName = localStorage.getItem('customer_name');
+        if (savedName) setName(savedName);
+    }, [fetchLoyaltyConfig]);
 
     const checkProgress = async (e) => {
         if (e) e.preventDefault();
@@ -94,6 +97,9 @@ const LoyaltyWidget = ({ restaurantId, primaryColor, darkMode }) => {
                         ) : (
                             <div className="space-y-6 text-center animate-in fade-in duration-500">
                                 <div>
+                                    {name && (
+                                        <p className="text-xs font-bold text-gray-400 mb-2">Olá, {name}!</p>
+                                    )}
                                     <div className="text-4xl font-black mb-1" style={{ color: primaryColor }}>
                                         {points < config.goal ? points : config.goal}/{config.goal}
                                     </div>
@@ -117,9 +123,18 @@ const LoyaltyWidget = ({ restaurantId, primaryColor, darkMode }) => {
                                 </div>
 
                                 {points >= config.goal ? (
-                                    <div className="bg-green-500/10 border border-green-500/30 p-4 rounded-2xl animate-pulse">
+                                    <div className="bg-green-500/10 border border-green-500/30 p-4 rounded-2xl animate-bounce-short">
                                         <p className="text-green-500 font-bold text-sm">🎉 Recompensa Disponível!</p>
-                                        <p className="text-xs text-gray-500 mt-1">{config.reward_text}</p>
+                                        <p className="text-xs text-gray-500 mt-1 mb-3">{config.reward_text}</p>
+                                        <button
+                                            onClick={() => {
+                                                setIsOpen(false);
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }}
+                                            className="w-full bg-green-500 text-white text-[10px] font-bold py-2 rounded-lg hover:bg-green-600 transition-colors"
+                                        >
+                                            RESCATAR NO CHECKOUT 🍽️
+                                        </button>
                                     </div>
                                 ) : (
                                     <p className={`text-xs italic ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>

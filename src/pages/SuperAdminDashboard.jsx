@@ -533,7 +533,7 @@ const SuperAdminDashboard = () => {
                         <button
                             onClick={async () => {
                                 await signOut();
-                                navigate('/login');
+                                navigate('/login', { replace: true });
                             }}
                             className="bg-red-900/30 backdrop-blur-md border border-red-800/50 px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-red-900/50 hover:border-red-500 transition-all text-red-200"
                         >

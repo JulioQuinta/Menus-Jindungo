@@ -42,6 +42,12 @@ const AdminDashboard = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+    // Explicit logout to ensure redirect even if ProtectedRoute logic is delayed
+    const handleLogout = async () => {
+        await signOut();
+        navigate('/login', { replace: true });
+    };
+
     // Data State
     const [restaurant, setRestaurant] = useState(null);
     const [categories, setCategories] = useState([]);
@@ -577,7 +583,7 @@ const AdminDashboard = () => {
                             <span className="tracking-wide">Reportar Pagamento via WhatsApp</span>
                         </a>
                         <button
-                            onClick={signOut}
+                            onClick={handleLogout}
                             className="w-full bg-transparent hover:bg-white/5 text-gray-400 font-medium py-3 rounded-xl transition-all border border-transparent hover:border-white/10 uppercase tracking-widest text-xs"
                         >
                             Sair da Conta (Logout)
@@ -612,7 +618,7 @@ const AdminDashboard = () => {
                 menuItems={menuItems}
                 location={location}
                 globalLogoUrl={globalLogoUrl}
-                signOut={signOut}
+                signOut={handleLogout}
             />
 
             {/* Main Content */}

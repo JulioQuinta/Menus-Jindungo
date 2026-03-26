@@ -67,7 +67,8 @@ const StaffManager = ({ restaurantId }) => {
 
         } catch (error) {
             console.error("Erro ao adicionar staff:", error);
-            toast.error("Erro ao gravar. Verifique se o PIN ou Email já estão em uso.");
+            const errorMessage = error.message || error.details || "Verifique se o PIN ou Email já estão em uso.";
+            toast.error(`Aconteceu um erro: ${errorMessage}`);
         } finally {
             setIsSaving(false);
         }

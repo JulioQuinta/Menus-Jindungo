@@ -75,8 +75,16 @@ export const AuthProvider = ({ children }) => {
         return supabase.auth.signUp({ email, password });
     };
 
-    const signOut = () => {
-        return supabase.auth.signOut();
+    const signOut = async () => {
+        try {
+            await supabase.auth.signOut();
+        } catch (error) {
+            console.error("Error during sign out:", error);
+        } finally {
+            localStorage.removeItem('masquerade_restaurant_id');
+            setUser(null);
+            setRole(null);
+        }
     };
 
     const value = {

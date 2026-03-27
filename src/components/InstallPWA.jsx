@@ -4,8 +4,26 @@ const InstallPWA = () => {
     const [deferredPrompt, setDeferredPrompt] = useState(null);
     const [showButton, setShowButton] = useState(false);
     const [isDismissed, setIsDismissed] = useState(false);
+    const [isIOS, setIsIOS] = useState(false);
+    const [isStandalone, setIsStandalone] = useState(false);
+    const [showIOSInstructions, setShowIOSInstructions] = useState(false);
 
     useEffect(() => {
+        // Check if already installed
+        const isAppStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
+        setIsStandalone(isAppStandalone);
+
+        if (isAppStandalone) return;
+
+        // Detect iOS
+        const userAgent = window.navigator.userAgent.toLowerCase();
+        const isIOSDevice = /iphone|ipad|ipod/.test(userAgent);
+        setIsIOS(isIOSDevice);
+
+        if (isIOSDevice) {
+            setShowButton(true);
+        }
+
         const handler = (e) => {
             e.preventDefault();
             setDeferredPrompt(e);
@@ -17,13 +35,46 @@ const InstallPWA = () => {
     }, []);
 
     const handleInstallClick = async () => {
-        if (!deferredPrompt) return;
+        if (!deferredPrompt) {
+            if (isIOS) {
+                setShowIOSInstructions(true);
+            } else {
+                alert('A instalação direta não é suportada por este browser. Por favor, utilize a opção "Adicionar ao ecrã principal" no menu do seu browser.');
+            }
+            return;
+        }
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
         console.log(`User response to the install prompt: ${outcome}`);
         setDeferredPrompt(null);
         setShowButton(false);
     };
+
+    if (isStandalone) return null;
+
+    if (showIOSInstructions) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4">
+                <div className="bg-[#1a1a1a] p-6 rounded-3xl w-full max-w-sm text-center border border-white/10 animate-slide-up">
+                    <div className="bg-gradient-to-tr from-[#D4AF37] to-yellow-500 w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(212,175,55,0.3)]">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-2">Instalar no iOS</h3>
+                    <p className="text-gray-400 mb-6 text-sm">
+                        Para instalar, toque no botão de <span className="text-white font-bold inline-flex items-center justify-center px-1"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> Partilha</span> no menu inferior do Safari e depois escolha <span className="text-white font-bold">Adicionar ao Ecrã principal</span>.
+                    </p>
+                    <button
+                        onClick={() => { setShowIOSInstructions(false); setIsDismissed(true); setShowButton(false); }}
+                        className="w-full bg-white text-black font-bold py-3 rounded-xl hover:bg-gray-200 transition-colors"
+                    >
+                        Entendido
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     if (!showButton || isDismissed) return null;
 

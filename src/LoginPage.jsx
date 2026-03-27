@@ -4,6 +4,7 @@ import { useAuth } from './context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { Lock, User, ChefHat, Briefcase } from 'lucide-react'; // Using icons for visual cues
 import { useSettings } from './context/SettingsContext';
+import { supabase } from './lib/supabaseClient';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
@@ -21,21 +22,45 @@ const LoginPage = () => {
     }, []);
 
     useEffect(() => {
-        if (user && role) {
+        if (!loading && user && role) {
             console.log("LOGIN REDIRECT - User Role Is:", role);
             if (role === 'super_admin') navigate('/super-admin');
             else if (role === 'admin' || role === 'owner') navigate('/admin');
             else navigate('/menu');
         }
-    }, [user, role, navigate]);
+    }, [user, role, navigate, loading]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
 
         try {
-            const { error } = await signIn(email, password);
+            const { data: authData, error } = await signIn(email, password);
             if (error) throw error;
+
+            // Enforce role based on selected tab
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', authData.user.id)
+                .single();
+            const fetchedRole = profile?.role || 'client';
+
+            if (loginType === 'restaurant' && fetchedRole === 'super_admin') {
+                await supabase.auth.signOut();
+                toast.error("Por favor, utilize a aba de Gestão.");
+                setErrorShake(true);
+                setTimeout(() => setErrorShake(false), 500);
+                return; // Stop here, finally block handles loading
+            }
+            if (loginType === 'internal' && fetchedRole !== 'super_admin') {
+                await supabase.auth.signOut();
+                toast.error("Acesso restrito. Utilize a aba de Restaurante.");
+                setErrorShake(true);
+                setTimeout(() => setErrorShake(false), 500);
+                return; // Stop here
+            }
+
             toast.success("Bem-vindo de volta!");
         } catch (error) {
             console.error(error);

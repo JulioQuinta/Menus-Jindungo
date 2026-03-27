@@ -133,7 +133,7 @@ const getTrans = (item, lang, field) => {
 
 export const GridLayout = ({ items = [], primaryColor, isEditing, darkMode, selectedLanguage = 'PT', customBgInfo, restaurantClosed }) => {
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-4">
             {items.map(item => (
                 <div
                     key={item.id}
@@ -262,7 +262,7 @@ export const MinimalLayout = ({ items = [], primaryColor, fontFamily, isEditing,
 };
 
 export const GridLayoutSkeleton = ({ darkMode }) => (
-    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 gap-4">
         {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className={`rounded-xl overflow-hidden border ${darkMode ? 'bg-[#1E1E1E] border-white/5' : 'bg-white border-gray-100'} h-64`}>
                 <Skeleton height="120px" darkMode={darkMode} className="rounded-none" />

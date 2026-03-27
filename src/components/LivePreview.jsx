@@ -111,8 +111,8 @@ const CategoryCarousel = ({ categories, activeCategory, onSelect, primaryColor }
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl mb-0.5 transition-all duration-300 ${activeCategory === cat.id ? 'bg-[#D4AF37] text-black animate-bounce' : 'bg-black/20 grayscale'
                             }`}>
                             {(() => {
-                                const l = cat.label;
-                                if (l.includes('Bebidas')) return '🍷';
+                                const l = cat.label || cat.name;
+                                if (l.includes('Bebida')) return '🍷';
                                 if (l === 'Sobremesas') return '🍰';
                                 if (l === 'Para Começar' || l === 'Entradas') return '🍤';
                                 if (l.includes('Chef')) return '👨‍🍳';
@@ -185,11 +185,11 @@ const CategorySection = ({ cat, Layout, commonProps, fontFamily }) => {
 const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, restaurantId, features = {} }) => {
     const { layoutMode, primaryColor, fontFamily, backgroundImage, darkMode, backgroundColor } = config;
     const [selectedLanguage, setSelectedLanguage] = React.useState('PT');
-    const [activeCategory, setActiveCategory] = React.useState(categories?.[0]?.id);
+    const [activeCategory, setActiveCategory] = React.useState(null);
     const [searchTerm, setSearchTerm] = React.useState('');
     const [showSearch, setShowSearch] = React.useState(false);
 
-    // Auto-initialize active category once loaded
+    // Initialize active category once loaded
     React.useEffect(() => {
         if (!activeCategory && categories.length > 0) {
             setActiveCategory(categories[0].id);
@@ -248,7 +248,6 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
 
         const commonProps = { primaryColor, isEditing, darkMode, selectedLanguage, restaurantClosed: config.isOpen === false, customBgInfo: { isCustom: isCustomBg, textColor: effectiveTextColor, bgColor: effectiveBgColor } };
 
-        // If searching, show all matching categories. If not, only show the active category.
         const targetCategories = searchTerm 
             ? filteredCategories 
             : categories.filter(cat => cat.id === activeCategory);
@@ -256,9 +255,12 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
         // Fallback: if no active category (e.g. initial load before state), show first
         const displayCategories = targetCategories.length > 0 
             ? targetCategories 
-            : (categories.length > 0 ? [categories[0]] : []);
+            : categories;
 
-        switch (layoutMode) {
+        // Sempre usar o formato de 'list' (Vertical) como padrão geral para garantir o scroll up and down fácil
+        const activeLayoutMode = 'list';
+
+        switch (activeLayoutMode) {
             case 'grid':
                 return displayCategories.map(cat => (
                     <CategorySection key={cat.id} cat={cat} Layout={GridLayout} commonProps={commonProps} />
@@ -277,7 +279,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
 
     const handleCategorySelect = (id) => {
         setActiveCategory(id);
-        // Scroll the closest scrollable parent to top
+        // Reseta o scroll da lista ao trocar de categoria
         const scrollContainer = document.querySelector('.overflow-y-auto') || window;
         scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -400,7 +402,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
                 >
                     <CategoryCarousel
                         categories={categories}
-                        activeCategory={activeCategory || categories?.[0]?.id}
+                        activeCategory={activeCategory || categories[0]?.id}
                         onSelect={handleCategorySelect}
                         primaryColor={effectivePrimaryColor}
                     />

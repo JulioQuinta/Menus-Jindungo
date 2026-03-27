@@ -23,13 +23,13 @@ const LandingPage = () => {
             <div style={{ position: 'absolute', top: '-10%', left: '-10%', width: '40%', height: '40%', background: 'rgba(212,175,55,0.1)', borderRadius: '50%', filter: 'blur(100px)' }}></div>
             <div style={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '40%', height: '40%', background: 'rgba(255,255,255,0.05)', borderRadius: '50%', filter: 'blur(100px)' }}></div>
 
-            <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexDirection: 'column' }}>
+            <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexDirection: 'column', textAlign: 'center' }}>
                 <img src={logoUrl || "/jindungo_logo_v3.png"} style={{ width: '100px', height: '100px', objectFit: 'contain', borderRadius: '50%' }} alt="Logo Global" />
-                <h1 style={{ fontSize: '3rem', margin: 0, fontFamily: 'Playfair Display, serif', fontWeight: 'bold' }}>
+                <h1 style={{ fontSize: '3rem', margin: 0, fontFamily: 'Playfair Display, serif', fontWeight: 'bold', textAlign: 'center' }}>
                     <span style={{ color: '#D4AF37' }}>Jindungo</span>
                 </h1>
             </div>
-            <p style={{ fontSize: '1.1rem', opacity: 0.8, marginBottom: '2.5rem', letterSpacing: '1px', textTransform: 'uppercase' }}>
+            <p style={{ fontSize: '1.1rem', opacity: 0.8, marginBottom: '2.5rem', letterSpacing: '1px', textTransform: 'uppercase', textAlign: 'center', padding: '0 20px', lineHeight: '1.5', width: '100%', maxWidth: '100%' }}>
                 A Revolução do Menu Digital em Angola
             </p>
 

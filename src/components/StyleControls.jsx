@@ -249,25 +249,7 @@ const StyleControls = ({ config, setConfig, onReset, onLogoUpload, onHeaderBgUpl
                 <p className="text-xs text-gray-400 mt-2">Os pedidos dos clientes serão encaminhados para este número automaticamente.</p>
             </div>
 
-            {/* Layout Mode */}
-            <div>
-                <label className={labelClasses}>Layout do Menu Público</label>
-                <div className="grid grid-cols-3 gap-3 p-1.5 bg-black/50 border border-white/10 rounded-xl">
-                    {['grid', 'list', 'minimal'].map(mode => (
-                        <button
-                            key={mode}
-                            onClick={() => handleChange('layoutMode', mode)}
-                            className={`py-3 px-2 rounded-lg text-sm font-bold transition-all tracking-wide ${config.layoutMode === mode
-                                ? 'bg-white/10 text-white shadow-sm border border-white/20'
-                                : 'text-gray-500 hover:text-gray-300 border border-transparent'}`}
-                        >
-                            {mode === 'grid' && 'Grade de Fotos'}
-                            {mode === 'list' && 'Lista Clássica'}
-                            {mode === 'minimal' && 'Minimalista'}
-                        </button>
-                    ))}
-                </div>
-            </div>
+            {/* Layout Mode (Removido - Padronizado para Lista Vertical) */}
 
             {/* Brand Color */}
             <div>

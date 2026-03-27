@@ -81,26 +81,26 @@ const Explorar = () => {
         <div className="min-h-screen bg-[#0A0A0A] text-white font-sans selection:bg-[#D4AF37] selection:text-black">
 
             {/* Top Navigation */}
-            <header className="absolute top-0 left-0 right-0 z-50 p-6 flex justify-between items-center">
-                <div onClick={() => navigate('/')} className="flex items-center gap-3 cursor-pointer group">
-                    <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center border border-white/10 group-hover:border-[#D4AF37]/50 shadow-lg transition-all group-hover:scale-105 overflow-hidden">
-                        <img src={logoUrl || "/jindungo_logo_v3.png"} alt="Logo" className="w-8 h-8 object-contain" />
+            <header className="absolute top-0 left-0 right-0 z-50 p-4 md:p-6 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent md:bg-none">
+                <div onClick={() => navigate('/')} className="flex items-center gap-2 md:gap-3 cursor-pointer group">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-white/5 rounded-full flex items-center justify-center border border-white/10 group-hover:border-[#D4AF37]/50 shadow-lg transition-all group-hover:scale-105 overflow-hidden shrink-0">
+                        <img src={logoUrl || "/jindungo_logo_v3.png"} alt="Logo" className="w-6 h-6 md:w-8 md:h-8 object-contain" />
                     </div>
-                    <span className="font-serif font-bold text-2xl tracking-tight text-white group-hover:text-[#D4AF37] transition-colors">
-                        Jindungo<span className="text-[#D4AF37] opacity-80 font-medium">Menus</span>
+                    <span className="font-serif font-bold text-xl md:text-2xl tracking-tight text-white group-hover:text-[#D4AF37] transition-colors">
+                        Jindungo<span className="text-[#D4AF37] opacity-80 font-medium hidden sm:inline">Menus</span>
                     </span>
                 </div>
-                <button onClick={() => navigate('/login')} className="text-sm font-bold text-gray-400 hover:text-white bg-white/5 px-4 py-2 rounded-xl border border-white/10 hover:border-white/30 transition-colors">
+                <button onClick={() => navigate('/login')} className="text-xs md:text-sm font-bold text-gray-400 hover:text-white bg-white/5 px-3 py-2 md:px-4 md:py-2 rounded-xl border border-white/10 hover:border-white/30 transition-colors shrink-0 whitespace-nowrap">
                     Acesso Admin
                 </button>
             </header>
 
             {/* Hero */}
-            <div className="relative h-[42vh] flex items-center justify-center overflow-hidden border-b border-white/5">
+            <div className="relative min-h-[45vh] pt-32 pb-16 md:pt-0 md:pb-0 md:h-[42vh] flex items-center justify-center overflow-hidden border-b border-white/5 flex-col">
                 <div className="absolute inset-0 bg-gradient-to-b from-[#D4AF37]/10 to-transparent opacity-50" />
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20" />
-                <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-                    <h1 className="text-5xl md:text-7xl font-serif font-black mb-4 tracking-tight bg-gradient-to-r from-white via-white to-gray-500 bg-clip-text text-transparent">
+                <div className="relative z-10 text-center px-4 max-w-4xl mx-auto w-full mt-10 md:mt-0">
+                    <h1 className="text-4xl md:text-7xl font-serif font-black mb-4 tracking-tight bg-gradient-to-r from-white via-white to-gray-500 bg-clip-text text-transparent leading-tight">
                         Explorar Jindungo
                     </h1>
                     <p className="text-gray-400 text-base md:text-lg font-medium max-w-2xl mx-auto mb-6">

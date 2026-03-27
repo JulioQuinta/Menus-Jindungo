@@ -58,7 +58,7 @@ const StyleControls = ({ config, setConfig, onReset, onLogoUpload, onHeaderBgUpl
     const publicUrl = `${originUrl}/${slug}`;
 
     return (
-        <div className="bg-black/60 backdrop-blur-xl text-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/10 flex flex-col gap-8 w-full transition-all">
+        <div className="bg-black/60 backdrop-blur-xl text-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-2xl border border-white/10 flex flex-col gap-6 sm:gap-8 w-full transition-all">
 
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <h2 className="text-2xl font-serif font-bold text-white">Personalização Visual</h2>
@@ -87,7 +87,7 @@ const StyleControls = ({ config, setConfig, onReset, onLogoUpload, onHeaderBgUpl
             {/* Custom URL Slug */}
             <div>
                 <label className={labelClasses}>Link Público do Menu (Slug)</label>
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                     <input
                         type="text"
                         className={inputClasses}
@@ -98,7 +98,7 @@ const StyleControls = ({ config, setConfig, onReset, onLogoUpload, onHeaderBgUpl
                     <button
                         onClick={handleSaveSlug}
                         disabled={isSavingSlug || localSlug === slug || !localSlug.trim()}
-                        className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap ${localSlug !== slug && localSlug.trim()
+                        className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap ${localSlug !== slug && localSlug.trim()
                                 ? 'bg-gradient-to-r from-[#D4AF37] to-yellow-600 text-black shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:brightness-110 hover:-translate-y-0.5'
                                 : 'bg-green-500/10 text-green-500 border border-green-500/20 opacity-80'
                             }`}
@@ -106,7 +106,7 @@ const StyleControls = ({ config, setConfig, onReset, onLogoUpload, onHeaderBgUpl
                         {isSavingSlug ? '...' : (localSlug !== slug ? 'Salvar Novo Link' : <><Check size={18} /> Link Salvo</>)}
                     </button>
                 </div>
-                <p className="text-xs text-gray-400 mt-3">
+                <p className="text-[10px] sm:text-xs text-gray-400 mt-3 break-all">
                     Link atual: <span className="text-[#D4AF37] font-mono bg-yellow-900/20 px-2 py-0.5 rounded border border-yellow-500/20">{originUrl}/{slug}</span>
                 </p>
             </div>

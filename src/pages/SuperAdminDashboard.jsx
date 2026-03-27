@@ -512,30 +512,30 @@ const SuperAdminDashboard = () => {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 border-b border-white/10 pb-6">
                     <div>
-                        <h1 className="text-4xl font-serif text-[#D4AF37] font-bold tracking-wide">Centro de Comando SaaS</h1>
-                        <p className="text-gray-400 text-sm mt-2 uppercase tracking-widest">Jindungo Plataforma Global</p>
+                        <h1 className="text-2xl sm:text-4xl font-serif text-[#D4AF37] font-bold tracking-wide">Centro de Comando</h1>
+                        <p className="text-[10px] sm:text-sm text-gray-400 mt-1 uppercase tracking-widest">Jindungo Plataforma Global</p>
                     </div>
-                    <div className="flex gap-4">
+                    <div className="flex gap-2 sm:gap-4">
                         {activeTab === 'restaurants' && (
                             <button
                                 onClick={() => setIsAddModalOpen(true)}
-                                className="bg-[#D4AF37] text-black px-5 py-2.5 rounded-xl text-sm font-bold shadow-[0_4px_15px_rgba(212,175,55,0.3)] hover:scale-105 transition-all"
+                                className="hidden sm:block bg-[#D4AF37] text-black px-5 py-2.5 rounded-xl text-sm font-bold shadow-[0_4px_15px_rgba(212,175,55,0.3)] hover:scale-105 transition-all"
                             >
                                 + Novo Cliente
                             </button>
                         )}
                         <button
                             onClick={() => navigate('/admin')}
-                            className="bg-white/10 backdrop-blur-md border border-white/10 px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-white/20 transition-all text-white"
+                            className="flex-1 sm:flex-none bg-white/10 backdrop-blur-md border border-white/10 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium hover:bg-white/20 transition-all text-white whitespace-nowrap"
                         >
-                            Menu Pessoal
+                            Painel Admin
                         </button>
                         <button
                             onClick={async () => {
                                 await signOut();
                                 navigate('/login', { replace: true });
                             }}
-                            className="bg-red-900/30 backdrop-blur-md border border-red-800/50 px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-red-900/50 hover:border-red-500 transition-all text-red-200"
+                            className="bg-red-900/30 backdrop-blur-md border border-red-800/50 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium hover:bg-red-900/50 hover:border-red-500 transition-all text-red-200"
                         >
                             Sair
                         </button>
@@ -543,48 +543,48 @@ const SuperAdminDashboard = () => {
                 </div>
 
                 {/* Metrics Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <button onClick={() => setActiveTab('restaurants')} className="bg-black/40 border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center text-center relative overflow-hidden group cursor-pointer w-full hover:-translate-y-1 transition-all duration-300 focus:outline-none hover:border-white/30 hover:shadow-[0_10px_30px_rgba(255,255,255,0.05)]">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
+                    <button onClick={() => setActiveTab('restaurants')} className="bg-black/40 border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center relative overflow-hidden group cursor-pointer w-full hover:-translate-y-1 transition-all duration-300 focus:outline-none hover:border-white/30 hover:shadow-[0_10px_30px_rgba(255,255,255,0.05)]">
                         <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-transparent pointer-events-none transform translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-                        <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                            <span className="text-xl">🏪</span>
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/5 rounded-full flex items-center justify-center mb-2 sm:mb-4 group-hover:scale-110 transition-transform">
+                            <span className="text-lg sm:text-xl">🏪</span>
                         </div>
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1 z-10">Restaurantes</p>
-                        <p className="text-4xl font-serif text-white font-bold z-10">{stats.totalRestaurants}</p>
+                        <p className="text-[9px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest mb-1 z-10">Clientes</p>
+                        <p className="text-2xl sm:text-4xl font-serif text-white font-bold z-10">{stats.totalRestaurants}</p>
                     </button>
 
-                    <button onClick={() => setActiveTab('restaurants')} className="bg-black/40 border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center text-center relative overflow-hidden group cursor-pointer w-full hover:-translate-y-1 transition-all duration-300 focus:outline-none hover:border-green-500/30 hover:shadow-[0_10px_30px_rgba(34,197,94,0.1)]">
+                    <button onClick={() => setActiveTab('restaurants')} className="bg-black/40 border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center relative overflow-hidden group cursor-pointer w-full hover:-translate-y-1 transition-all duration-300 focus:outline-none hover:border-green-500/30 hover:shadow-[0_10px_30px_rgba(34,197,94,0.1)]">
                         <div className="absolute inset-0 bg-gradient-to-t from-green-900/10 to-transparent pointer-events-none transform translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-                        <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                            <span className="text-xl">✅</span>
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-500/10 rounded-full flex items-center justify-center mb-2 sm:mb-4 group-hover:scale-110 transition-transform">
+                            <span className="text-lg sm:text-xl">✅</span>
                         </div>
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1 z-10">Ativos</p>
-                        <p className="text-4xl font-serif text-green-400 font-bold z-10">{stats.activeRestaurants}</p>
+                        <p className="text-[9px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest mb-1 z-10">Ativos</p>
+                        <p className="text-2xl sm:text-4xl font-serif text-green-400 font-bold z-10">{stats.activeRestaurants}</p>
                     </button>
 
-                    <button onClick={() => setActiveTab('users')} className="bg-black/40 border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center text-center relative overflow-hidden group cursor-pointer w-full hover:-translate-y-1 transition-all duration-300 focus:outline-none hover:border-blue-500/30 hover:shadow-[0_10px_30px_rgba(59,130,246,0.1)]">
+                    <button onClick={() => setActiveTab('users')} className="bg-black/40 border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center relative overflow-hidden group cursor-pointer w-full hover:-translate-y-1 transition-all duration-300 focus:outline-none hover:border-blue-500/30 hover:shadow-[0_10px_30px_rgba(59,130,246,0.1)]">
                         <div className="absolute inset-0 bg-gradient-to-t from-blue-900/10 to-transparent pointer-events-none transform translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-                        <div className="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                            <span className="text-xl">👥</span>
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500/10 rounded-full flex items-center justify-center mb-2 sm:mb-4 group-hover:scale-110 transition-transform">
+                            <span className="text-lg sm:text-xl">👥</span>
                         </div>
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1 z-10">Utilizadores</p>
-                        <p className="text-4xl font-serif text-blue-400 font-bold z-10">{stats.totalUsers}</p>
+                        <p className="text-[9px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest mb-1 z-10">Acessos</p>
+                        <p className="text-2xl sm:text-4xl font-serif text-blue-400 font-bold z-10">{stats.totalUsers}</p>
                     </button>
 
-                    <button onClick={() => setActiveTab('overview')} className="bg-black/40 border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center text-center relative overflow-hidden group cursor-pointer w-full hover:-translate-y-1 transition-all duration-300 focus:outline-none hover:border-[#D4AF37]/40 hover:shadow-[0_10px_30px_rgba(212,175,55,0.1)]">
+                    <button onClick={() => setActiveTab('overview')} className="bg-black/40 border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center relative overflow-hidden group cursor-pointer w-full hover:-translate-y-1 transition-all duration-300 focus:outline-none hover:border-[#D4AF37]/40 hover:shadow-[0_10px_30px_rgba(212,175,55,0.1)]">
                         <div className="absolute inset-0 bg-gradient-to-t from-[#D4AF37]/10 to-transparent pointer-events-none transform translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-                        <div className="w-12 h-12 bg-[#D4AF37]/10 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                            <span className="text-xl">🍽️</span>
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#D4AF37]/10 rounded-full flex items-center justify-center mb-2 sm:mb-4 group-hover:scale-110 transition-transform">
+                            <span className="text-lg sm:text-xl">🍽️</span>
                         </div>
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1 z-10">Itens no Sistema</p>
-                        <p className="text-4xl font-serif text-[#D4AF37] font-bold z-10">{stats.totalItems}</p>
+                        <p className="text-[9px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest mb-1 z-10">Items</p>
+                        <p className="text-2xl sm:text-4xl font-serif text-[#D4AF37] font-bold z-10">{stats.totalItems}</p>
                     </button>
                 </div>
 
-                {/* Modern Saas Tabs */}
-                <div className="flex items-center gap-2 p-1.5 bg-black/40 border border-white/5 rounded-2xl w-full max-w-4xl mx-auto overflow-x-auto scrollbar-hide">
+                {/* Desktop SaaS Tabs (Hidden on very small mobile if using Bottom Nav) */}
+                <div className="hidden sm:flex items-center gap-2 p-1.5 bg-black/40 border border-white/5 rounded-2xl w-full max-w-4xl mx-auto overflow-x-auto scrollbar-hide">
                     {[
-                        { id: 'overview', label: 'Painel Central', icon: '📊' },
+                        { id: 'overview', label: 'Painel', icon: '📊' },
                         { id: 'restaurants', label: 'Clientes', icon: '🏪' },
                         { id: 'users', label: 'Acessos', icon: '🔒' },
                         { id: 'finance', label: 'Faturação', icon: '💳' },
@@ -699,133 +699,165 @@ const SuperAdminDashboard = () => {
                                     />
                                 </div>
                             </div>
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-white/5">
-                                    <thead className="bg-black/40">
-                                        <tr>
-                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Restaurante / Link</th>
-                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Responsável</th>
-                                            <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Faturação (Validade)</th>
-                                            <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Sistema</th>
-                                            <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Acões SaaS</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-white/5 bg-transparent">
-                                        {paginatedRestaurants.map(rest => {
-                                            const expired = isExpired(rest.valid_until);
-                                            return (
-                                                <tr key={rest.id} className="hover:bg-white/5 transition duration-300 group">
-                                                    <td className="px-6 py-5 whitespace-nowrap">
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4AF37]/20 to-black border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] font-serif font-bold group-hover:scale-110 transition-transform shadow-[0_4px_10px_rgba(212,175,55,0.2)]">
-                                                                {rest.name.charAt(0).toUpperCase()}
-                                                            </div>
-                                                            <div>
-                                                                <div className="text-sm font-bold text-white group-hover:text-[#D4AF37] transition-colors">{rest.name}</div>
-                                                                <div className="text-xs text-gray-500 mt-1 hover:text-white transition-colors">
-                                                                    <a href={`/${rest.slug}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
-                                                                        <span className="text-gray-600">jindungo.ao/</span>{rest.slug}
-                                                                        <span className="text-[10px]">🔗</span>
-                                                                    </a>
+                            <div className="bg-black/20 backdrop-blur-sm">
+                                {/* Desktop Table View */}
+                                <div className="hidden md:block overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-white/5">
+                                        <thead className="bg-black/40">
+                                            <tr>
+                                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Restaurante / Link</th>
+                                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Responsável</th>
+                                                <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Faturação (Validade)</th>
+                                                <th className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Sistema</th>
+                                                <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Acões SaaS</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-white/5 bg-transparent">
+                                            {paginatedRestaurants.map(rest => {
+                                                const expired = isExpired(rest.valid_until);
+                                                return (
+                                                    <tr key={rest.id} className="hover:bg-white/5 transition duration-300 group">
+                                                        <td className="px-6 py-5 whitespace-nowrap">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4AF37]/20 to-black border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] font-serif font-bold group-hover:scale-110 transition-transform shadow-[0_4px_10px_rgba(212,175,55,0.2)]">
+                                                                    {rest.name.charAt(0).toUpperCase()}
+                                                                </div>
+                                                                <div>
+                                                                    <div className="text-sm font-bold text-white group-hover:text-[#D4AF37] transition-colors">{rest.name}</div>
+                                                                    <div className="text-xs text-gray-500 mt-1 hover:text-white transition-colors">
+                                                                        <a href={`/${rest.slug}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                                                                            <span className="text-gray-600">jindungo.ao/</span>{rest.slug}
+                                                                            <span className="text-[10px]">🔗</span>
+                                                                        </a>
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-5 whitespace-nowrap">
-                                                        <div className="text-sm font-medium text-white">{rest.profiles?.email || 'Nenhum'}</div>
-                                                        <div className="text-[10px] bg-white/10 text-gray-400 px-2 py-0.5 rounded-full inline-block mt-1 font-mono">
-                                                            ID: {rest.owner_id?.substring(0, 8) || 'N/A'}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-5 whitespace-nowrap text-center">
-                                                        <span className={`px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-lg border ${rest.plan === 'Plano Semanal' ? 'bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/30' :
-                                                            rest.plan === 'Plano Anual' ? 'bg-purple-900/20 text-purple-400 border-purple-800/50' :
-                                                                'bg-white/5 text-gray-300 border-white/10'
-                                                            }`}>
-                                                            {rest.plan || 'Free'}
-                                                        </span>
-                                                        <div className={`mt-2 text-xs font-medium ${expired ? 'text-red-400' : 'text-green-500'}`}>
-                                                            {expired ? 'Expirou: ' : 'Vence: '} {formatDate(rest.valid_until)}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-5 whitespace-nowrap text-center">
-                                                        <button
-                                                            onClick={() => toggleRestaurantStatus(rest.id, rest.status)}
-                                                            className={`px-3 py-1 inline-flex items-center gap-2 text-xs font-bold rounded-lg border transition-all ${rest.status === 'active'
-                                                                ? 'bg-green-900/20 text-green-400 border-green-900/50 hover:bg-red-900/20 hover:border-red-900/50 hover:text-red-400'
-                                                                : 'bg-red-900/20 text-red-500 border-red-900/50 hover:bg-green-900/20 hover:border-green-900/50 hover:text-green-400'
-                                                                }`}
-                                                            title="Clique para alternar On/Off"
-                                                        >
-                                                            <span className={`w-2 h-2 rounded-full ${rest.status === 'active' ? 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]' : 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]'}`}></span>
-                                                            {rest.status === 'active' ? 'Ativo' : 'Bloqueado'}
-                                                        </button>
-                                                    </td>
-                                                    <td className="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
-                                                        <div className="flex gap-2 justify-end transition-opacity duration-300">
+                                                        </td>
+                                                        <td className="px-6 py-5 whitespace-nowrap">
+                                                            <div className="text-sm font-medium text-white">{rest.profiles?.email || 'Nenhum'}</div>
+                                                            <div className="text-[10px] bg-white/10 text-gray-400 px-2 py-0.5 rounded-full inline-block mt-1 font-mono">
+                                                                ID: {rest.owner_id?.substring(0, 8) || 'N/A'}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-5 whitespace-nowrap text-center">
+                                                            <span className={`px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-lg border ${rest.plan === 'Plano Semanal' ? 'bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/30' :
+                                                                rest.plan === 'Plano Anual' ? 'bg-purple-900/20 text-purple-400 border-purple-800/50' :
+                                                                    'bg-white/5 text-gray-300 border-white/10'
+                                                                }`}>
+                                                                {rest.plan || 'Free'}
+                                                            </span>
+                                                            <div className={`mt-2 text-xs font-medium ${expired ? 'text-red-400' : 'text-green-500'}`}>
+                                                                {expired ? 'Expirou: ' : 'Vence: '} {formatDate(rest.valid_until)}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-5 whitespace-nowrap text-center">
                                                             <button
-                                                                onClick={() => setRenewModal({ isOpen: true, restaurant: rest, selectedPlan: PLANS[1], customDays: 0 })}
-                                                                className="w-8 h-8 rounded-lg bg-green-900/20 text-green-400 border border-green-900/50 hover:bg-green-500 hover:text-white flex items-center justify-center transition-all shadow-[0_4px_10px_rgba(0,0,0,0.3)] hover:scale-110"
-                                                                title="Renovar Plano"
+                                                                onClick={() => toggleRestaurantStatus(rest.id, rest.status)}
+                                                                className={`px-3 py-1 inline-flex items-center gap-2 text-xs font-bold rounded-lg border transition-all ${rest.status === 'active'
+                                                                    ? 'bg-green-900/20 text-green-400 border-green-900/50 hover:bg-red-900/20 hover:border-red-900/50 hover:text-red-400'
+                                                                    : 'bg-red-900/20 text-red-500 border-red-900/50 hover:bg-green-900/20 hover:border-green-900/50 hover:text-green-400'
+                                                                    }`}
+                                                                title="Clique para alternar On/Off"
                                                             >
-                                                                💳
+                                                                <span className={`w-2 h-2 rounded-full ${rest.status === 'active' ? 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]' : 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]'}`}></span>
+                                                                {rest.status === 'active' ? 'Ativo' : 'Bloqueado'}
                                                             </button>
-                                                            <button
-                                                                onClick={() => handlePopulateDemo(rest.id, rest.name)}
-                                                                className="w-8 h-8 rounded-lg bg-blue-900/20 text-blue-400 border border-blue-900/50 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-all shadow-[0_4px_10px_rgba(0,0,0,0.3)] hover:scale-110"
-                                                                title="Preencher Dados Demo"
-                                                            >
-                                                                🪄
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleMasquerade(rest.id)}
-                                                                className="w-8 h-8 rounded-lg bg-white/5 text-white border border-white/10 hover:bg-white hover:text-black flex items-center justify-center transition-all shadow-[0_4px_10px_rgba(0,0,0,0.3)] hover:scale-110"
-                                                                title="Aceder como Cliente (Entrar)"
-                                                            >
-                                                                🕵️‍♂️
-                                                            </button>
-                                                            <button
-                                                                onClick={() => setDeleteModal({ isOpen: true, restaurant: rest, confirmName: '' })}
-                                                                className="w-8 h-8 rounded-lg bg-red-900/20 text-red-400 border border-red-900/50 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all shadow-[0_4px_10px_rgba(0,0,0,0.3)] hover:scale-110"
-                                                                title="Eliminar Cliente"
-                                                            >
-                                                                🗑️
-                                                            </button>
+                                                        </td>
+                                                        <td className="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
+                                                            <div className="flex gap-2 justify-end transition-opacity duration-300">
+                                                                <button onClick={() => setRenewModal({ isOpen: true, restaurant: rest, selectedPlan: PLANS[1], customDays: 0 })} className="w-8 h-8 rounded-lg bg-green-900/20 text-green-400 border border-green-900/50 hover:bg-green-500 hover:text-white flex items-center justify-center transition-all shadow-[0_4px_10px_rgba(0,0,0,0.3)] hover:scale-110">💳</button>
+                                                                <button onClick={() => handlePopulateDemo(rest.id, rest.name)} className="w-8 h-8 rounded-lg bg-blue-900/20 text-blue-400 border border-blue-900/50 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-all shadow-[0_4px_10px_rgba(0,0,0,0.3)] hover:scale-110">🪄</button>
+                                                                <button onClick={() => handleMasquerade(rest.id)} className="w-8 h-8 rounded-lg bg-white/5 text-white border border-white/10 hover:bg-white hover:text-black flex items-center justify-center transition-all shadow-[0_4px_10px_rgba(0,0,0,0.3)] hover:scale-110">🕵️‍♂️</button>
+                                                                <button onClick={() => setDeleteModal({ isOpen: true, restaurant: rest, confirmName: '' })} className="w-8 h-8 rounded-lg bg-red-900/20 text-red-400 border border-red-900/50 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all shadow-[0_4px_10px_rgba(0,0,0,0.3)] hover:scale-110">🗑️</button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Mobile Card View */}
+                                <div className="md:hidden divide-y divide-white/5">
+                                    {paginatedRestaurants.map(rest => {
+                                        const expired = isExpired(rest.valid_until);
+                                        return (
+                                            <div key={rest.id} className="p-4 space-y-4">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4AF37]/20 to-black border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] font-serif font-bold text-lg">
+                                                            {rest.name.charAt(0).toUpperCase()}
                                                         </div>
-                                                    </td>
-                                                </tr>
-                                            )
-                                        })}
-                                        {restaurants.length === 0 && (
-                                            <tr><td colSpan="5" className="px-6 py-12 text-center text-gray-500 font-medium">Nenhum cliente/restaurante registado na plataforma SaaS.</td></tr>
-                                        )}
-                                        {restaurants.length > 0 && paginatedRestaurants.length === 0 && (
-                                            <tr><td colSpan="5" className="px-6 py-12 text-center text-gray-500 font-medium border-t border-white/5">Nenhum resultado encontrado para "{searchQuery}".</td></tr>
-                                        )}
-                                    </tbody>
-                                </table>
+                                                        <div>
+                                                            <div className="text-sm font-bold text-white">{rest.name}</div>
+                                                            <div className="text-[10px] text-gray-500 flex items-center gap-1">
+                                                                <span className="text-gray-600">jindungo.ao/</span>{rest.slug}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => toggleRestaurantStatus(rest.id, rest.status)}
+                                                        className={`px-2 py-1 flex items-center gap-1.5 text-[10px] font-black rounded-lg border uppercase tracking-widest ${rest.status === 'active' ? 'bg-green-900/20 text-green-400 border-green-900/50' : 'bg-red-900/20 text-red-500 border-red-900/50'}`}
+                                                    >
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${rest.status === 'active' ? 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]' : 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]'}`}></span>
+                                                        {rest.status === 'active' ? 'ON' : 'OFF'}
+                                                    </button>
+                                                </div>
+
+                                                <div className="flex justify-between items-center text-[11px] bg-white/5 rounded-xl p-3 border border-white/5">
+                                                    <div className="space-y-1">
+                                                        <div className="text-gray-500 font-bold uppercase tracking-tighter text-[9px]">Responsável</div>
+                                                        <div className="text-gray-300 font-medium truncate max-w-[140px]">{rest.profiles?.email || 'N/A'}</div>
+                                                    </div>
+                                                    <div className="text-right space-y-1">
+                                                        <div className="text-gray-500 font-bold uppercase tracking-tighter text-[9px]">Plano / Expiração</div>
+                                                        <div className={`font-bold ${expired ? 'text-red-400' : 'text-[#D4AF37]'}`}>
+                                                            {rest.plan || 'Free'} • {formatDate(rest.valid_until)}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-4 gap-2">
+                                                    <button onClick={() => setRenewModal({ isOpen: true, restaurant: rest, selectedPlan: PLANS[1], customDays: 0 })} className="py-2.5 rounded-xl bg-green-900/20 text-green-400 border border-green-900/50 flex flex-col items-center justify-center gap-1 transition-all text-[9px] font-bold"><span>💳</span><span>RENOVAR</span></button>
+                                                    <button onClick={() => handlePopulateDemo(rest.id, rest.name)} className="py-2.5 rounded-xl bg-blue-900/20 text-blue-400 border border-blue-900/50 flex flex-col items-center justify-center gap-1 transition-all text-[9px] font-bold"><span>🪄</span><span>DEMO</span></button>
+                                                    <button onClick={() => handleMasquerade(rest.id)} className="py-2.5 rounded-xl bg-white/5 text-white border border-white/10 flex flex-col items-center justify-center gap-1 transition-all text-[9px] font-bold"><span>🕵️‍♂️</span><span>ENTRAR</span></button>
+                                                    <button onClick={() => setDeleteModal({ isOpen: true, restaurant: rest, confirmName: '' })} className="py-2.5 rounded-xl bg-red-900/20 text-red-500 border border-red-900/50 flex flex-col items-center justify-center gap-1 transition-all text-[9px] font-bold"><span>🗑️</span><span>APAGAR</span></button>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+
+                                {/* No Results Messages */}
+                                {restaurants.length === 0 && (
+                                    <div className="px-6 py-12 text-center text-gray-500 font-medium border-t border-white/5">Nenhum cliente/restaurante registado na plataforma SaaS.</div>
+                                )}
+                                {restaurants.length > 0 && paginatedRestaurants.length === 0 && (
+                                    <div className="px-6 py-12 text-center text-gray-500 font-medium border-t border-white/5">Nenhum resultado encontrado para "{searchQuery}".</div>
+                                )}
 
                                 {/* Pagination Controls */}
                                 {totalRestaurantPages > 1 && (
-                                    <div className="p-4 border-t border-white/5 flex items-center justify-between text-sm text-gray-400 bg-black/20">
-                                        <div>
-                                            A mostrar <span className="font-bold text-white">{(currentPage - 1) * itemsPerPage + 1}</span> - <span className="font-bold text-white">{Math.min(currentPage * itemsPerPage, filteredRestaurants.length)}</span> de <span className="font-bold text-white">{filteredRestaurants.length}</span> resultados
+                                    <div className="p-4 border-t border-white/5 flex items-center justify-between text-xs text-gray-400 bg-black/20">
+                                        <div className="hidden sm:block">
+                                            A mostrar <span className="font-bold text-white">{(currentPage - 1) * itemsPerPage + 1}</span> - <span className="font-bold text-white">{Math.min(currentPage * itemsPerPage, filteredRestaurants.length)}</span> de <span className="font-bold text-white">{filteredRestaurants.length}</span>
                                         </div>
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-end items-center">
                                             <button
                                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                                 disabled={currentPage === 1}
-                                                className="px-3 py-1 rounded bg-white/5 hover:bg-white/10 disabled:opacity-30 transition"
+                                                className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 transition border border-white/10 text-[10px] font-bold uppercase tracking-widest"
                                             >
                                                 Anterior
                                             </button>
-                                            <div className="flex px-2 items-center text-white font-medium">
+                                            <div className="px-3 text-white font-bold">
                                                 {currentPage} / {totalRestaurantPages}
                                             </div>
                                             <button
                                                 onClick={() => setCurrentPage(p => Math.min(totalRestaurantPages, p + 1))}
                                                 disabled={currentPage === totalRestaurantPages}
-                                                className="px-3 py-1 rounded bg-white/5 hover:bg-white/10 disabled:opacity-30 transition"
+                                                className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 transition border border-white/10 text-[10px] font-bold uppercase tracking-widest"
                                             >
                                                 Próximo
                                             </button>
@@ -852,92 +884,139 @@ const SuperAdminDashboard = () => {
                                     />
                                 </div>
                             </div>
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-white/5">
-                                    <thead className="bg-black/40">
-                                        <tr>
-                                            <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Email</th>
-                                            <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Nível de Acesso (Role)</th>
-                                            <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Status / Bloqueio</th>
-                                            <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Controlos</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-white/5 bg-transparent">
-                                        {paginatedUsers.map((user) => (
-                                            <tr key={user.id} className="hover:bg-white/5 transition duration-300 group">
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-gray-400 group-hover:bg-white/10 group-hover:text-white transition-all">
-                                                            {user.email?.charAt(0).toUpperCase() || 'U'}
-                                                        </div>
-                                                        <div className="text-sm font-medium text-white group-hover:text-[#D4AF37] transition-colors">{user.email}</div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                    <span className={`px-3 py-1 inline-flex text-[11px] leading-5 font-bold rounded-lg border uppercase tracking-wider ${user.role === 'super_admin' ? 'bg-purple-900/20 text-purple-400 border-purple-900/50' :
-                                                        user.role === 'admin' ? 'bg-blue-900/20 text-blue-400 border-blue-900/50' :
-                                                            'bg-white/5 text-gray-400 border-white/10'
-                                                        }`}>
-                                                        {user.role}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                    <span className={`px-3 py-1 inline-flex items-center gap-2 text-xs leading-5 font-bold rounded-lg border ${user.status === 'banned' ? 'bg-red-900/20 text-red-500 border-red-900/50' : 'bg-green-900/20 text-green-400 border-green-900/50'
-                                                        }`}>
-                                                        <span className={`w-2 h-2 rounded-full ${user.status === 'banned' ? 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]' : 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]'}`}></span>
-                                                        {user.status === 'banned' ? 'Banned' : 'Ativo'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                        <button
-                                                            onClick={() => setEditingUser(user)}
-                                                            className="px-3 py-1.5 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all shadow-sm hover:scale-105"
-                                                        >
-                                                            Permissões
-                                                        </button>
-                                                        <button
-                                                            onClick={() => toggleUserProfileBan(user.id, user.status)}
-                                                            className={`px-3 py-1.5 rounded-lg border font-bold text-xs transition-all shadow-sm hover:scale-105 ${user.status === 'banned'
-                                                                ? 'bg-green-900/20 text-green-400 border-green-900/50 hover:bg-green-500 hover:text-white'
-                                                                : 'bg-red-900/20 text-red-400 border-red-900/50 hover:bg-red-500 hover:text-white'
-                                                                }`}
-                                                        >
-                                                            {user.status === 'banned' ? 'Desbloquear' : 'Banir'}
-                                                        </button>
-                                                    </div>
-                                                </td>
+                            
+                            <div className="bg-black/20 backdrop-blur-sm">
+                                {/* Desktop Table View */}
+                                <div className="hidden md:block overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-white/5">
+                                        <thead className="bg-black/40">
+                                            <tr>
+                                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Email</th>
+                                                <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Nível de Acesso (Role)</th>
+                                                <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Status / Bloqueio</th>
+                                                <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Controlos</th>
                                             </tr>
-                                        ))}
-                                        {users.length === 0 && (
-                                            <tr><td colSpan="4" className="px-6 py-12 text-center text-gray-500 font-medium border-t border-white/5">Nenhum utilizador encontrado.</td></tr>
-                                        )}
-                                        {users.length > 0 && paginatedUsers.length === 0 && (
-                                            <tr><td colSpan="4" className="px-6 py-12 text-center text-gray-500 font-medium border-t border-white/5">Nenhum resultado encontrado para "{searchQuery}".</td></tr>
-                                        )}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className="divide-y divide-white/5 bg-transparent">
+                                            {paginatedUsers.map((user) => (
+                                                <tr key={user.id} className="hover:bg-white/5 transition duration-300 group">
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-gray-400 group-hover:bg-white/10 group-hover:text-white transition-all">
+                                                                {user.email?.charAt(0).toUpperCase() || 'U'}
+                                                            </div>
+                                                            <div className="text-sm font-medium text-white group-hover:text-[#D4AF37] transition-colors">{user.email}</div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                        <span className={`px-3 py-1 inline-flex text-[11px] leading-5 font-bold rounded-lg border uppercase tracking-wider ${user.role === 'super_admin' ? 'bg-purple-900/20 text-purple-400 border-purple-900/50' :
+                                                            user.role === 'admin' ? 'bg-blue-900/20 text-blue-400 border-blue-900/50' :
+                                                                'bg-white/5 text-gray-400 border-white/10'
+                                                            }`}>
+                                                            {user.role}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                        <span className={`px-3 py-1 inline-flex items-center gap-2 text-xs leading-5 font-bold rounded-lg border ${user.status === 'banned' ? 'bg-red-900/20 text-red-500 border-red-900/50' : 'bg-green-900/20 text-green-400 border-green-900/50'
+                                                            }`}>
+                                                            <span className={`w-2 h-2 rounded-full ${user.status === 'banned' ? 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]' : 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]'}`}></span>
+                                                            {user.status === 'banned' ? 'Banned' : 'Ativo'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                            <button
+                                                                onClick={() => setEditingUser(user)}
+                                                                className="px-3 py-1.5 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all shadow-sm hover:scale-105"
+                                                            >
+                                                                Permissões
+                                                            </button>
+                                                            <button
+                                                                onClick={() => toggleUserProfileBan(user.id, user.status)}
+                                                                className={`px-3 py-1.5 rounded-lg border font-bold text-xs transition-all shadow-sm hover:scale-105 ${user.status === 'banned'
+                                                                    ? 'bg-green-900/20 text-green-400 border-green-900/50 hover:bg-green-500 hover:text-white'
+                                                                    : 'bg-red-900/20 text-red-400 border-red-900/50 hover:bg-red-500 hover:text-white'
+                                                                    }`}
+                                                            >
+                                                                {user.status === 'banned' ? 'Desbloquear' : 'Banir'}
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Mobile Card View */}
+                                <div className="md:hidden divide-y divide-white/5">
+                                    {paginatedUsers.map((user) => (
+                                        <div key={user.id} className="p-4 space-y-4">
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 border border-white/10 font-bold">
+                                                        {user.email?.charAt(0).toUpperCase() || 'U'}
+                                                    </div>
+                                                    <div className="space-y-0.5">
+                                                        <div className="text-sm font-bold text-white truncate max-w-[180px]">{user.email}</div>
+                                                        <div className="flex gap-2">
+                                                            <span className={`px-1.5 py-0.5 text-[9px] font-black rounded border uppercase tracking-widest ${user.role === 'super_admin' ? 'bg-purple-900/20 text-purple-400 border-purple-900/50' : 'bg-blue-900/20 text-blue-400 border-blue-900/50'}`}>
+                                                                {user.role}
+                                                            </span>
+                                                            <span className={`px-1.5 py-0.5 text-[9px] font-black rounded border uppercase tracking-widest ${user.status === 'banned' ? 'bg-red-900/20 text-red-400 border-red-900/50' : 'bg-green-900/20 text-green-400 border-green-900/50'}`}>
+                                                                {user.status === 'banned' ? 'BAN' : 'OK'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <button 
+                                                    onClick={() => setEditingUser(user)} 
+                                                    className="py-2.5 rounded-xl bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 font-bold text-[10px] uppercase tracking-widest active:scale-95 transition-all shadow-sm"
+                                                >
+                                                    Permissões
+                                                </button>
+                                                <button 
+                                                    onClick={() => toggleUserProfileBan(user.id, user.status)} 
+                                                    className={`py-2.5 rounded-xl border font-bold text-[10px] uppercase tracking-widest active:scale-95 transition-all shadow-sm ${user.status === 'banned' ? 'bg-green-900/20 text-green-400 border-green-900/50' : 'bg-red-900/20 text-red-400 border-red-900/50'}`}
+                                                >
+                                                    {user.status === 'banned' ? 'Ativar' : 'Banir'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* No Results */}
+                                {users.length === 0 && (
+                                    <div className="px-6 py-12 text-center text-gray-500 font-medium border-t border-white/5">Nenhum utilizador encontrado.</div>
+                                )}
+                                {users.length > 0 && paginatedUsers.length === 0 && (
+                                    <div className="px-6 py-12 text-center text-gray-500 font-medium border-t border-white/5">Nenhum resultado encontrado para "{searchQuery}".</div>
+                                )}
+
                                 {/* Pagination Controls */}
                                 {totalUserPages > 1 && (
-                                    <div className="p-4 border-t border-white/5 flex items-center justify-between text-sm text-gray-400 bg-black/20">
-                                        <div>
-                                            A mostrar <span className="font-bold text-white">{(currentPage - 1) * itemsPerPage + 1}</span> - <span className="font-bold text-white">{Math.min(currentPage * itemsPerPage, filteredUsers.length)}</span> de <span className="font-bold text-white">{filteredUsers.length}</span> resultados
+                                    <div className="p-4 border-t border-white/5 flex items-center justify-between text-xs text-gray-400 bg-black/20">
+                                        <div className="hidden sm:block">
+                                            A mostrar <span className="font-bold text-white">{(currentPage - 1) * itemsPerPage + 1}</span> - <span className="font-bold text-white">{Math.min(currentPage * itemsPerPage, filteredUsers.length)}</span> de <span className="font-bold text-white">{filteredUsers.length}</span>
                                         </div>
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-end items-center">
                                             <button
                                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                                 disabled={currentPage === 1}
-                                                className="px-3 py-1 rounded bg-white/5 hover:bg-white/10 disabled:opacity-30 transition"
+                                                className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 transition border border-white/10 text-[10px] font-bold uppercase tracking-widest"
                                             >
                                                 Anterior
                                             </button>
-                                            <div className="flex px-2 items-center text-white font-medium">
+                                            <div className="px-3 text-white font-bold">
                                                 {currentPage} / {totalUserPages}
                                             </div>
                                             <button
                                                 onClick={() => setCurrentPage(p => Math.min(totalUserPages, p + 1))}
                                                 disabled={currentPage === totalUserPages}
-                                                className="px-3 py-1 rounded bg-white/5 hover:bg-white/10 disabled:opacity-30 transition"
+                                                className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 transition border border-white/10 text-[10px] font-bold uppercase tracking-widest"
                                             >
                                                 Próximo
                                             </button>
@@ -1049,43 +1128,43 @@ const SuperAdminDashboard = () => {
 
                     {/* FINANCE TAB */}
                     {activeTab === 'finance' && (
-                        <div className="p-6 md:p-8 space-y-8 min-h-[400px]">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="p-4 md:p-8 space-y-6 min-h-[400px]">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {/* MRR Card */}
-                                <div className="bg-gradient-to-br from-black/80 to-[#D4AF37]/5 border border-[#D4AF37]/20 rounded-3xl p-8 relative overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl group hover:border-[#D4AF37]/40 transition-all duration-500">
-                                    <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/10 rounded-full blur-[60px] -mr-20 -mt-20 pointer-events-none group-hover:bg-[#D4AF37]/20 transition-all duration-700"></div>
+                                <div className="bg-gradient-to-br from-black/80 to-[#D4AF37]/5 border border-[#D4AF37]/20 rounded-2xl p-6 md:p-8 relative overflow-hidden shadow-2xl backdrop-blur-xl group hover:border-[#D4AF37]/40 transition-all">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#D4AF37]/10 rounded-full blur-[40px] -mr-10 -mt-10 pointer-events-none group-hover:bg-[#D4AF37]/20 transition-all"></div>
                                     <div className="relative z-10 flex flex-col h-full justify-between">
                                         <div>
                                             <div className="flex items-center gap-3 mb-4">
-                                                <div className="w-10 h-10 bg-[#D4AF37]/10 rounded-xl flex items-center justify-center text-[#D4AF37]">📊</div>
-                                                <h3 className="text-gray-400 font-bold uppercase tracking-widest text-sm">Receita Mensal (MRR)</h3>
+                                                <div className="w-8 h-8 md:w-10 md:h-10 bg-[#D4AF37]/10 rounded-xl flex items-center justify-center text-[#D4AF37]">📊</div>
+                                                <h3 className="text-gray-400 font-bold uppercase tracking-widest text-[10px] md:text-xs">Receita Mensal (MRR)</h3>
                                             </div>
                                             <div className="flex items-baseline gap-2">
-                                                <span className="text-5xl font-serif font-bold text-white group-hover:text-[#D4AF37] transition-colors">{formatCurrency(totalMRR)}</span>
-                                                <span className="text-gray-500 font-bold uppercase text-xs tracking-wider">/mês</span>
+                                                <span className="text-3xl md:text-5xl font-serif font-bold text-white group-hover:text-[#D4AF37] transition-colors">{formatCurrency(totalMRR)}</span>
+                                                <span className="text-gray-500 font-bold uppercase text-[9px] tracking-wider">/mês</span>
                                             </div>
                                         </div>
-                                        <p className="text-sm text-gray-500 mt-6 pt-4 border-t border-white/5">
-                                            Valor estimado de faturação mensal baseado nos planos ativos.
+                                        <p className="text-[10px] md:text-sm text-gray-500 mt-4 pt-3 border-t border-white/5">
+                                            Valor estimado baseado nos planos ativos.
                                         </p>
                                     </div>
                                 </div>
 
                                 {/* Receivables Card */}
-                                <div className="bg-gradient-to-br from-black/80 to-green-900/10 border border-green-900/30 rounded-3xl p-8 relative overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl group hover:border-green-500/30 transition-all duration-500">
-                                    <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 rounded-full blur-[60px] -mr-20 -mt-20 pointer-events-none group-hover:bg-green-500/20 transition-all duration-700"></div>
+                                <div className="bg-gradient-to-br from-black/80 to-green-900/10 border border-green-900/30 rounded-2xl p-6 md:p-8 relative overflow-hidden shadow-2xl backdrop-blur-xl group hover:border-green-500/30 transition-all">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-[40px] -mr-10 -mt-10 pointer-events-none group-hover:bg-green-500/20 transition-all"></div>
                                     <div className="relative z-10 flex flex-col h-full justify-between">
                                         <div>
                                             <div className="flex items-center gap-3 mb-4">
-                                                <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center text-green-400">💰</div>
-                                                <h3 className="text-gray-400 font-bold uppercase tracking-widest text-sm">Recebíveis (7 Dias)</h3>
+                                                <div className="w-8 h-8 md:w-10 md:h-10 bg-green-500/10 rounded-xl flex items-center justify-center text-green-400">💰</div>
+                                                <h3 className="text-gray-400 font-bold uppercase tracking-widest text-[10px] md:text-xs">Próximos 7 Dias</h3>
                                             </div>
                                             <div className="flex items-baseline gap-2">
-                                                <span className="text-5xl font-serif font-bold text-green-400">{formatCurrency(expiringRevenue7Days)}</span>
+                                                <span className="text-3xl md:text-5xl font-serif font-bold text-green-400">{formatCurrency(expiringRevenue7Days)}</span>
                                             </div>
                                         </div>
-                                        <p className="text-sm text-gray-500 mt-6 pt-4 border-t border-white/5">
-                                            Valor potencial das subscrições que expiram na próxima semana.
+                                        <p className="text-[10px] md:text-sm text-gray-500 mt-4 pt-3 border-t border-white/5">
+                                            Previsão de renovações imediatas.
                                         </p>
                                     </div>
                                 </div>
@@ -1130,124 +1209,106 @@ const SuperAdminDashboard = () => {
 
                     {/* NOTIFICATIONS TAB */}
                     {activeTab === 'notifications' && (
-                        <div className="p-6 md:p-8 space-y-8 min-h-[400px]">
-                            <div className="bg-gradient-to-br from-[#0a0a0a] to-[#141414] rounded-3xl p-6 md:p-8 border border-white/10 shadow-2xl relative overflow-hidden">
+                        <div className="p-4 md:p-8 space-y-6 min-h-[400px]">
+                            <div className="bg-gradient-to-br from-[#0a0a0a] to-[#141414] rounded-2xl p-6 md:p-8 border border-white/10 shadow-2xl relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-[80px] -mr-40 -mt-40 pointer-events-none"></div>
-                                <div className="mb-8 relative z-10">
-                                    <h2 className="text-2xl font-serif font-bold text-white mb-2 flex items-center gap-3">
-                                        <span className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-2xl border border-blue-500/20">📢</span>
-                                        Altifalante do Sistema
+                                <div className="mb-6 relative z-10">
+                                    <h2 className="text-xl md:text-2xl font-serif font-bold text-white mb-2 flex items-center gap-3">
+                                        <span className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-blue-500/10 flex items-center justify-center text-xl md:text-2xl border border-blue-500/20">📢</span>
+                                        Notificação Global
                                     </h2>
-                                    <p className="text-gray-400">Envie notificações globais para todos os clientes logados no painel. Use para avisos de manutenção, novidades ou informações urgentes.</p>
+                                    <p className="text-xs md:text-sm text-gray-400">Avisos e novidades para todos os clientes.</p>
                                 </div>
 
                                 {/* Form */}
-                                <form onSubmit={handleCreateNotification} className="space-y-6 relative z-10 bg-black/40 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
-                                    <div>
-                                        <label className="block text-sm font-bold text-gray-300 mb-2">Título / Assunto (opcional)</label>
-                                        <input
-                                            type="text"
-                                            value={newNotification.title || ''}
-                                            onChange={(e) => setNewNotification({ ...newNotification, title: e.target.value })}
-                                            placeholder="Ex: Atualização Importante do Sistema"
-                                            className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37] transition-colors"
-                                        />
+                                <form onSubmit={handleCreateNotification} className="space-y-4 relative z-10 bg-black/40 p-4 md:p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Título (Opcional)</label>
+                                            <input
+                                                type="text"
+                                                value={newNotification.title || ''}
+                                                onChange={(e) => setNewNotification({ ...newNotification, title: e.target.value })}
+                                                placeholder="Assunto da notícia..."
+                                                className="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#D4AF37] transition-all"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Tipo de Aviso</label>
+                                            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                                                {['info', 'warning', 'danger', 'success'].map(type => (
+                                                    <label key={type} className="flex-shrink-0 cursor-pointer group">
+                                                        <input type="radio" value={type} checked={newNotification.type === type} onChange={(e) => setNewNotification({ ...newNotification, type: e.target.value })} className="hidden" />
+                                                        <span className={`px-3 py-1.5 rounded-lg border text-[10px] font-bold uppercase transition-all flex items-center gap-1 ${newNotification.type === type ? 
+                                                            (type === 'info' ? 'bg-blue-500 text-white border-blue-500' : 
+                                                             type === 'warning' ? 'bg-orange-500 text-white border-orange-500' :
+                                                             type === 'danger' ? 'bg-red-500 text-white border-red-500' :
+                                                             'bg-green-500 text-white border-green-500') : 
+                                                            'bg-white/5 text-gray-400 border-white/10 group-hover:bg-white/10'}`}>
+                                                            {type === 'info' ? 'ℹ️' : type === 'warning' ? '⚠️' : type === 'danger' ? '🚨' : '✅'}
+                                                        </span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-bold text-gray-300 mb-2">Mensagem</label>
+                                        <label className="block text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Mensagem</label>
                                         <textarea
                                             required
                                             rows="3"
-                                            className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37] resize-none"
-                                            placeholder="Escreva os detalhes da notificação aqui..."
+                                            className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#D4AF37] resize-none"
+                                            placeholder="Detalhes da notificação..."
                                             value={newNotification.message}
                                             onChange={(e) => setNewNotification({ ...newNotification, message: e.target.value })}
                                         ></textarea>
                                     </div>
-                                    <div className="flex flex-col sm:flex-row gap-4 items-center justify-between pt-2">
-                                        <div className="flex flex-wrap gap-4">
-                                            <label className="flex items-center gap-2 cursor-pointer text-sm">
-                                                <input type="radio" value="info" checked={newNotification.type === 'info'} onChange={(e) => setNewNotification({ ...newNotification, type: e.target.value })} className="accent-[#D4AF37]" />
-                                                <span className="text-blue-400 font-bold bg-blue-900/20 px-3 py-1.5 rounded-lg border border-blue-900/50">ℹ️ Informação</span>
-                                            </label>
-                                            <label className="flex items-center gap-2 cursor-pointer text-sm">
-                                                <input type="radio" value="warning" checked={newNotification.type === 'warning'} onChange={(e) => setNewNotification({ ...newNotification, type: e.target.value })} className="accent-[#D4AF37]" />
-                                                <span className="text-orange-400 font-bold bg-orange-900/20 px-3 py-1.5 rounded-lg border border-orange-900/50">⚠️ Aviso</span>
-                                            </label>
-                                            <label className="flex items-center gap-2 cursor-pointer text-sm">
-                                                <input type="radio" value="danger" checked={newNotification.type === 'danger'} onChange={(e) => setNewNotification({ ...newNotification, type: e.target.value })} className="accent-[#D4AF37]" />
-                                                <span className="text-red-400 font-bold bg-red-900/20 px-3 py-1.5 rounded-lg border border-red-900/50">🚨 Urgente</span>
-                                            </label>
-                                            <label className="flex items-center gap-2 cursor-pointer text-sm">
-                                                <input type="radio" value="success" checked={newNotification.type === 'success'} onChange={(e) => setNewNotification({ ...newNotification, type: e.target.value })} className="accent-[#D4AF37]" />
-                                                <span className="text-green-400 font-bold bg-green-900/20 px-3 py-1.5 rounded-lg border border-green-900/50">✅ Sucesso</span>
-                                            </label>
-                                        </div>
-                                        <button
-                                            type="submit"
-                                            disabled={isSendingNotification || (!newNotification.message && !newNotification.message?.trim())}
-                                            className="px-8 py-3 bg-[#D4AF37] text-black font-bold text-sm rounded-xl hover:bg-[#b5952f] disabled:opacity-50 transition-all shadow-[0_4px_15px_rgba(212,175,55,0.4)] hover:shadow-[0_6px_25px_rgba(212,175,55,0.6)] transform hover:-translate-y-1"
-                                        >
-                                            {isSendingNotification ? 'A Distribuir...' : 'Publicar Avisos'}
-                                        </button>
-                                    </div>
+                                    
+                                    <button
+                                        type="submit"
+                                        disabled={isSendingNotification || (!newNotification.message && !newNotification.message?.trim())}
+                                        className="w-full py-3 bg-[#D4AF37] text-black font-black text-xs uppercase tracking-widest rounded-xl hover:bg-[#b5952f] disabled:opacity-50 transition-all shadow-[0_4px_15px_rgba(212,175,55,0.3)] active:scale-95"
+                                    >
+                                        {isSendingNotification ? 'A Publicar...' : 'Emitir Notificação Global'}
+                                    </button>
                                 </form>
                             </div>
 
                             {/* Notifications History */}
-                            <div className="bg-black/60 backdrop-blur-md rounded-3xl border border-white/5 shadow-2xl overflow-hidden">
-                                <div className="p-6 border-b border-white/10 bg-gradient-to-r from-black/80 to-transparent">
-                                    <h4 className="font-serif font-bold text-white flex items-center gap-2">
-                                        <span>📜</span> Histórico de Mensagens Recentes
-                                    </h4>
+                            <div className="bg-black/40 backdrop-blur-md rounded-2xl border border-white/5 overflow-hidden">
+                                <div className="p-4 border-b border-white/10 bg-white/5 flex items-center gap-2">
+                                    <span className="text-lg">📜</span>
+                                    <h4 className="text-xs font-bold text-gray-300 uppercase tracking-widest">Histórico de Mensagens</h4>
                                 </div>
-                                <div className="divide-y divide-white/5 max-h-[500px] overflow-y-auto scrollbar-hide">
+                                <div className="divide-y divide-white/5 max-h-[400px] overflow-y-auto scrollbar-hide">
                                     {notifications.length === 0 ? (
                                         <div className="p-12 text-center text-gray-500 font-medium">
-                                            <span className="text-4xl block mb-4 opacity-50">📭</span>
-                                            Nenhum aviso transmitido ainda.
+                                            <span className="text-3xl block mb-2 opacity-30">📭</span>
+                                            Nenhum aviso transmitido.
                                         </div>
                                     ) : (
                                         notifications.map(notif => (
-                                            <div key={notif.id} className={`p-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between transition-colors group ${notif.is_active ? 'bg-transparent hover:bg-white/5' : 'bg-black/40 opacity-70'}`}>
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-3 mb-2">
-                                                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${notif.type === 'info' ? 'bg-blue-900/20 text-blue-400 border-blue-900/50' :
+                                            <div key={notif.id} className={`p-4 flex flex-col gap-3 transition-colors ${notif.is_active ? 'bg-transparent' : 'bg-black/20 opacity-60'}`}>
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase border ${notif.type === 'info' ? 'bg-blue-900/20 text-blue-400 border-blue-900/50' :
                                                             notif.type === 'warning' ? 'bg-orange-900/20 text-orange-400 border-orange-900/50' :
                                                                 notif.type === 'danger' ? 'bg-red-900/20 text-red-400 border-red-900/50' :
                                                                     'bg-green-900/20 text-green-400 border-green-900/50'
                                                             }`}>
                                                             {notif.type}
                                                         </span>
-                                                        <span className="text-xs text-gray-500 font-medium">{formatDate(notif.created_at)}</span>
-                                                        {notif.is_active && (
-                                                            <span className="flex h-2.5 w-2.5 relative ml-1">
-                                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-                                                            </span>
-                                                        )}
+                                                        <span className="text-[10px] text-gray-500 font-bold uppercase">{formatDate(notif.created_at)}</span>
                                                     </div>
-                                                    <p className="text-sm font-medium text-gray-300">{notif.message}</p>
+                                                    <div className="flex gap-2">
+                                                        <button onClick={() => toggleNotificationState(notif.id, notif.is_active)} className={`p-1.5 rounded-lg border transition-all ${notif.is_active ? 'bg-red-500/10 text-red-400 border-red-500/30' : 'bg-green-500/10 text-green-400 border-green-500/30'}`}>
+                                                            {notif.is_active ? '🛑' : '✅'}
+                                                        </button>
+                                                        <button onClick={() => deleteNotification(notif.id)} className="p-1.5 rounded-lg bg-white/5 text-gray-400 border border-white/10">🗑️</button>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-3 w-full md:w-auto mt-4 md:mt-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
-                                                    <button
-                                                        onClick={() => toggleNotificationState(notif.id, notif.is_active)}
-                                                        className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold rounded-xl border transition-all shadow-sm ${notif.is_active
-                                                            ? 'bg-red-900/20 text-red-400 border-red-900/50 hover:bg-red-500 hover:text-white'
-                                                            : 'bg-green-900/20 text-green-400 border-green-900/50 hover:bg-green-500 hover:text-white'
-                                                            }`}
-                                                    >
-                                                        {notif.is_active ? 'Revogar' : 'Reativar'}
-                                                    </button>
-                                                    <button
-                                                        onClick={() => deleteNotification(notif.id)}
-                                                        className="px-4 py-2 text-xs text-gray-400 bg-white/5 hover:bg-white/20 hover:text-white border border-white/10 rounded-xl transition-all"
-                                                        title="Apagar do histórico"
-                                                    >
-                                                        🗑️
-                                                    </button>
-                                                </div>
+                                                <p className="text-xs text-gray-300 leading-relaxed">{notif.message}</p>
                                             </div>
                                         ))
                                     )}
@@ -1552,6 +1613,40 @@ const SuperAdminDashboard = () => {
                         </div>
                     </div>
                 </div>
+            )}
+            {/* Fixed Bottom Navigation (Mobile Only) */}
+            <div className="sm:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] z-[60]">
+                <div className="bg-black/80 backdrop-blur-2xl border border-white/15 rounded-2xl p-2 flex items-center justify-around shadow-[0_15px_30px_rgba(0,0,0,0.6)]">
+                    {[
+                        { id: 'overview', label: 'Resumo', icon: '📊' },
+                        { id: 'restaurants', label: 'Clientes', icon: '🏪' },
+                        { id: 'users', label: 'Acessos', icon: '🔒' },
+                        { id: 'finance', label: 'Guito', icon: '💳' },
+                        { id: 'notifications', label: 'Avisos', icon: '📢' }
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all ${activeTab === tab.id
+                                ? 'bg-[#D4AF37]/10 text-[#D4AF37] scale-110 shadow-inner'
+                                : 'text-gray-500'
+                                }`}
+                        >
+                            <span className="text-xl leading-none">{tab.icon}</span>
+                            <span className="text-[9px] font-black uppercase tracking-tighter">{tab.label}</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Floating Action Button (FAB) - Mobile Only when in Restaurants tab */}
+            {activeTab === 'restaurants' && (
+                <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="sm:hidden fixed bottom-28 right-6 w-14 h-14 bg-[#D4AF37] text-black rounded-full shadow-[0_8px_30px_rgba(212,175,55,0.4)] flex items-center justify-center text-3xl font-bold z-[60] active:scale-90 transition-transform"
+                >
+                    +
+                </button>
             )}
         </div>
     );

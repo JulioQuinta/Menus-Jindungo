@@ -142,14 +142,49 @@ const Explorar = () => {
                     <span className="ml-auto text-gray-500 text-sm">{filteredRestaurants.length} estabelecimentos</span>
                 </div>
 
+                {/* Restaurantes Mais Solicitados */}
+                {!loading && filteredRestaurants.length > 0 && (
+                    <div className="mb-5 md:mb-8 sticky top-0 md:top-[88px] z-40 bg-gradient-to-b from-[#0A0A0A] via-[#0A0A0A]/95 to-[#0A0A0A]/90 backdrop-blur-md pt-4 pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+                        <div className="flex items-center gap-2 mb-3 md:mb-4">
+                            <Star className="text-[#D4AF37]" size={16} fill="#D4AF37" />
+                            <h2 className="text-base md:text-xl font-bold text-white tracking-tight">Os Mais Solicitados</h2>
+                        </div>
+                        <div className="flex overflow-x-auto gap-3 md:gap-4 pb-2 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                            {filteredRestaurants.slice(0, 8).map(res => (
+                                <div 
+                                    key={`popular-${res.id}`}
+                                    onClick={() => navigate(`/${res.slug}`)}
+                                    className="snap-start flex flex-col items-center gap-1.5 md:gap-2 min-w-[64px] md:min-w-[80px] cursor-pointer group shrink-0"
+                                >
+                                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 border-transparent group-hover:border-[#D4AF37] transition-all bg-[#1A1A1A] shadow-lg flex items-center justify-center relative">
+                                        {res.theme_config?.logoUrl ? (
+                                            <img src={res.theme_config.logoUrl} alt={res.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="text-xl md:text-2xl font-serif text-white/50">{res.name[0]}</span>
+                                        )}
+                                        {res._isOpen && (
+                                            <div className="absolute bottom-1 right-1 w-2.5 h-2.5 md:w-3 md:h-3 bg-green-500 rounded-full border-2 border-[#111] z-10"></div>
+                                        )}
+                                    </div>
+                                    <span className="text-[10px] md:text-xs font-medium text-center text-gray-300 group-hover:text-white line-clamp-2 leading-tight">
+                                        {res.name}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                        {/* Shadow edge for sticky feel */}
+                        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+                    </div>
+                )}
+
                 {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {[1, 2, 3, 4, 5, 6].map(i => (
-                            <div key={i} className="h-[380px] bg-white/5 rounded-[2rem] animate-pulse border border-white/5" />
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-8">
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                            <div key={i} className="h-[180px] md:h-[300px] bg-white/5 rounded-2xl md:rounded-3xl animate-pulse border border-white/5" />
                         ))}
                     </div>
                 ) : filteredRestaurants.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-8">
                         {filteredRestaurants.map(res => {
                             const todayHours = getTodayHours(res.business_info);
                             const dishCount = getDishCount(res);
@@ -157,77 +192,77 @@ const Explorar = () => {
                                 <div
                                     key={res.id}
                                     onClick={() => navigate(`/${res.slug}`)}
-                                    className="group bg-[#111111] rounded-[2.5rem] overflow-hidden border border-white/5 hover:border-[#D4AF37]/30 transition-all duration-500 cursor-pointer shadow-xl hover:shadow-[#D4AF37]/10 flex flex-col h-full"
+                                    className="group bg-[#111111] rounded-2xl md:rounded-3xl overflow-hidden border border-white/5 hover:border-[#D4AF37]/30 transition-all duration-500 cursor-pointer shadow-xl hover:shadow-[#D4AF37]/10 flex flex-col h-full"
                                 >
                                     {/* Image Area */}
-                                    <div className="h-52 bg-[#1A1A1A] relative overflow-hidden flex-shrink-0">
+                                    <div className="h-20 md:h-40 bg-[#1A1A1A] relative overflow-hidden flex-shrink-0">
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10" />
                                         {res.theme_config?.logoUrl ? (
                                             <img src={res.theme_config.logoUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60" alt={res.name} />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-6xl font-serif text-white/10">{res.name[0]}</div>
+                                            <div className="w-full h-full flex items-center justify-center text-3xl md:text-5xl font-serif text-white/10">{res.name[0]}</div>
                                         )}
                                         {/* Status badges */}
-                                        <div className="absolute top-4 left-4 z-20 flex gap-2 flex-wrap">
-                                            <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest backdrop-blur-md border ${res._isOpen ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'}`}>
+                                        <div className="absolute top-1.5 left-1.5 md:top-3 md:left-3 z-20 flex flex-col md:flex-row gap-0.5 md:gap-2">
+                                            <div className={`px-1.5 py-0.5 md:px-2.5 md:py-1 rounded-full text-[7px] md:text-[9px] font-black uppercase tracking-widest backdrop-blur-md border ${res._isOpen ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'}`}>
                                                 {res._isOpen ? '● Aberto' : '● Fechado'}
                                             </div>
                                             {res._hasDelivery && (
-                                                <div className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest backdrop-blur-md border bg-blue-500/20 text-blue-400 border-blue-500/30 flex items-center gap-1">
-                                                    <Bike size={10} /> Entrega
+                                                <div className="px-1.5 py-0.5 md:px-2.5 md:py-1 rounded-full text-[7px] md:text-[9px] font-black uppercase tracking-widest backdrop-blur-md border bg-blue-500/20 text-blue-400 border-blue-500/30 flex items-center justify-center gap-1 w-max">
+                                                    <Bike size={8} className="md:w-[10px]" /> <span className="hidden md:inline">Entrega</span>
                                                 </div>
                                             )}
                                         </div>
                                         {/* Share */}
-                                        <button onClick={(e) => handleShare(res, e)} className="absolute top-4 right-4 z-20 p-2 bg-black/40 hover:bg-black/70 rounded-full border border-white/10 transition-all">
-                                            <Share2 size={14} className="text-white" />
+                                        <button onClick={(e) => handleShare(res, e)} className="absolute top-1.5 right-1.5 md:top-3 md:right-3 z-20 p-1 md:p-1.5 bg-black/40 hover:bg-black/70 rounded-full border border-white/10 transition-all">
+                                            <Share2 className="text-white w-3 h-3 md:w-3.5 md:h-3.5" />
                                         </button>
                                     </div>
 
                                     {/* Content */}
-                                    <div className="p-6 flex flex-col flex-1">
-                                        <div className="flex justify-between items-start mb-3">
-                                            <h3 className="text-xl font-bold text-white group-hover:text-[#D4AF37] transition-colors line-clamp-1">{res.name}</h3>
-                                            <div className="flex items-center gap-1 text-[#D4AF37]">
-                                                <Star size={12} fill="currentColor" />
-                                                <span className="text-xs font-bold">Novo</span>
+                                    <div className="p-2.5 md:p-5 flex flex-col flex-1">
+                                        <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-1 md:mb-2">
+                                            <h3 className="text-[13px] md:text-lg font-bold text-white group-hover:text-[#D4AF37] transition-colors line-clamp-1">{res.name}</h3>
+                                            <div className="flex items-center gap-1 text-[#D4AF37] mt-0.5 md:mt-0">
+                                                <Star className="w-2 h-2 md:w-3 md:h-3" fill="currentColor" />
+                                                <span className="text-[8px] md:text-[10px] font-bold">Novo</span>
                                             </div>
                                         </div>
-                                        <div className="space-y-2 mb-5 flex-1">
-                                            <div className="flex items-center gap-2 text-gray-400 text-sm">
-                                                <MapPin size={14} className="text-[#D4AF37] shrink-0" />
-                                                <span className="line-clamp-1">{res.business_info?.location?.address || 'Angola'}</span>
+                                        <div className="space-y-0.5 md:space-y-1.5 mb-2 md:mb-4 flex-1">
+                                            <div className="flex items-center gap-1 md:gap-1.5 text-gray-400">
+                                                <MapPin className="text-[#D4AF37] shrink-0 w-2.5 h-2.5 md:w-3 md:h-3" />
+                                                <span className="line-clamp-1 text-[9px] md:text-xs">{res.business_info?.location?.address || 'Angola'}</span>
                                             </div>
                                             {todayHours && !todayHours.closed ? (
-                                                <div className="flex items-center gap-2 text-gray-400 text-sm">
-                                                    <Clock size={14} className="text-[#D4AF37] shrink-0" />
-                                                    <span>{todayHours.open} – {todayHours.close}</span>
+                                                <div className="flex items-center gap-1 md:gap-1.5 text-gray-400">
+                                                    <Clock className="text-[#D4AF37] shrink-0 w-2.5 h-2.5 md:w-3 md:h-3" />
+                                                    <span className="truncate text-[9px] md:text-xs">{todayHours.open} <span className="hidden md:inline">– {todayHours.close}</span></span>
                                                 </div>
                                             ) : (
-                                                <div className="flex items-center gap-2 text-gray-500 text-sm">
-                                                    <Clock size={14} className="shrink-0" />
-                                                    <span>Horário não definido</span>
+                                                <div className="flex items-center gap-1 md:gap-1.5 text-gray-500">
+                                                    <Clock className="shrink-0 w-2.5 h-2.5 md:w-3 md:h-3" />
+                                                    <span className="truncate text-[9px] md:text-xs">Não def.</span>
                                                 </div>
                                             )}
                                             {dishCount !== null && (
-                                                <div className="flex items-center gap-2 text-gray-400 text-sm">
-                                                    <Utensils size={14} className="text-[#D4AF37] shrink-0" />
-                                                    <span>{dishCount} pratos disponíveis</span>
+                                                <div className="flex items-center gap-1 md:gap-1.5 text-gray-400">
+                                                    <Utensils className="text-[#D4AF37] shrink-0 w-2.5 h-2.5 md:w-3 md:h-3" />
+                                                    <span className="truncate text-[9px] md:text-xs">{dishCount} pratos</span>
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="flex gap-2 pt-4 border-t border-white/5">
+                                        <div className="flex flex-col xl:flex-row gap-1 md:gap-2 pt-1.5 md:pt-3 border-t border-white/5 mt-auto">
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); setBookingTarget({ id: res.id, name: res.name }); }}
-                                                className="flex-1 bg-white/5 hover:bg-[#D4AF37]/10 text-gray-300 hover:text-[#D4AF37] border border-white/10 hover:border-[#D4AF37]/30 py-3 rounded-2xl transition-all flex items-center justify-center gap-2 text-xs font-bold"
+                                                className="flex-1 bg-white/5 hover:bg-[#D4AF37]/10 text-gray-300 hover:text-[#D4AF37] border border-white/10 hover:border-[#D4AF37]/30 py-1 md:py-2 rounded-lg transition-all flex items-center justify-center gap-1 md:gap-1.5 font-bold"
                                             >
-                                                <Calendar size={13} /> Reservar
+                                                <Calendar className="w-2.5 h-2.5 md:w-3 md:h-3" /> <span className="text-[8px] md:text-[10px] hidden md:inline">Reservar</span>
                                             </button>
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); navigate(`/${res.slug}`); }}
-                                                className="flex-1 bg-[#D4AF37] hover:bg-[#B3932D] text-black py-3 rounded-2xl transition-all flex items-center justify-center gap-2 text-xs font-bold shadow-lg"
+                                                className="flex-1 bg-[#D4AF37] hover:bg-[#B3932D] text-black py-1 md:py-2 rounded-lg transition-all flex items-center justify-center gap-1 md:gap-1.5 font-bold shadow-lg"
                                             >
-                                                Menu <ArrowRight size={13} />
+                                                <span className="text-[8px] md:text-[10px]">Menu</span> <ArrowRight className="w-2.5 h-2.5 md:w-3 md:h-3" />
                                             </button>
                                         </div>
                                     </div>

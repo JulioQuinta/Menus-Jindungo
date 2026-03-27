@@ -488,82 +488,81 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                                                     items={filteredItems?.map(i => i.id) || []}
                                                     strategy={rectSortingStrategy}
                                                 >
-                                                    <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+                                                    <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-3 sm:gap-6">
                                                         {filteredItems && filteredItems.map(item => (
                                                             <SortableItem key={item.id} id={item.id}>
                                                                 <div
-                                                                    className="group relative bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 hover:border-[#D4AF37]/70 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(212,175,55,0.1)] overflow-hidden h-full"
+                                                                    className="group relative bg-[#1A1A1A]/80 backdrop-blur-md rounded-xl sm:rounded-2xl border border-white/5 hover:border-[#D4AF37]/50 transition-all duration-300 hover:shadow-lg overflow-hidden h-full flex items-center p-2.5 sm:p-4 gap-3 sm:gap-4"
                                                                 >
-                                                                    <div className="flex h-full">
-                                                                        {/* Image Section */}
-                                                                        <div className="w-1/3 min-h-[120px] relative overflow-hidden">
-                                                                            <img
-                                                                                src={item.img_url || 'https://via.placeholder.com/150'}
-                                                                                alt={item.name}
-                                                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                                                            />
-                                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                                                                    {/* Image Section */}
+                                                                    <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-lg sm:rounded-xl relative overflow-hidden flex-shrink-0 shadow-md border border-white/5">
+                                                                        <img
+                                                                            src={item.img_url || 'https://via.placeholder.com/150'}
+                                                                            alt={item.name}
+                                                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                                        />
+                                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                                                                    </div>
+
+                                                                    {/* Content Section */}
+                                                                    <div className="flex-1 flex flex-col justify-between py-0.5 min-w-0 h-full">
+                                                                        <div>
+                                                                            <div className="flex justify-between items-start mb-0.5 sm:mb-1">
+                                                                                <h4 className="font-bold text-white text-[13px] sm:text-lg leading-tight truncate pr-2">{item.name}</h4>
+                                                                                <div className="flex gap-1.5 sm:gap-2 flex-shrink-0">
+                                                                                    <button
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            setEditingItem({
+                                                                                                ...item,
+                                                                                                variants: item.translations?.variants || item.variants || null
+                                                                                            });
+                                                                                        }}
+                                                                                        className="text-gray-400 hover:text-[#D4AF37] bg-white/5 hover:bg-white/10 rounded-md p-1.5 transition-all outline-none border border-white/5 shadow-sm"
+                                                                                        title="Editar Produto"
+                                                                                    >
+                                                                                        <span className="sr-only">Editar</span>
+                                                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                            <p className="text-[#D4AF37] font-bold text-xs sm:text-base mb-1">{item.price}</p>
+                                                                            <p className="text-gray-500 text-[10px] sm:text-xs line-clamp-1 sm:line-clamp-2">{item.desc_text || "Sem descrição..."}</p>
                                                                         </div>
 
-                                                                        {/* Content Section */}
-                                                                        <div className="flex-1 p-4 flex flex-col justify-between">
-                                                                            <div>
-                                                                                <div className="flex justify-between items-start mb-1">
-                                                                                    <h4 className="font-bold text-white text-lg leading-tight pr-2 line-clamp-2">{item.name}</h4>
-                                                                                    <div className="flex gap-2">
-                                                                                        <button
-                                                                                            onClick={(e) => {
-                                                                                                e.stopPropagation();
-                                                                                                setEditingItem({
-                                                                                                    ...item,
-                                                                                                    variants: item.translations?.variants || item.variants || null
-                                                                                                });
-                                                                                            }}
-                                                                                            className="text-gray-400 hover:text-[#D4AF37] bg-white/5 hover:bg-white/10 rounded-lg p-1.5 transition-all outline outline-1 outline-white/10 border-none shadow-sm"
-                                                                                            title="Editar Produto"
-                                                                                        >
-                                                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                                                                                        </button>
-                                                                                    </div>
-                                                                                </div>
-                                                                                <p className="text-[#D4AF37] font-bold text-base mb-2">{item.price}</p>
-                                                                                <p className="text-gray-500 text-xs line-clamp-2">{item.desc_text || "Sem descrição..."}</p>
-                                                                            </div>
+                                                                        <div className="flex justify-between items-center mt-2 pt-2 sm:mt-3 sm:pt-3 border-t border-white/5">
+                                                                            <label className="flex items-center gap-1.5 sm:gap-2 cursor-pointer relative scale-[0.85] sm:scale-100 origin-left">
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    className="sr-only peer"
+                                                                                    checked={item.available !== false} // Default true
+                                                                                    onChange={async (e) => {
+                                                                                        e.stopPropagation();
+                                                                                        // Optimistic toggle
+                                                                                        const newVal = !(item.available !== false);
+                                                                                        const newItems = categories.map(c => {
+                                                                                            if (c.id !== cat.id) return c;
+                                                                                            return {
+                                                                                                ...c,
+                                                                                                items: c.items.map(i => i.id === item.id ? { ...i, available: newVal } : i)
+                                                                                            };
+                                                                                        });
+                                                                                        setCategories(newItems);
 
-                                                                            <div className="flex justify-between items-center mt-3 pt-3 border-t border-white/5">
-                                                                                <label className="flex items-center gap-2 cursor-pointer relative">
-                                                                                    <input
-                                                                                        type="checkbox"
-                                                                                        className="sr-only peer"
-                                                                                        checked={item.available !== false} // Default true
-                                                                                        onChange={async (e) => {
-                                                                                            e.stopPropagation();
-                                                                                            // Optimistic toggle
-                                                                                            const newVal = !(item.available !== false);
-                                                                                            const newItems = categories.map(c => {
-                                                                                                if (c.id !== cat.id) return c;
-                                                                                                return {
-                                                                                                    ...c,
-                                                                                                    items: c.items.map(i => i.id === item.id ? { ...i, available: newVal } : i)
-                                                                                                };
-                                                                                            });
-                                                                                            setCategories(newItems);
+                                                                                        await supabase.from('menu_items').update({ available: newVal }).eq('id', item.id);
+                                                                                    }}
+                                                                                />
+                                                                                <div className="w-9 h-5 bg-gray-700/80 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:shadow-[0_0_5px_rgba(0,0,0,0.5)] after:transition-all peer-checked:bg-green-500"></div>
+                                                                                <span className={`text-[10px] font-bold uppercase tracking-widest ${item.available !== false ? 'text-green-400' : 'text-gray-500'}`}>{item.available !== false ? 'Disponível' : 'Esgotado'}</span>
+                                                                            </label>
 
-                                                                                            await supabase.from('menu_items').update({ available: newVal }).eq('id', item.id);
-                                                                                        }}
-                                                                                    />
-                                                                                    <div className="w-10 h-6 bg-gray-700/80 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:shadow-[0_0_5px_rgba(0,0,0,0.5)] after:transition-all peer-checked:bg-green-500"></div>
-                                                                                    <span className={`text-[10px] font-bold uppercase tracking-widest ${item.available !== false ? 'text-green-400' : 'text-gray-500'}`}>{item.available !== false ? 'Disponível' : 'Esgotado'}</span>
-                                                                                </label>
-
-                                                                                <button
-                                                                                    onClick={(e) => { e.stopPropagation(); handleDelete(item.id) }}
-                                                                                    className="text-gray-500 hover:text-red-500 bg-white/5 hover:bg-white/10 rounded-lg p-1.5 transition-all outline outline-1 outline-white/10 border-none shadow-sm"
-                                                                                    title="Apagar Prato"
-                                                                                >
-                                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                                                                </button>
-                                                                            </div>
+                                                                            <button
+                                                                                onClick={(e) => { e.stopPropagation(); handleDelete(item.id) }}
+                                                                                className="text-gray-500 hover:text-red-500 bg-white/5 hover:bg-white/10 rounded-md p-1.5 transition-all outline-none border border-white/5 shadow-sm"
+                                                                                title="Apagar Prato"
+                                                                            >
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                                                            </button>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -573,12 +572,12 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                                                         {/* Add Item Card Placeholder */}
                                                         <button
                                                             onClick={() => setEditingItem({ ...DEFAULT_ITEM, category_id: cat.id })}
-                                                            className="flex flex-col items-center justify-center min-h-[140px] rounded-2xl border-2 border-dashed border-white/20 hover:border-[#D4AF37]/50 hover:bg-[#D4AF37]/5 transition-all group shadow-sm bg-black/20"
+                                                            className="flex flex-col items-center justify-center min-h-[90px] sm:min-h-[140px] rounded-xl sm:rounded-2xl border border-dashed border-white/20 hover:border-[#D4AF37]/50 hover:bg-[#D4AF37]/5 transition-all group shadow-sm bg-black/20"
                                                         >
-                                                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-gray-400 group-hover:bg-[#D4AF37] group-hover:text-black transition-colors mb-2 shadow-[0_0_15px_rgba(255,255,255,0.05)] group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)]">
-                                                                <span className="text-2xl font-light leading-none">+</span>
+                                                            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-white/10 flex items-center justify-center text-gray-400 group-hover:bg-[#D4AF37] group-hover:text-black transition-colors mb-1 sm:mb-2 shadow-[0_0_15px_rgba(255,255,255,0.05)] group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)]">
+                                                                <span className="text-xl sm:text-2xl font-light leading-none">+</span>
                                                             </div>
-                                                            <span className="text-sm font-bold text-gray-500 group-hover:text-[#D4AF37] uppercase tracking-wider">Novo Prato</span>
+                                                            <span className="text-[10px] sm:text-sm font-bold text-gray-500 group-hover:text-[#D4AF37] uppercase tracking-wider">Novo Prato</span>
                                                         </button>
                                                     </div>
                                                 </SortableContext>

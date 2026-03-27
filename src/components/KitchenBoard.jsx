@@ -329,9 +329,9 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
             )}
 
             {orders.length > 0 && (
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 h-full min-h-0 overflow-x-auto pb-2 px-2">
+                <div className="flex-1 flex flex-row gap-4 md:gap-6 h-full min-h-0 overflow-x-auto snap-x snap-mandatory pb-2 px-2 custom-scrollbar">
                     {/* Column 1: Pendentes */}
-                    <div className="bg-black/60 shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl rounded-3xl p-5 flex flex-col h-full min-h-0 border border-white/5 relative overflow-hidden group">
+                    <div className="w-[85vw] sm:w-[320px] md:flex-1 shrink-0 snap-center bg-black/60 shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl rounded-2xl md:rounded-3xl p-4 md:p-5 flex flex-col h-full min-h-0 border border-white/5 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 blur-[50px] rounded-full -mr-16 -mt-16 group-hover:bg-yellow-500/20 transition-all duration-700"></div>
                         <div className="flex items-center justify-between mb-4 z-10">
                             <div className="flex items-center gap-2 text-yellow-500 font-bold uppercase tracking-wider text-xs">
@@ -348,7 +348,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                     </div>
 
                     {/* Column 2: Preparando */}
-                    <div className="bg-black/60 shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl rounded-3xl p-5 flex flex-col h-full min-h-0 border border-white/5 relative overflow-hidden group">
+                    <div className="w-[85vw] sm:w-[320px] md:flex-1 shrink-0 snap-center bg-black/60 shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl rounded-2xl md:rounded-3xl p-4 md:p-5 flex flex-col h-full min-h-0 border border-white/5 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-[50px] rounded-full -mr-16 -mt-16 group-hover:bg-orange-500/20 transition-all duration-700"></div>
                         <div className="flex items-center justify-between mb-4 z-10">
                             <div className="flex items-center gap-2 text-orange-500 font-bold uppercase tracking-wider text-xs">
@@ -365,7 +365,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                     </div>
 
                     {/* Column 3: Prontos */}
-                    <div className="bg-black/60 shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl rounded-3xl p-5 flex flex-col h-full min-h-0 border border-white/5 relative overflow-hidden group">
+                    <div className="w-[85vw] sm:w-[320px] md:flex-1 shrink-0 snap-center bg-black/60 shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl rounded-2xl md:rounded-3xl p-4 md:p-5 flex flex-col h-full min-h-0 border border-white/5 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 blur-[50px] rounded-full -mr-16 -mt-16 group-hover:bg-green-500/20 transition-all duration-700"></div>
                         <div className="flex items-center justify-between mb-4 z-10">
                             <div className="flex items-center gap-2 text-green-500 font-bold uppercase tracking-wider text-xs">

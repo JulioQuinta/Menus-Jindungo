@@ -10,7 +10,7 @@ const StatCard = ({ title, value, icon: Icon, colorClass, trend, trendValue, isP
     const colorBase = colorClass.split(' ')[0].replace('bg-', '').replace('-500', '');
 
     return (
-        <div className="bg-gradient-to-br from-black/80 to-[#141414] backdrop-blur-md p-6 sm:p-8 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-white/5 flex flex-col justify-between h-40 relative overflow-hidden group hover:border-white/20 transition-all duration-500">
+        <div className="bg-gradient-to-br from-black/80 to-[#141414] backdrop-blur-md p-4 sm:p-8 rounded-2xl sm:rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-white/5 flex flex-col justify-between h-32 sm:h-40 relative overflow-hidden group hover:border-white/20 transition-all duration-500">
             {/* Dynamic Glow */}
             <div className={`absolute right-0 top-0 w-32 h-32 rounded-full blur-[60px] -mr-10 -mt-10 transition-transform duration-700 group-hover:scale-150 opacity-20 bg-${colorBase}-500`}></div>
 

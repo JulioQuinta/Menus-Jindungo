@@ -665,7 +665,7 @@ const AdminDashboard = () => {
                     user={user}
                 />
 
-                <div className="p-8 max-w-7xl mx-auto pb-24">
+                <div className="p-4 sm:p-8 max-w-7xl mx-auto pb-24">
                     <Routes>
                         <Route path="/" element={
                             <DashboardStats restaurantId={restaurant?.id} features={features} />

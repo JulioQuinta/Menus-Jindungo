@@ -2,7 +2,7 @@ import React from 'react';
 
 const AdminAlerts = ({ activeAlerts, onDismiss }) => {
     return (
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 w-80 pointer-events-none">
+        <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:bottom-6 sm:right-6 z-50 flex flex-col gap-3 sm:w-80 pointer-events-none">
             {activeAlerts.map(alert => (
                 <div key={alert.id} className={`pointer-events-auto text-white p-4 rounded-xl shadow-2xl border-2 animate-bounce flex items-center justify-between ${alert.isOrder ? 'bg-green-600 border-green-400' : 'bg-red-600 border-red-400'}`}>
                     <div>

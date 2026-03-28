@@ -28,28 +28,38 @@ export const getContrastColor = (hexcolor) => {
 
 export const hexToRgb = (hex) => {
     let r = 0, g = 0, b = 0;
+    // Remove # if present
+    const cleanHex = hex.replace('#', '');
+    
     // 3 digits
-    if (hex.length === 4) {
-        r = parseInt(hex[1] + hex[1], 16);
-        g = parseInt(hex[2] + hex[2], 16);
-        b = parseInt(hex[3] + hex[3], 16);
+    if (cleanHex.length === 3) {
+        r = parseInt(cleanHex[0] + cleanHex[0], 16);
+        g = parseInt(cleanHex[1] + cleanHex[1], 16);
+        b = parseInt(cleanHex[2] + cleanHex[2], 16);
     }
     // 6 digits
-    else if (hex.length === 7) {
-        r = parseInt(hex.substring(1, 3), 16);
-        g = parseInt(hex.substring(3, 5), 16);
-        b = parseInt(hex.substring(5, 7), 16);
+    else if (cleanHex.length === 6) {
+        r = parseInt(cleanHex.substring(0, 2), 16);
+        g = parseInt(cleanHex.substring(2, 4), 16);
+        b = parseInt(cleanHex.substring(4, 6), 16);
     }
     return { r, g, b };
 };
 
 export const darkenColor = (hex, percent) => {
-    const { r, g, b } = hexToRgb(hex);
-    const f = 1 - percent / 100;
-    const dr = Math.floor(r * f);
-    const dg = Math.floor(g * f);
-    const db = Math.floor(b * f);
+    try {
+        const { r, g, b } = hexToRgb(hex);
+        const f = 1 - percent / 100;
+        
+        // Clamp values between 0 and 255 to prevent overflow
+        const dr = Math.min(255, Math.max(0, Math.floor(r * f)));
+        const dg = Math.min(255, Math.max(0, Math.floor(g * f)));
+        const db = Math.min(255, Math.max(0, Math.floor(b * f)));
 
-    const toHex = (n) => n.toString(16).padStart(2, '0');
-    return `#${toHex(dr)}${toHex(dg)}${toHex(db)}`;
+        const toHex = (n) => n.toString(16).padStart(2, '0');
+        return `#${toHex(dr)}${toHex(dg)}${toHex(db)}`;
+    } catch (e) {
+        console.error("Error in darkenColor:", e);
+        return hex; // Fallback to original
+    }
 };

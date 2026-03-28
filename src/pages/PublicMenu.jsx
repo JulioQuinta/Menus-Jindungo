@@ -142,6 +142,8 @@ const PublicMenu = () => {
                     checkIsOpen(restaurantData.business_info);
                 }
 
+                setLoading(false);
+
             } catch (err) {
                 // If it's an AbortError, it means the request was cancelled (e.g. unmount), ignore it.
                 if (err.name === 'AbortError' || err.message?.includes('Abort')) {
@@ -151,8 +153,6 @@ const PublicMenu = () => {
                 console.error("Public Menu Critical Error:", err);
                 setError(err.message || 'Erro desconhecido');
                 toast.error(`Erro: ${err.message}`);
-            } finally {
-                // Only set loading false if we didn't abort (otherwise state update on unmounted component)
                 setLoading(false);
             }
         };

@@ -275,24 +275,33 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
     return (
         <div style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.5)', zIndex: 9999,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', // Centered
-            padding: '16px', backdropFilter: 'blur(2px)' // Add padding to avoid touching edges
+            background: 'rgba(0,0,0,0.6)', zIndex: 9999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '12px', backdropFilter: 'blur(8px)' // More blur for premium feel
         }} onClick={onClose}>
-            <div className="w-full max-w-md rounded-3xl p-5 sm:p-6 shadow-2xl relative text-gray-800" style={{
-                background: 'white',
-                animation: 'slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)', // Much faster, snappy slide
-                maxHeight: '85vh',
+            <div className="w-full max-w-md rounded-[32px] p-6 sm:p-8 shadow-2xl relative text-gray-900 border border-white/20 animate-in slide-in-from-bottom-10 duration-500" style={{
+                background: 'rgba(255, 255, 255, 0.95)',
+                maxHeight: '90vh',
                 overflowY: 'auto'
             }} onClick={e => e.stopPropagation()}>
 
-                <div style={{ height: '4px', width: '40px', background: '#cbd5e0', borderRadius: '2px', margin: '0 auto 1.5rem' }} />
+                <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6 sm:hidden" />
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h2 style={{ fontSize: '1.2rem', margin: 0, color: '#1a202c', fontWeight: 'bold' }}>
-                        {features?.hasUpsell && showUpsell ? 'Quase lá...' : 'Finalizar Pedido'}
-                    </h2>
-                    <button onClick={onClose} style={{ background: 'transparent', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#a0aec0' }}>&times;</button>
+                <div className="flex justify-between items-center mb-8">
+                    <div>
+                        <h2 className="text-2xl font-serif font-black text-gray-900 leading-tight">
+                            {features?.hasUpsell && showUpsell ? 'Sugestões para Si' : 'Finalizar Pedido'}
+                        </h2>
+                        <p className="text-[10px] uppercase tracking-[0.2em] font-black text-gray-400 mt-1">
+                            {cartItems.length} {cartItems.length === 1 ? 'Artigo Selecionado' : 'Artigos Selecionados'}
+                        </p>
+                    </div>
+                    <button 
+                        onClick={onClose} 
+                        className="w-10 h-10 flex items-center justify-center rounded-2xl bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90"
+                    >
+                        <X size={20} />
+                    </button>
                 </div>
 
                 {features?.hasUpsell && showUpsell ? (
@@ -304,20 +313,20 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                     />
                 ) : (
                     <>
-                        {/* Tabs Order Type */}
-                        <div className="flex bg-gray-100 p-1 rounded-2xl mb-8 border border-gray-200/50 shadow-inner">
+                        {/* Premium Tabs Order Type */}
+                        <div className="flex bg-gray-100/80 backdrop-blur-sm p-1.5 rounded-[20px] mb-8 border border-gray-200/50 shadow-inner group">
                             <button
                                 onClick={() => setOrderType('dine-in')}
-                                className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 font-bold ${orderType === 'dine-in' ? 'bg-white text-primary shadow-md transform scale-[1.02]' : 'bg-transparent text-gray-500 hover:text-gray-700'}`}
+                                className={`flex-1 py-3 px-4 rounded-[14px] flex items-center justify-center gap-2 transition-all duration-500 font-bold text-sm ${orderType === 'dine-in' ? 'bg-white text-primary shadow-[0_4px_12px_rgba(0,0,0,0.1)] ring-1 ring-black/5 scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}
                             >
-                                <UtensilsCrossed size={18} />
+                                <UtensilsCrossed size={16} className={orderType === 'dine-in' ? 'animate-bounce-short' : ''} />
                                 <span>No Local</span>
                             </button>
                             <button
                                 onClick={() => setOrderType('delivery')}
-                                className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 font-bold ${orderType === 'delivery' ? 'bg-white text-primary shadow-md transform scale-[1.02]' : 'bg-transparent text-gray-500 hover:text-gray-700'}`}
+                                className={`flex-1 py-3 px-4 rounded-[14px] flex items-center justify-center gap-2 transition-all duration-500 font-bold text-sm ${orderType === 'delivery' ? 'bg-white text-primary shadow-[0_4px_12px_rgba(0,0,0,0.1)] ring-1 ring-black/5 scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}
                             >
-                                <Bike size={18} />
+                                <Bike size={16} className={orderType === 'delivery' ? 'animate-bounce-short' : ''} />
                                 <span>Entrega</span>
                             </button>
                         </div>
@@ -334,28 +343,43 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
 
                         <div style={{ borderTop: '1px dashed #e2e8f0', margin: '1rem 0' }} />
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1.5rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', color: '#4a5568' }}>
-                                <span>Subtotal</span>
-                                <span>{new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(subtotal).replace('AOA', 'Kz')}</span>
-                            </div>
-                            {deliveryFee > 0 && (
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#3182ce', fontWeight: 'bold' }}>
-                                    <span>Taxa de Entrega ({selectedZone?.name})</span>
-                                    <span>+{deliveryFee} Kz</span>
+                        <div className="bg-gray-50/50 rounded-3xl p-5 mb-8 border border-gray-100 shadow-sm">
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center text-sm font-medium text-gray-500">
+                                    <span>Subtotal</span>
+                                    <span className="text-gray-900">{new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(subtotal).replace('AOA', 'Kz')}</span>
                                 </div>
-                            )}
-                            {discount > 0 && (
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#38a169', fontWeight: 'bold' }}>
-                                    <span>Desconto ({appliedCoupon?.code})</span>
-                                    <span>-{discount} Kz</span>
+                                {deliveryFee > 0 && (
+                                    <div className="flex justify-between items-center text-sm font-bold text-blue-600">
+                                        <div className="flex items-center gap-1.5">
+                                            <Bike size={14} />
+                                            <span>Taxa de Entrega</span>
+                                        </div>
+                                        <span>+{new Intl.NumberFormat('pt-AO').format(deliveryFee)} Kz</span>
+                                    </div>
+                                )}
+                                {discount > 0 && (
+                                    <div className="flex justify-between items-center text-sm font-bold text-green-600">
+                                        <div className="flex items-center gap-1.5">
+                                            <Ticket size={14} />
+                                            <span>Desconto ({appliedCoupon?.code})</span>
+                                        </div>
+                                        <span>-{new Intl.NumberFormat('pt-AO').format(discount)} Kz</span>
+                                    </div>
+                                )}
+                                <div className="pt-3 border-t border-gray-200/50 flex justify-between items-end">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Total a Pagar</span>
+                                        <span className="text-3xl font-serif font-black text-gray-900 leading-none mt-1">
+                                            {new Intl.NumberFormat('pt-AO').format(total)}
+                                            <span className="text-xs ml-1 text-gray-400">Kz</span>
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-green-100/50 rounded-full text-green-700 text-[10px] font-black uppercase tracking-wider h-fit mb-1 border border-green-200/50">
+                                        <CheckCircle2 size={10} />
+                                        Seguro
+                                    </div>
                                 </div>
-                            )}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', fontWeight: 'bold', marginTop: '0.5rem', color: '#1a202c' }}>
-                                <span>Total Final</span>
-                                <span style={{ color: '#D4AF37' }}>
-                                    {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(total).replace('AOA', 'Kz')}
-                                </span>
                             </div>
                         </div>
 
@@ -617,13 +641,25 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                         <button
                             onClick={handleSendOrder}
                             disabled={cartItems.length === 0 || isSending}
-                            className={`w-full p-4 rounded-2xl font-bold text-lg text-black transition-all ${cartItems.length === 0 || isSending ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02] active:scale-[0.98]'}`}
+                            className={`w-full group relative overflow-hidden p-5 rounded-[24px] font-black text-lg transition-all ${cartItems.length === 0 || isSending ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-[1.02] active:scale-[0.98]'}`}
                             style={{
-                                background: 'linear-gradient(135deg, #D4AF37 0%, #F1C40F 100%)',
-                                boxShadow: '0 8px 20px rgba(212,175,55,0.3)',
+                                background: 'linear-gradient(135deg, #1A1A1A 0%, #333 100%)',
+                                color: '#D4AF37',
+                                boxShadow: '0 12px 32px rgba(0,0,0,0.2)'
                             }}
                         >
-                            {isSending ? 'Processando pedido...' : ((features?.canUseKDS && restaurantId) ? 'Enviar para Cozinha 👨‍🍳' : 'Fechar Pedido no WhatsApp 🟢')}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                            
+                            <div className="flex items-center justify-center gap-3 relative z-10">
+                                {isSending ? (
+                                    <div className="w-6 h-6 border-4 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full animate-spin" />
+                                ) : (
+                                    <>
+                                        <span>{(features?.canUseKDS && restaurantId) ? 'Enviar Pedido à Cozinha' : 'Pedir via WhatsApp'}</span>
+                                        <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                    </>
+                                )}
+                            </div>
                         </button>
                     </>
                 )}

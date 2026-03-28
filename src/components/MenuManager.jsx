@@ -433,12 +433,20 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                             </button>
                         )}
                     </div>
-                    <button
-                        onClick={() => setShowCategoryManager(true)}
-                        className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 transition-all backdrop-blur-sm justify-center"
-                    >
-                        <span>Gerenciar Categorias</span>
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setShowCategoryManager(true)}
+                            className="flex-1 flex items-center gap-2 px-4 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 transition-all backdrop-blur-sm justify-center text-sm"
+                        >
+                            <span>Categorias</span>
+                        </button>
+                        <button
+                            onClick={() => setEditingItem({ ...DEFAULT_ITEM })}
+                            className="sm:hidden flex-1 flex items-center gap-2 px-4 py-3 bg-[#D4AF37] text-black rounded-xl transition-all justify-center text-sm font-bold shadow-lg"
+                        >
+                            <span>+ Novo Prato</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -607,10 +615,10 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                 )}
             </div>
 
-            {/* MAGIC FLOATING BUTTON */}
+            {/* MAGIC FLOATING BUTTON (Hidden on mobile to avoid overlap) */}
             <button
                 onClick={() => setEditingItem({ ...DEFAULT_ITEM })}
-                className="absolute bottom-8 right-8 w-16 h-16 rounded-full bg-gradient-to-br from-[#D4AF37] to-yellow-600 text-black shadow-[0_4px_30px_rgba(212,175,55,0.5)] hover:scale-110 hover:shadow-[0_10px_40px_rgba(212,175,55,0.7)] hover:-rotate-90 transition-all duration-300 flex items-center justify-center z-50 group border border-yellow-200/50"
+                className="hidden sm:flex absolute bottom-8 right-8 w-16 h-16 rounded-full bg-gradient-to-br from-[#D4AF37] to-yellow-600 text-black shadow-[0_4px_30px_rgba(212,175,55,0.5)] hover:scale-110 hover:shadow-[0_10px_40px_rgba(212,175,55,0.7)] hover:-rotate-90 transition-all duration-300 items-center justify-center z-50 group border border-yellow-200/50"
             >
                 <span className="text-4xl leading-none font-light group-hover:font-bold">+</span>
             </button>

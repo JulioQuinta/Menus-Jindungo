@@ -10,17 +10,17 @@ const StatCard = ({ title, value, icon: Icon, colorClass, trend, trendValue, isP
     const colorBase = colorClass.split(' ')[0].replace('bg-', '').replace('-500', '');
 
     return (
-        <div className="bg-gradient-to-br from-black/80 to-[#141414] backdrop-blur-md p-4 sm:p-8 rounded-2xl sm:rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-white/5 flex flex-col justify-between h-32 sm:h-40 relative overflow-hidden group hover:border-white/20 transition-all duration-500">
+        <div className="bg-gradient-to-br from-black/80 to-[#141414] backdrop-blur-md p-3 sm:p-8 rounded-2xl sm:rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-white/5 flex flex-col justify-between h-28 sm:h-40 relative overflow-hidden group hover:border-white/10 transition-all duration-500">
             {/* Dynamic Glow */}
             <div className={`absolute right-0 top-0 w-32 h-32 rounded-full blur-[60px] -mr-10 -mt-10 transition-transform duration-700 group-hover:scale-150 opacity-20 bg-${colorBase}-500`}></div>
 
             <div className="flex justify-between items-start z-10 relative">
-                <div>
-                    <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">{title}</p>
-                    <h3 className="text-3xl sm:text-4xl font-serif font-bold text-white leading-none drop-shadow-md group-hover:text-[#D4AF37] transition-colors">{value}</h3>
+                <div className="min-w-0 flex-1">
+                    <p className="text-gray-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.2em] mb-1 sm:mb-2 truncate">{title}</p>
+                    <h3 className="text-xl sm:text-4xl font-serif font-bold text-white leading-none drop-shadow-md group-hover:text-[#D4AF37] transition-colors truncate">{value}</h3>
                 </div>
-                <div className={`p-3 rounded-2xl border border-${colorBase}-500/30 bg-${colorBase}-500/10 text-${colorBase}-400 shadow-[0_0_20px_rgba(0,0,0,0.3)] group-hover:scale-110 transition-transform`}>
-                    <Icon size={24} />
+                <div className={`p-2 sm:p-3 rounded-xl sm:rounded-2xl border border-${colorBase}-500/30 bg-${colorBase}-500/10 text-${colorBase}-400 shadow-[0_0_20px_rgba(0,0,0,0.3)] group-hover:scale-110 transition-transform flex-shrink-0 ml-2`}>
+                    <Icon size={18} className="sm:w-6 sm:h-6" />
                 </div>
             </div>
 
@@ -330,7 +330,7 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
             )}
 
             {/* Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-6">
                 <StatCard
                     title={`${features?.canUseKDS ? 'Faturação' : 'Vendas WhatsApp'}`}
                     value={salesLoading ? '...' : `${salesStats.revenue.toLocaleString('pt-AO')} Kz`}
@@ -340,7 +340,7 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
                     isPositive={true}
                 />
                 <StatCard
-                    title="Descontos (Marketing)"
+                    title="Descontos"
                     value={salesLoading ? '...' : `${salesStats.discounts ? salesStats.discounts.toLocaleString('pt-AO') : '0'} Kz`}
                     icon={Ticket}
                     colorClass="bg-pink-500"
@@ -348,7 +348,7 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
                     isPositive={false}
                 />
                 <StatCard
-                    title="Encomendas Reais"
+                    title="Encomendas"
                     value={salesLoading ? '...' : salesStats.ordersCount}
                     icon={ShoppingBag}
                     colorClass="bg-orange-500"
@@ -356,7 +356,7 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
                     isPositive={true}
                 />
                 <StatCard
-                    title="Acessos ao Menu"
+                    title="Acessos Menu"
                     value={stats.viewsToday}
                     icon={Eye}
                     colorClass="bg-blue-500"

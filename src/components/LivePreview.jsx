@@ -5,7 +5,7 @@ import StickyCategoryNav from './StickyCategoryNav';
 import HighlightsCarousel from './HighlightsCarousel'; // Assuming these exist or will be uncommented
 import { getContrastColor, darkenColor } from '../utils/colorUtils';
 
-import { Search, X, Globe } from 'lucide-react';
+import { Search, X, Globe, Utensils } from 'lucide-react';
 // import SearchBar from './SearchBar';
 
 const FlagSelector = ({ selected, onSelect }) => {
@@ -216,8 +216,20 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
 
         if (!categories || categories.length === 0) {
             return (
-                <div className="text-center py-10 text-gray-500">
-                    <p>Nenhum item disponível no momento.</p>
+                <div className="text-center py-20 flex flex-col items-center gap-4 bg-white/5 backdrop-blur-sm rounded-3xl border border-white/5 mx-4 my-8 shadow-inner overflow-hidden relative">
+                    {/* Background accent */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+
+                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary/60 border border-primary/20 animate-pulse-slow">
+                        <Utensils size={32} strokeWidth={1.5} />
+                    </div>
+                    <div className="space-y-1 relative z-10 px-6">
+                        <p className="text-lg font-bold tracking-tight" style={{ color: effectiveTextColor }}>Cardápio em Preparação</p>
+                        <p className="text-sm opacity-60 leading-relaxed font-medium" style={{ color: effectiveTextColor }}>Estamos a organizar as melhores opções para si. <br /> Por favor, regresse em breve!</p>
+                    </div>
+                    <div className="mt-4 px-4 py-1.5 bg-black/20 rounded-full border border-white/5 text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">
+                        Jindungo Menus Digital
+                    </div>
                 </div>
             );
         }
@@ -258,23 +270,9 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
             : categories;
 
         // Sempre usar o formato de 'list' (Vertical) como padrão geral para garantir o scroll up and down fácil
-        const activeLayoutMode = 'list';
-
-        switch (activeLayoutMode) {
-            case 'grid':
-                return displayCategories.map(cat => (
-                    <CategorySection key={cat.id} cat={cat} Layout={GridLayout} commonProps={commonProps} />
-                ));
-            case 'minimal':
-                return displayCategories.map(cat => (
-                    <CategorySection key={cat.id} cat={cat} Layout={MinimalLayout} commonProps={commonProps} fontFamily={fontFamily} />
-                ));
-            case 'list':
-            default:
-                return displayCategories.map(cat => (
-                    <CategorySection key={cat.id} cat={cat} Layout={ListLayout} commonProps={commonProps} />
-                ));
-        }
+        return displayCategories.map(cat => (
+            <CategorySection key={cat.id} cat={cat} Layout={ListLayout} commonProps={commonProps} />
+        ));
     };
 
     const handleCategorySelect = (id) => {
@@ -391,15 +389,16 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
                 )}
             </div>
 
-            {/* Sticky Category Carousel */}
-            {!isLoading && categories.length > 0 && (
-                <div
-                    className="sticky top-0 z-[60] py-3 transition-all border-b border-white/5 backdrop-blur-xl"
-                    style={{
-                        backgroundColor: `${effectiveBgColor}f2`, // Adding slight transparency (f2 = 95%)
-                        borderBottomColor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
-                    }}
-                >
+             {/* Sticky Category Carousel */}
+             {!isLoading && categories.length > 0 && (
+                 <div
+                     className="sticky top-0 z-[70] py-2 transition-all border-b backdrop-blur-2xl shadow-sm"
+                     style={{
+                         backgroundColor: darkMode ? 'rgba(18,18,18,0.92)' : 'rgba(255,255,255,0.92)',
+                         borderBottomColor: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                         marginTop: '-1px' // Prevent pixel gap
+                     }}
+                 >
                     <CategoryCarousel
                         categories={categories}
                         activeCategory={activeCategory || categories[0]?.id}

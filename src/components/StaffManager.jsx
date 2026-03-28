@@ -153,59 +153,109 @@ const StaffManager = ({ restaurantId }) => {
                         <p className="text-sm">Comece por adicionar o seu primeiro colaborador.</p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-white/5 text-gray-400 text-xs uppercase tracking-wider">
-                                    <th className="px-6 py-4 font-bold border-b border-white/5">Nome / Email</th>
-                                    <th className="px-6 py-4 font-bold border-b border-white/5">Função (Role)</th>
-                                    <th className="px-6 py-4 font-bold border-b border-white/5">Acesso Rápido</th>
-                                    <th className="px-6 py-4 font-bold border-b border-white/5 text-right">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5">
-                                {filteredStaff.map((person) => (
-                                    <tr key={person.id} className="hover:bg-white/5 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-800 to-black border border-white/10 flex items-center justify-center text-white font-bold text-lg shadow-inner">
-                                                    {person.name.charAt(0).toUpperCase()}
+                    <>
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-white/5 text-gray-400 text-xs uppercase tracking-wider">
+                                        <th className="px-6 py-4 font-bold border-b border-white/5">Nome / Email</th>
+                                        <th className="px-6 py-4 font-bold border-b border-white/5">Função (Role)</th>
+                                        <th className="px-6 py-4 font-bold border-b border-white/5">Acesso Rápido</th>
+                                        <th className="px-6 py-4 font-bold border-b border-white/5 text-right">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {filteredStaff.map((person) => (
+                                        <tr key={person.id} className="hover:bg-white/5 transition-colors group">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-800 to-black border border-white/10 flex items-center justify-center text-white font-bold text-lg shadow-inner">
+                                                        {person.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-gray-200">{person.name}</div>
+                                                        {person.email && <div className="text-xs text-gray-500 flex items-center gap-1"><Mail size={10} /> {person.email}</div>}
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <div className="font-bold text-gray-200">{person.name}</div>
-                                                    {person.email && <div className="text-xs text-gray-500 flex items-center gap-1"><Mail size={10} /> {person.email}</div>}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-widest ${person.role === 'admin' ? 'bg-red-400/10 text-red-400 border-red-400/20' :
+                                                        person.role === 'kitchen' ? 'bg-blue-400/10 text-blue-400 border-blue-400/20' :
+                                                            person.role === 'reception' ? 'bg-green-400/10 text-green-400 border-green-400/20' :
+                                                                'bg-yellow-400/10 text-yellow-400 border-yellow-400/20'
+                                                    }`}>
+                                                    {getRoleLabel(person.role)}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2 text-gray-400 font-mono tracking-widest bg-black/40 px-3 py-1 rounded-lg border border-white/5 w-fit">
+                                                    <Key size={14} className="text-[#D4AF37]" />
+                                                    ****
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button
+                                                    onClick={() => handleDeleteStaff(person.id, person.name)}
+                                                    className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                                    title="Remover"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Mobile Card View */}
+                        <div className="md:hidden divide-y divide-white/5 px-4">
+                            {filteredStaff.map((person) => (
+                                <div key={person.id} className="py-6 flex flex-col gap-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#D4AF37]/20 to-black border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] font-bold text-xl">
+                                                {person.name.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <div className="font-bold text-lg text-white">{person.name}</div>
+                                                <div className={`text-[10px] font-black uppercase tracking-widest mt-0.5 ${person.role === 'admin' ? 'text-red-400' :
+                                                        person.role === 'kitchen' ? 'text-blue-400' :
+                                                            person.role === 'reception' ? 'text-green-400' :
+                                                                'text-yellow-400'
+                                                    }`}>
+                                                    {getRoleLabel(person.role)}
                                                 </div>
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-widest ${person.role === 'admin' ? 'bg-red-400/10 text-red-400 border-red-400/20' :
-                                                    person.role === 'kitchen' ? 'bg-blue-400/10 text-blue-400 border-blue-400/20' :
-                                                        person.role === 'reception' ? 'bg-green-400/10 text-green-400 border-green-400/20' :
-                                                            'bg-yellow-400/10 text-yellow-400 border-yellow-400/20'
-                                                }`}>
-                                                {getRoleLabel(person.role)}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2 text-gray-400 font-mono tracking-widest bg-black/40 px-3 py-1 rounded-lg border border-white/5 w-fit">
-                                                <Key size={14} className="text-[#D4AF37]" />
+                                        </div>
+                                        <button
+                                            onClick={() => handleDeleteStaff(person.id, person.name)}
+                                            className="p-3 bg-red-500/10 text-red-400 rounded-xl border border-red-500/20 active:scale-95 transition-all"
+                                        >
+                                            <Trash2 size={20} />
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-3 mt-2 pb-2">
+                                        <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex flex-col gap-1 shadow-inner">
+                                            <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Acesso PIN</span>
+                                            <div className="flex items-center gap-2 font-mono text-sm tracking-widest text-gray-300">
+                                                <Key size={12} className="text-[#D4AF37]" />
                                                 ****
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button
-                                                onClick={() => handleDeleteStaff(person.id, person.name)}
-                                                className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-                                                title="Remover"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                        </div>
+                                        <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex flex-col gap-1 shadow-inner">
+                                            <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Contacto</span>
+                                            <span className="text-xs text-gray-400 truncate">
+                                                {person.email || 'Não definido'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
                 )}
             </div>
 

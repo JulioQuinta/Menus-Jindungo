@@ -33,6 +33,7 @@ import AdminSidebar from '../components/dashboard/AdminSidebar';
 import AdminHeader from '../components/dashboard/AdminHeader';
 import AdminAlerts from '../components/dashboard/AdminAlerts';
 import MasqueradeBanner from '../components/dashboard/MasqueradeBanner';
+import AdminMobileNav from '../components/dashboard/AdminMobileNav';
 
 const AdminDashboard = () => {
     const { user, signOut, loading: authLoading } = useAuth();
@@ -663,9 +664,10 @@ const AdminDashboard = () => {
                     location={location}
                     menuItems={menuItems}
                     user={user}
+                    restaurant={restaurant}
                 />
 
-                <div className="p-4 sm:p-8 max-w-7xl mx-auto pb-24">
+                <div className="p-4 sm:p-8 max-w-7xl mx-auto pb-32 lg:pb-24">
                     <Routes>
                         <Route path="/" element={
                             <DashboardStats restaurantId={restaurant?.id} features={features} />
@@ -837,19 +839,24 @@ const AdminDashboard = () => {
                     </Routes>
                 </div>
 
-                {/* [NEW] Floating Action Button: View Menu */}
+                {/* [NEW] Floating Action Button: View Menu (Hidden on Mobile to use Bottom Nav space) */}
                 {restaurant?.slug && (
                     <a
                         href={`/${restaurant.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="fixed bottom-8 left-1/2 -translate-x-1/2 sm:left-auto sm:right-8 sm:translate-x-0 z-40 bg-white text-black px-6 py-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-white/20 hover:scale-105 active:scale-95 hover:bg-[#D4AF37] transition-all flex items-center gap-3 font-bold group"
+                        className="hidden sm:flex fixed bottom-8 right-8 z-40 bg-white text-black px-6 py-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-white/20 hover:scale-105 active:scale-95 hover:bg-[#D4AF37] transition-all items-center gap-3 font-bold group"
                     >
                         <Eye size={20} className="group-hover:animate-pulse" />
-                        <span className="whitespace-nowrap">Ver Ementa Pública</span>
+                        <span className="whitespace-nowrap">Ver Menu Digital</span>
                         <ExternalLink size={16} className="opacity-50" />
                     </a>
                 )}
+
+                <AdminMobileNav 
+                    onOpenSidebar={() => setIsMobileMenuOpen(true)} 
+                    restaurantSlug={restaurant?.slug}
+                />
 
                 <Toaster position="top-right" />
             </main>

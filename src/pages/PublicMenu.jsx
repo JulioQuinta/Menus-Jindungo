@@ -13,6 +13,7 @@ import CheckoutModal from '../components/CheckoutModal';
 import LoyaltyWidget from '../components/LoyaltyWidget';
 import BookingModal from '../components/BookingModal';
 import StaffPinModal from '../components/StaffPinModal';
+import ActiveOrderTracker from '../components/ActiveOrderTracker';
 import { getPlanFeatures } from '../utils/planLimits';
 import { Info, Share2, MapPin, Clock, Instagram, Facebook, Phone, X, Calendar, BellRing, Lock } from 'lucide-react';
 
@@ -484,6 +485,14 @@ const PublicMenu = () => {
                             restaurantId={restaurant.id}
                             primaryColor={config?.primaryColor || '#D4AF37'}
                             darkMode={config?.darkMode}
+                        />
+                    )}
+
+                    {/* [NEW] Persistent Active Order Tracker */}
+                    {restaurant && (
+                        <ActiveOrderTracker 
+                            restaurantId={restaurant.id}
+                            whatsappNumber={config?.whatsappNumber}
                         />
                     )}
 

@@ -212,6 +212,14 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                 // Save customer info for future visits
                 localStorage.setItem('customer_phone', customerPhone);
                 localStorage.setItem('customer_name', customerName);
+                
+                // Save active order for the sophisticated tracking flow
+                localStorage.setItem(`jindungo_active_order_${restaurantId}`, JSON.stringify({
+                    id: newOrder.id,
+                    timestamp: Date.now()
+                }));
+                // Dispatch event so ActiveOrderTracker catches it immediately
+                window.dispatchEvent(new Event('jindungo_new_order'));
             }
 
             // 2. Track Analytics
@@ -232,6 +240,13 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                     onClose(); // Just close cart, they are on WhatsApp now
                     return; // Stop here so it doesn't show the OrderStatusView which implies an internal tracking
                 }
+            } else {
+                // Since we use the sophisticated tracker now, just close the modal
+                toast.success("Pedido Enviado com Sucesso! Acompanhe o status no ecrã principal.", {
+                    icon: '🚀',
+                    duration: 5000
+                });
+                closeAndReset();
             }
 
         } catch (err) {
@@ -249,28 +264,9 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
         // Cart is cleared on success, so user starts fresh
     };
 
-    // If order created, show Status View
-    if (createdOrder) {
-        return (
-            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={closeAndReset}>
-                <div className="bg-white w-full max-w-md rounded-3xl p-6 max-h-[90vh] overflow-y-auto shadow-2xl relative" onClick={e => e.stopPropagation()}>
-                    <button
-                        onClick={closeAndReset}
-                        className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition-colors z-10"
-                        aria-label="Fechar"
-                    >
-                        &times;
-                    </button>
-                    <div className="mt-2">
-                        <OrderStatusView order={createdOrder} whatsappNumber={whatsappNumber} />
-                        <button onClick={closeAndReset} className="w-full mt-4 py-3 bg-gray-100 rounded-xl font-bold text-gray-600 hover:bg-gray-200 transition">
-                            Fechar / Novo Pedido
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    // If order created, we DO NOT show the modal here anymore, the Tracker takes over.
+    // We just return null if success (though closeAndReset handles it, we keep this as safeguard)
+    if (createdOrder) return null;
 
     return (
         <div style={{

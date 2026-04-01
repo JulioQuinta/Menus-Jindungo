@@ -518,6 +518,10 @@ const AdminDashboard = () => {
     ];
 
     const isExpired = restaurant?.valid_until ? new Date(restaurant.valid_until) < new Date() : false;
+    const daysUntilExpiration = restaurant?.valid_until 
+        ? Math.ceil((new Date(restaurant.valid_until) - new Date()) / (1000 * 60 * 60 * 24)) 
+        : null;
+    const isExpiringSoon = daysUntilExpiration !== null && daysUntilExpiration <= 7 && daysUntilExpiration > 0;
     const features = getPlanFeatures(restaurant?.plan);
 
     if (loading) return (
@@ -656,6 +660,29 @@ const AdminDashboard = () => {
                         </div>
                     </div>
                 ))}
+
+                {/* [NEW] Expiration Alert Banner */}
+                {isExpiringSoon && (
+                    <div className="px-4 py-3 flex items-center justify-between gap-3 shadow-lg sticky top-0 z-[35] backdrop-blur-md border-b text-sm font-medium bg-gradient-to-r from-orange-600/95 to-red-600/95 text-white border-orange-500/50 animate-pulse-slow">
+                        <div className="flex items-center gap-3">
+                            <span className="text-xl">⚠️</span>
+                            <div>
+                                <strong className="block mb-0.5 uppercase tracking-wider text-[10px] opacity-80">
+                                    Aviso de Renovação de Licença
+                                </strong>
+                                O seu plano termina em <strong>{daysUntilExpiration} dias</strong>. Para evitar a suspensão do seu Menu Digital, efetue a regularização.
+                            </div>
+                        </div>
+                        <a 
+                            href="https://wa.me/244900000000?text=Olá, quero renovar a licença do meu restaurante." 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="bg-white text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-100 transition whitespace-nowrap shadow-sm"
+                        >
+                            Renovar Agora
+                        </a>
+                    </div>
+                )}
 
                 {/* Removed InstallPWA from here since it is now global in App.jsx */}
 

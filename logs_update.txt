@@ -1,0 +1,16 @@
+
+Processing user: juliopitra8@gmail.com
+Sign up error for juliopitra8@gmail.com: Error sending confirmation email
+Could not get User ID for juliopitra8@gmail.com, skipping...
+
+Processing user: juliotest02@gmail.com
+Sign up error for juliotest02@gmail.com: Error sending confirmation email
+Could not get User ID for juliotest02@gmail.com, skipping...
+
+Processing user: juliotest01@gmail.com
+Sign up error for juliotest01@gmail.com: Error sending confirmation email
+Could not get User ID for juliotest01@gmail.com, skipping...
+
+Processing user: tipitarus@gmail.com
+Sign up error for tipitarus@gmail.com: Error sending confirmation email
+Could not get User ID for tipitarus@gmail.com, skipping...

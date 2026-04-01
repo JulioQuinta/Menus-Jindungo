@@ -43,6 +43,7 @@ const Router = () => {
             />
 
             {/* Public Menu (Catch-all for slugs) */}
+            <Route path="/r/:slug" element={<PublicMenu />} />
             <Route path="/:slug" element={<PublicMenu />} />
 
             {/* Fallback */}

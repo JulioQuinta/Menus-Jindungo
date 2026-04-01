@@ -44,13 +44,6 @@ export default defineConfig({
               },
             },
           },
-          {
-            urlPattern: ({ url }) => url.origin === 'https://api.supabase.co', // Adjust if needed
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'api-cache',
-            },
-          },
         ],
       },
     })

@@ -13,12 +13,26 @@ const AdminAlerts = ({ activeAlerts, onDismiss }) => {
                             {alert.isOrder ? alert.request_type : 'Chamou o garçom!'}
                         </p>
                     </div>
-                    <button
-                        onClick={() => onDismiss(alert.id)}
-                        className={`bg-white px-3 py-1 rounded-lg font-bold text-sm hover:bg-opacity-90 transition-colors shadow-sm ${alert.isOrder ? 'text-green-600' : 'text-red-600'}`}
-                    >
-                        {alert.isOrder ? 'Ver' : 'Atendido'}
-                    </button>
+                    <div className="flex gap-2">
+                        {alert.isOrder && alert.customer_phone && (
+                            <a
+                                href={`https://wa.me/244${alert.customer_phone.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-white/20 p-2 rounded-lg hover:bg-white/30 transition-colors flex items-center justify-center"
+                                title="Contactar Cliente"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-square"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            </a>
+                        )}
+                        <button
+                            onClick={() => onDismiss(alert.id)}
+                            className={`bg-white px-3 py-1 rounded-lg font-bold text-sm hover:bg-opacity-90 transition-colors shadow-sm ${alert.isOrder ? 'text-green-600' : 'text-red-600'}`}
+                        >
+                            {alert.isOrder ? 'Ver' : 'Atendido'}
+                        </button>
+                    </div>
                 </div>
             ))}
         </div>

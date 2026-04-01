@@ -24,7 +24,7 @@ const InstallPWA = () => {
         // Browser Detection
         const userAgent = window.navigator.userAgent.toLowerCase();
         const isIOSDevice = /iphone|ipad|ipod/.test(userAgent);
-        const isSafari = /safari/.test(userAgent) && !/chrome/.test(userAgent);
+        const isSafari = /safari/.test(userAgent) && !/chrome|crios/.test(userAgent);
         const isSamsung = /samsungbrowser/.test(userAgent);
         const isFirefox = /firefox/.test(userAgent);
         const isDesktop = !/mobile|android|iphone|ipad|ipod/.test(userAgent);

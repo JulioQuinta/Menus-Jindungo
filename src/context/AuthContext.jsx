@@ -22,11 +22,13 @@ export const AuthProvider = ({ children }) => {
                         .eq('id', session.user.id)
                         .maybeSingle();
 
+                    console.log("Profile Data Received:", data);
                     if (error) {
                         console.error("Supabase Profile Error:", error);
                         // Don't crash, just use default role
                         setRole('client');
                     } else if (data) {
+                        console.log("Profile Status:", data.status, "Role:", data.role);
                         if (data.status === 'banned') {
                             await supabase.auth.signOut();
                             alert("Sua conta foi suspensa.");

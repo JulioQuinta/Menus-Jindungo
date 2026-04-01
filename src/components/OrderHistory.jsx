@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { Clock, ShoppingBag, User, MapPin, Phone } from 'lucide-react';
+import { Clock, ShoppingBag, User, MapPin, Phone, MessageSquare } from 'lucide-react';
 
 const OrderHistory = ({ restaurantId }) => {
     const [orders, setOrders] = useState([]);
@@ -98,9 +98,22 @@ const OrderHistory = ({ restaurantId }) => {
                                                     <User size={14} className="text-gray-500" />
                                                     {order.customer_name || 'Anónimo'}
                                                 </div>
-                                                <div className="text-xs text-gray-500 mt-1 flex items-center gap-1.5">
-                                                    <Phone size={12} />
-                                                    {order.customer_phone || (order.order_data?.customerPhone || 'N/A')}
+                                                <div className="text-xs text-gray-500 mt-1 flex items-center justify-between group/wa">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Phone size={12} />
+                                                        {order.customer_phone || (order.order_data?.customerPhone || 'N/A')}
+                                                    </div>
+                                                    {(order.customer_phone || order.order_data?.customerPhone) && (
+                                                        <a 
+                                                            href={`https://wa.me/244${(order.customer_phone || order.order_data?.customerPhone).replace(/\D/g, '')}`} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer"
+                                                            className="opacity-0 group-hover/wa:opacity-100 transition-opacity bg-green-500/10 text-green-500 p-1 rounded hover:bg-green-500/20"
+                                                            title="Abrir WhatsApp do Cliente"
+                                                        >
+                                                            <MessageSquare size={12} />
+                                                        </a>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="py-5 px-6">
@@ -174,7 +187,19 @@ const OrderHistory = ({ restaurantId }) => {
 
                                     <div className="flex justify-between items-end gap-2">
                                         <div className="flex-1 min-w-0">
-                                            <div className="font-bold text-gray-200 truncate">{order.customer_name || 'Anónimo'}</div>
+                                            <div className="font-bold text-gray-200 truncate flex items-center gap-2">
+                                                {order.customer_name || 'Anónimo'}
+                                                {(order.customer_phone || order.order_data?.customerPhone) && (
+                                                    <a
+                                                        href={`https://wa.me/244${(order.customer_phone || order.order_data?.customerPhone).replace(/\D/g, '')}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-green-500 bg-green-500/10 p-1 rounded-lg"
+                                                    >
+                                                        <MessageSquare size={12} />
+                                                    </a>
+                                                )}
+                                            </div>
                                             <div className="flex flex-wrap gap-x-2 gap-y-1 mt-1">
                                                 {order.items?.map((item, idx) => (
                                                     <span key={idx} className="text-[10px] text-gray-500 whitespace-nowrap">

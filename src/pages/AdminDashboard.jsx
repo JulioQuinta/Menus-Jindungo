@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
+import { isNotificationSupported, sendNotification, requestNotificationPermission } from '../utils/notificationHelper';
 import toast, { Toaster } from 'react-hot-toast';
 import { compressImage } from '../lib/imageUtils';
 import { QrCode, ClipboardList, TrendingUp, Settings, LogOut, ChevronRight, Menu, Bell, LinkIcon, MapPin, Search, Star, Utensils, MonitorSmartphone, Mail, Smartphone, Eye, Calendar, Tag, Info, UserX, MessageSquare, Volume2, Shield, LayoutDashboard, UtensilsCrossed, User, Award, Ticket, Users, ExternalLink } from 'lucide-react';
@@ -151,8 +152,8 @@ const AdminDashboard = () => {
                     setActiveAlerts(prev => [...prev, newOrderAlert]);
 
                     // Browser Notification
-                    if (Notification.permission === 'granted') {
-                        new Notification("Novo Pedido Jindungo!", {
+                    if (isNotificationSupported() && Notification?.permission === 'granted') {
+                        sendNotification("Novo Pedido Jindungo!", {
                             body: `De: ${payload.new.customer_name || 'Cliente'} - ${payload.new.total} Kz`,
                             icon: '/jindungo_logo_v3.png'
                         });
@@ -191,8 +192,8 @@ const AdminDashboard = () => {
                     toast.success(`Nova Reserva de ${payload.new.customer_name}!`, { icon: '📅', duration: 6000 });
 
                     // Browser Notification
-                    if (Notification.permission === 'granted') {
-                        new Notification("Nova Reserva Jindungo!", {
+                    if (isNotificationSupported() && Notification?.permission === 'granted') {
+                        sendNotification("Nova Reserva Jindungo!", {
                             body: `Cliente: ${payload.new.customer_name} para ${payload.new.num_tables} mesas`,
                             icon: '/jindungo_logo_v3.png'
                         });
@@ -254,8 +255,8 @@ const AdminDashboard = () => {
             fetchRestaurantData();
 
             // Request Notification Permission
-            if (Notification.permission === 'default') {
-                Notification.requestPermission();
+            if (isNotificationSupported() && Notification?.permission === 'default') {
+                requestNotificationPermission();
             }
         }
     }, [user]);
@@ -791,7 +792,7 @@ const AdminDashboard = () => {
                         } />
 
                         <Route path="/chat" element={<ChatAdminPanel categories={categories} onUpdate={handleMenuUpdate} restaurantId={restaurant?.id} />} />
-                        <Route path="/qrcode" element={<QRCodeGenerator url={`${window.location.origin}/${restaurant?.slug}`} restaurantName={restaurant?.name || restaurant?.slug} logoUrl={config?.logoUrl} />} />
+                        <Route path="/qrcode" element={<QRCodeGenerator url={`${window.location.origin}/r/${restaurant?.slug}`} restaurantName={restaurant?.name || restaurant?.slug} logoUrl={config?.logoUrl} />} />
                         <Route path="/settings" element={
                             <div className="space-y-6">
                                 <StyleControls
@@ -842,7 +843,7 @@ const AdminDashboard = () => {
                 {/* [NEW] Floating Action Button: View Menu (Hidden on Mobile to use Bottom Nav space) */}
                 {restaurant?.slug && (
                     <a
-                        href={`/${restaurant.slug}`}
+                        href={`/r/${restaurant.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="hidden sm:flex fixed bottom-8 right-8 z-40 bg-white text-black px-6 py-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-white/20 hover:scale-105 active:scale-95 hover:bg-[#D4AF37] transition-all items-center gap-3 font-bold group"

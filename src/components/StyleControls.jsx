@@ -246,7 +246,10 @@ const StyleControls = ({ config, setConfig, onReset, onLogoUpload, onHeaderBgUpl
                         placeholder="244923456789"
                     />
                 </div>
-                <p className="text-xs text-gray-400 mt-2">Os pedidos dos clientes serão encaminhados para este número automaticamente.</p>
+                <p className="text-xs text-gray-400 mt-2">
+                    Os pedidos dos clientes serão encaminhados para este número. <br />
+                    <span className="text-[#D4AF37] font-bold">Use o formato internacional (ex: 244900000000)</span>.
+                </p>
             </div>
 
             {/* Layout Mode (Removido - Padronizado para Lista Vertical) */}

@@ -180,7 +180,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
         const mapsLink = gpsCoords ? ` | Maps: https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : '';
         const refNote = addressReference ? ` | Ref: ${addressReference}` : '';
         const baseTableOrAddress = orderType === 'dine-in' ? tableNumber : `Entrega: ${address}${refNote}${mapsLink} ${zoneInfo}`;
-        const paymentInfo = paymentMethod === 'cash' ? 'Dinheiro' : 'Multicaixa';
+        const paymentInfo = paymentMethod === 'cash' ? 'Dinheiro' : 'Multicaixa Express';
 
         const orderData = {
             restaurant_id: restaurantId,
@@ -213,13 +213,15 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                 localStorage.setItem('customer_phone', customerPhone);
                 localStorage.setItem('customer_name', customerName);
                 
-                // Save active order for the sophisticated tracking flow
-                localStorage.setItem(`jindungo_active_order_${restaurantId}`, JSON.stringify({
-                    id: newOrder.id,
-                    timestamp: Date.now()
-                }));
-                // Dispatch event so ActiveOrderTracker catches it immediately
-                window.dispatchEvent(new Event('jindungo_new_order'));
+                if (features?.canUseKDS) {
+                    // Save active order for the sophisticated tracking flow
+                    localStorage.setItem(`jindungo_active_order_${restaurantId}`, JSON.stringify({
+                        id: newOrder.id,
+                        timestamp: Date.now()
+                    }));
+                    // Dispatch event so ActiveOrderTracker catches it immediately
+                    window.dispatchEvent(new Event('jindungo_new_order'));
+                }
             }
 
             // 2. Track Analytics
@@ -618,7 +620,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                     className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${paymentMethod === 'multicaixa' ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300'}`}
                                 >
                                     <CreditCard size={18} />
-                                    <span>Multicaixa</span>
+                                    <span>Multicaixa Express</span>
                                 </button>
                             </div>
                             {paymentMethod === 'cash' && (

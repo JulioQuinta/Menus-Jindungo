@@ -8,6 +8,7 @@ const ActiveOrderTracker = ({ restaurantId, whatsappNumber }) => {
     const [orderInfo, setOrderInfo] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const currentActiveIdRef = React.useRef(null);
 
     // Initial check
     useEffect(() => {
@@ -20,8 +21,11 @@ const ActiveOrderTracker = ({ restaurantId, whatsappNumber }) => {
                     const parsed = JSON.parse(saved);
                     // Expire after 12 hours just in case
                     if (Date.now() - parsed.timestamp < 12 * 60 * 60 * 1000) {
-                        setActiveOrderId(parsed.id);
-                        fetchOrderStatus(parsed.id);
+                        if (currentActiveIdRef.current !== parsed.id) {
+                            currentActiveIdRef.current = parsed.id;
+                            setActiveOrderId(parsed.id);
+                            fetchOrderStatus(parsed.id);
+                        }
                     } else {
                         localStorage.removeItem(`jindungo_active_order_${restaurantId}`);
                     }
@@ -52,16 +56,19 @@ const ActiveOrderTracker = ({ restaurantId, whatsappNumber }) => {
                 .eq('id', id)
                 .single();
             
-            if (error) throw error;
+            if (error) {
+                if (error.code === 'PGRST116') {
+                    // Not found = deleted from DB, clear tracker
+                    clearTracker();
+                }
+                throw error;
+            }
             
             if (data) {
                 setOrderInfo(data);
                 if (data.status === 'delivered' || data.status === 'cancelled') {
-                    // It's finished. We can keep it to show rating, then user closes it.
+                    // It's finished. Keep it to show history, user must manually close.
                 }
-            } else {
-                // If not found, clear it
-                clearTracker();
             }
         } catch (err) {
             console.error("Error fetching active order:", err);
@@ -92,6 +99,7 @@ const ActiveOrderTracker = ({ restaurantId, whatsappNumber }) => {
 
     const clearTracker = () => {
         localStorage.removeItem(`jindungo_active_order_${restaurantId}`);
+        currentActiveIdRef.current = null;
         setActiveOrderId(null);
         setOrderInfo(null);
         setIsModalOpen(false);

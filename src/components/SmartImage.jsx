@@ -37,6 +37,8 @@ const SmartImage = ({ src, alt, className = '', style = {}, borderRadius = '0' }
                 <img
                     src={finalSrc}
                     alt={alt}
+                    loading="lazy"
+                    decoding="async"
                     onLoad={() => setLoaded(true)}
                     style={{
                         width: '100%',

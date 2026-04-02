@@ -652,12 +652,12 @@ const SuperAdminDashboard = () => {
                                                             .getPublicUrl(fileName);
 
                                                         const res = await updateLogoUrl(publicUrl);
-                                                        if (res.error) throw res.error;
+                                                        if (res?.error) throw res.error;
 
                                                         toast.success('Logótipo atualizado instantaneamente!', { id: loadingToast });
                                                     } catch (err) {
-                                                        console.error(err);
-                                                        toast.error('Ocorreu um erro na atualização.', { id: loadingToast });
+                                                        console.error('Error in logo update:', err);
+                                                        toast.error(err.message || 'Ocorreu um erro na atualização.', { id: loadingToast });
                                                     }
                                                 }}
                                             />
@@ -666,9 +666,11 @@ const SuperAdminDashboard = () => {
                                             onClick={async () => {
                                                 const loadingToast = toast.loading('A restaurar...');
                                                 try {
-                                                    await updateLogoUrl('/jindungo_logo_v3.png');
+                                                    const res = await updateLogoUrl('/jindungo_logo_v3.png');
+                                                    if (res?.error) throw res.error;
                                                     toast.success('Logótipo Base restaurado.', { id: loadingToast });
                                                 } catch (err) {
+                                                    console.error('Error restoring logo:', err);
                                                     toast.error('Falhou a restaurar.', { id: loadingToast });
                                                 }
                                             }}

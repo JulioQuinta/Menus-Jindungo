@@ -40,7 +40,7 @@ const TableBillTemplate = React.forwardRef(({ order, restaurantName }, ref) => {
                 </div>
                 <div className="flex justify-between mt-1 text-[10px]">
                     <span>Método Pgto:</span>
-                    <span>{order.payment_method === 'multicaixa' ? 'Multicaixa' : order.payment_method === 'cash' ? 'Dinheiro' : (order.payment_method || 'Não inf.')}</span>
+                    <span>{order.payment_method === 'multicaixa' ? 'Multicaixa Express' : order.payment_method === 'cash' ? 'Dinheiro' : (order.payment_method || 'Não inf.')}</span>
                 </div>
             </div>
 

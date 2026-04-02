@@ -30,7 +30,7 @@ export const generateWhatsAppLink = (cartItems, total, orderType, details, resta
         message += `*Pagamento:* Dinheiro 💵\n`;
         if (details.changeFor) message += `_Troco para: ${new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(details.changeFor).replace('AOA', 'Kz')}_\n`;
     } else if (details.paymentMethod === 'multicaixa') {
-        message += `*Pagamento:* Multicaixa / Transferência 💳\n_(Comprovativo enviado em anexo)_\n`;
+        message += `*Pagamento:* Multicaixa Express / Transferência 💳\n_(Comprovativo enviado em anexo)_\n`;
     }
 
     message += `\n`;

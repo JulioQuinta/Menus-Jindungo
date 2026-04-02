@@ -14,7 +14,9 @@ const FlagSelector = ({ selected, onSelect }) => {
         { code: 'PT', flag: '🇦🇴', label: 'Português' },
         { code: 'EN', flag: '🇺🇸', label: 'English' },
         { code: 'FR', flag: '🇫🇷', label: 'Français' },
-        { code: 'ES', flag: '🇪🇸', label: 'Español' }
+        { code: 'ES', flag: '🇪🇸', label: 'Español' },
+        { code: 'AR', flag: '🇦🇪', label: 'العربية' },
+        { code: 'ZH', flag: '🇨🇳', label: '中文(简体)' }
     ];
 
     const current = languages.find(l => l.code === selected) || languages[0];
@@ -64,28 +66,17 @@ const CategoryCarousel = ({ categories, activeCategory, onSelect, primaryColor }
     // Auto-scroll the active category into view
     const scrollRef = React.useRef(null);
     
-    // Triple the categories for a "loop" feel - we'll repeat them enough to fill the scroll
-    const loopedCategories = [...categories, ...categories, ...categories];
+    // Clean category rendering without repeating to save memory
+    const loopedCategories = categories;
 
     React.useEffect(() => {
         if (scrollRef.current && activeCategory) {
-            // Find the center instance of the active category to scroll to
-            const buttons = scrollRef.current.querySelectorAll(`[data-catid="${activeCategory}"]`);
-            const activeBtn = buttons[Math.floor(buttons.length / 2)];
+            const activeBtn = scrollRef.current.querySelector(`[data-catid="${activeCategory}"]`);
             if (activeBtn) {
                 activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
             }
         }
     }, [activeCategory]);
-
-    // Initial scroll to middle
-    React.useEffect(() => {
-        if (scrollRef.current && categories.length > 0) {
-            const container = scrollRef.current;
-            const scrollWidth = container.scrollWidth;
-            container.scrollLeft = scrollWidth / 3;
-        }
-    }, [categories.length]);
 
     return (
         <div className="relative group">
@@ -184,7 +175,9 @@ const CategorySection = ({ cat, Layout, commonProps, fontFamily }) => {
 
 const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, restaurantId, features = {} }) => {
     const { layoutMode, primaryColor, fontFamily, backgroundImage, darkMode, backgroundColor } = config;
-    const [selectedLanguage, setSelectedLanguage] = React.useState('PT');
+    const [selectedLanguage, setSelectedLanguage] = React.useState(() => {
+        return localStorage.getItem('jindungo_lang') || 'PT';
+    });
     const [activeCategory, setActiveCategory] = React.useState(null);
     const [searchTerm, setSearchTerm] = React.useState('');
     const [showSearch, setShowSearch] = React.useState(false);
@@ -196,6 +189,11 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
         }
     }, [categories, activeCategory]);
 
+    // Save language preference
+    React.useEffect(() => {
+        localStorage.setItem('jindungo_lang', selectedLanguage);
+    }, [selectedLanguage]);
+
     const effectivePrimaryColor = primaryColor || '#D4AF37';
     // If background is not set, use a very light tint of the primary color for a themed look
     const defaultLightBg = darkenColor(effectivePrimaryColor, -92).slice(0, 7);
@@ -206,7 +204,9 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
         PT: { welcome: 'Bem-vindo ao', searchPlaceholder: 'Pesquisar no menu...', noResults: 'Nenhum resultado para', waitMsg: 'O garçom está a caminho!', tech: 'Tecnologia' },
         EN: { welcome: 'Welcome to', searchPlaceholder: 'Search menu...', noResults: 'No results for', waitMsg: 'The waiter is coming!', tech: 'Technology' },
         FR: { welcome: 'Bienvenue à', searchPlaceholder: 'Chercher au menu...', noResults: 'Aucun résultat para', waitMsg: 'Le serveur arrive!', tech: 'Technologie' },
-        ES: { welcome: 'Bienvenido a', searchPlaceholder: 'Buscar en el menú...', noResults: 'No hay resultados para', waitMsg: '¡El camarero viene!', tech: 'Tecnología' }
+        ES: { welcome: 'Bienvenido a', searchPlaceholder: 'Buscar en el menú...', noResults: 'No hay resultados para', waitMsg: '¡El camarero viene!', tech: 'Tecnología' },
+        AR: { welcome: 'مرحباً بك في', searchPlaceholder: 'البحث في القائمة...', noResults: 'لا توجد نتائج لـ', waitMsg: 'النادل قادم!', tech: 'تكنولوجيا' },
+        ZH: { welcome: '欢迎来到', searchPlaceholder: '搜索菜单...', noResults: '没有搜索结果', waitMsg: '服务员快来了！', tech: '技术' }
     };
 
     const renderLayout = () => {
@@ -299,7 +299,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
                 style={{
                     backgroundColor: effectivePrimaryColor,
                     backgroundImage: config.headerBgUrl
-                        ? `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.6)), url(${config.headerBgUrl})`
+                        ? `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.85)), url(${config.headerBgUrl})`
                         : (darkMode
                             ? `linear-gradient(to bottom, ${darkenColor(effectivePrimaryColor, 60)}, ${darkenColor(effectivePrimaryColor, 80)})`
                             : `linear-gradient(to bottom, ${darkenColor(effectivePrimaryColor, 35)}, ${darkenColor(effectivePrimaryColor, 60)})`),
@@ -344,9 +344,9 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
 
 
                 {/* Welcome Text */}
-                <div className="text-center relative z-10">
-                    <p className={`text-sm font-bold tracking-widest uppercase mb-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] ${darkMode ? 'text-white' : 'text-white'}`}>
-                        {translations[selectedLanguage].welcome} {config.restaurantName || 'Jindungo'}
+                <div className="text-center relative z-10 w-full px-4">
+                    <p className={`text-sm font-black tracking-widest uppercase mb-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] ${darkMode ? 'text-white' : 'text-white/95'}`}>
+                        {translations[selectedLanguage]?.welcome || translations['PT'].welcome} {config.restaurantName || 'Jindungo'}
                     </p>
                 </div>
 

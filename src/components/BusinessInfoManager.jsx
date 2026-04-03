@@ -217,7 +217,7 @@ const BusinessInfoManager = ({ info, onSave, isLoading }) => {
                         </div>
 
                         <div>
-                            <label className={labelClasses}>Telefone Secundário (Reservas)</label>
+                            <label className={labelClasses}>Número de WhatsApp (Receber Pedidos)</label>
                             <div className="relative">
                                 <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
                                 <input

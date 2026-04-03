@@ -3,14 +3,18 @@ import { analyticsService } from '../services/analyticsService';
 import { supabase } from '../lib/supabaseClient';
 import { orderService } from '../services/orderService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
+import { useNavigate } from 'react-router-dom'; // [NEW] Added for navigation
 import { Calendar, Users, TrendingUp, Eye, Banknote, ShoppingBag, Download, Clock, ChevronRight, FileText, BarChart3, Ticket } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 
-const StatCard = ({ title, value, icon: Icon, colorClass, trend, trendValue, isPositive = true }) => {
+const StatCard = ({ title, value, icon: Icon, colorClass, trend, trendValue, isPositive = true, onClick }) => {
     const colorBase = colorClass.split(' ')[0].replace('bg-', '').replace('-500', '');
 
     return (
-        <div className="bg-gradient-to-br from-black/80 to-[#141414] backdrop-blur-md p-3 sm:p-8 rounded-2xl sm:rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-white/5 flex flex-col justify-between h-28 sm:h-40 relative overflow-hidden group hover:border-white/10 transition-all duration-500">
+        <div 
+            onClick={onClick}
+            className={`bg-gradient-to-br from-black/80 to-[#141414] backdrop-blur-md p-3 sm:p-8 rounded-2xl sm:rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-white/5 flex flex-col justify-between h-28 sm:h-40 relative overflow-hidden group hover:border-white/20 transition-all duration-500 ${onClick ? 'cursor-pointer active:scale-[0.98]' : ''}`}
+        >
             {/* Dynamic Glow */}
             <div className={`absolute right-0 top-0 w-32 h-32 rounded-full blur-[60px] -mr-10 -mt-10 transition-transform duration-700 group-hover:scale-150 opacity-20 bg-${colorBase}-500`}></div>
 
@@ -61,6 +65,7 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
     const [salesStats, setSalesStats] = useState({ revenue: 0, discounts: 0, ordersCount: 0, avgTicket: 0, data: [], chartData: [], topProducts: [], hourlyData: [] });
     const [salesLoading, setSalesLoading] = useState(false);
     const componentRef = React.useRef(null);
+    const navigate = useNavigate(); // [NEW] Navigation tool
 
     const handlePrint = useReactToPrint({
         contentRef: componentRef,
@@ -338,6 +343,7 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
                     colorClass="bg-green-500"
                     trendValue={salesStats.ordersCount > 0 ? 12 : 0}
                     isPositive={true}
+                    onClick={() => document.getElementById('sales-report')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                 />
                 <StatCard
                     title="Descontos"
@@ -346,6 +352,7 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
                     colorClass="bg-pink-500"
                     trendValue={0}
                     isPositive={false}
+                    onClick={() => document.getElementById('sales-report')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                 />
                 <StatCard
                     title="Encomendas"
@@ -354,6 +361,7 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
                     colorClass="bg-orange-500"
                     trendValue={salesStats.ordersCount > 2 ? 8 : 0}
                     isPositive={true}
+                    onClick={() => navigate('/admin/orders')}
                 />
                 <StatCard
                     title="Acessos Menu"
@@ -361,6 +369,7 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
                     icon={Eye}
                     colorClass="bg-blue-500"
                     trend="Ao vivo"
+                    onClick={() => document.getElementById('views-chart')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                 />
                 <StatCard
                     title="Ticket Médio"
@@ -369,13 +378,14 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
                     colorClass="bg-purple-500"
                     trendValue={salesStats.avgTicket > 0 ? 5 : 0}
                     isPositive={true}
+                    onClick={() => document.getElementById('sales-report')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                 />
             </div>
 
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Sales Chart */}
-                <div className="bg-black/60 backdrop-blur-md p-6 sm:p-8 rounded-3xl shadow-2xl border border-white/5 flex flex-col h-[450px]">
+                <div id="sales-report" className="scroll-mt-24 bg-black/60 backdrop-blur-md p-6 sm:p-8 rounded-3xl shadow-2xl border border-white/5 flex flex-col h-[450px]">
                     <div className="flex justify-between items-center mb-8">
                         <h3 className="text-xl font-serif font-bold text-white">Relatório de Vendas</h3>
                         <div className="flex gap-2">
@@ -411,7 +421,7 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
                 </div>
 
                 {/* Views Chart */}
-                <div className="bg-black/60 backdrop-blur-md p-6 sm:p-8 rounded-3xl shadow-2xl border border-white/5 flex flex-col h-[450px]">
+                <div id="views-chart" className="scroll-mt-24 bg-black/60 backdrop-blur-md p-6 sm:p-8 rounded-3xl shadow-2xl border border-white/5 flex flex-col h-[450px]">
                     <h3 className="text-xl font-serif font-bold text-white mb-8">Acessos nos últimos 7 dias</h3>
                     <div className="flex-1 w-full min-h-0">
                         <ResponsiveContainer width="100%" height="100%">

@@ -8,27 +8,27 @@ import { compressImage } from '../lib/imageUtils';
 import { QrCode, ClipboardList, TrendingUp, Settings, LogOut, ChevronRight, Menu, Bell, LinkIcon, MapPin, Search, Star, Utensils, MonitorSmartphone, Mail, Smartphone, Eye, Calendar, Tag, Info, UserX, MessageSquare, Volume2, Shield, LayoutDashboard, UtensilsCrossed, User, Award, Ticket, Users, ExternalLink } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
-import { getPlanFeatures } from '../utils/planLimits';
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
+import { lazyWithRetry, clearReloadFlag } from '../utils/lazyWithRetry';
 
-// Lazy-loaded Components
-const DashboardStats = lazy(() => import('../components/DashboardStats'));
-const MenuManager = lazy(() => import('../components/MenuManager'));
-const KitchenBoard = lazy(() => import('../components/KitchenBoard'));
-const CategoryManager = lazy(() => import('../components/CategoryManager'));
-const StyleControls = lazy(() => import('../components/StyleControls'));
-const DeliverySettings = lazy(() => import('../components/DeliverySettings'));
-const CustomerManager = lazy(() => import('../components/CustomerManager'));
-const ChatAdminPanel = lazy(() => import('../components/ChatAdminPanel'));
-const StaffManager = lazy(() => import('../components/StaffManager'));
-const QRCodeGenerator = lazy(() => import('../components/QRCodeGenerator'));
-const OrderHistory = lazy(() => import('../components/OrderHistory'));
-const LoyaltyManager = lazy(() => import('../components/LoyaltyManager'));
-const BusinessInfoManager = lazy(() => import('../components/BusinessInfoManager'));
-const ReservationManager = lazy(() => import('../components/ReservationManager'));
-const FeedbackManager = lazy(() => import('../components/FeedbackManager'));
-const CouponManager = lazy(() => import('../components/CouponManager'));
-const UpgradePrompt = lazy(() => import('../components/UpgradePrompt'));
+// Lazy-loaded Components with Retry Logic
+const DashboardStats = lazyWithRetry(() => import('../components/DashboardStats'));
+const MenuManager = lazyWithRetry(() => import('../components/MenuManager'));
+const KitchenBoard = lazyWithRetry(() => import('../components/KitchenBoard'));
+const CategoryManager = lazyWithRetry(() => import('../components/CategoryManager'));
+const StyleControls = lazyWithRetry(() => import('../components/StyleControls'));
+const DeliverySettings = lazyWithRetry(() => import('../components/DeliverySettings'));
+const CustomerManager = lazyWithRetry(() => import('../components/CustomerManager'));
+const ChatAdminPanel = lazyWithRetry(() => import('../components/ChatAdminPanel'));
+const StaffManager = lazyWithRetry(() => import('../components/StaffManager'));
+const QRCodeGenerator = lazyWithRetry(() => import('../components/QRCodeGenerator'));
+const OrderHistory = lazyWithRetry(() => import('../components/OrderHistory'));
+const LoyaltyManager = lazyWithRetry(() => import('../components/LoyaltyManager'));
+const BusinessInfoManager = lazyWithRetry(() => import('../components/BusinessInfoManager'));
+const ReservationManager = lazyWithRetry(() => import('../components/ReservationManager'));
+const FeedbackManager = lazyWithRetry(() => import('../components/FeedbackManager'));
+const CouponManager = lazyWithRetry(() => import('../components/CouponManager'));
+const UpgradePrompt = lazyWithRetry(() => import('../components/UpgradePrompt'));
 
 // Refactored Sub-components
 import AdminSidebar from '../components/dashboard/AdminSidebar';
@@ -56,6 +56,13 @@ const AdminDashboard = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showCategoryModal, setShowCategoryModal] = useState(false);
+
+    // [MODIFIED] Clear retry flag once main dashboard is ready
+    useEffect(() => {
+        if (!loading) {
+            clearReloadFlag();
+        }
+    }, [loading]);
 
     // [NEW] Alerts State
     const [activeAlerts, setActiveAlerts] = useState([]);

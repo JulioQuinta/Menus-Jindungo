@@ -32,16 +32,41 @@ export default defineConfig({
         ]
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 5000000, // [NEW] Allow files up to 5MB to be cached (important for large bundles)
         runtimeCaching: [
           {
-            urlPattern: ({ request }) => request.destination === 'image',
+            // Cache para Imagens do Supabase (Menus/Itens)
+            urlPattern: ({ url }) => url.origin.includes('supabase.co'),
+            handler: 'StaleWhileRevalidate', // Carrega rápido da cache, mas atualiza se houver nova versão
+            options: {
+              cacheName: 'supabase-images',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 dias
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          {
+            // Cache para Google Fonts
+            urlPattern: ({ url }) => url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com',
             handler: 'CacheFirst',
             options: {
-              cacheName: 'images-cache',
+              cacheName: 'google-fonts',
               expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 ano
               },
+            },
+          },
+          {
+            // Cache para Ativos Estáticos (Vite Assets)
+            urlPattern: ({ request }) => request.destination === 'script' || request.destination === 'style' || request.destination === 'worker',
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'static-resources',
             },
           },
         ],

@@ -9,7 +9,8 @@ import {
     DndContext,
     closestCenter,
     KeyboardSensor,
-    PointerSensor,
+    MouseSensor, // [NEW] Use MouseSensor for PC
+    TouchSensor, // [NEW] Use TouchSensor for Mobile
     useSensor,
     useSensors,
 } from '@dnd-kit/core';
@@ -31,9 +32,11 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
 
     // Sensors for DND
     const sensors = useSensors(
-        useSensor(PointerSensor, {
+        useSensor(MouseSensor), // [PC] Arraste instantâneo com rato
+        useSensor(TouchSensor, {
             activationConstraint: {
-                distance: 15, // [MODIFIED] Maior distância para evitar disparos acidentais ao fazer scroll no mobile
+                delay: 250, // [MOBILE] Carregar e segurar por 250ms para arrastar
+                tolerance: 8, // Tolerância de movimento antes de cancelar arraste
             },
         }),
         useSensor(KeyboardSensor, {
@@ -432,8 +435,43 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
     }
 
     return (
-        <div className="menu-manager h-full relative flex flex-col">
-            {/* Toolbar */}
+        <div className="menu-manager h-full relative flex flex-col lg:flex-row gap-8 items-start">
+            {/* [NEW] BARRA LATERAL DE NAVEGAÇÃO RÁPIDA (Mobile Floating / Desktop Sticky) */}
+            <aside className="fixed left-2 top-1/2 -translate-y-1/2 z-[100] sm:hidden flex flex-col gap-3 bg-black/60 backdrop-blur-xl p-2.5 rounded-full border border-white/10 shadow-2xl max-h-[70vh] overflow-y-auto scrollbar-hide py-4 opacity-90 hover:opacity-100 transition-opacity">
+                {categories.map((cat, idx) => (
+                    <button
+                        key={`nav-${cat.id}`}
+                        onClick={() => {
+                            const el = document.getElementById(`cat-section-${cat.id}`);
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }}
+                        className="w-10 h-10 rounded-full flex items-center justify-center bg-white/5 border border-white/5 hover:border-primary/50 text-[10px] font-black text-gray-400 hover:text-primary transition-all active:scale-90"
+                    >
+                        {cat.label?.charAt(0) || cat.name?.charAt(0) || idx + 1}
+                    </button>
+                ))}
+            </aside>
+
+            {/* Desktop Sidebar Sidebar */}
+            <aside className="hidden lg:flex flex-col gap-2 sticky top-8 w-56 flex-shrink-0 bg-black/20 p-4 rounded-3xl border border-white/5 h-[calc(100vh-200px)] overflow-y-auto scrollbar-hide">
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-2 mb-2">Índice do Menu</p>
+                {categories.map((cat) => (
+                    <button
+                        key={`side-${cat.id}`}
+                        onClick={() => {
+                            const el = document.getElementById(`cat-section-${cat.id}`);
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }}
+                        className="w-full text-left px-4 py-3 rounded-xl border border-transparent hover:border-primary/30 hover:bg-white/5 text-gray-400 hover:text-primary text-xs font-bold transition-all truncate"
+                    >
+                        {cat.label || cat.name}
+                    </button>
+                ))}
+            </aside>
+
+            {/* Main Content Area */}
+            <div className="flex-1 w-full relative">
+                {/* Toolbar */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                 <div>
                     <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white mb-1 sm:mb-2">Editor de Menu</h2>
@@ -499,7 +537,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                                 return (
                                     <SortableItem key={cat.id} id={cat.id} useHandle={true}>
                                         {(context) => (
-                                            <div className="mb-6">
+                                            <div className="mb-8 scroll-mt-24" id={`cat-section-${cat.id}`}>
                                                 {/* Category Header */}
                                                 <div className="flex items-center gap-3 mb-4 pl-2 bg-white/5 py-2 px-4 rounded-xl border border-white/5 backdrop-blur-sm w-max">
                                                     <div
@@ -629,27 +667,27 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                                             </div>
                                         )}
                                     </SortableItem>
-                                )
-                            })}
-                        </div>
-                    </SortableContext>
-                </DndContext>
+                                ))}
+                            </div>
+                        </SortableContext>
+                    </DndContext>
 
-                {categories.length === 0 && (
-                    <div className="flex flex-col items-center justify-center h-80 text-center bg-black/20 rounded-3xl border border-white/5 mx-auto max-w-2xl mt-10 shadow-2xl backdrop-blur-md">
-                        <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 shadow-inner border border-white/10">
-                            <span className="text-5xl drop-shadow-lg">🍽️</span>
+                    {categories.length === 0 && (
+                        <div className="flex flex-col items-center justify-center h-80 text-center bg-black/20 rounded-3xl border border-white/5 mx-auto max-w-2xl mt-10 shadow-2xl backdrop-blur-md">
+                            <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 shadow-inner border border-white/10">
+                                <span className="text-5xl drop-shadow-lg">🍽️</span>
+                            </div>
+                            <h3 className="text-2xl font-serif font-bold text-white mb-2">O seu Menu está Vazio</h3>
+                            <p className="text-gray-400 mb-8 max-w-md">Para começar a vender, crie primeiro as suas categorias estruturando assim a sua ementa de forma premium.</p>
+                            <button
+                                onClick={() => setShowCategoryManager(true)}
+                                className="bg-gradient-to-r from-[#D4AF37] to-yellow-600 text-black font-bold py-3.5 px-8 rounded-xl transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:shadow-[0_0_30px_rgba(212,175,55,0.6)] hover:-translate-y-1 hover:scale-105 active:scale-95"
+                            >
+                                + Criar a 1ª Categoria
+                            </button>
                         </div>
-                        <h3 className="text-2xl font-serif font-bold text-white mb-2">O seu Menu está Vazio</h3>
-                        <p className="text-gray-400 mb-8 max-w-md">Para começar a vender, crie primeiro as suas categorias estruturando assim a sua ementa de forma premium.</p>
-                        <button
-                            onClick={() => setShowCategoryManager(true)}
-                            className="bg-gradient-to-r from-[#D4AF37] to-yellow-600 text-black font-bold py-3.5 px-8 rounded-xl transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:shadow-[0_0_30px_rgba(212,175,55,0.6)] hover:-translate-y-1 hover:scale-105 active:scale-95"
-                        >
-                            + Criar a 1ª Categoria
-                        </button>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
             {/* MAGIC FLOATING BUTTON (Hidden on mobile to avoid overlap) */}

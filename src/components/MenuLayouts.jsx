@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import SmartImage from './SmartImage';
 import Skeleton from './Skeleton';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, ChevronDown, ChevronUp } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 const QuantityControls = ({ item, isEditing, primaryColor, darkMode, restaurantClosed }) => {
@@ -131,98 +131,162 @@ const getTrans = (item, lang, field) => {
     return item.translations[lang.toLowerCase()][field] || item[field];
 };
 
-export const GridLayout = ({ items = [], primaryColor, isEditing, darkMode, selectedLanguage = 'PT', customBgInfo, restaurantClosed }) => {
+const getCompositionStyle = (darkMode, customBg) => {
+    if (customBg?.isCustom) {
+        // Se o fundo é escuro (textColor branco), usar amarelo/gold vibrante
+        if (customBg.textColor === '#ffffff') return 'text-[#F9BF00] font-semibold';
+        // Se o fundo é claro, usar castanho profundo/charcoal
+        return 'text-[#1a1a1a] font-medium'; 
+    }
+    return darkMode ? 'text-[#F9BF00] font-semibold' : 'text-[#3E2723] font-medium';
+};
+
+const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguage, customBgInfo, restaurantClosed }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const composition = getTrans(item, selectedLanguage, 'composition');
+
+    return (
+        <div
+            className={`rounded-xl shadow-md transition-all duration-300 overflow-hidden border flex flex-col h-full group animate-fade-in-up ${getCardStyle(darkMode, customBgInfo)} 
+                ${item.available === false ? 'opacity-60 grayscale-[0.8] cursor-not-allowed' : 'hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(212,175,55,0.2)] hover:border-[#D4AF37]/50'}
+            `}
+            style={{ boxShadow: darkMode ? '0 5px 15px -5px rgba(0,0,0,0.5)' : '0 5px 15px -5px rgba(0, 0, 0, 0.1)' }}
+        >
+            {/* Image Section */}
+            <div className="relative aspect-[4/3] overflow-hidden rounded-t-xl">
+                <SmartImage
+                    src={item.img}
+                    alt={item.name}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80"></div>
+                {item.isHighlight && (
+                    <span className="absolute top-3 left-3 bg-[#D4AF37] text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg z-10 tracking-widest uppercase border border-white/20">
+                        ★ Destaque
+                    </span>
+                )}
+            </div>
+
+            {/* Content Section */}
+            <div className="p-3 sm:p-5 flex-1 flex flex-col justify-between relative">
+                <div>
+                    <div className="flex flex-col mb-1">
+                        <h3 className={`font-bold text-sm sm:text-xl leading-tight line-clamp-2 ${getTextStyle(darkMode, customBgInfo)}`}>
+                            {getTrans(item, selectedLanguage, 'name')}
+                        </h3>
+                        <span className="font-bold text-sm sm:text-lg mt-1" style={{ color: primaryColor }}>
+                            {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(Number(String(item.price).replace(/[^0-9.]/g, '')) || 0)}
+                        </span>
+                    </div>
+                    <p className={`text-[10px] sm:text-sm line-clamp-2 mb-2 font-light ${getSubTextStyle(darkMode, customBgInfo)}`}>
+                        {getTrans(item, selectedLanguage, 'desc')}
+                    </p>
+
+                    {composition && (
+                        <div className="mt-2">
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
+                                className={`text-[10px] sm:text-[11px] font-bold flex items-center gap-1.5 py-1 px-2 rounded-lg transition-all ${darkMode ? 'bg-white/5 text-[#D4AF37] hover:bg-white/10' : 'bg-black/5 text-[#5D4037] hover:bg-black/10'}`}
+                            >
+                                {isOpen ? 'Esconder detalhes' : 'Ver detalhes'}
+                                {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                            </button>
+                            
+                            <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-40 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
+                                <div className={`text-[10px] sm:text-[12px] italic leading-relaxed p-2 rounded-lg ${darkMode ? 'bg-black/20' : 'bg-gray-50/50'} ${getCompositionStyle(darkMode, customBgInfo)}`}>
+                                    <span className="opacity-60 mr-1.5 font-normal">✨</span>
+                                    {composition}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex justify-end mt-2 pt-2 border-t border-dashed border-gray-700/20">
+                    <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} restaurantClosed={restaurantClosed} />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const MenuItemList = ({ item, primaryColor, isEditing, darkMode, selectedLanguage, customBgInfo, restaurantClosed }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const composition = getTrans(item, selectedLanguage, 'composition');
+
+    return (
+        <div
+            className={`rounded-2xl shadow-sm border p-3 flex gap-4 transition-all animate-fade-in-up ${getCardStyle(darkMode, customBgInfo)}
+                ${item.available === false ? 'opacity-60 grayscale-[0.8] cursor-not-allowed' : 'hover:shadow-lg hover:translate-x-1'}
+            `}
+        >
+            {/* Image */}
+            <div className="w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 rounded-xl overflow-hidden relative group self-start sm:self-center">
+                <SmartImage
+                    src={item.img}
+                    alt={item.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 flex flex-col justify-between py-1">
+                <div>
+                    <div className="flex justify-between items-start">
+                        <h3 className={`font-bold text-lg leading-tight ${getTextStyle(darkMode, customBgInfo)}`}>
+                            {getTrans(item, selectedLanguage, 'name')}
+                        </h3>
+                        <span className="font-bold text-sm sm:text-base whitespace-nowrap ml-2" style={{ color: primaryColor }}>
+                            {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(Number(String(item.price).replace(/[^0-9.]/g, '')) || 0)}
+                        </span>
+                    </div>
+                    <p className={`text-xs sm:text-sm line-clamp-2 mt-1 font-light ${getSubTextStyle(darkMode, customBgInfo)}`}>
+                        {getTrans(item, selectedLanguage, 'desc')}
+                    </p>
+
+                    {composition && (
+                        <div className="mt-2">
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
+                                className={`text-[10px] sm:text-[11px] font-bold flex items-center gap-1 py-1 sm:py-1.5 px-2.5 rounded-lg transition-all ${darkMode ? 'bg-white/5 text-[#D4AF37] hover:bg-white/10' : 'bg-black/5 text-[#5D4037] hover:bg-black/10'}`}
+                            >
+                                {isOpen ? 'Ocultar detalhes' : 'Ver detalhes'}
+                                {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                            </button>
+                            
+                            <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-40 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
+                                <div className={`text-[11px] sm:text-[13px] italic leading-relaxed p-2.5 rounded-lg ${darkMode ? 'bg-black/20' : 'bg-gray-50/50'} ${getCompositionStyle(darkMode, customBgInfo)}`}>
+                                    <span className="opacity-60 mr-1.5 font-normal">•</span>
+                                    {composition}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex justify-end mt-2">
+                    <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} restaurantClosed={restaurantClosed} />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export const GridLayout = ({ items = [], ...props }) => {
     return (
         <div className="grid grid-cols-1 gap-4">
             {items.map(item => (
-                <div
-                    key={item.id}
-                    className={`rounded-xl shadow-md transition-all duration-300 overflow-hidden border flex flex-col h-full group animate-fade-in-up ${getCardStyle(darkMode, customBgInfo)} 
-                        ${item.available === false ? 'opacity-60 grayscale-[0.8] cursor-not-allowed' : 'hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(212,175,55,0.2)] hover:border-[#D4AF37]/50'}
-                    `}
-                    style={{ boxShadow: darkMode ? '0 5px 15px -5px rgba(0,0,0,0.5)' : '0 5px 15px -5px rgba(0, 0, 0, 0.1)' }}
-                >
-                    {/* Image Section */}
-                    <div className="relative aspect-[4/3] overflow-hidden rounded-t-xl">
-                        <SmartImage
-                            src={item.img}
-                            alt={item.name}
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80"></div>
-                        {item.isHighlight && (
-                            <span className="absolute top-3 left-3 bg-[#D4AF37] text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg z-10 tracking-widest uppercase border border-white/20">
-                                ★ Destaque
-                            </span>
-                        )}
-                    </div>
-
-                    {/* Content Section */}
-                    <div className="p-3 sm:p-5 flex-1 flex flex-col justify-between relative">
-                        <div>
-                            <div className="flex flex-col mb-1">
-                                <h3 className={`font-bold text-sm sm:text-xl leading-tight line-clamp-2 ${getTextStyle(darkMode, customBgInfo)}`}>
-                                    {getTrans(item, selectedLanguage, 'name')}
-                                </h3>
-                                <span className="font-bold text-sm sm:text-lg mt-1" style={{ color: primaryColor }}>
-                                    {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(Number(String(item.price).replace(/[^0-9.]/g, '')) || 0)}
-                                </span>
-                            </div>
-                            <p className={`text-[10px] sm:text-sm line-clamp-2 mb-2 font-light ${getSubTextStyle(darkMode, customBgInfo)}`}>
-                                {getTrans(item, selectedLanguage, 'desc')}
-                            </p>
-                        </div>
-
-                        <div className="flex justify-end mt-1 pt-2 border-t border-dashed border-gray-700/20">
-                            <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} restaurantClosed={restaurantClosed} />
-                        </div>
-                    </div>
-                </div>
+                <MenuItemGrid key={item.id} item={item} {...props} />
             ))}
         </div>
     );
 };
 
-export const ListLayout = ({ items = [], primaryColor, isEditing, darkMode, selectedLanguage = 'PT', customBgInfo, restaurantClosed }) => {
+export const ListLayout = ({ items = [], ...props }) => {
     return (
         <div className="flex flex-col gap-4">
             {items.map(item => (
-                <div
-                    key={item.id}
-                    className={`rounded-2xl shadow-sm border p-3 flex gap-4 transition-all animate-fade-in-up ${getCardStyle(darkMode, customBgInfo)}
-                        ${item.available === false ? 'opacity-60 grayscale-[0.8] cursor-not-allowed' : 'hover:shadow-lg hover:translate-x-1'}
-                    `}
-                >
-                    {/* Image */}
-                    <div className="w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 rounded-xl overflow-hidden relative group">
-                        <SmartImage
-                            src={item.img}
-                            alt={item.name}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        />
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 flex flex-col justify-between py-1">
-                        <div>
-                            <div className="flex justify-between items-start">
-                                <h3 className={`font-bold text-lg leading-tight ${getTextStyle(darkMode, customBgInfo)}`}>
-                                    {getTrans(item, selectedLanguage, 'name')}
-                                </h3>
-                                <span className="font-bold text-sm sm:text-base whitespace-nowrap ml-2" style={{ color: primaryColor }}>
-                                    {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(Number(String(item.price).replace(/[^0-9.]/g, '')) || 0)}
-                                </span>
-                            </div>
-                            <p className={`text-xs sm:text-sm line-clamp-2 mt-1 font-light ${getSubTextStyle(darkMode, customBgInfo)}`}>
-                                {getTrans(item, selectedLanguage, 'desc')}
-                            </p>
-                        </div>
-
-                        <div className="flex justify-end mt-2">
-                            <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} restaurantClosed={restaurantClosed} />
-                        </div>
-                    </div>
-                </div>
+                <MenuItemList key={item.id} item={item} {...props} />
             ))}
         </div>
     );

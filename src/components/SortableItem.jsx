@@ -18,10 +18,20 @@ export function SortableItem({ id, children, useHandle = false }) {
         opacity: isDragging ? 0.5 : 1,
         zIndex: isDragging ? 999 : 'auto',
         position: 'relative',
-        touchAction: 'none'
+        // [MODIFIED] Se usarmos handle, o container DEVE permitir scroll (manipulation ou auto)
+        // Só bloqueamos se não houver handle (uso antigo)
+        touchAction: useHandle ? 'auto' : 'none'
     };
 
-    const context = { attributes, listeners };
+    // [MODIFIED] Passamos as listeners para o componente filho (handle)
+    const context = { 
+        attributes, 
+        listeners: {
+            ...listeners,
+            // Opcional: garantir que o handle tenha touch-action none
+            style: { touchAction: 'none' } 
+        } 
+    };
 
     return (
         <div ref={setNodeRef} style={style} {...(!useHandle ? { ...attributes, ...listeners } : {})}>

@@ -8,26 +8,27 @@ import { compressImage } from '../lib/imageUtils';
 import { QrCode, ClipboardList, TrendingUp, Settings, LogOut, ChevronRight, Menu, Bell, LinkIcon, MapPin, Search, Star, Utensils, MonitorSmartphone, Mail, Smartphone, Eye, Calendar, Tag, Info, UserX, MessageSquare, Volume2, Shield, LayoutDashboard, UtensilsCrossed, User, Award, Ticket, Users, ExternalLink } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
-// Components
-import DashboardStats from '../components/DashboardStats';
-import MenuManager from '../components/MenuManager';
-import KitchenBoard from '../components/KitchenBoard';
-import CategoryManager from '../components/CategoryManager';
-import StyleControls from '../components/StyleControls';
-import DeliverySettings from '../components/DeliverySettings';
-import CustomerManager from '../components/CustomerManager';
-import ChatAdminPanel from '../components/ChatAdminPanel';
-import InstallPWA from '../components/InstallPWA';
-import StaffManager from '../components/StaffManager';
-import QRCodeGenerator from '../components/QRCodeGenerator';
-import OrderHistory from '../components/OrderHistory';
-import LoyaltyManager from '../components/LoyaltyManager';
-import BusinessInfoManager from '../components/BusinessInfoManager';
-import ReservationManager from '../components/ReservationManager';
-import FeedbackManager from '../components/FeedbackManager';
-import CouponManager from '../components/CouponManager';
-import UpgradePrompt from '../components/UpgradePrompt';
 import { getPlanFeatures } from '../utils/planLimits';
+import { lazy, Suspense } from 'react';
+
+// Lazy-loaded Components
+const DashboardStats = lazy(() => import('../components/DashboardStats'));
+const MenuManager = lazy(() => import('../components/MenuManager'));
+const KitchenBoard = lazy(() => import('../components/KitchenBoard'));
+const CategoryManager = lazy(() => import('../components/CategoryManager'));
+const StyleControls = lazy(() => import('../components/StyleControls'));
+const DeliverySettings = lazy(() => import('../components/DeliverySettings'));
+const CustomerManager = lazy(() => import('../components/CustomerManager'));
+const ChatAdminPanel = lazy(() => import('../components/ChatAdminPanel'));
+const StaffManager = lazy(() => import('../components/StaffManager'));
+const QRCodeGenerator = lazy(() => import('../components/QRCodeGenerator'));
+const OrderHistory = lazy(() => import('../components/OrderHistory'));
+const LoyaltyManager = lazy(() => import('../components/LoyaltyManager'));
+const BusinessInfoManager = lazy(() => import('../components/BusinessInfoManager'));
+const ReservationManager = lazy(() => import('../components/ReservationManager'));
+const FeedbackManager = lazy(() => import('../components/FeedbackManager'));
+const CouponManager = lazy(() => import('../components/CouponManager'));
+const UpgradePrompt = lazy(() => import('../components/UpgradePrompt'));
 
 // Refactored Sub-components
 import AdminSidebar from '../components/dashboard/AdminSidebar';
@@ -766,7 +767,13 @@ const AdminDashboard = () => {
                 />
 
                 <div className="p-4 sm:p-8 max-w-7xl mx-auto pb-32 lg:pb-24">
-                    <Routes>
+                    <Suspense fallback={
+                        <div className="flex flex-col items-center justify-center p-20 opacity-50">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D4AF37] mb-4"></div>
+                            <span className="text-xs font-mono uppercase tracking-widest text-[#D4AF37]">A carregar módulo...</span>
+                        </div>
+                    }>
+                        <Routes>
                         <Route path="/" element={
                             <DashboardStats restaurantId={restaurant?.id} features={features} />
                         } /><Route path="/menu" element={<MenuManager categories={categories} restaurantId={restaurant?.id} onUpdate={handleMenuUpdate} />} />
@@ -935,7 +942,8 @@ const AdminDashboard = () => {
                             </div>
                         } />
                     </Routes>
-                </div>
+                </Suspense>
+            </div>
 
                 {/* [NEW] Floating Action Button: View Menu (Hidden on Mobile to use Bottom Nav space) */}
                 {restaurant?.slug && (

@@ -20,7 +20,7 @@ import {
     verticalListSortingStrategy,
     rectSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Search, X } from 'lucide-react';
+import { Search, X, GripVertical } from 'lucide-react';
 
 const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdate }) => {
     const [categories, setCategories] = useState([]);
@@ -33,7 +33,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
-                distance: 8,
+                distance: 15, // [MODIFIED] Maior distância para evitar disparos acidentais ao fazer scroll no mobile
             },
         }),
         useSensor(KeyboardSensor, {
@@ -139,11 +139,18 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                 price: item.price,
                 desc_text: item.desc_text,
                 subcategory: item.subcategory, // [NEW]
+                composition: item.composition, // [NEW]
                 available: item.available,
                 img_url: item.img_url, // [FIX] Include image URL in save payload
                 translations: {
                     ...(item.translations || {}),
-                    variants: item.variants
+                    variants: item.variants,
+                    pt: { 
+                        ...(item.translations?.pt || {}),
+                        name: item.name,
+                        desc: item.desc_text,
+                        composition: item.composition
+                    }
                 }
             };
 
@@ -337,6 +344,24 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                         </p>
                     </div>
 
+                    {/* [NEW] Composition / Ingredients Field */}
+                    <div>
+                        <label className={labelClasses}>
+                            Composição / Acompanhamentos
+                            <span className="text-gray-400 font-normal ml-2 normal-case tracking-normal">(Nível Premium)</span>
+                        </label>
+                        <textarea
+                            className={`${inputClasses} min-h-[60px] resize-y`}
+                            rows={2}
+                            value={editingItem.composition || ''}
+                            onChange={e => setEditingItem({ ...editingItem, composition: e.target.value })}
+                            placeholder="Ex: Inclui Arroz, Feijão, Batatas e Salada Mista..."
+                        />
+                        <p className="text-[10px] text-gray-500 mt-1 italic italic-font">
+                            Informação técnica sobre o que vêm no prato. Aparece com destaque elegante no menu.
+                        </p>
+                    </div>
+
                     <div>
                         <label className={labelClasses}>Fotografia do Prato</label>
                         <input
@@ -496,14 +521,25 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                                                     items={filteredItems?.map(i => i.id) || []}
                                                     strategy={rectSortingStrategy}
                                                 >
-                                                    <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-3 sm:gap-6">
+                        <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-3 sm:gap-6">
                                                         {filteredItems && filteredItems.map(item => (
-                                                            <SortableItem key={item.id} id={item.id}>
-                                                                <div
-                                                                    className="group relative bg-[#1A1A1A]/80 backdrop-blur-md rounded-xl sm:rounded-2xl border border-white/5 hover:border-[#D4AF37]/50 transition-all duration-300 hover:shadow-lg overflow-hidden h-full flex items-center p-2.5 sm:p-4 gap-3 sm:gap-4"
-                                                                >
-                                                                    {/* Image Section */}
-                                                                    <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-lg sm:rounded-xl relative overflow-hidden flex-shrink-0 shadow-md border border-white/5">
+                                                            <SortableItem key={item.id} id={item.id} useHandle={true}>
+                                                                {(context) => (
+                                                                    <div
+                                                                        className="group relative bg-[#1A1A1A]/80 backdrop-blur-md rounded-xl sm:rounded-2xl border border-white/5 hover:border-[#D4AF37]/50 transition-all duration-300 hover:shadow-lg overflow-hidden h-full flex items-center p-2.5 sm:p-4 gap-3 sm:gap-4"
+                                                                    >
+                                                                        {/* Drag Handle (Mobile Friendly) */}
+                                                                        <div 
+                                                                            {...context.attributes} 
+                                                                            {...context.listeners} 
+                                                                            style={context.listeners.style}
+                                                                            className="cursor-move p-2 -ml-2 text-gray-600 hover:text-[#D4AF37] transition-colors"
+                                                                        >
+                                                                            <GripVertical size={20} />
+                                                                        </div>
+
+                                                                        {/* Image Section */}
+                                                                        <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-lg sm:rounded-xl relative overflow-hidden flex-shrink-0 shadow-md border border-white/5">
                                                                         <img
                                                                             src={item.img_url || 'https://via.placeholder.com/150'}
                                                                             alt={item.name}
@@ -572,8 +608,9 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                                                                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                                                             </button>
                                                                         </div>
+                                                                        </div>
                                                                     </div>
-                                                                </div>
+                                                                )}
                                                             </SortableItem>
                                                         ))}
 

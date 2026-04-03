@@ -125,13 +125,16 @@ const PublicMenu = () => {
                             desc: item.desc_text,
                             img: item.img_url,
                             subcategory: item.subcategory,
+                            composition: item.composition, // [NEW]
                             isHighlight: item.is_highlight,
                             badge: item.badge,
                             translations: {
-                                pt: { name: item.name, desc: item.desc_text },
-                                en: { name: item.name_en || item.name, desc: item.desc_en || item.desc_text },
-                                fr: { name: item.name_fr || item.name, desc: item.desc_fr || item.desc_text },
-                                es: { name: item.name_es || item.name, desc: item.desc_es || item.desc_text },
+                                pt: { name: item.name, desc: item.desc_text, composition: item.composition },
+                                en: { name: item.name_en || item.name, desc: item.desc_en || item.desc_text, composition: (item.translations?.en?.composition || item.composition) },
+                                fr: { name: item.name_fr || item.name, desc: item.desc_fr || item.desc_text, composition: (item.translations?.fr?.composition || item.composition) },
+                                es: { name: item.name_es || item.name, desc: item.desc_es || item.desc_text, composition: (item.translations?.es?.composition || item.composition) },
+                                ar: { name: item.name_ar || item.name, desc: item.desc_ar || item.desc_text, composition: (item.translations?.ar?.composition || item.composition) },
+                                zh: { name: item.name_zh || item.name, desc: item.desc_zh || item.desc_text, composition: (item.translations?.zh?.composition || item.composition) },
                             }
                         }))
                 }));

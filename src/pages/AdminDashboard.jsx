@@ -534,7 +534,7 @@ const AdminDashboard = () => {
         { icon: User, label: 'CRM Clientes', path: '/admin/crm', feature: 'canCollectClientData' },
         { icon: MessageSquare, label: 'Avaliações', path: '/admin/feedbacks', feature: 'canCollectClientData' },
         { icon: Award, label: 'Fidelização', path: '/admin/loyalty', feature: 'canCollectClientData' },
-        { icon: Info, label: 'Horários & Info', path: '/admin/info', feature: 'canCollectClientData' },
+        { icon: Info, label: 'Horários & Info', path: '/admin/info' },
         { icon: Ticket, label: 'Marketing', path: '/admin/marketing' },
         { icon: Users, label: 'Equipa / Staff', path: '/admin/staff', feature: 'canManageStaff' },
         { icon: QrCode, label: 'QR Code', path: '/admin/qrcode' },
@@ -866,24 +866,12 @@ const AdminDashboard = () => {
                         } />
 
                         <Route path="/info" element={
-                            features.canCollectClientData ? (
-                                <BusinessInfoManager
-                                    info={businessInfo}
-                                    onSave={handleBusinessInfoSave}
-                                    isLoading={loading}
-                                />
-                            ) : (
-                                <UpgradePrompt
-                                    title="Horários & Contactos"
-                                    requiredPlan="Business"
-                                    features={[
-                                        "Configuração de horário de funcionamento",
-                                        "Controlo automático de loja aberta/fechada",
-                                        "Localização com Link Google Maps",
-                                        "Redes Sociais prontas no menu"
-                                    ]}
-                                />
-                            )
+                            <BusinessInfoManager
+                                info={businessInfo}
+                                onSave={handleBusinessInfoSave}
+                                isLoading={loading}
+                                features={features}
+                            />
                         } />
 
                         <Route path="/marketing" element={

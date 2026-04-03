@@ -8,6 +8,7 @@ import { compressImage } from '../lib/imageUtils';
 import { QrCode, ClipboardList, TrendingUp, Settings, LogOut, ChevronRight, Menu, Bell, LinkIcon, MapPin, Search, Star, Utensils, MonitorSmartphone, Mail, Smartphone, Eye, Calendar, Tag, Info, UserX, MessageSquare, Volume2, Shield, LayoutDashboard, UtensilsCrossed, User, Award, Ticket, Users, ExternalLink } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
+import { getPlanFeatures } from '../utils/planLimits';
 import { Suspense } from 'react';
 import { lazyWithRetry, clearReloadFlag } from '../utils/lazyWithRetry';
 

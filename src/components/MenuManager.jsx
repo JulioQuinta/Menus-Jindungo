@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'react-hot-toast';
 import CategoryManager from './CategoryManager';
@@ -9,8 +9,8 @@ import {
     DndContext,
     closestCenter,
     KeyboardSensor,
-    MouseSensor, // [NEW] Use MouseSensor for PC
-    TouchSensor, // [NEW] Use TouchSensor for Mobile
+    MouseSensor, 
+    TouchSensor, 
     useSensor,
     useSensors,
 } from '@dnd-kit/core';
@@ -32,11 +32,11 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
 
     // Sensors for DND
     const sensors = useSensors(
-        useSensor(MouseSensor), // [PC] Arraste instantâneo com rato
+        useSensor(MouseSensor),
         useSensor(TouchSensor, {
             activationConstraint: {
-                delay: 250, // [MOBILE] Carregar e segurar por 250ms para arrastar
-                tolerance: 8, // Tolerância de movimento antes de cancelar arraste
+                delay: 250,
+                tolerance: 8,
             },
         }),
         useSensor(KeyboardSensor, {
@@ -45,19 +45,14 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
     );
 
     useEffect(() => {
-        // Ensure sorting by sorting categories by position
         const sorted = [...initialCategories].sort((a, b) => (a.position || 0) - (b.position || 0));
-
-        // Also sort items within categories
         const sortedCats = sorted.map(cat => ({
             ...cat,
             items: (cat.items || []).sort((a, b) => (a.position || 0) - (b.position || 0))
         }));
-
         setCategories(sortedCats);
     }, [initialCategories]);
 
-    // Handle Drag End for Categories and Items
     const handleDragEnd = async (event) => {
         const { active, over } = event;
         if (!over) return;
@@ -65,45 +60,29 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
         if (active.id !== over.id) {
             const isCategory = categories.some(cat => cat.id === active.id);
 
-            // CASE 1: Reordering Categories
             if (isCategory) {
                 setCategories((prev) => {
                     const oldIndex = prev.findIndex((item) => item.id === active.id);
                     const newIndex = prev.findIndex((item) => item.id === over.id);
-
                     if (newIndex === -1) return prev;
-
                     const newItems = arrayMove(prev, oldIndex, newIndex);
-
-                    // Persist new order
                     Promise.all(newItems.map((cat, index) =>
                         supabase.from('categories').update({ position: index }).eq('id', cat.id)
                     )).then(() => {
                         if (onUpdate) onUpdate();
                     });
-
                     return newItems;
                 });
-            }
-            // CASE 2: Reordering Items
-            else {
-                // Find category containing the item
+            } else {
                 const category = categories.find(cat => cat.items?.some(i => i.id === active.id));
                 if (!category) return;
-
                 const oldIndex = category.items.findIndex(i => i.id === active.id);
                 const newIndex = category.items.findIndex(i => i.id === over.id);
-
                 if (newIndex === -1) return;
-
                 const newItems = arrayMove(category.items, oldIndex, newIndex);
-
-                // Update local state
                 setCategories(prev => prev.map(cat =>
                     cat.id === category.id ? { ...cat, items: newItems } : cat
                 ));
-
-                // Persist to DB
                 Promise.all(newItems.map((item, index) =>
                     supabase.from('menu_items').update({ position: index }).eq('id', item.id)
                 )).then(() => {
@@ -113,14 +92,13 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
         }
     };
 
-    // Initial State for New Item
     const DEFAULT_ITEM = {
         name: '',
         price: '',
         desc_text: '',
         category_id: categories[0]?.id || '',
         restaurant_id: restaurantId,
-        subcategory: '', // [NEW]
+        subcategory: '',
         available: true
     };
 
@@ -128,9 +106,8 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
         setIsSaving(true);
         try {
             const isNew = !item.id;
-
             if (!item.name || !item.price || !item.category_id) {
-                toast.error("Nome, Preço e Categoria são obrigatórios.");
+                toast.error("Nome, PreÃ§o e Categoria sÃ£o obrigatÃ³rios.");
                 setIsSaving(false);
                 return;
             }
@@ -141,10 +118,10 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                 name: item.name,
                 price: item.price,
                 desc_text: item.desc_text,
-                subcategory: item.subcategory, // [NEW]
-                composition: item.composition, // [NEW]
+                subcategory: item.subcategory,
+                composition: item.composition,
                 available: item.available,
-                img_url: item.img_url, // [FIX] Include image URL in save payload
+                img_url: item.img_url,
                 translations: {
                     ...(item.translations || {}),
                     variants: item.variants,
@@ -157,36 +134,24 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                 }
             };
 
-            // If new, assign last position
-            if (isNew) {
-                // Find max position in this category
-                // This is a rough check, ideally backend handles auto-increment or we query max
-                payload.position = 999;
-            }
+            if (isNew) payload.position = 999;
 
             let error;
             if (isNew) {
-                const { error: insertError } = await supabase
-                    .from('menu_items')
-                    .insert([payload]);
+                const { error: insertError } = await supabase.from('menu_items').insert([payload]);
                 error = insertError;
             } else {
-                const { error: updateError } = await supabase
-                    .from('menu_items')
-                    .update(payload)
-                    .eq('id', item.id);
+                const { error: updateError } = await supabase.from('menu_items').update(payload).eq('id', item.id);
                 error = updateError;
             }
 
             if (error) throw error;
-
             setEditingItem(null);
             if (onUpdate) onUpdate();
             toast.success(isNew ? "Prato criado com sucesso!" : "Prato atualizado com sucesso!");
-
         } catch (err) {
             console.error("Error saving item:", err);
-            toast.error("Erro ao salvar item. Tente novamente.");
+            toast.error("Erro ao salvar item.");
         } finally {
             setIsSaving(false);
         }
@@ -214,498 +179,173 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                     <h2 className="text-2xl font-serif font-bold text-white">
                         {editingItem.id ? 'Editar Prato' : 'Novo Prato'}
                     </h2>
-                    <button onClick={() => setEditingItem(null)} className="p-2 bg-white/5 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white border border-white/5">
-                        ✕
-                    </button>
+                    <button onClick={() => setEditingItem(null)} className="p-2 bg-white/5 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white border border-white/5">âœ•</button>
                 </div>
-
                 <div className="flex flex-col gap-6">
                     <div>
                         <label className={labelClasses}>Nome do Prato</label>
-                        <input
-                            className={inputClasses}
-                            value={editingItem.name}
-                            onChange={e => setEditingItem({ ...editingItem, name: e.target.value })}
-                            placeholder="Ex: Bitoque de Frango"
-                        />
+                        <input className={inputClasses} value={editingItem.name} onChange={e => setEditingItem({ ...editingItem, name: e.target.value })} placeholder="Ex: Bitoque de Frango" />
                     </div>
                     <div>
-                        <label className={labelClasses}>Preço</label>
-                        <input
-                            className={inputClasses}
-                            value={editingItem.price}
-                            onChange={e => setEditingItem({ ...editingItem, price: e.target.value })}
-                            placeholder="Ex: 12.000 Kz"
-                        />
+                        <label className={labelClasses}>PreÃ§o</label>
+                        <input className={inputClasses} value={editingItem.price} onChange={e => setEditingItem({ ...editingItem, price: e.target.value })} placeholder="Ex: 12.000 Kz" />
                     </div>
                     <div>
                         <div className="flex justify-between items-center mb-2 mt-4">
-                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider m-0">Descrição</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider m-0">DescriÃ§Ã£o</label>
                             <button
-                                type="button"
                                 onClick={() => {
                                     if (!editingItem.name) return toast.error("Digite o nome do prato primeiro!");
-                                    const templates = [
-                                        `O delicioso ${editingItem.name} é preparado com ingredientes frescos e selecionados, trazendo uma explosão de sabor a cada mordida.`,
-                                        `Experimente nosso ${editingItem.name}, feito artesanalmente para proporcionar uma experiência gastronômica única.`,
-                                        `${editingItem.name} suculento e irresistível. Uma escolha perfeita para quem aprecia qualidade e bom gosto.`,
-                                        `Nossa versão especial de ${editingItem.name} vai te surpreender. Sabor autêntico e inesquecível.`
-                                    ];
-                                    const randomDesc = templates[Math.floor(Math.random() * templates.length)];
-                                    setEditingItem({ ...editingItem, desc_text: randomDesc });
+                                    const templates = [`O delicioso ${editingItem.name} Ã© preparado com ingredientes frescos...`, `Experimente nosso ${editingItem.name}...` ];
+                                    setEditingItem({ ...editingItem, desc_text: templates[Math.floor(Math.random() * templates.length)] });
                                 }}
-                                className="text-xs bg-gradient-to-r from-[#D4AF37] to-yellow-600 text-black px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:opacity-90 transition-opacity font-bold shadow-[0_0_15px_rgba(212,175,55,0.4)]"
-                            >
-                                ✨ Descrição Mágica
-                            </button>
+                                className="text-xs bg-gradient-to-r from-[#D4AF37] to-yellow-600 text-black px-3 py-1.5 rounded-full font-bold"
+                            >âœ¨ DescriÃ§Ã£o MÃ¡gica</button>
                         </div>
-                        <textarea
-                            className={`${inputClasses} min-h-[100px] resize-y`}
-                            rows={3}
-                            value={editingItem.desc_text || ''}
-                            onChange={e => setEditingItem({ ...editingItem, desc_text: e.target.value })}
-                            placeholder="Descreva seu prato com detalhes apetitosos..."
-                        />
+                        <textarea className={`${inputClasses} min-h-[100px]`} rows={3} value={editingItem.desc_text || ''} onChange={e => setEditingItem({ ...editingItem, desc_text: e.target.value })} />
                     </div>
                     <div>
                         <label className={labelClasses}>Categoria Base</label>
-                        <div className="relative">
-                            <select
-                                className={`${inputClasses} appearance-none cursor-pointer`}
-                                value={editingItem.category_id}
-                                onChange={e => setEditingItem({ ...editingItem, category_id: e.target.value })}
-                            >
-                                {categories.map(cat => (
-                                    <option key={cat.id} value={cat.id}>{cat.label || cat.name}</option>
-                                ))}
-                            </select>
-                            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-500">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                        </div>
+                        <select className={inputClasses} value={editingItem.category_id} onChange={e => setEditingItem({ ...editingItem, category_id: e.target.value })}>
+                            {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.label || cat.name}</option>)}
+                        </select>
                     </div>
-
-                    {/* [NEW] Subcategory Input (Dynamic) */}
                     <div>
-                        <label className={labelClasses}>
-                            Sub-categoria / Aba Interna
-                            <span className="text-gray-400 font-normal ml-2 normal-case tracking-normal">(Opcional)</span>
-                        </label>
-                        <input
-                            className={inputClasses}
-                            value={editingItem.subcategory || ''}
-                            onChange={e => setEditingItem({ ...editingItem, subcategory: e.target.value })}
-                            placeholder="Criar ou escolher sub-categoria..."
-                            list="subcategory-suggestions"
-                        />
-                        <datalist id="subcategory-suggestions">
-                            {categories.find(c => c.id === editingItem.category_id)?.subcategories?.map(sub => (
-                                <option key={sub} value={sub} />
-                            ))}
-                            {/* Fallbacks if empty */}
-                            {!categories.find(c => c.id === editingItem.category_id)?.subcategories?.length && (
-                                <>
-                                    <option value="Recomendados" />
-                                    <option value="Especialidades" />
-                                </>
-                            )}
-                        </datalist>
-                        {/* Chips for quick selection */}
-                        <div className="flex flex-wrap gap-2 mt-2">
-                            {categories.find(c => c.id === editingItem.category_id)?.subcategories?.map(sub => (
-                                <button
-                                    key={sub}
-                                    type="button"
-                                    onClick={() => setEditingItem({ ...editingItem, subcategory: sub })}
-                                    className={`text-xs px-3 py-1 rounded-full border transition-colors ${editingItem.subcategory === sub ? 'bg-primary text-black border-primary' : 'bg-gray-200 text-gray-600 border-transparent hover:bg-gray-300'}`}
-                                >
-                                    {sub}
-                                </button>
-                            ))}
-                        </div>
+                        <label className={labelClasses}>ComposiÃ§Ã£o / Acompanhamentos</label>
+                        <textarea className={`${inputClasses} min-h-[60px]`} rows={2} value={editingItem.composition || ''} onChange={e => setEditingItem({ ...editingItem, composition: e.target.value })} placeholder="Ex: Inclui Arroz, FeijÃ£o..." />
                     </div>
-
-                    {/* [NEW] Variants / Options Input */}
                     <div>
-                        <label className={labelClasses}>
-                            Variantes / Opções
-                            <span className="text-gray-400 font-normal ml-2 normal-case tracking-normal">(Ex: Manga, Morango, Misto)</span>
-                        </label>
-                        <input
-                            className={inputClasses}
-                            value={Array.isArray(editingItem.variants) ? editingItem.variants.join(', ') : (editingItem.variants || '')}
-                            onChange={e => {
-                                // Save as array
-                                const val = e.target.value;
-                                const arr = val.split(',').map(s => s.trim()).filter(Boolean);
-                                setEditingItem({ ...editingItem, variants: arr.length > 0 ? arr : null });
-                            }}
-                            placeholder="Separe as opções por vírgulas..."
-                        />
-                        <p className="text-[11px] text-gray-500 mt-1">
-                            Se preencher isto, o cliente terá de escolher uma destas opções antes de adicionar ao carrinho.
-                        </p>
+                        <label className={labelClasses}>Fotografia</label>
+                        <input type="file" accept="image/*" onChange={async (e) => {
+                            const file = e.target.files[0];
+                            if (!file) return;
+                            try {
+                                toast.loading("Otimizando...", { id: 'upload' });
+                                let uploadFile = file;
+                                if (file.type.startsWith('image/') && file.size > 200 * 1024) uploadFile = await compressImage(file);
+                                const fileExt = uploadFile.name.split('.').pop() || 'jpg';
+                                const fileName = `items/${restaurantId}/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+                                const { error } = await supabase.storage.from('menus').upload(fileName, uploadFile);
+                                if (error) throw error;
+                                const { data: { publicUrl } } = supabase.storage.from('menus').getPublicUrl(fileName);
+                                setEditingItem({ ...editingItem, img_url: publicUrl });
+                                toast.success("Enviado!", { id: 'upload' });
+                            } catch (err) { toast.error("Erro no upload."); }
+                        }} />
                     </div>
-
-                    {/* [NEW] Composition / Ingredients Field */}
-                    <div>
-                        <label className={labelClasses}>
-                            Composição / Acompanhamentos
-                            <span className="text-gray-400 font-normal ml-2 normal-case tracking-normal">(Nível Premium)</span>
-                        </label>
-                        <textarea
-                            className={`${inputClasses} min-h-[60px] resize-y`}
-                            rows={2}
-                            value={editingItem.composition || ''}
-                            onChange={e => setEditingItem({ ...editingItem, composition: e.target.value })}
-                            placeholder="Ex: Inclui Arroz, Feijão, Batatas e Salada Mista..."
-                        />
-                        <p className="text-[10px] text-gray-500 mt-1 italic italic-font">
-                            Informação técnica sobre o que vêm no prato. Aparece com destaque elegante no menu.
-                        </p>
-                    </div>
-
-                    <div>
-                        <label className={labelClasses}>Fotografia do Prato</label>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={async (e) => {
-                                const file = e.target.files[0];
-                                if (!file) return;
-
-                                try {
-                                    toast.loading("Otimizando imagem...", { id: 'upload' });
-
-                                    // COMPRESSION (New)
-                                    let uploadFile = file;
-                                    if (file.type.startsWith('image/') && file.size > 200 * 1024) {
-                                        uploadFile = await compressImage(file);
-                                    }
-
-                                    // Sanitize filename
-                                    const fileExt = uploadFile.name.split('.').pop() || 'jpg';
-                                    const fileName = `items/${restaurantId}/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-
-                                    const { error } = await supabase.storage.from('menus').upload(fileName, uploadFile, {
-                                        cacheControl: '3600',
-                                        upsert: false
-                                    });
-
-                                    if (error) throw error;
-
-                                    const { data: { publicUrl } } = supabase.storage.from('menus').getPublicUrl(fileName);
-                                    if (!publicUrl) throw new Error("Falha ao gerar URL pública");
-
-                                    setEditingItem({ ...editingItem, img_url: publicUrl });
-                                    toast.success("Foto enviada com sucesso!", { id: 'upload' });
-
-                                } catch (err) {
-                                    toast.error("Erro no upload da imagem.", { id: 'upload' });
-                                    console.error(err);
-                                }
-                            }}
-                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/20 file:text-primary hover:file:bg-primary/30 transition-all cursor-pointer"
-                        />
-                        {editingItem.img_url && (
-                            <div className="mt-4 relative group w-32 h-32 rounded-2xl overflow-hidden shadow-sm">
-                                <img src={editingItem.img_url} alt="Preview" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="mt-8 pt-6 border-t border-white/10 flex flex-col-reverse sm:flex-row gap-4">
-                        <button
-                            className="px-6 py-3 rounded-xl font-bold transition-all w-full sm:w-auto bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10"
-                            onClick={() => setEditingItem(null)}
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            className="px-6 py-3 rounded-xl font-bold transition-all w-full sm:w-auto bg-[#D4AF37] text-black shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:-translate-y-0.5"
-                            onClick={() => handleSave(editingItem)}
-                            disabled={isSaving}
-                        >
-                            {isSaving ? 'A Salvar...' : (editingItem.id ? 'Atualizar Prato' : 'Adicionar Prato')}
-                        </button>
+                    <div className="mt-8 flex gap-4">
+                        <button className="flex-1 px-6 py-3 rounded-xl bg-white/5 text-white" onClick={() => setEditingItem(null)}>Cancelar</button>
+                        <button className="flex-1 px-6 py-3 rounded-xl bg-[#D4AF37] text-black font-bold" onClick={() => handleSave(editingItem)} disabled={isSaving}>Salvar</button>
                     </div>
                 </div>
-            </div >
+            </div>
         );
     }
 
     return (
         <div className="menu-manager h-full relative flex flex-col lg:flex-row gap-8 items-start">
-            {/* [NEW] BARRA LATERAL DE NAVEGAÇÃO RÁPIDA (Mobile Floating / Desktop Sticky) */}
-            <aside className="fixed left-2 top-1/2 -translate-y-1/2 z-[100] sm:hidden flex flex-col gap-3 bg-black/60 backdrop-blur-xl p-2.5 rounded-full border border-white/10 shadow-2xl max-h-[70vh] overflow-y-auto scrollbar-hide py-4 opacity-90 hover:opacity-100 transition-opacity">
+            <aside className="fixed left-2 top-1/2 -translate-y-1/2 z-[100] sm:hidden flex flex-col gap-3 bg-black/60 backdrop-blur-xl p-2.5 rounded-full border border-white/10 shadow-2xl max-h-[70vh] overflow-y-auto scrollbar-hide py-4">
                 {categories.map((cat, idx) => (
-                    <button
-                        key={`nav-${cat.id}`}
-                        onClick={() => {
-                            const el = document.getElementById(`cat-section-${cat.id}`);
-                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }}
-                        className="w-10 h-10 rounded-full flex items-center justify-center bg-white/5 border border-white/5 hover:border-primary/50 text-[10px] font-black text-gray-400 hover:text-primary transition-all active:scale-90"
-                    >
+                    <button key={`nav-${cat.id}`} onClick={() => document.getElementById(`cat-section-${cat.id}`)?.scrollIntoView({ behavior: 'smooth' })} className="w-10 h-10 rounded-full flex items-center justify-center bg-white/5 border border-white/5 text-[10px] font-black text-white">
                         {cat.label?.charAt(0) || cat.name?.charAt(0) || idx + 1}
                     </button>
                 ))}
             </aside>
 
-            {/* Desktop Sidebar Sidebar */}
             <aside className="hidden lg:flex flex-col gap-2 sticky top-8 w-56 flex-shrink-0 bg-black/20 p-4 rounded-3xl border border-white/5 h-[calc(100vh-200px)] overflow-y-auto scrollbar-hide">
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-2 mb-2">Índice do Menu</p>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-2 mb-2">Ãndice</p>
                 {categories.map((cat) => (
-                    <button
-                        key={`side-${cat.id}`}
-                        onClick={() => {
-                            const el = document.getElementById(`cat-section-${cat.id}`);
-                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }}
-                        className="w-full text-left px-4 py-3 rounded-xl border border-transparent hover:border-primary/30 hover:bg-white/5 text-gray-400 hover:text-primary text-xs font-bold transition-all truncate"
-                    >
+                    <button key={`side-${cat.id}`} onClick={() => document.getElementById(`cat-section-${cat.id}`)?.scrollIntoView({ behavior: 'smooth' })} className="w-full text-left px-4 py-3 rounded-xl hover:bg-white/5 text-gray-400 hover:text-primary text-xs font-bold transition-all truncate">
                         {cat.label || cat.name}
                     </button>
                 ))}
             </aside>
 
-            {/* Main Content Area */}
-            <div className="flex-1 w-full relative">
-                {/* Toolbar */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-                <div>
-                    <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white mb-1 sm:mb-2">Editor de Menu</h2>
-                    <p className="text-gray-400 text-sm">Gerencie seus pratos e categorias com facilidade.</p>
-                </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-                    <div className="relative flex-1 sm:min-w-[280px]">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                        <input
-                            type="text"
-                            placeholder="Procurar prato..."
-                            value={adminSearch}
-                            onChange={(e) => setAdminSearch(e.target.value)}
-                            className="w-full pl-10 pr-10 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] transition-all"
-                        />
-                        {adminSearch && (
-                            <button
-                                onClick={() => setAdminSearch('')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
-                            >
-                                <X size={16} />
-                            </button>
-                        )}
+            <div className="flex-1 w-full flex flex-col gap-8">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white">Editor de Menu</h2>
+                        <p className="text-gray-400 text-sm">Gerencie seus pratos e categorias.</p>
                     </div>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setShowCategoryManager(true)}
-                            className="flex-1 flex items-center gap-2 px-4 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 transition-all backdrop-blur-sm justify-center text-sm"
-                        >
-                            <span>Categorias</span>
-                        </button>
-                        <button
-                            onClick={() => setEditingItem({ ...DEFAULT_ITEM })}
-                            className="sm:hidden flex-1 flex items-center gap-2 px-4 py-3 bg-[#D4AF37] text-black rounded-xl transition-all justify-center text-sm font-bold shadow-lg"
-                        >
-                            <span>+ Novo Prato</span>
-                        </button>
+                    <div className="flex gap-3 w-full sm:w-auto">
+                        <div className="relative flex-1 sm:min-w-[280px]">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                            <input type="text" placeholder="Procurar..." value={adminSearch} onChange={(e) => setAdminSearch(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none" />
+                        </div>
+                        <button onClick={() => setShowCategoryManager(true)} className="px-4 py-3 bg-white/5 text-white rounded-xl border border-white/10">Categorias</button>
                     </div>
                 </div>
-            </div>
 
-            <div className="flex-1 overflow-y-auto pb-24 scrollbar-hide">
-                <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                >
-                    <SortableContext
-                        items={categories.map(c => c.id)}
-                        strategy={verticalListSortingStrategy}
-                    >
-                        <div className="space-y-8">
-                            {categories.map(cat => {
-                                const filteredItems = adminSearch
-                                    ? cat.items?.filter(item =>
-                                        item.name.toLowerCase().includes(adminSearch.toLowerCase()) ||
-                                        item.desc_text?.toLowerCase().includes(adminSearch.toLowerCase())
-                                    )
-                                    : cat.items;
+                <div className="flex-1 overflow-y-auto pb-24">
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                        <SortableContext items={categories.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                            <div className="space-y-12">
+                                {categories.map(cat => {
+                                    const filteredItems = adminSearch ? cat.items?.filter(i => i.name.toLowerCase().includes(adminSearch.toLowerCase())) : cat.items;
+                                    if (adminSearch && (!filteredItems || filteredItems.length === 0)) return null;
 
-                                if (adminSearch && (!filteredItems || filteredItems.length === 0)) return null;
-
-                                return (
-                                    <SortableItem key={cat.id} id={cat.id} useHandle={true}>
-                                        {(context) => (
-                                            <div className="mb-8 scroll-mt-24" id={`cat-section-${cat.id}`}>
-                                                {/* Category Header */}
-                                                <div className="flex items-center gap-3 mb-4 pl-2 bg-white/5 py-2 px-4 rounded-xl border border-white/5 backdrop-blur-sm w-max">
-                                                    <div
-                                                        {...context.attributes}
-                                                        {...context.listeners}
-                                                        className="p-1 rounded bg-white/5 text-gray-500 hover:text-[#D4AF37] transition-colors cursor-grab active:cursor-grabbing"
-                                                    >
-                                                        <span className="text-xl leading-none">⋮⋮</span>
+                                    return (
+                                        <SortableItem key={cat.id} id={cat.id} useHandle={true}>
+                                            {(context) => (
+                                                <div className="scroll-mt-24" id={`cat-section-${cat.id}`}>
+                                                    <div className="flex items-center gap-3 mb-6 pl-2 bg-white/5 py-2 px-4 rounded-xl border border-white/5 w-max">
+                                                        <div {...context.attributes} {...context.listeners} className="cursor-grab text-gray-500">â‹®â‹®</div>
+                                                        <h3 className="text-xl font-serif font-bold text-white">{cat.label || cat.name}</h3>
                                                     </div>
-                                                    <h3 className="text-xl font-serif font-bold text-white tracking-wide">
-                                                        {cat.label || cat.name}
-                                                        <span className="ml-3 text-xs font-bold text-[#D4AF37] bg-yellow-900/20 px-2.5 py-1 rounded-lg border border-[#D4AF37]/30">
-                                                            {cat.items?.length || 0} itens
-                                                        </span>
-                                                    </h3>
-                                                </div>
 
-                                                <SortableContext
-                                                    items={filteredItems?.map(i => i.id) || []}
-                                                    strategy={rectSortingStrategy}
-                                                >
-                        <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-3 sm:gap-6">
-                                                        {filteredItems && filteredItems.map(item => (
-                                                            <SortableItem key={item.id} id={item.id} useHandle={true}>
-                                                                {(context) => (
-                                                                    <div
-                                                                        className="group relative bg-[#1A1A1A]/80 backdrop-blur-md rounded-xl sm:rounded-2xl border border-white/5 hover:border-[#D4AF37]/50 transition-all duration-300 hover:shadow-lg overflow-hidden h-full flex items-center p-2.5 sm:p-4 gap-3 sm:gap-4"
-                                                                    >
-                                                                        {/* Drag Handle (Mobile Friendly) */}
-                                                                        <div 
-                                                                            {...context.attributes} 
-                                                                            {...context.listeners} 
-                                                                            style={context.listeners.style}
-                                                                            className="cursor-move p-2 -ml-2 text-gray-600 hover:text-[#D4AF37] transition-colors"
-                                                                        >
-                                                                            <GripVertical size={20} />
-                                                                        </div>
-
-                                                                        {/* Image Section */}
-                                                                        <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-lg sm:rounded-xl relative overflow-hidden flex-shrink-0 shadow-md border border-white/5">
-                                                                        <img
-                                                                            src={item.img_url || 'https://via.placeholder.com/150'}
-                                                                            alt={item.name}
-                                                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                                                        />
-                                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                                                                    </div>
-
-                                                                    {/* Content Section */}
-                                                                    <div className="flex-1 flex flex-col justify-between py-0.5 min-w-0 h-full">
-                                                                        <div>
-                                                                            <div className="flex justify-between items-start mb-0.5 sm:mb-1">
-                                                                                <h4 className="font-bold text-white text-[13px] sm:text-lg leading-tight truncate pr-2">{item.name}</h4>
-                                                                                <div className="flex gap-1.5 sm:gap-2 flex-shrink-0">
-                                                                                    <button
-                                                                                        onClick={(e) => {
-                                                                                            e.stopPropagation();
-                                                                                            setEditingItem({
-                                                                                                ...item,
-                                                                                                variants: item.translations?.variants || item.variants || null
-                                                                                            });
-                                                                                        }}
-                                                                                        className="text-gray-400 hover:text-[#D4AF37] bg-white/5 hover:bg-white/10 rounded-md p-1.5 transition-all outline-none border border-white/5 shadow-sm"
-                                                                                        title="Editar Produto"
-                                                                                    >
-                                                                                        <span className="sr-only">Editar</span>
-                                                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                                    <SortableContext items={filteredItems?.map(i => i.id) || []} strategy={rectSortingStrategy}>
+                                                        <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+                                                            {filteredItems?.map(item => (
+                                                                <SortableItem key={item.id} id={item.id} useHandle={true}>
+                                                                    {(context) => (
+                                                                        <div className="group relative bg-[#1A1A1A]/80 rounded-xl border border-white/5 hover:border-[#D4AF37]/50 p-4 flex items-center gap-4">
+                                                                            <div {...context.attributes} {...context.listeners} className="cursor-move text-gray-600"><GripVertical size={20} /></div>
+                                                                            <img src={item.img_url || 'https://via.placeholder.com/150'} alt={item.name} className="w-20 h-20 rounded-lg object-cover" />
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <div className="flex justify-between items-start">
+                                                                                    <h4 className="font-bold text-white truncate">{item.name}</h4>
+                                                                                    <button onClick={() => setEditingItem({ ...item })} className="text-gray-400 hover:text-[#D4AF37]">
+                                                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                                                                                     </button>
                                                                                 </div>
+                                                                                <p className="text-[#D4AF37] font-bold">{item.price}</p>
+                                                                                <div className="flex justify-between items-center mt-2">
+                                                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                                                        <input type="checkbox" className="sr-only peer" checked={item.available !== false} onChange={async () => {
+                                                                                            const newVal = !(item.available !== false);
+                                                                                            setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, items: c.items.map(i => i.id === item.id ? { ...i, available: newVal } : i) } : c));
+                                                                                            await supabase.from('menu_items').update({ available: newVal }).eq('id', item.id);
+                                                                                        }} />
+                                                                                        <div className="w-8 h-4 bg-gray-700 rounded-full peer-checked:bg-green-500"></div>
+                                                                                        <span className="text-[10px] text-gray-400">{item.available !== false ? 'SIM' : 'NÃƒO'}</span>
+                                                                                    </label>
+                                                                                    <button onClick={() => handleDelete(item.id)} className="text-gray-500 hover:text-red-500"><X size={14} /></button>
+                                                                                </div>
                                                                             </div>
-                                                                            <p className="text-[#D4AF37] font-bold text-xs sm:text-base mb-1">{item.price}</p>
-                                                                            <p className="text-gray-500 text-[10px] sm:text-xs line-clamp-1 sm:line-clamp-2">{item.desc_text || "Sem descrição..."}</p>
                                                                         </div>
-
-                                                                        <div className="flex justify-between items-center mt-2 pt-2 sm:mt-3 sm:pt-3 border-t border-white/5">
-                                                                            <label className="flex items-center gap-1.5 sm:gap-2 cursor-pointer relative scale-[0.85] sm:scale-100 origin-left">
-                                                                                <input
-                                                                                    type="checkbox"
-                                                                                    className="sr-only peer"
-                                                                                    checked={item.available !== false} // Default true
-                                                                                    onChange={async (e) => {
-                                                                                        e.stopPropagation();
-                                                                                        // Optimistic toggle
-                                                                                        const newVal = !(item.available !== false);
-                                                                                        const newItems = categories.map(c => {
-                                                                                            if (c.id !== cat.id) return c;
-                                                                                            return {
-                                                                                                ...c,
-                                                                                                items: c.items.map(i => i.id === item.id ? { ...i, available: newVal } : i)
-                                                                                            };
-                                                                                        });
-                                                                                        setCategories(newItems);
-
-                                                                                        await supabase.from('menu_items').update({ available: newVal }).eq('id', item.id);
-                                                                                    }}
-                                                                                />
-                                                                                <div className="w-9 h-5 bg-gray-700/80 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:shadow-[0_0_5px_rgba(0,0,0,0.5)] after:transition-all peer-checked:bg-green-500"></div>
-                                                                                <span className={`text-[10px] font-bold uppercase tracking-widest ${item.available !== false ? 'text-green-400' : 'text-gray-500'}`}>{item.available !== false ? 'Disponível' : 'Esgotado'}</span>
-                                                                            </label>
-
-                                                                            <button
-                                                                                onClick={(e) => { e.stopPropagation(); handleDelete(item.id) }}
-                                                                                className="text-gray-500 hover:text-red-500 bg-white/5 hover:bg-white/10 rounded-md p-1.5 transition-all outline-none border border-white/5 shadow-sm"
-                                                                                title="Apagar Prato"
-                                                                            >
-                                                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                                                            </button>
-                                                                        </div>
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-                                                            </SortableItem>
-                                                        ))}
-
-                                                        {/* Add Item Card Placeholder */}
-                                                        <button
-                                                            onClick={() => setEditingItem({ ...DEFAULT_ITEM, category_id: cat.id })}
-                                                            className="flex flex-col items-center justify-center min-h-[90px] sm:min-h-[140px] rounded-xl sm:rounded-2xl border border-dashed border-white/20 hover:border-[#D4AF37]/50 hover:bg-[#D4AF37]/5 transition-all group shadow-sm bg-black/20"
-                                                        >
-                                                            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-white/10 flex items-center justify-center text-gray-400 group-hover:bg-[#D4AF37] group-hover:text-black transition-colors mb-1 sm:mb-2 shadow-[0_0_15px_rgba(255,255,255,0.05)] group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)]">
-                                                                <span className="text-xl sm:text-2xl font-light leading-none">+</span>
-                                                            </div>
-                                                            <span className="text-[10px] sm:text-sm font-bold text-gray-500 group-hover:text-[#D4AF37] uppercase tracking-wider">Novo Prato</span>
-                                                        </button>
-                                                    </div>
-                                                </SortableContext>
-                                            </div>
-                                        )}
-                                    </SortableItem>
-                                ))}
+                                                                    )}
+                                                                </SortableItem>
+                                                            ))}
+                                                            <button onClick={() => setEditingItem({ ...DEFAULT_ITEM, category_id: cat.id })} className="border border-dashed border-white/20 rounded-xl p-8 flex flex-col items-center justify-center text-gray-500 hover:border-[#D4AF37] hover:text-[#D4AF37] transition-all">
+                                                                <span className="text-2xl">+</span>
+                                                                <span className="text-xs font-bold uppercase mt-2">Novo Prato</span>
+                                                            </button>
+                                                        </div>
+                                                    </SortableContext>
+                                                </div>
+                                            )}
+                                        </SortableItem>
+                                    );
+                                })}
                             </div>
                         </SortableContext>
                     </DndContext>
-
-                    {categories.length === 0 && (
-                        <div className="flex flex-col items-center justify-center h-80 text-center bg-black/20 rounded-3xl border border-white/5 mx-auto max-w-2xl mt-10 shadow-2xl backdrop-blur-md">
-                            <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 shadow-inner border border-white/10">
-                                <span className="text-5xl drop-shadow-lg">🍽️</span>
-                            </div>
-                            <h3 className="text-2xl font-serif font-bold text-white mb-2">O seu Menu está Vazio</h3>
-                            <p className="text-gray-400 mb-8 max-w-md">Para começar a vender, crie primeiro as suas categorias estruturando assim a sua ementa de forma premium.</p>
-                            <button
-                                onClick={() => setShowCategoryManager(true)}
-                                className="bg-gradient-to-r from-[#D4AF37] to-yellow-600 text-black font-bold py-3.5 px-8 rounded-xl transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:shadow-[0_0_30px_rgba(212,175,55,0.6)] hover:-translate-y-1 hover:scale-105 active:scale-95"
-                            >
-                                + Criar a 1ª Categoria
-                            </button>
-                        </div>
-                    )}
                 </div>
             </div>
 
-            {/* MAGIC FLOATING BUTTON (Hidden on mobile to avoid overlap) */}
-            <button
-                onClick={() => setEditingItem({ ...DEFAULT_ITEM })}
-                className="hidden sm:flex absolute bottom-8 right-8 w-16 h-16 rounded-full bg-gradient-to-br from-[#D4AF37] to-yellow-600 text-black shadow-[0_4px_30px_rgba(212,175,55,0.5)] hover:scale-110 hover:shadow-[0_10px_40px_rgba(212,175,55,0.7)] hover:-rotate-90 transition-all duration-300 items-center justify-center z-50 group border border-yellow-200/50"
-            >
-                <span className="text-4xl leading-none font-light group-hover:font-bold">+</span>
-            </button>
+            <button onClick={() => setEditingItem({ ...DEFAULT_ITEM })} className="sm:hidden fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[#D4AF37] text-black shadow-lg flex items-center justify-center text-2xl z-[100]">+</button>
 
-            {showCategoryManager && (
-                <CategoryManager
-                    categories={categories}
-                    restaurantId={restaurantId}
-                    onUpdate={onUpdate}
-                    onClose={() => setShowCategoryManager(false)}
-                />
-            )}
+            {showCategoryManager && <CategoryManager categories={categories} restaurantId={restaurantId} onUpdate={onUpdate} onClose={() => setShowCategoryManager(false)} />}
         </div>
     );
 };

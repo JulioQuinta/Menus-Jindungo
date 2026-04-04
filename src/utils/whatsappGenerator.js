@@ -7,7 +7,9 @@ export const generateWhatsAppLink = (cartItems, total, orderType, details, resta
 
     // Fallback or Add country code if missing
     if (!cleanPhone || cleanPhone.length < 9) {
-        cleanPhone = '244923456789'; // Voltar ao número Demo padrão
+        // Se o número for inválido ou muito curto, não deve redirecionar para um número demo
+        // para evitar que o cliente envie o pedido para a pessoa errada.
+        return null; 
     } else if (cleanPhone.length === 9) {
         // Se introduziu só 9 números (Angola), assume 244
         cleanPhone = '244' + cleanPhone;

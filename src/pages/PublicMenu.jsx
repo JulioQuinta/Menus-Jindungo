@@ -103,7 +103,8 @@ const PublicMenu = () => {
                 const finalConfig = {
                     ...DEFAULT_CONFIG,
                     ...themeData,
-                    restaurantName: restaurantData.name
+                    restaurantName: restaurantData.name,
+                    whatsappNumber: restaurantData.business_info?.socials?.phone || themeData.whatsappNumber
                 };
                 setConfig(finalConfig);
 
@@ -264,8 +265,7 @@ const PublicMenu = () => {
     const handleRetry = () => {
         setError(null);
         setLoading(true);
-        // Force re-run of effect by toggling a trigger or just calling fetchData if I extract it
-        window.location.reload(); // Simple retry for now
+        window.location.reload(); 
     };
 
     if (error) {

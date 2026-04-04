@@ -3,7 +3,7 @@ import { X, Calendar, Users, Clock, Send, CheckCircle2, Phone, User } from 'luci
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
 
-const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName }) => {
+const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName, whatsappNumber }) => {
     const [step, setStep] = useState(1); // 1: Info, 2: Contacts, 3: Success
     const [bookingData, setBookingData] = useState({
         customer_name: '',
@@ -31,6 +31,31 @@ const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName }) => {
 
             if (error) throw error;
             setStep(3);
+
+            // [NEW] Automatically open WhatsApp if the restaurant has a number configured
+            if (whatsappNumber) {
+                let cleanPhone = String(whatsappNumber).replace(/\D/g, '');
+                if (cleanPhone.length === 9) cleanPhone = '244' + cleanPhone;
+                
+                let msg = `*Nova Solicitação de Reserva* 🗓️\n\n`;
+                msg += `*Cliente:* ${bookingData.customer_name}\n`;
+                msg += `*Contacto:* ${bookingData.customer_phone}\n`;
+                
+                // Formatar Data
+                const dateParts = bookingData.reservation_date.split('-');
+                const formattedDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : bookingData.reservation_date;
+                
+                msg += `*Data:* ${formattedDate}\n`;
+                msg += `*Hora:* ${bookingData.reservation_time}\n`;
+                msg += `*Pessoas:* ${bookingData.num_people}\n`;
+                msg += `*Mesas:* ${bookingData.num_tables}\n`;
+                if (bookingData.notes) msg += `\n*Observações:* ${bookingData.notes}\n`;
+                msg += `\n_Reserva solicitada via Menú Jindungo_`;
+                
+                const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
+                window.open(url, '_blank');
+            }
+            
         } catch (error) {
             console.error('Error saving reservation:', error);
             toast.error("Erro ao solicitar reserva. Tente novamente.");

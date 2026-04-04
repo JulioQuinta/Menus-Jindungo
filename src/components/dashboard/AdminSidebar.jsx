@@ -42,7 +42,7 @@ const AdminSidebar = ({
                 </button>
             </div>
 
-            <nav className="p-4 space-y-2 flex-1 overflow-y-auto scrollbar-hide mt-4">
+            <nav className="p-4 space-y-2 flex-1 overflow-y-auto custom-scrollbar mt-4">
                 {menuItems.map((item) => {
                     const active = isActive(item.path);
                     return (

@@ -652,7 +652,7 @@ const AdminDashboard = () => {
             />
 
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto relative z-10 bg-[#121212]">
+            <main className="flex-1 overflow-y-auto custom-scrollbar relative z-10 bg-[#121212]">
 
 
                 {/* [NEW] Waiter & Order Alerts Section */}

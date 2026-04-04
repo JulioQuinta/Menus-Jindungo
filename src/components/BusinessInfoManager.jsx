@@ -247,17 +247,26 @@ const BusinessInfoManager = ({ info, onSave, isLoading, features = {} }) => {
 
                         <div>
                             <label className={`${labelClasses} text-[#D4AF37]`}>Número de WhatsApp (Receber Pedidos)</label>
-                            <div className="relative">
-                                <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#D4AF37]" />
-                                <input
-                                    type="tel"
-                                    className={`${inputClasses} pl-9 border-[#D4AF37]/30 focus:border-[#D4AF37]`}
-                                    value={localInfo.socials.phone}
-                                    onChange={(e) => handleChange('socials', 'phone', e.target.value)}
-                                    placeholder="9xx xxx xxx"
-                                />
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <div className="relative flex-1">
+                                    <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#D4AF37]" />
+                                    <input
+                                        type="tel"
+                                        className={`${inputClasses} pl-9 border-[#D4AF37]/30 focus:border-[#D4AF37]`}
+                                        value={localInfo.socials.phone}
+                                        onChange={(e) => handleChange('socials', 'phone', e.target.value)}
+                                        placeholder="9xx xxx xxx"
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => onSave(localInfo)}
+                                    disabled={isLoading}
+                                    className="px-4 py-2 bg-gradient-to-r from-[#D4AF37] to-yellow-600 text-black font-bold rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 whitespace-nowrap"
+                                >
+                                    <Save size={16} /> Gravar
+                                </button>
                             </div>
-                            <p className="text-[10px] text-gray-500 mt-2 italic">* Este é o número que receberá os pedidos via WhatsApp no Plano Start.</p>
+                            <p className="text-[10px] text-gray-500 mt-2 italic">* Clique em 'Gravar' após introduzir o número. Este é o número que receberá os pedidos via WhatsApp no Plano Start.</p>
                         </div>
 
                         <div>

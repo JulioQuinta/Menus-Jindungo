@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { orderService } from '../services/orderService';
-import { Clock, CheckCircle, ChefHat, Truck, XCircle, AlertCircle, Banknote, Printer, Ticket, Smartphone, Volume2, VolumeX, Award } from 'lucide-react';
+import { Clock, CheckCircle, ChefHat, Truck, XCircle, AlertCircle, Banknote, Printer, Ticket, Smartphone, Volume2, VolumeX, Award, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { generateWhatsAppLink } from '../utils/whatsappGenerator';
+import toast from 'react-hot-toast';
 import TableBillTemplate from './TableBillTemplate';
 
 const OrderCard = ({ order, onStatusChange, onPrint, enablePrint, restaurantName }) => {
@@ -237,18 +238,31 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
     }, [restaurantId]);
 
     const handleStatusUpdate = async (id, status, reason = null) => {
+        // Keep previous state for rollback
+        const previousOrders = [...orders];
+
         // Optimistic update
         setOrders(prev => prev.map(o => o.id === id ? { ...o, status, rejection_reason: reason } : o));
 
-        // API Call
-        await orderService.updateOrderStatus(id, status, reason);
+        const toastId = toast.loading('A atualizar pedido...');
 
-        // Remove from list if delivered/cancelled after animation? 
-        // For now we keep them until refresh or filter logic if needed, but getActiveOrders filters them.
-        if (status === 'delivered' || status === 'cancelled' || status === 'paid') {
-            setTimeout(() => {
-                setOrders(prev => prev.filter(o => o.id !== id));
-            }, 500); // Wait for visual feedback
+        try {
+            // API Call
+            await orderService.updateOrderStatus(id, status, reason);
+            
+            toast.success('Pedido atualizado!', { id: toastId });
+
+            // Remove from list if delivered/cancelled/paid after animation
+            if (status === 'delivered' || status === 'cancelled' || status === 'paid') {
+                setTimeout(() => {
+                    setOrders(prev => prev.filter(o => o.id !== id));
+                }, 500); // Wait for visual feedback
+            }
+        } catch (error) {
+            console.error('Falha ao atualizar pedido:', error);
+            // Rollback on failure
+            setOrders(previousOrders);
+            toast.error('Erro ao atualizar: ' + (error.message || 'Verifique a ligação'), { id: toastId });
         }
     };
 
@@ -280,7 +294,23 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                     </button>
 
                     <div className="flex bg-black/40 border border-white/5 p-1 rounded-2xl backdrop-blur-md">
-                        <div className="px-4 py-2 text-center border-r border-white/5 last:border-0">
+                        <button 
+                            onClick={() => {
+                                setLoading(true);
+                                const loadOrders = async () => {
+                                    const { data } = await orderService.getActiveOrders(restaurantId);
+                                    setOrders(data);
+                                    setLoading(false);
+                                    toast.success('Lista atualizada!');
+                                };
+                                loadOrders();
+                            }}
+                            className="p-2.5 text-gray-400 hover:text-white transition-colors border-r border-white/5"
+                            title="Recarregar quadro"
+                        >
+                            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                        </button>
+                        <div className="px-4 py-2 text-center">
                             <div className="text-xs font-black text-white">{orders.length}</div>
                             <div className="text-[8px] uppercase font-bold text-gray-500 tracking-tighter">Total</div>
                         </div>

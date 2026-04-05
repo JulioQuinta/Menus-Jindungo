@@ -35,7 +35,7 @@ export const orderService = {
             return { data, error: null };
         } catch (error) {
             console.error('Error updating order:', error);
-            return { data: null, error };
+            throw error; // Throw so the UI can catch it
         }
     },
 

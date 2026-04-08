@@ -1,23 +1,60 @@
 import React, { useMemo } from 'react';
 
 const SimpleAnalytics = ({ items = [] }) => {
-    // Mock data generation if no real data exists, memoized to prevent re-renders
-    const data = useMemo(() => {
-        return items.slice(0, 5).map((item, i) => ({
-            name: item.name,
-            views: 20 + (i * 5) // Stable mock views
-        }));
-    }, [items.length]);
+    const [realData, setRealData] = React.useState([]);
+    const [loading, setLoading] = React.useState(true);
 
-    const maxViews = Math.max(1, ...data.map(d => d.views));
+    React.useEffect(() => {
+        if (!items || items.length === 0) return;
+        const fetchPopularItems = async () => {
+            const restId = items[0].restaurant_id;
+            if (!restId) return;
+            try {
+                const { supabase } = await import('../lib/supabaseClient');
+                // Fetch last 50 orders
+                const { data } = await supabase.from('orders').select('items').eq('restaurant_id', restId).order('created_at', { ascending: false }).limit(50);
+                
+                const freqs = {};
+                if (data) {
+                    data.forEach(order => {
+                        (order.items || []).forEach(i => {
+                            freqs[i.name] = (freqs[i.name] || 0) + (i.quantity || 1);
+                        });
+                    });
+                }
+                
+                // Map frequencies to provided items
+                let computed = items.map(item => ({
+                    name: item.name,
+                    views: freqs[item.name] || 0
+                })).sort((a, b) => b.views - a.views).slice(0, 5);
+
+                // Fallback for fresh instances so UI isn't empty
+                if (computed.every(c => c.views === 0)) {
+                    computed = items.slice(0, 5).map(item => ({ name: item.name, views: 0 }));
+                }
+
+                setRealData(computed);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchPopularItems();
+    }, [items]);
+
+    const maxViews = Math.max(1, ...realData.map(d => d.views));
 
     return (
         <div className="bg-white/90 dark:bg-[#141414]/90 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
             <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                🔥 Mais Vistos Hoje
+                🔥 Mais Populares
             </h4>
             <div className="flex flex-col gap-4">
-                {data.map((d, i) => (
+                {loading ? (
+                    <div className="text-sm text-gray-400 animate-pulse">A calcular estatísticas reais...</div>
+                ) : realData.map((d, i) => (
                     <div key={i} className="flex items-center gap-4 text-sm">
                         <span className="w-1/3 truncate text-gray-800 dark:text-gray-200 font-medium font-serif">
                             {d.name}
@@ -30,7 +67,7 @@ const SimpleAnalytics = ({ items = [] }) => {
                                 }}
                             />
                         </div>
-                        <span className="w-12 text-right font-bold text-primary">{d.views}</span>
+                        <span className="w-12 text-right font-bold text-primary">{d.views} <span className="text-[10px] text-gray-400">pedidos</span></span>
                     </div>
                 ))}
             </div>

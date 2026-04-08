@@ -78,16 +78,4 @@ export default defineConfig({
     host: true, // Expose to network
     allowedHosts: ['all', '.loca.lt'], // Enable localtunnel external hosts
   },
-  build: {
-    target: 'esnext',
-    cssCodeSplit: true,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-utils': ['lucide-react', 'react-hot-toast', '@supabase/supabase-js'],
-        }
-      }
-    }
-  }
 })

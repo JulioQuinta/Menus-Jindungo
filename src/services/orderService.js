@@ -108,7 +108,7 @@ export const orderService = {
     // Subscribe to realtime updates
     subscribeToOrders(restaurantId, onUpdate) {
         return supabase
-            .channel('orders-channel')
+            .channel(`orders-channel-${restaurantId}`)
             .on(
                 'postgres_changes',
                 {

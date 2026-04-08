@@ -634,6 +634,27 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                     />
                                 </div>
                             )}
+                            {paymentMethod === 'multicaixa' && (
+                                <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-xl animate-in slide-in-from-right duration-300">
+                                    <h4 className="text-[10px] font-black text-blue-800 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                        <Smartphone size={14} /> Pagamento Automático
+                                    </h4>
+                                    <div className="space-y-3">
+                                        <input
+                                            type="tel"
+                                            placeholder="Nº de Telemóvel Associado (Ex: 9xx xxx xxx)"
+                                            className="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none transition-all text-sm font-bold text-gray-900 placeholder-gray-400"
+                                            value={customerPhone} // Aproveitando o telefone do cliente
+                                            onChange={e => setCustomerPhone(e.target.value)}
+                                        />
+                                        <div className="text-xs text-blue-600/80 font-medium space-y-1 ml-1 border-l-2 border-blue-200 pl-3">
+                                            <p>1. Ao enviar, receberá uma notificação no telemóvel.</p>
+                                            <p>2. Abre a app <b>MCX Express</b> e confirma com o teu PIN.</p>
+                                            <p>3. O pedido irá direto para a cozinha após o sucesso.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <button

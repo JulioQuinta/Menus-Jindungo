@@ -21,6 +21,16 @@ const InstallPWA = () => {
 
         if (isAppStandalone) return;
 
+        // Check if dismissed recently (7 days)
+        const dismissedAt = localStorage.getItem('pwa_dismissed_at');
+        if (dismissedAt) {
+            const daysSince = (Date.now() - parseInt(dismissedAt)) / (1000 * 60 * 60 * 24);
+            if (daysSince < 7) {
+                setIsDismissed(true);
+                return;
+            }
+        }
+
         // Browser Detection
         const userAgent = window.navigator.userAgent.toLowerCase();
         const isIOSDevice = /iphone|ipad|ipod/.test(userAgent);
@@ -51,6 +61,12 @@ const InstallPWA = () => {
         window.addEventListener('beforeinstallprompt', handler);
         return () => window.removeEventListener('beforeinstallprompt', handler);
     }, []);
+
+    const handleDismiss = () => {
+        localStorage.setItem('pwa_dismissed_at', Date.now().toString());
+        setIsDismissed(true);
+        setShowInstructions(false);
+    };
 
     const handleInstallClick = async () => {
         if (!deferredPrompt) {
@@ -90,7 +106,7 @@ const InstallPWA = () => {
                         </div>
                         
                         <button
-                            onClick={() => { setShowInstructions(false); setIsDismissed(true); }}
+                            onClick={handleDismiss}
                             className="text-gray-400 text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors"
                         >
                             Já entendi
@@ -127,7 +143,7 @@ const InstallPWA = () => {
                     </div>
 
                     <button
-                        onClick={() => { setShowInstructions(false); setIsDismissed(true); }}
+                        onClick={handleDismiss}
                         className="w-full bg-[#D4AF37] text-black font-black py-4 rounded-2xl hover:bg-[#b5952f] transition-all shadow-[0_5px_15px_rgba(212,175,55,0.3)] active:scale-95 uppercase tracking-widest text-xs"
                     >
                         Entendido
@@ -158,7 +174,7 @@ const InstallPWA = () => {
 
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={() => setIsDismissed(true)}
+                        onClick={handleDismiss}
                         className="p-2 text-gray-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest"
                     >
                         Ignorar

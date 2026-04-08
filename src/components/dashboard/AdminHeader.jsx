@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, ChevronRight, MessageSquare } from 'lucide-react';
 
-const AdminHeader = ({ 
+const AdminHeader = memo(({ 
     setIsMobileMenuOpen, 
     location, 
     menuItems, 
-    user 
+    user,
+    activeStaff,
+    setShowStaffModal
 }) => {
     const currentMenuItem = menuItems.find(i => (i.path === '/admin' ? location.pathname === '/admin' : location.pathname.includes(i.path)));
 
@@ -47,19 +49,21 @@ const AdminHeader = ({
 
                     <div className="h-6 w-[1px] bg-white/10 hidden sm:block"></div>
 
-                    <div className="flex items-center gap-2 sm:gap-4 pl-1 sm:pl-2 cursor-pointer group">
+                    <div onClick={() => setShowStaffModal(true)} className="flex items-center gap-2 sm:gap-4 pl-1 sm:pl-2 cursor-pointer group">
                         <div className="text-right hidden sm:block">
-                            <p className="text-sm font-bold text-white group-hover:text-[#D4AF37] transition-colors">{user?.email?.split('@')[0]}</p>
-                            <p className="text-[10px] text-gray-500 mt-0.5 uppercase tracking-wider">Gestor</p>
+                            <p className={`text-sm font-bold transition-colors ${activeStaff ? 'text-green-400 group-hover:text-green-300' : 'text-white group-hover:text-[#D4AF37]'}`}>
+                                {activeStaff ? activeStaff.name : user?.email?.split('@')[0]}
+                            </p>
+                            <p className="text-[10px] text-gray-500 mt-0.5 uppercase tracking-wider">{activeStaff ? 'Em Operação' : 'Gestor(a)'}</p>
                         </div>
-                        <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] font-bold shadow-lg group-hover:bg-[#D4AF37] group-hover:text-black transition-all transform group-hover:scale-105">
-                            {user?.email?.charAt(0).toUpperCase()}
+                        <div className={`w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-2xl border flex items-center justify-center font-bold shadow-lg transition-all transform group-hover:scale-105 ${activeStaff ? 'bg-green-500/10 border-green-500/30 text-green-400 group-hover:bg-green-500 group-hover:text-black' : 'bg-[#D4AF37]/10 border-[#D4AF37]/30 text-[#D4AF37] group-hover:bg-[#D4AF37] group-hover:text-black'}`}>
+                            {activeStaff ? activeStaff.name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase()}
                         </div>
                     </div>
                 </div>
             </div>
         </header>
     );
-};
+});
 
 export default AdminHeader;

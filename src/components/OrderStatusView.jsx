@@ -45,6 +45,7 @@ const OrderStatusModal = ({ orderId, restaurantId, isOpen, onClose }) => {
             case 'pending': return { label: 'Aguardando Confirmação', icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-100', text: 'Seu pedido foi enviado para a cozinha.' };
             case 'preparing': return { label: 'Em Preparação', icon: ChefHat, color: 'text-orange-600', bg: 'bg-orange-100', text: 'O chef já está preparando seu prato!' };
             case 'ready': return { label: 'Pronto!', icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100', text: 'Seu pedido está pronto para entrega/retirada.' };
+            case 'paid':
             case 'delivered': return { label: 'Entregue', icon: Truck, color: 'text-blue-600', bg: 'bg-blue-100', text: 'Bom apetite!' };
             case 'cancelled': return { label: 'Cancelado', icon: XCircle, color: 'text-red-600', bg: 'bg-red-100', text: 'Houve um problema com seu pedido.' };
             default: return { label: 'Processando', icon: Clock, color: 'text-gray-600', bg: 'bg-gray-100', text: 'Atualizando status...' };
@@ -64,13 +65,19 @@ const OrderStatusModal = ({ orderId, restaurantId, isOpen, onClose }) => {
 // Let's return a UI component that CheckoutModal can switch to.
 export const OrderStatusView = ({ order, status, whatsappNumber }) => {
     const getStatusInfo = (s) => {
-        switch (s) {
+        if (!s) return { label: 'Processando', icon: Clock, color: 'text-gray-600', bg: 'bg-gray-100', desc: '...' };
+        const normalized = String(s).toLowerCase().trim();
+        switch (normalized) {
             case 'pending': return { label: 'Aguardando Confirmação', icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-100', desc: 'Aguarde o restaurante confirmar.' };
             case 'preparing': return { label: 'Em Preparação', icon: ChefHat, color: 'text-orange-600', bg: 'bg-orange-100', desc: 'A cozinha está a todo vapor!' };
             case 'ready': return { label: 'Pronto!', icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100', desc: 'Pode vir buscar ou estamos levando.' };
+            case 'paid':
+            case 'pago':
             case 'delivered': return { label: 'Concluído', icon: Truck, color: 'text-blue-600', bg: 'bg-blue-100', desc: 'Obrigado pela preferência!' };
             case 'cancelled': return { label: 'Cancelado', icon: XCircle, color: 'text-red-600', bg: 'bg-red-100', desc: 'Houve um problema com seu pedido.' };
-            default: return { label: 'Processando', icon: Clock, color: 'text-gray-600', bg: 'bg-gray-100', desc: '...' };
+            default: 
+                console.log('Status desconhecido:', s);
+                return { label: 'Processando', icon: Clock, color: 'text-gray-600', bg: 'bg-gray-100', desc: '...' };
         }
     };
 
@@ -155,7 +162,7 @@ export const OrderStatusView = ({ order, status, whatsappNumber }) => {
                         <div className="animate-fade-in">
                             <textarea
                                 placeholder="Algo que possamos melhorar? (Opcional)"
-                                className="w-full p-3 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-sm mb-3 outline-none focus:ring-2 focus:ring-yellow-500/50"
+                                className="w-full p-3 bg-white border border-gray-200 dark:border-white/10 rounded-xl text-sm mb-3 outline-none focus:ring-2 focus:ring-yellow-500/50 text-gray-900 font-medium"
                                 value={comment}
                                 onChange={(e) => setComment(e.target.value)}
                                 rows={2}

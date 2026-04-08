@@ -2,16 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-
-// FORCE CLEAR PERSISTENT TRACKER (Emergency Fix)
-if (typeof window !== 'undefined') {
-    Object.keys(localStorage).forEach(key => {
-        if (key.includes('active_order') || key.includes('jindungo_active')) {
-            localStorage.removeItem(key);
-            console.log('Emergency Clean: Removed', key);
-        }
-    });
-}
 import { menuService } from '../services/menuService';
 import { themeService } from '../services/themeService'; // Assuming this exists or using default
 // import { analyticsService } from '../services/analyticsService';
@@ -501,7 +491,13 @@ const PublicMenu = () => {
                         />
                     )}
 
-                    {/* Active Order Tracker removed to avoid buyer confusion as requested */}
+                    {/* [NEW] Persistent Active Order Tracker */}
+                    {restaurant && (
+                        <ActiveOrderTracker 
+                            restaurantId={restaurant.id}
+                            whatsappNumber={config?.whatsappNumber}
+                        />
+                    )}
 
                     <CheckoutModal
                         isOpen={isCheckoutOpen}

@@ -204,16 +204,23 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
     useEffect(() => {
         if (!restaurantId) return;
 
-        // 1. Initial Load
+        // 1. Initial Load (Safe merging)
         const loadOrders = async () => {
             const { data } = await orderService.getActiveOrders(restaurantId);
-            setOrders(data);
+            setOrders(prev => {
+                // Keep everything we already got from Realtime and combine with fetched data
+                const newIds = new Set(prev.map(o => o.id));
+                const combined = [...prev, ...data.filter(o => !newIds.has(o.id))];
+                return combined;
+            });
             setLoading(false);
         };
         loadOrders();
 
         // 2. Realtime Subscription
         const channel = orderService.subscribeToOrders(restaurantId, (payload) => {
+            console.log('Realtime Event Received:', payload.eventType, payload.new?.id, payload.new?.status);
+            
             if (payload.eventType === 'INSERT') {
                 // Play Sound Safely only if enabled
                 if (isAudioEnabled) {
@@ -225,9 +232,23 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                     }
                 }
 
-                setOrders(prev => [...prev, payload.new]);
+                // Prepend new order so it's always at the top/visible
+                setOrders(prev => {
+                    // Avoid double-inserting if it's already there
+                    if (prev.find(o => o.id === payload.new.id)) return prev;
+                    return [payload.new, ...prev];
+                });
+                
+                // Show a quick toast notification
+                toast.success(`Novo Pedido de ${payload.new.customer_name || 'Cliente'}!`, {
+                    icon: '🔔',
+                    duration: 5000
+                });
+
             } else if (payload.eventType === 'UPDATE') {
                 setOrders(prev => prev.map(o => o.id === payload.new.id ? payload.new : o));
+            } else if (payload.eventType === 'DELETE') {
+                setOrders(prev => prev.filter(o => o.id !== payload.old.id));
             }
         });
 
@@ -266,9 +287,18 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
         }
     };
 
-    const pendingOrders = orders.filter(o => o.status === 'pending');
-    const preparingOrders = orders.filter(o => o.status === 'preparing');
-    const readyOrders = orders.filter(o => o.status === 'ready');
+    const pendingOrders = orders.filter(o => {
+        const s = (o.status || '').toLowerCase().trim();
+        return s === 'pending' || s === 'pendente';
+    });
+    const preparingOrders = orders.filter(o => {
+        const s = (o.status || '').toLowerCase().trim();
+        return s === 'preparing' || s === 'preparando';
+    });
+    const readyOrders = orders.filter(o => {
+        const s = (o.status || '').toLowerCase().trim();
+        return s === 'ready' || s === 'pronto' || s === 'paid' || s === 'pago';
+    });
 
     if (loading) return <div className="p-8 text-gray-500">Carregando pedidos...</div>;
 
@@ -311,8 +341,13 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                         </button>
                         <div className="px-4 py-2 text-center">
-                            <div className="text-xs font-black text-white">{orders.length}</div>
-                            <div className="text-[8px] uppercase font-bold text-gray-500 tracking-tighter">Total</div>
+                            <div className="text-xs font-black text-white">
+                                {orders.filter(o => {
+                                    const s = (o.status || '').toLowerCase().trim();
+                                    return s === 'pending' || s === 'preparing' || s === 'ready' || s === 'paid';
+                                }).length}
+                            </div>
+                            <div className="text-[8px] uppercase font-bold text-gray-500 tracking-tighter">Ativos</div>
                         </div>
                     </div>
                 </div>

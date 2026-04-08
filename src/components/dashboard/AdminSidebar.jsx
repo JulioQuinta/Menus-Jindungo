@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, LogOut } from 'lucide-react';
 
-const AdminSidebar = ({ 
+const AdminSidebar = memo(({ 
     isSidebarOpen, 
     isMobileMenuOpen, 
     setIsSidebarOpen, 
@@ -18,12 +18,12 @@ const AdminSidebar = ({
     };
 
     return (
-        <aside className={`fixed lg:relative z-50 glass-dark border-r border-white/5 transition-all duration-500 ease-spring h-screen flex flex-col shadow-2xl
-            ${isMobileMenuOpen ? 'left-0 w-72' : '-left-full lg:left-0'} 
+        <aside className={`fixed lg:relative z-50 glass-dark border-r border-white/5 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] h-screen flex flex-col shadow-2xl will-change-transform
+            ${isMobileMenuOpen ? 'translate-x-0 w-72' : '-translate-x-full lg:translate-x-0'} 
             ${isSidebarOpen ? 'lg:w-72' : 'lg:w-24'}`}>
 
             <div className="p-8 border-b border-white/5 flex items-center justify-between">
-                <div className={`flex items-center gap-3 transition-opacity duration-300 ${isSidebarOpen || isMobileMenuOpen ? 'opacity-100' : 'lg:opacity-0 lg:hidden'}`}>
+                <div className={`flex items-center gap-3 transition-all duration-300 ${isSidebarOpen || isMobileMenuOpen ? 'opacity-100' : 'lg:opacity-0 lg:hidden pointer-events-none'}`}>
                     <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl overflow-hidden bg-white/10 flex items-center justify-center shadow-[0_0_20px_rgba(212,175,55,0.3)] transform hover:scale-105 transition-transform cursor-pointer border border-[#D4AF37]/30">
                         <img src={globalLogoUrl || "/jindungo_logo_v3.png"} className="w-full h-full object-contain" alt="Global App Logo" />
                     </div>
@@ -50,12 +50,12 @@ const AdminSidebar = ({
                             key={item.path}
                             to={item.path}
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className={`group flex items-center gap-4 px-4 py-4 rounded-xl transition-all duration-300 relative overflow-hidden ${active
+                            className={`group flex items-center gap-4 px-4 py-4 rounded-xl transition-all duration-200 relative overflow-hidden ${active
                                 ? 'bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 shadow-[0_4px_20px_rgba(212,175,55,0.1)]'
                                 : 'text-gray-400 hover:bg-white/5 hover:text-white hover:pl-6'
                                 }`}
                         >
-                            <div className={`relative z-10 transition-transform duration-300 ${active ? 'scale-110 drop-shadow-[0_0_8px_rgba(212,175,55,0.5)]' : 'group-hover:scale-110'}`}>
+                            <div className={`relative z-10 transition-transform duration-200 ${active ? 'scale-110 drop-shadow-[0_0_8px_rgba(212,175,55,0.5)]' : 'group-hover:scale-110'}`}>
                                 <item.icon size={22} />
                             </div>
                             <span className={`font-medium tracking-wide whitespace-nowrap transition-all duration-300 ${(isSidebarOpen || isMobileMenuOpen) ? 'opacity-100 translate-x-0' : 'lg:opacity-0 lg:-translate-x-10 lg:absolute'}`}>
@@ -80,6 +80,6 @@ const AdminSidebar = ({
             </div>
         </aside>
     );
-};
+});
 
 export default AdminSidebar;

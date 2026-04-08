@@ -10,6 +10,7 @@ import { supabase } from '../lib/supabaseClient';
 
 import { getPlanFeatures } from '../utils/planLimits';
 import { Suspense } from 'react';
+import { lazyWithRetry, clearReloadFlag } from '../utils/lazyWithRetry';
 // Global Audio instance to prevent repeated allocation and browser lag
 const notificationSound = new Audio('/bell.mp3');
 notificationSound.volume = 0.5;

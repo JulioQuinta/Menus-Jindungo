@@ -54,6 +54,15 @@ const AdminDashboard = () => {
     const [activeStaff, setActiveStaff] = useState(null);
     const [showStaffModal, setShowStaffModal] = useState(false);
 
+    // Explicit logout to ensure redirect even if ProtectedRoute logic is delayed
+    const handleLogout = async () => {
+        await signOut();
+        navigate('/login', { replace: true });
+    };
+
+    // Data State
+    const [restaurant, setRestaurant] = useState(null);
+
     useEffect(() => {
         if (restaurant?.id) {
             const savedName = localStorage.getItem(`jindungo_staff_name_${restaurant.id}`);
@@ -63,15 +72,6 @@ const AdminDashboard = () => {
             }
         }
     }, [restaurant?.id]);
-
-    // Explicit logout to ensure redirect even if ProtectedRoute logic is delayed
-    const handleLogout = async () => {
-        await signOut();
-        navigate('/login', { replace: true });
-    };
-
-    // Data State
-    const [restaurant, setRestaurant] = useState(null);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showCategoryModal, setShowCategoryModal] = useState(false);

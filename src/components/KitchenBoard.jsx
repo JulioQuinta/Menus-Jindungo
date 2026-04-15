@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { orderService } from '../services/orderService';
-import { Clock, CheckCircle, ChefHat, Truck, XCircle, AlertCircle, Banknote, Printer, Ticket, Smartphone, Volume2, VolumeX, Award, RefreshCw } from 'lucide-react';
+import { Clock, CheckCircle, ChefHat, Truck, XCircle, AlertCircle, Banknote, Printer, Ticket, Smartphone, Volume2, VolumeX, Award, RefreshCw, Bike } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { generateWhatsAppLink } from '../utils/whatsappGenerator';
 import toast from 'react-hot-toast';
 import TableBillTemplate from './TableBillTemplate';
+import { printerService } from '../utils/bluetoothPrinter';
 
 const OrderCard = ({ order, onStatusChange, onPrint, enablePrint, restaurantName }) => {
     // Calculate waiting time
     const [elapsed, setElapsed] = useState('');
+    const [showTimeSelector, setShowTimeSelector] = useState(false);
+    const [customMins, setCustomMins] = useState('30');
 
     useEffect(() => {
         const updateTimer = () => {
@@ -27,26 +30,63 @@ const OrderCard = ({ order, onStatusChange, onPrint, enablePrint, restaurantName
         ready: 'border-[#2ECC71] bg-black/40 shadow-[0_5px_20px_rgba(46,204,113,0.1)]',
     };
 
+    // Data Extraction for Delivery and Maps
+    const isDelivery = order.table_number?.includes('Entrega:');
+    let displayAddress = order.table_number;
+    let mapsLink = null;
+    let paymentMethod = null;
+
+    if (isDelivery) {
+        const parts = order.table_number.split('|').map(p => p.trim());
+        displayAddress = parts[0].replace('Entrega:', '').trim();
+        parts.forEach(part => {
+             if (part.startsWith('Maps:')) mapsLink = part.replace('Maps:', '').trim();
+             if (part.startsWith('Pgto:')) paymentMethod = part.replace('Pgto:', '').trim();
+             if (part.startsWith('Ref:')) displayAddress += ` (Ref: ${part.replace('Ref:', '').trim()})`;
+        });
+    } else {
+        if (order.table_number?.includes('| Pgto:')) {
+            const parts = order.table_number.split('| Pgto:');
+            displayAddress = parts[0].trim();
+            paymentMethod = parts[1].trim();
+        }
+    }
+
     return (
         <div className={`p-5 rounded-2xl border-l-4 backdrop-blur-md mb-4 animate-slide-in transition-all hover:scale-[1.02] hover:-translate-y-1 ${statusColors[order.status] || 'border-white/10 bg-black/40'} border-y border-y-white/5 border-r border-r-white/5`}>
             <div className="flex justify-between items-start mb-3">
-                <div>
-                    <h4 className="font-bold text-lg text-white leading-tight">#{order.table_number.includes("Entrega") ? '🛵' : 'Mesa'} {order.table_number.replace('Entrega: ', '')}</h4>
-                    <span className="text-sm text-gray-400 font-medium">{order.customer_name}</span>
+                <div className="flex-1 pr-3">
+                    <h4 className="font-bold text-sm text-white leading-tight break-words">
+                        {isDelivery ? (
+                            <span className="flex items-start gap-1"><Bike size={16} className="text-cyan-400 shrink-0 mt-0.5"/> {displayAddress}</span>
+                        ) : (
+                            <span>#Mesa {displayAddress}</span>
+                        )}
+                    </h4>
+                    <span className="text-sm text-gray-400 font-medium mt-1 inline-block">{order.customer_name}</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-gray-300 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10 shadow-sm">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-gray-300 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10 shadow-sm shrink-0">
                     <Clock size={12} className={order.status === 'pending' && parseInt(elapsed) > 15 ? 'text-red-400 animate-pulse' : 'text-[#D4AF37]'} />
                     {elapsed}
                 </div>
             </div>
 
             {/* Payment Info */}
-            {order.table_number.includes('| Pgto:') && (
-                <div className="mb-3 text-xs font-semibold text-gray-300 bg-green-900/20 p-2 rounded-lg border border-green-500/20 flex items-center gap-2">
-                    <span className="flex h-2 w-2 relative mr-1"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>
-                    <Banknote size={14} className="text-green-400" />
-                    {order.table_number.split('| Pgto:')[1]?.trim()}
+            {paymentMethod && (
+                <div className="mb-3 text-xs font-semibold text-gray-300 bg-green-900/20 p-2 rounded-lg border border-green-500/20 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                        <span className="flex h-2 w-2 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>
+                        <Banknote size={14} className="text-green-400 shrink-0" />
+                        <span className="break-all">{paymentMethod}</span>
+                    </div>
                 </div>
+            )}
+            
+            {/* GPS Link */}
+            {mapsLink && (
+                <a href={mapsLink} target="_blank" rel="noopener noreferrer" className="mb-3 w-full bg-white/5 hover:bg-white/10 text-cyan-400 border border-cyan-500/30 font-bold px-3 py-2.5 rounded-lg text-[11px] uppercase tracking-wider flex items-center justify-center gap-2 transition-all">
+                    Abrir Mapa no GPS
+                </a>
             )}
 
             <div className="space-y-2 mb-4">
@@ -102,20 +142,84 @@ const OrderCard = ({ order, onStatusChange, onPrint, enablePrint, restaurantName
 
                 {order.status === 'ready' && (
                     <div className="flex flex-col gap-2 w-full">
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => onStatusChange(order.id, 'delivered')}
-                                className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-white py-2.5 rounded-xl font-bold text-sm flex justify-center items-center gap-2 transition-all shadow-lg hover:shadow-blue-500/25"
-                            >
-                                <Truck size={16} /> Entregue
-                            </button>
-                            <button
-                                onClick={() => { if (window.confirm('Recebeu o pagamento e deseja fechar esta conta?')) onStatusChange(order.id, 'paid'); }}
-                                className="flex-1 bg-gradient-to-r from-[#D4AF37] to-yellow-600 hover:brightness-110 text-black py-2.5 rounded-xl font-bold text-sm flex justify-center items-center gap-2 transition-all shadow-lg hover:shadow-yellow-500/25"
-                            >
-                                <Banknote size={16} /> Pago
-                            </button>
-                        </div>
+                        {isDelivery ? (
+                            <div className="w-full">
+                                {!showTimeSelector ? (
+                                    <button
+                                        onClick={() => setShowTimeSelector(true)}
+                                        className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white py-3 rounded-xl font-bold text-sm flex justify-center items-center gap-2 transition-all shadow-lg hover:shadow-cyan-500/30"
+                                    >
+                                        <Bike size={18} /> Despachar Mota
+                                    </button>
+                                ) : (
+                                    <div className="bg-black/60 p-4 rounded-xl border border-cyan-500/30 animate-in zoom-in-95 duration-200">
+                                        <p className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest mb-3 text-center">Tempo de Entrega?</p>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {[15, 20, 30, 45, 60, 90].map(mins => (
+                                                <button
+                                                    key={mins}
+                                                    onClick={() => {
+                                                        const targetEpochMs = Date.now() + mins * 60000;
+                                                        onStatusChange(order.id, 'out_for_delivery', targetEpochMs.toString());
+                                                        setShowTimeSelector(false);
+                                                    }}
+                                                    className="bg-cyan-500/10 hover:bg-cyan-500 text-cyan-300 hover:text-white py-2 rounded-lg text-xs font-black transition-all border border-cyan-500/20"
+                                                >
+                                                    {mins}'
+                                                </button>
+                                            ))}
+                                        </div>
+                                        
+                                        <div className="mt-3 pt-3 border-t border-white/5">
+                                            <div className="flex gap-2">
+                                                <input 
+                                                    type="number" 
+                                                    value={customMins}
+                                                    onChange={(e) => setCustomMins(e.target.value)}
+                                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-cyan-500/50"
+                                                    placeholder="Outros min..."
+                                                />
+                                                <button
+                                                    onClick={() => {
+                                                        const val = parseInt(customMins);
+                                                        if (val > 0) {
+                                                            const targetEpochMs = Date.now() + val * 60000;
+                                                            onStatusChange(order.id, 'out_for_delivery', targetEpochMs.toString());
+                                                            setShowTimeSelector(false);
+                                                        }
+                                                    }}
+                                                    className="bg-cyan-500 text-black px-3 rounded-lg font-bold text-xs"
+                                                >
+                                                    OK
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <button 
+                                            onClick={() => setShowTimeSelector(false)}
+                                            className="w-full mt-3 text-[9px] text-gray-500 hover:text-white uppercase font-bold tracking-[0.2em]"
+                                        >
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => onStatusChange(order.id, 'delivered')}
+                                    className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-white py-2.5 rounded-xl font-bold text-sm flex justify-center items-center gap-2 transition-all shadow-lg hover:shadow-blue-500/25"
+                                >
+                                    <Truck size={16} /> Entregue
+                                </button>
+                                <button
+                                    onClick={() => onStatusChange(order.id, 'delivered')}
+                                    className="flex-1 bg-gradient-to-r from-[#D4AF37] to-yellow-600 hover:brightness-110 text-black py-2.5 rounded-xl font-bold text-sm flex justify-center items-center gap-2 transition-all shadow-lg hover:shadow-yellow-500/25"
+                                >
+                                    <Banknote size={16} /> Pago
+                                </button>
+                            </div>
+                        )}
                         
                         {order.customer_phone && (
                             <button
@@ -136,6 +240,72 @@ const OrderCard = ({ order, onStatusChange, onPrint, enablePrint, restaurantName
                                 className="flex-1 bg-white/5 border border-green-500/30 text-green-400 py-2 rounded-xl font-bold text-[10px] flex justify-center items-center gap-2 hover:bg-green-500/10 transition-all uppercase"
                             >
                                 <Smartphone size={14} /> Avisar no WhatsApp
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {order.status === 'out_for_delivery' && (
+                    <div className="flex flex-col gap-2 w-full mt-2">
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => {
+                                    const motoboyUrl = `${window.location.origin}/delivery/${order.id}`;
+                                    navigator.clipboard.writeText(motoboyUrl);
+                                    toast.success('Link do Motoboy copiado!');
+                                }}
+                                className="flex-1 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 py-2.5 rounded-xl font-bold text-xs flex justify-center items-center gap-2 transition-all uppercase"
+                            >
+                                <Bike size={14} /> Link da App (Estafeta)
+                            </button>
+                            <button
+                                onClick={() => onStatusChange(order.id, 'arrived')}
+                                className="flex-1 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 py-2.5 rounded-xl font-bold text-xs flex justify-center items-center gap-2 transition-all uppercase"
+                            >
+                                🔔 Estafeta Chegou
+                            </button>
+                        </div>
+                        
+                        {order.customer_phone && (
+                            <button
+                                onClick={() => {
+                                    let message = `Olá ${order.customer_name || ''}! Confirmamos a entrega do seu pedido no *${restaurantName || 'Restaurante'}*. Bom apetite e volte sempre! 🍽️\n`;
+                                    let phone = order.customer_phone.replace(/\D/g, '');
+                                    if (phone.length === 9) phone = '244' + phone;
+                                    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+                                }}
+                                className="flex-1 bg-white/5 border border-green-500/30 text-green-400 py-2 rounded-xl font-bold text-[10px] flex justify-center items-center gap-2 hover:bg-green-500/10 transition-all uppercase"
+                            >
+                                <Smartphone size={14} /> Msg de Agradecimento
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {order.status === 'arrived' && (
+                    <div className="flex flex-col gap-2 w-full mt-2">
+                        <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-xl p-3 mb-1 text-center animate-pulse">
+                             <p className="text-yellow-400 font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2">
+                                 <Bike size={14}/> À PORTA DO CLIENTE!
+                             </p>
+                        </div>
+                        <button
+                            onClick={() => onStatusChange(order.id, 'delivered')}
+                            className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:brightness-110 text-white py-2.5 rounded-xl font-bold text-sm flex justify-center items-center gap-2 transition-all shadow-lg hover:shadow-green-500/25"
+                        >
+                            <CheckCircle size={16} /> Entregue c/ Sucesso (Pago)
+                        </button>
+                        {order.customer_phone && (
+                            <button
+                                onClick={() => {
+                                    let message = `Olá ${order.customer_name || ''}! O nosso estafeta acabou de chegar à sua porta com o seu pedido! 🛵💨\nPor favor, venha recebê-lo.`;
+                                    let phone = order.customer_phone.replace(/\D/g, '');
+                                    if (phone.length === 9) phone = '244' + phone;
+                                    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+                                }}
+                                className="flex-1 bg-white/5 border border-green-500/30 text-green-400 py-2 rounded-xl font-bold text-[10px] flex justify-center items-center gap-2 hover:bg-green-500/10 transition-all uppercase"
+                            >
+                                <Smartphone size={14} /> Msg: &quot;Vem à Porta&quot;
                             </button>
                         )}
                     </div>
@@ -179,6 +349,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
 
     // Native Printing State
     const [printingOrder, setPrintingOrder] = useState(null);
+    const [isBluetoothReady, setIsBluetoothReady] = useState(false);
 
     const toggleAudio = () => {
         if (!isAudioEnabled) {
@@ -193,7 +364,40 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
         }
     };
 
-    const handlePrintOrder = (order) => {
+    const toggleBluetoothPrinter = async () => {
+        try {
+            if (isBluetoothReady) {
+                printerService.disconnect();
+                setIsBluetoothReady(false);
+                toast.success('Impressora Térmica desligada.');
+            } else {
+                toast.loading('Selecione a Impressora Bluetooth...', { id: 'bt-loading' });
+                await printerService.connect();
+                setIsBluetoothReady(true);
+                toast.success('Impressora Emparelhada!', { id: 'bt-loading' });
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error(error.message || 'Falha ao emparelhar Bluetooth.', { id: 'bt-loading' });
+        }
+    };
+
+    const handlePrintOrder = async (order) => {
+        if (isBluetoothReady && printerService.isConnected()) {
+            try {
+                toast.loading('A Imprimir...', { id: 'print' });
+                await printerService.printOrder(order, restaurantName);
+                toast.success('Talão Impresso!', { id: 'print' });
+            } catch (error) {
+                toast.error('Erro na impressão Bluetooth. Modificando para fallback visual.', { id: 'print' });
+                // Fallback on fail
+                setPrintingOrder(order);
+                setTimeout(() => window.print(), 100);
+            }
+            return;
+        }
+
+        // Fallback genérico visual (Window.print)
         setPrintingOrder(order);
         // Wait for state to update and React to render the printable area
         setTimeout(() => {
@@ -297,13 +501,14 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
     });
     const readyOrders = orders.filter(o => {
         const s = (o.status || '').toLowerCase().trim();
-        return s === 'ready' || s === 'pronto' || s === 'paid' || s === 'pago';
+        return s === 'ready' || s === 'pronto' || s === 'paid' || s === 'pago' || s === 'out_for_delivery' || s === 'arrived';
     });
 
     if (loading) return <div className="p-8 text-gray-500">Carregando pedidos...</div>;
 
     return (
-        <div className="h-full flex flex-col p-4 sm:p-6 bg-transparent overflow-hidden relative">
+        <>
+        <div className="h-full flex flex-col p-4 sm:p-6 bg-transparent overflow-hidden relative print:hidden">
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h2 className="text-2xl font-black text-white tracking-tight">Cozinha: {restaurantName}</h2>
@@ -321,6 +526,19 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                     >
                         {isAudioEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
                         {isAudioEnabled ? 'SOM ATIVO' : 'CLIQUE P/ ATIVAR SOM'}
+                    </button>
+
+                    <button
+                        onClick={toggleBluetoothPrinter}
+                        className={`hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs transition-all ${
+                            isBluetoothReady 
+                                ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30' 
+                                : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'
+                        }`}
+                        title="Emparelhar Impressora Térmica POS"
+                    >
+                        <Printer size={16} />
+                        {isBluetoothReady ? 'POS ATIVO' : 'CONECTAR POS'}
                     </button>
 
                     <div className="flex bg-black/40 border border-white/5 p-1 rounded-2xl backdrop-blur-md">
@@ -344,7 +562,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                             <div className="text-xs font-black text-white">
                                 {orders.filter(o => {
                                     const s = (o.status || '').toLowerCase().trim();
-                                    return s === 'pending' || s === 'preparing' || s === 'ready' || s === 'paid';
+                                    return s === 'pending' || s === 'preparing' || s === 'ready' || s === 'paid' || s === 'out_for_delivery';
                                 }).length}
                             </div>
                             <div className="text-[8px] uppercase font-bold text-gray-500 tracking-tighter">Ativos</div>
@@ -353,32 +571,9 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                 </div>
             </div>
 
-            {/* Global Print Styles to hide the rest of the UI and only show the print container */}
-            <style>
-                {`
-                    @media print {
-                        body * {
-                            visibility: hidden;
-                        }
-                        #print-container, #print-container * {
-                            visibility: visible;
-                        }
-                        #print-container {
-                            position: absolute;
-                            left: 0;
-                            top: 0;
-                            width: 100%;
-                            padding: 0;
-                            margin: 0;
-                        }
-                        @page { margin: 0; }
-                    }
-                `}
-            </style>
-
             {/* Print Container: Only rendered when there is an order to print */}
             {printingOrder && (
-                <div id="print-container" className="absolute top-0 left-0 w-full z-[-1] opacity-0 pointer-events-none print:opacity-100 print:z-50 print:relative print:w-[80mm]">
+                <div id="print-container" className="hidden print:block w-[80mm] mx-auto text-black bg-white left-0 top-0 mt-0 pt-0">
                     <TableBillTemplate
                         order={printingOrder}
                         restaurantName={restaurantName || printingOrder?.restaurant?.name || 'Jindungo'}
@@ -448,6 +643,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                 </div>
             )}
         </div>
+        </>
     );
 };
 

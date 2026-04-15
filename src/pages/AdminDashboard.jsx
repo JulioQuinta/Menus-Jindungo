@@ -41,6 +41,7 @@ import AdminAlerts from '../components/dashboard/AdminAlerts';
 import MasqueradeBanner from '../components/dashboard/MasqueradeBanner';
 import AdminMobileNav from '../components/dashboard/AdminMobileNav';
 import StaffPinModal from '../components/StaffPinModal';
+import PaymentSaaSModal from '../components/PaymentSaaSModal';
 
 const AdminDashboard = () => {
     const { user, signOut, loading: authLoading } = useAuth();
@@ -53,6 +54,9 @@ const AdminDashboard = () => {
     // [NEW] Staff State for Expresso Login
     const [activeStaff, setActiveStaff] = useState(null);
     const [showStaffModal, setShowStaffModal] = useState(false);
+    
+    // [NEW] SaaS Payment Modal state
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
 
     // Explicit logout to ensure redirect even if ProtectedRoute logic is delayed
     const handleLogout = async () => {
@@ -615,6 +619,12 @@ const AdminDashboard = () => {
                             <span className="tracking-wide">Reportar Pagamento via WhatsApp</span>
                         </a>
                         <button
+                            onClick={() => setShowPaymentModal(true)}
+                            className="w-full bg-[#D4AF37] hover:bg-[#AA8B2C] text-black font-black py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                            <span>Renovação Imediata (MCX Express)</span>
+                        </button>
+                        <button
                             onClick={handleLogout}
                             className="w-full bg-transparent hover:bg-white/5 text-gray-400 font-medium py-3 rounded-xl transition-all border border-transparent hover:border-white/10 uppercase tracking-widest text-xs"
                         >
@@ -753,6 +763,15 @@ const AdminDashboard = () => {
                                 </a>
                                 <button
                                     onClick={() => {
+                                        setShowExpirationModal(false);
+                                        setShowPaymentModal(true);
+                                    }}
+                                    className="w-full bg-[#D4AF37] hover:bg-[#AA8B2C] text-black font-black py-4 rounded-xl transition-all shadow-lg flex justify-center items-center gap-2"
+                                >
+                                    Pagar com MCX (Automático)
+                                </button>
+                                <button
+                                    onClick={() => {
                                         sessionStorage.setItem('expiration_acknowledged', 'true');
                                         setShowExpirationModal(false);
                                     }}
@@ -772,6 +791,12 @@ const AdminDashboard = () => {
                     onClose={() => setShowStaffModal(false)}
                     restaurantId={restaurant?.id}
                     onLogin={(staff) => setActiveStaff(staff)}
+                />
+
+                <PaymentSaaSModal 
+                    isOpen={showPaymentModal} 
+                    onClose={() => setShowPaymentModal(false)}
+                    restaurant={restaurant}
                 />
 
                 {/* Glass Header */}

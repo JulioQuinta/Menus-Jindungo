@@ -42,7 +42,7 @@ const AdminSidebar = memo(({
                 </button>
             </div>
 
-            <nav className="p-4 space-y-2 flex-1 overflow-y-auto custom-scrollbar mt-4">
+            <nav className="p-4 space-y-2 flex-1 min-h-[0px] overflow-y-auto custom-scrollbar mt-4">
                 {menuItems.map((item) => {
                     const active = isActive(item.path);
                     return (
@@ -69,7 +69,7 @@ const AdminSidebar = memo(({
                 })}
             </nav>
 
-            <div className="p-4 border-t border-white/5 mt-auto">
+            <div className="p-4 border-t border-white/5 mt-auto shrink-0 pb-6 lg:pb-4">
                 <button
                     onClick={signOut}
                     className={`w-full flex items-center gap-4 px-4 py-4 rounded-xl text-gray-500 hover:bg-red-500/10 hover:text-red-400 hover:border hover:border-red-500/20 transition-all group ${(!isSidebarOpen && !isMobileMenuOpen) && 'justify-center border border-transparent'}`}

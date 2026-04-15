@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { couponService } from '../services/couponService';
 import { Ticket, Plus, Trash2, Calendar, Tag, Percent, Banknote, AlertCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { Link } from 'react-router-dom';
 
 const CouponManager = ({ restaurantId }) => {
     const [coupons, setCoupons] = useState([]);
@@ -92,6 +93,20 @@ const CouponManager = ({ restaurantId }) => {
                     <Plus size={20} />
                     {isAdding ? 'Cancelar' : 'Criar Novo Cupão'}
                 </button>
+            </div>
+
+            {/* [NEW] CTA Banner to CRM Campaign */}
+            <div className="bg-gradient-to-r from-blue-900/40 to-purple-900/40 border border-blue-500/30 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <h3 className="font-bold text-white flex items-center gap-2 text-sm">
+                        <AlertCircle size={16} className="text-blue-400" />
+                        Aumentar Vendas com o CRM
+                    </h3>
+                    <p className="text-xs text-gray-300 mt-1">Sabia que pode criar uma Lista de Transmissão Automática no WhatsApp com estes cupões para recuperar clientes inativos?</p>
+                </div>
+                <Link to="/admin/crm" className="text-xs shrink-0 font-bold bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-white transition-colors border border-white/10">
+                    Ir para CRM
+                </Link>
             </div>
 
             {isAdding && (

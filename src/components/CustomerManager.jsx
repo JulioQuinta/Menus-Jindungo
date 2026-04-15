@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { Search, User, Phone, ShoppingBag, TrendingUp, History, Download, ExternalLink } from 'lucide-react';
+import { Search, User, Phone, ShoppingBag, TrendingUp, History, Download, ExternalLink, Ticket, Target, Send, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const CustomerManager = ({ restaurantId }) => {
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    
+    // [NEW] Campaign State
+    const [showCampaignModal, setShowCampaignModal] = useState(false);
+    const [campaignData, setCampaignData] = useState({ couponCode: '', daysInactive: 30, discountText: '20%' });
 
     useEffect(() => {
         if (restaurantId) {
@@ -89,6 +93,32 @@ const CustomerManager = ({ restaurantId }) => {
         window.open(`https://wa.me/${finalPhone}`, '_blank');
     };
 
+    const handleRunCampaign = () => {
+        if (!campaignData.couponCode) return toast.error("Insira o código do Cupão Jindungo.");
+        
+        // Find inactive users
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - parseInt(campaignData.daysInactive));
+        
+        const targets = customers.filter(c => new Date(c.lastOrder) < cutoffDate && c.phone && c.phone !== 'Sem Telefone');
+        
+        if (targets.length === 0) {
+            return toast.error(`Nenhum cliente inativo há mais de ${campaignData.daysInactive} dias com telefone registado.`);
+        }
+
+        // Just copy the list of numbers/generate text so the owner can push via WhatsApp Broadcast (Listas de Transmissão)
+        const textToCopy = `Temos Saudades Suas! 🌶️\nUtilize o nosso cupão ${campaignData.couponCode} para um desconto de ${campaignData.discountText} no seu próximo pedido connosco!\n\nAceda ao menu: https://jindungo.app/r/lojadefault`;
+        const numbers = targets.map(t => {
+            const clean = t.phone.replace(/\D/g, '');
+            return clean.startsWith('244') ? clean : '244' + clean;
+        }).join(', ');
+
+        navigator.clipboard.writeText(`Lista de Números:\n${numbers}\n\nMensagem Base:\n${textToCopy}`);
+        
+        toast.success(`${targets.length} contactos e mensagem copiados para a sua área de transferência (Clipboard)! Pode colar na sua Lista de Transmissão do WhatsApp.`, { duration: 8000 });
+        setShowCampaignModal(false);
+    };
+
     return (
         <div className="space-y-6 animate-fade-in text-white">
             {/* Header Area */}
@@ -101,14 +131,94 @@ const CustomerManager = ({ restaurantId }) => {
                     </h2>
                     <p className="text-gray-400 mt-1">Conheça quem mais compra e fidelize os seus melhores clientes.</p>
                 </div>
-                <button
-                    onClick={handleExportCRM}
-                    className="bg-white/5 border border-white/10 text-white px-6 py-3 rounded-xl font-bold hover:bg-white/10 transition-all flex items-center gap-2"
-                >
-                    <Download size={20} className="text-[#D4AF37]" />
-                    Exportar Base (CSV)
-                </button>
+                <div className="flex items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
+                    <button
+                        onClick={() => setShowCampaignModal(true)}
+                        className="bg-gradient-to-r from-red-600 to-orange-600 border border-red-500/50 text-white px-6 py-3 rounded-xl font-bold hover:brightness-110 transition-all flex items-center gap-2 flex-1 md:flex-none justify-center shadow-[0_0_20px_rgba(220,38,38,0.3)]"
+                    >
+                        <Target size={20} />
+                        Nova Campanha
+                    </button>
+                    <button
+                        onClick={handleExportCRM}
+                        className="bg-white/5 border border-white/10 text-white px-4 py-3 rounded-xl font-bold hover:bg-white/10 transition-all flex items-center justify-center flex-1 md:flex-none"
+                        title="Exportar Base (CSV)"
+                    >
+                        <Download size={20} className="text-[#D4AF37]" />
+                    </button>
+                </div>
             </div>
+
+            {/* Campaign Modal */}
+            {showCampaignModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-[#121212] border border-[#D4AF37]/30 p-6 md:p-8 rounded-3xl max-w-md w-full relative shadow-2xl">
+                        <button onClick={() => setShowCampaignModal(false)} className="absolute top-4 right-4 text-gray-500 hover:text-white">
+                            <X size={20} />
+                        </button>
+                        <h3 className="text-2xl font-black mb-1 text-white flex items-center gap-2 mt-2">
+                            <Target className="text-[#D4AF37]" /> Recuperação Ativa
+                        </h3>
+                        <p className="text-sm text-gray-400 mb-6 border-b border-white/10 pb-4">Crie uma lista de transmissão WhatsApp para clientes que já não nos visitam há algum tempo.</p>
+                        
+                        <div className="space-y-4 mb-6">
+                            <div>
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Dias Inativos (Filtro)</label>
+                                <select 
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                                    value={campaignData.daysInactive}
+                                    onChange={(e) => setCampaignData({...campaignData, daysInactive: e.target.value})}
+                                >
+                                    <option value="15" className="bg-gray-800">Mais de 15 Dias</option>
+                                    <option value="30" className="bg-gray-800">Mais de 30 Dias</option>
+                                    <option value="60" className="bg-gray-800">Mais de 60 Dias</option>
+                                    <option value="90" className="bg-gray-800">Mais de 90 Dias (Risco de Perda)</option>
+                                </select>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 block flex items-center gap-1">
+                                        <Ticket size={12}/> Cupão (Existente)
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Ex: VOLTA10"
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[#D4AF37] uppercase font-mono"
+                                        value={campaignData.couponCode}
+                                        onChange={(e) => setCampaignData({...campaignData, couponCode: e.target.value})}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Texto do Desconto</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Ex: 10% / 1500 Kz"
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[#D4AF37]"
+                                        value={campaignData.discountText}
+                                        onChange={(e) => setCampaignData({...campaignData, discountText: e.target.value})}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-xl mb-6">
+                            <p className="text-[10px] text-orange-400 font-bold uppercase tracking-widest flex items-center gap-1 mb-1">
+                                <Send size={12} /> Como Funciona
+                            </p>
+                            <p className="text-xs text-orange-200/80 leading-relaxed">
+                                Ao clicar em Disparar, o sistema vai compilar na sua "área de transferência" (Copy/Paste) a lista de números alvo e o texto de marketing para que possa colar diretamente no WhatsApp.
+                            </p>
+                        </div>
+
+                        <button
+                            onClick={handleRunCampaign}
+                            className="w-full bg-gradient-to-r from-[#D4AF37] to-[#AA8B2C] text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform shadow-lg"
+                        >
+                            <Send size={18} /> Disparar Campanha
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Quick Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

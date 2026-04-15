@@ -48,6 +48,7 @@ export const orderService = {
                 .eq('restaurant_id', restaurantId)
                 .neq('status', 'delivered') // Hide delivered/cancelled from main view
                 .neq('status', 'cancelled')
+                .neq('status', 'waiting_payment')
                 .order('created_at', { ascending: true }); // Oldest first
 
             if (error) throw error;
@@ -55,6 +56,23 @@ export const orderService = {
         } catch (error) {
             console.error('Error fetching orders:', error);
             return { data: [], error };
+        }
+    },
+
+    // [NEW] Get a specific order by ID (For Motoboy Dashboard / Direct links)
+    async getOrderById(orderId) {
+        try {
+            const { data, error } = await supabase
+                .from('orders')
+                .select('*, restaurant:restaurants(name)')
+                .eq('id', orderId)
+                .single();
+
+            if (error) throw error;
+            return { data, error: null };
+        } catch (error) {
+            console.error('Error fetching order by ID:', error);
+            return { data: null, error };
         }
     },
 

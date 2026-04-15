@@ -12,6 +12,7 @@ const PublicMenu = lazy(() => import('./pages/PublicMenu'));
 const UpdatePassword = lazy(() => import('./pages/UpdatePassword'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const Explorar = lazy(() => import('./pages/Explorar'));
+const MotoboyDashboard = lazy(() => import('./pages/MotoboyDashboard'));
 
 // Basic Loading Fallback
 const PageLoader = () => (
@@ -53,6 +54,7 @@ const Router = () => {
                 {/* Public Menu (Catch-all for slugs) */}
                 <Route path="/r/:slug" element={<PublicMenu />} />
                 <Route path="/:slug" element={<PublicMenu />} />
+                <Route path="/delivery/:orderId" element={<MotoboyDashboard />} />
 
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to="/" replace />} />

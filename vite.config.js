@@ -50,6 +50,22 @@ export default defineConfig({
             },
           },
           {
+            // [NEW] Cache para a DB do Supabase (Offline Menu Support)
+            urlPattern: ({ url }) => url.origin.includes('supabase.co') && url.pathname.includes('/rest/v1/'),
+            handler: 'NetworkFirst', // Tenta rede 1º (para dados frescos), se falhar usa a cache (Offline App)
+            options: {
+              cacheName: 'supabase-api-db',
+              networkTimeoutSeconds: 3, // Se a rede angolana demorar > 3s, devolve logo a cache
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 Dias de fallback DB local
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          {
             // Cache para Google Fonts
             urlPattern: ({ url }) => url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com',
             handler: 'CacheFirst',
@@ -74,7 +90,7 @@ export default defineConfig({
     })
   ],
   server: {
-    port: 5176,
+    port: 5174,
     host: true, // Expose to network
     allowedHosts: ['all', '.loca.lt'], // Enable localtunnel external hosts
   },

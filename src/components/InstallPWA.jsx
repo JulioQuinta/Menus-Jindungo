@@ -80,7 +80,7 @@ const InstallPWA = () => {
         setShowButton(false);
     };
 
-    if (isStandalone) return null;
+    if (isStandalone || window.location.pathname.includes('/super-admin')) return null;
 
     if (showInstructions) {
         if (browserInfo.isIOS) {

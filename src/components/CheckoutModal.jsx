@@ -10,6 +10,7 @@ import CheckoutUpsell from './CheckoutUpsell';
 import { couponService } from '../services/couponService';
 import { Ticket, X, CheckCircle2, Award, Star, UtensilsCrossed, Bike, User, Smartphone, MapPin, Banknote, CreditCard, ChevronRight } from 'lucide-react';
 import { loyaltyService } from '../services/loyaltyService';
+import MapPicker from './MapPicker';
 
 const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features = {}, initialTable = '', deliveryConfig = {}, activeStaff = null }) => {
     const { cartItems, getCartTotal, clearCart } = useCart();
@@ -186,7 +187,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
             restaurant_id: restaurantId,
             items: cartItems,
             total: total,
-            status: 'pending',
+            status: paymentMethod === 'multicaixa' ? 'waiting_payment' : 'pending',
             customer_name: customerName || 'Cliente',
             customer_phone: customerPhone,
             table_number: `${baseTableOrAddress} | Pgto: ${paymentInfo}`,
@@ -206,6 +207,29 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                 const { data, error } = await orderService.createOrder(orderData);
                 if (error) throw error;
                 newOrder = data;
+
+                // Fluxo de Pagamento MCX Real
+                if (paymentMethod === 'multicaixa') {
+                    toast.loading("A iniciar pagamento seguro no Multicaixa Express...", { id: 'mcx-toast' });
+                    const { data: mcxData, error: mcxError } = await supabase.functions.invoke('process-payment', {
+                        body: { 
+                            amount: total, 
+                            phone: customerPhone,
+                            order_id: newOrder.id,
+                            restaurant_id: restaurantId
+                        }
+                    });
+
+                    if (mcxError || mcxData?.error) {
+                        toast.error(mcxData?.error || "Falha na comunicação com o provedor de pagamentos.", { id: 'mcx-toast' });
+                        await orderService.updateOrderStatus(newOrder.id, 'cancelled', 'Falha no gateway MCX');
+                        setIsSending(false);
+                        return; // Stop flow
+                    }
+
+                    toast.success("Abra a sua App Multicaixa Express ou consulte o SMS para confirmar o PIN!", { id: 'mcx-toast', duration: 10000 });
+                }
+
                 setCreatedOrder(newOrder);
                 clearCart();
                 
@@ -554,31 +578,21 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                         </select>
                                     </div>
                                 )}
-                                {/* GPS Location Button */}
-                                <button
-                                    type="button"
-                                    onClick={handleGetLocation}
-                                    disabled={isGettingLocation}
-                                    className={`w-full flex items-center justify-center gap-2 py-3 px-4 mb-3 rounded-xl border-2 font-bold text-sm transition-all ${
-                                        gpsCoords 
-                                            ? 'bg-green-50 border-green-400 text-green-700' 
-                                            : 'bg-blue-50 border-blue-200 text-blue-600 hover:border-blue-400'
-                                    } disabled:opacity-60`}
-                                >
-                                    <MapPin size={16} />
-                                    {isGettingLocation ? 'A obter localização...' : gpsCoords ? '✓ Localização Obtida (GPS)' : 'Usar a Minha Localização (GPS)'}
-                                </button>
-
-                                {gpsCoords && (
-                                    <a
-                                        href={`https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-2 text-xs text-blue-500 hover:text-blue-700 mb-3 font-medium"
-                                    >
-                                        <MapPin size={12} /> Ver no Google Maps
-                                    </a>
-                                )}
+                                {/* Interactive Map Picker */}
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>
+                                        Toque no Mapa para assinalar a Morada
+                                    </label>
+                                    <MapPicker 
+                                        onLocationSelected={(pos, addr) => {
+                                            setGpsCoords(pos);
+                                            // Only auto-fill if address is empty or user wants it
+                                            if (addr && (!address || address.trim() === '')) {
+                                                setAddress(addr);
+                                            }
+                                        }}
+                                    />
+                                </div>
 
                                 <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>
                                     Endereço / Bairro

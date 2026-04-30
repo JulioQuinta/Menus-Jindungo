@@ -571,16 +571,6 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                 </div>
             </div>
 
-            {/* Print Container: Only rendered when there is an order to print */}
-            {printingOrder && (
-                <div id="print-container" className="hidden print:block w-[80mm] mx-auto text-black bg-white left-0 top-0 mt-0 pt-0">
-                    <TableBillTemplate
-                        order={printingOrder}
-                        restaurantName={restaurantName || printingOrder?.restaurant?.name || 'Jindungo'}
-                    />
-                </div>
-            )}
-
             {orders.length === 0 && (
                 <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
                     <ChefHat size={48} className="mb-4 opacity-50" />
@@ -643,6 +633,16 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                 </div>
             )}
         </div>
+
+        {/* Print Container: Only rendered when there is an order to print */}
+        {printingOrder && (
+            <div id="print-container" className="hidden print:block w-[80mm] mx-auto text-black bg-white mt-0 pt-0">
+                <TableBillTemplate
+                    order={printingOrder}
+                    restaurantName={restaurantName || printingOrder?.restaurant?.name || 'Jindungo'}
+                />
+            </div>
+        )}
         </>
     );
 };

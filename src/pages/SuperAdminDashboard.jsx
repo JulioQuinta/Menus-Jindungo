@@ -756,6 +756,7 @@ const SuperAdminDashboard = () => {
                     )}
 
                     {/* RESTAURANTS TAB */}
+                    {activeTab === 'restaurants' && (
                         <div>
                             {/* Search Bar */}
                             <div className="p-4 bg-black/40 border-b border-white/5">

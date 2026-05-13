@@ -4,9 +4,9 @@ import { GridLayout, ListLayout, MinimalLayout, GridLayoutSkeleton, ListLayoutSk
 import StickyCategoryNav from './StickyCategoryNav';
 import HighlightsCarousel from './HighlightsCarousel'; // Assuming these exist or will be uncommented
 import { getContrastColor, darkenColor } from '../utils/colorUtils';
+import { Search, X, Utensils } from 'lucide-react';
 
-import { Search, X, Globe, Utensils } from 'lucide-react';
-// import SearchBar from './SearchBar';
+import { getTranslation, UI_TRANSLATIONS } from '../utils/i18n';
 
 const FlagSelector = ({ selected, onSelect }) => {
     const [isOpen, setIsOpen] = React.useState(false);
@@ -62,7 +62,7 @@ const FlagSelector = ({ selected, onSelect }) => {
     );
 };
 
-const CategoryCarousel = ({ categories, activeCategory, onSelect, primaryColor }) => {
+const CategoryCarousel = ({ categories, activeCategory, onSelect, primaryColor, selectedLanguage }) => {
     // Auto-scroll the active category into view
     const scrollRef = React.useRef(null);
     
@@ -77,6 +77,12 @@ const CategoryCarousel = ({ categories, activeCategory, onSelect, primaryColor }
             }
         }
     }, [activeCategory]);
+
+    const translateCat = (cat) => {
+        const label = cat.label || cat.name;
+        const dict = UI_TRANSLATIONS[selectedLanguage]?.standardCategories || {};
+        return dict[label] || label;
+    };
 
     return (
         <div className="relative group">
@@ -114,7 +120,7 @@ const CategoryCarousel = ({ categories, activeCategory, onSelect, primaryColor }
                             })()}
                         </div>
                         <span className={`text-[10px] font-bold whitespace-nowrap leading-tight max-w-[80px] truncate ${activeCategory === cat.id ? 'text-[#D4AF37]' : 'text-gray-400'}`}>
-                            {cat.label || cat.name}
+                            {translateCat(cat)}
                         </span>
                     </button>
                 ))}
@@ -123,7 +129,7 @@ const CategoryCarousel = ({ categories, activeCategory, onSelect, primaryColor }
     );
 };
 
-const CategorySection = ({ cat, Layout, commonProps, fontFamily }) => {
+const CategorySection = ({ cat, Layout, commonProps, fontFamily, onItemAdded, selectedLanguage }) => {
     const subcategories = [...new Set(cat.items.map(i => i.subcategory).filter(Boolean))];
     const [activeSub, setActiveSub] = React.useState('Todos');
 
@@ -131,13 +137,18 @@ const CategorySection = ({ cat, Layout, commonProps, fontFamily }) => {
         ? cat.items
         : cat.items.filter(i => i.subcategory === activeSub);
 
+    const translateCat = (label) => {
+        const dict = UI_TRANSLATIONS[selectedLanguage]?.standardCategories || {};
+        return dict[label] || label;
+    };
+
     if (filteredItems.length === 0 && activeSub !== 'Todos') return null;
 
     return (
         <div id={`category-${cat.id}`} className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: commonProps.primaryColor }}>
                 <span className="w-1 h-6 rounded-full bg-current block"></span>
-                {cat.label}
+                {translateCat(cat.label)}
             </h2>
 
             {subcategories.length > 0 && (
@@ -150,7 +161,7 @@ const CategorySection = ({ cat, Layout, commonProps, fontFamily }) => {
                             }`}
                         style={{ backgroundColor: activeSub === 'Todos' ? commonProps.primaryColor : undefined }}
                     >
-                        Todos
+                        {getTranslation(selectedLanguage, 'all')}
                     </button>
                     {subcategories.map(sub => (
                         <button
@@ -168,16 +179,13 @@ const CategorySection = ({ cat, Layout, commonProps, fontFamily }) => {
                 </div>
             )}
 
-            <Layout items={filteredItems} {...commonProps} fontFamily={fontFamily} />
+            <Layout items={filteredItems} {...commonProps} fontFamily={fontFamily} onItemAdded={onItemAdded} />
         </div>
     );
 };
 
-const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, restaurantId, features = {} }) => {
+const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, restaurantId, features = {}, onItemAdded, selectedLanguage = 'PT', onLanguageChange }) => {
     const { layoutMode, primaryColor, fontFamily, backgroundImage, darkMode, backgroundColor } = config;
-    const [selectedLanguage, setSelectedLanguage] = React.useState(() => {
-        return localStorage.getItem('jindungo_lang') || 'PT';
-    });
     const [activeCategory, setActiveCategory] = React.useState(null);
     const [searchTerm, setSearchTerm] = React.useState('');
     const [showSearch, setShowSearch] = React.useState(false);
@@ -189,25 +197,13 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
         }
     }, [categories, activeCategory]);
 
-    // Save language preference
-    React.useEffect(() => {
-        localStorage.setItem('jindungo_lang', selectedLanguage);
-    }, [selectedLanguage]);
-
     const effectivePrimaryColor = primaryColor || '#D4AF37';
     // If background is not set, use a very light tint of the primary color for a themed look
     const defaultLightBg = darkenColor(effectivePrimaryColor, -92).slice(0, 7);
     const effectiveBgColor = backgroundColor || (darkMode ? '#121212' : defaultLightBg);
     const effectiveTextColor = backgroundColor ? getContrastColor(effectiveBgColor) : (darkMode ? '#ffffff' : '#1a1a1a');
 
-    const translations = {
-        PT: { welcome: 'Bem-vindo ao', searchPlaceholder: 'Pesquisar no menu...', noResults: 'Nenhum resultado para', waitMsg: 'O garçom está a caminho!', tech: 'Tecnologia' },
-        EN: { welcome: 'Welcome to', searchPlaceholder: 'Search menu...', noResults: 'No results for', waitMsg: 'The waiter is coming!', tech: 'Technology' },
-        FR: { welcome: 'Bienvenue à', searchPlaceholder: 'Chercher au menu...', noResults: 'Aucun résultat para', waitMsg: 'Le serveur arrive!', tech: 'Technologie' },
-        ES: { welcome: 'Bienvenido a', searchPlaceholder: 'Buscar en el menú...', noResults: 'No hay resultados para', waitMsg: '¡El camarero viene!', tech: 'Tecnología' },
-        AR: { welcome: 'مرحباً بك في', searchPlaceholder: 'البحث في القائمة...', noResults: 'لا توجد نتائج لـ', waitMsg: 'النادل قادم!', tech: 'تكنولوجيا' },
-        ZH: { welcome: '欢迎来到', searchPlaceholder: '搜索菜单...', noResults: '没有搜索结果', waitMsg: '服务员快来了！', tech: '技术' }
-    };
+    const t = (key) => getTranslation(selectedLanguage, key);
 
     const renderLayout = () => {
         if (isLoading) {
@@ -228,7 +224,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
                         <p className="text-sm opacity-60 leading-relaxed font-medium" style={{ color: effectiveTextColor }}>Estamos a organizar as melhores opções para si. <br /> Por favor, regresse em breve!</p>
                     </div>
                     <div className="mt-4 px-4 py-1.5 bg-black/20 rounded-full border border-white/5 text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">
-                        Jindungo Menus Digital
+                        Menus Jindungo Digital
                     </div>
                 </div>
             );
@@ -252,7 +248,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
                 <div className="text-center py-20 animate-fade-in">
                     <div className="text-4xl mb-4 grayscale opacity-50">🔍</div>
                     <p className="text-gray-500 font-medium">
-                        {translations[selectedLanguage].noResults} "{searchTerm}"
+                        {t('noResults')} "{searchTerm}"
                     </p>
                 </div>
             );
@@ -269,9 +265,10 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
             ? targetCategories 
             : categories;
 
-        // Sempre usar o formato de 'list' (Vertical) como padrão geral para garantir o scroll up and down fácil
+        const Layout = layoutMode === 'grid' ? GridLayout : (layoutMode === 'minimal' ? MinimalLayout : ListLayout);
+
         return displayCategories.map(cat => (
-            <CategorySection key={cat.id} cat={cat} Layout={ListLayout} commonProps={commonProps} />
+            <CategorySection key={cat.id} cat={cat} Layout={Layout} commonProps={commonProps} onItemAdded={onItemAdded} selectedLanguage={selectedLanguage} />
         ));
     };
 
@@ -338,15 +335,14 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
                     </div>
                 </div>
 
-                {/* Language Selector - Top Right Absolute */}
-                <FlagSelector selected={selectedLanguage} onSelect={setSelectedLanguage} />
+                {/* Language Flag Selector (Absolute Top Right) */}
+                <FlagSelector selected={selectedLanguage} onSelect={onLanguageChange} />
 
 
 
-                {/* Welcome Text */}
                 <div className="text-center relative z-10 w-full px-4">
-                    <p className={`text-sm font-black tracking-widest uppercase mb-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] ${darkMode ? 'text-white' : 'text-white/95'}`}>
-                        {translations[selectedLanguage]?.welcome || translations['PT'].welcome} {config.restaurantName || 'Jindungo'}
+                    <p className={`text-[10px] font-display mb-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] ${darkMode ? 'text-white' : 'text-white/95'}`}>
+                        {t('welcome')} {config.restaurantName || 'Jindungo'}
                     </p>
                 </div>
 
@@ -369,7 +365,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
                                 <input
                                     autoFocus
                                     type="text"
-                                    placeholder={translations[selectedLanguage].searchPlaceholder}
+                                    placeholder={t('searchPlaceholder')}
                                     className={`w-full rounded-2xl py-3.5 pl-12 pr-12 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] transition-all text-sm font-medium ${config.headerBgUrl ? 'bg-black/80 border-white/40 shadow-2xl' : 'bg-white/10 border-white/20'}`}
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -404,6 +400,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
                         activeCategory={activeCategory || categories[0]?.id}
                         onSelect={handleCategorySelect}
                         primaryColor={effectivePrimaryColor}
+                        selectedLanguage={selectedLanguage}
                     />
                 </div>
             )}
@@ -415,10 +412,10 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
             {/* Branding Watermark */}
             {!features.canHideBranding && (
                 <div className="pb-8 pt-4 text-center opacity-50 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-[10px] uppercase tracking-widest font-bold mb-1">Tecnologia</span>
+                    <span className="text-[10px] uppercase tracking-widest font-bold mb-1">{t('tech')}</span>
                     <div className="flex items-center gap-1.5 grayscale">
                         <img src="/jindungo_logo_v3.png" className="w-12 h-12 object-contain" alt="Logo" />
-                        <span className="font-serif font-bold text-sm tracking-tight">JindungoMenus</span>
+                        <span className="font-serif font-bold text-sm tracking-tight">Menus Jindungo</span>
                     </div>
                 </div>
             )}

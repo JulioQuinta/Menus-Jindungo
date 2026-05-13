@@ -63,6 +63,22 @@ const SuperAdminDashboard = () => {
         { id: 'manual', label: 'Ajuste Manual (±)', days: 0, name: 'Ajuste Manual' }
     ];
 
+    // [NEW] Premium Tooltip Component (Simplified & Isolated)
+    const Tooltip = ({ text, children }) => {
+        if (!text) return children;
+        const title = text.includes(':') ? text.split(':')[0] : text;
+
+        return (
+            <div className="relative group/tip inline-flex">
+                {children}
+                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/90 backdrop-blur-md text-white rounded-xl border border-white/10 opacity-0 invisible group-hover/tip:opacity-100 group-hover/tip:visible transition-all duration-200 whitespace-nowrap z-[100] shadow-xl pointer-events-none scale-95 group-hover/tip:scale-100 origin-bottom">
+                    <span className="text-[#D4AF37] text-[10px] font-black uppercase tracking-widest">{title}</span>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-black/90"></div>
+                </div>
+            </div>
+        );
+    };
+
     useEffect(() => {
         fetchData();
     }, []);
@@ -109,6 +125,9 @@ const SuperAdminDashboard = () => {
             });
 
         } catch (error) {
+            // Ignore AbortError if the component is unmounting or similar
+            if (error?.name === 'AbortError' || error?.message?.includes('Abort')) return;
+
             console.error('FINAL Error fetching data in SuperAdminDashboard:', error);
             if (error && error.message) {
                 toast.error(`Erro: ${error.message}`);
@@ -254,19 +273,24 @@ const SuperAdminDashboard = () => {
 
     // --- SaaS: Populate Demo Data ---
     const handlePopulateDemo = async (restId, restName) => {
-        if (!window.confirm(`ATENÇÃO: Deseja preencher o restaurante "${restName}" com 10 categorias e dezenas de pratos de demonstração? Isso foi feito para ajudar novos clientes a entenderem a plataforma.`)) return;
-
-        const loadingToast = toast.loading("A gerar pratos de demonstração, por favor aguarde...");
-
+        if (!window.confirm(`Deseja carregar o MENU DE TESTE (10 categorias e 25 pratos) para o restaurante "${restName}"?`)) return;
+        
+        const loadingToast = toast.loading("Gerando menu completo de demonstração...");
         try {
             const result = await populateDemoData(restId);
             if (result.success) {
                 toast.success(result.message, { id: loadingToast });
+                fetchData();
             } else {
-                toast.error(result.message, { id: loadingToast });
+                // Better handling of AbortError or connection issues
+                if (result.message?.includes('interrompida') || result.message?.includes('Conexão')) {
+                    toast.error(result.message, { id: loadingToast, duration: 6000 });
+                } else {
+                    toast.error(result.message, { id: loadingToast });
+                }
             }
         } catch (error) {
-            console.error(error);
+            console.error("Error populating demo:", error);
             toast.error("Ocorreu um erro no preenchimento de teste.", { id: loadingToast });
         }
     };
@@ -290,7 +314,6 @@ const SuperAdminDashboard = () => {
 
     const toggleUserProfileBan = async (userId, currentStatus) => {
         const newStatus = currentStatus === 'banned' ? 'active' : 'banned';
-        if (!window.confirm(`Tem certeza que deseja ${newStatus === 'banned' ? 'BANIR' : 'ATIVAR'} este usuário?`)) return;
         try {
             const { error } = await supabase
                 .from('profiles')
@@ -304,10 +327,58 @@ const SuperAdminDashboard = () => {
         }
     };
 
+    const approveUser = async (userId, userEmail, userPhone, userName) => {
+        // Abrir a aba de forma síncrona antes do await para evitar o bloqueio de popups do navegador
+        let waWindow = null;
+        if (userPhone) {
+            waWindow = window.open('about:blank', '_blank');
+        }
+
+        try {
+            const { error } = await supabase.rpc('approve_client', { client_id: userId });
+            
+            if (error) {
+                if (waWindow) waWindow.close();
+                console.error("RPC Error:", error);
+                throw error;
+            }
+
+            setUsers(users.map(u => u.id === userId ? { ...u, status: 'active' } : u));
+            toast.success("Cliente aprovado com sucesso! Já pode fazer login.");
+            
+            const firstName = userName ? userName.split(' ')[0] : 'Cliente';
+            const message = `Olá ${firstName}! A sua conta Jindungo foi ativada com sucesso. Já pode aceder ao seu Painel de Gestão: https://jindungo.ao/login`;
+
+            if (userPhone && waWindow) {
+                const cleanPhone = userPhone.replace(/[^0-9]/g, '');
+                const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+                waWindow.location.href = waUrl;
+                toast("WhatsApp aberto numa nova aba.", { icon: '💬' });
+            } else if (userEmail) {
+                if (waWindow) waWindow.close(); // just in case
+                const mailtoUrl = `mailto:${userEmail}?subject=${encodeURIComponent("Conta Ativada - Jindungo")}&body=${encodeURIComponent(message)}`;
+                // Create a temporary link to open mailto to avoid popup blockers and empty tabs
+                const link = document.createElement('a');
+                link.href = mailtoUrl;
+                link.click();
+                toast("Cliente de Email aberto.", { icon: '📧' });
+            }
+            
+            // Optionally update active restaurant stats
+            setStats(prev => ({
+                ...prev,
+                activeRestaurants: prev.activeRestaurants + 1
+            }));
+
+        } catch (error) {
+            console.error("ERRO AO APROVAR:", error);
+            toast.error(`Erro: ${error.message || error.details || "Desconhecido"}`);
+        }
+    };
+
     // --- Restaurant Management ---
     const toggleRestaurantStatus = async (restId, currentStatus) => {
         const newStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
-        if (!window.confirm(`Tem certeza que deseja ${newStatus === 'suspended' ? 'SUSPENDER' : 'REATIVAR'} este restaurante? O menu público ${newStatus === 'suspended' ? 'ficará offline' : 'voltará ao ar'}.`)) return;
 
         try {
             const { error } = await supabase
@@ -378,7 +449,6 @@ const SuperAdminDashboard = () => {
     };
 
     const deleteNotification = async (id) => {
-        if (!window.confirm("Deseja eliminar este aviso definitivamente do histórico?")) return;
         try {
             const { error } = await supabase
                 .from('system_notifications')
@@ -686,7 +756,6 @@ const SuperAdminDashboard = () => {
                     )}
 
                     {/* RESTAURANTS TAB */}
-                    {activeTab === 'restaurants' && (
                         <div>
                             {/* Search Bar */}
                             <div className="p-4 bg-black/40 border-b border-white/5">
@@ -753,28 +822,37 @@ const SuperAdminDashboard = () => {
                                                             </div>
                                                         </td>
                                                         <td className="px-6 py-5 whitespace-nowrap text-center">
-                                                            <button
-                                                                onClick={() => toggleRestaurantStatus(rest.id, rest.status)}
-                                                                className={`px-3 py-1 inline-flex items-center gap-2 text-xs font-bold rounded-lg border transition-all ${rest.status === 'active'
-                                                                    ? 'bg-green-900/20 text-green-400 border-green-900/50 hover:bg-red-900/20 hover:border-red-900/50 hover:text-red-400'
-                                                                    : 'bg-red-900/20 text-red-500 border-red-900/50 hover:bg-green-900/20 hover:border-green-900/50 hover:text-green-400'
-                                                                    }`}
-                                                                title="Clique para alternar On/Off"
-                                                            >
-                                                                <span className={`w-2 h-2 rounded-full ${rest.status === 'active' ? 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]' : 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]'}`}></span>
-                                                                {rest.status === 'active' ? 'Ativo' : 'Bloqueado'}
-                                                            </button>
+                                                            <Tooltip text="Visibilidade do Menu">
+                                                                <button
+                                                                    onClick={() => toggleRestaurantStatus(rest.id, rest.status)}
+                                                                    className={`px-3 py-1 inline-flex items-center gap-2 text-xs font-bold rounded-lg border transition-all ${rest.status === 'active'
+                                                                        ? 'bg-green-900/20 text-green-400 border-green-900/50 hover:bg-red-900/20 hover:border-red-900/50 hover:text-red-400'
+                                                                        : 'bg-red-900/20 text-red-500 border-red-900/50 hover:bg-green-900/20 hover:border-green-900/50 hover:text-green-400'
+                                                                        }`}
+                                                                >
+                                                                    <span className={`w-2 h-2 rounded-full ${rest.status === 'active' ? 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]' : 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]'}`}></span>
+                                                                    {rest.status === 'active' ? 'Ativo' : 'Bloqueado'}
+                                                                </button>
+                                                            </Tooltip>
                                                         </td>
                                                         <td className="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
-                                                            <div className="flex gap-2 justify-end transition-opacity duration-300">
-                                                                <button onClick={() => setRenewModal({ isOpen: true, restaurant: rest, selectedPlan: PLANS[1], customDays: 0 })} className="w-8 h-8 rounded-lg bg-green-900/20 text-green-400 border border-green-900/50 hover:bg-green-500 hover:text-white flex items-center justify-center transition-all shadow-[0_4px_10px_rgba(0,0,0,0.3)] hover:scale-110">💳</button>
-                                                                <button onClick={() => handlePopulateDemo(rest.id, rest.name)} className="w-8 h-8 rounded-lg bg-blue-900/20 text-blue-400 border border-blue-900/50 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-all shadow-[0_4px_10px_rgba(0,0,0,0.3)] hover:scale-110">🪄</button>
-                                                                <button onClick={() => handleMasquerade(rest.id)} className="w-8 h-8 rounded-lg bg-white/5 text-white border border-white/10 hover:bg-white hover:text-black flex items-center justify-center transition-all shadow-[0_4px_10px_rgba(0,0,0,0.3)] hover:scale-110">🕵️‍♂️</button>
-                                                                <button onClick={() => setDeleteModal({ isOpen: true, restaurant: rest, confirmName: '' })} className="w-8 h-8 rounded-lg bg-red-900/20 text-red-400 border border-red-900/50 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all shadow-[0_4px_10px_rgba(0,0,0,0.3)] hover:scale-110">🗑️</button>
+                                                            <div className="flex gap-2 justify-end">
+                                                                <Tooltip text="Faturação e Plano">
+                                                                    <button onClick={() => setRenewModal({ isOpen: true, restaurant: rest, selectedPlan: PLANS[1], customDays: 0 })} className="w-8 h-8 rounded-lg bg-green-900/20 text-green-400 border border-green-900/50 hover:bg-green-500 hover:text-white flex items-center justify-center transition-all shadow-sm hover:scale-110">💳</button>
+                                                                </Tooltip>
+                                                                <Tooltip text="Gerar Dados Demo">
+                                                                    <button onClick={() => handlePopulateDemo(rest.id, rest.name)} className="w-8 h-8 rounded-lg bg-blue-900/20 text-blue-400 border border-blue-900/50 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-all shadow-sm hover:scale-110">🪄</button>
+                                                                </Tooltip>
+                                                                <Tooltip text="Entrar como Dono">
+                                                                    <button onClick={() => handleMasquerade(rest.id)} className="w-8 h-8 rounded-lg bg-white/5 text-white border border-white/10 hover:bg-white hover:text-black flex items-center justify-center transition-all shadow-sm hover:scale-110">🕵️‍♂️</button>
+                                                                </Tooltip>
+                                                                <Tooltip text="Eliminar Restaurante">
+                                                                    <button onClick={() => setDeleteModal({ isOpen: true, restaurant: rest, confirmName: '' })} className="w-8 h-8 rounded-lg bg-red-900/20 text-red-400 border border-red-900/50 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all shadow-sm hover:scale-110">🗑️</button>
+                                                                </Tooltip>
                                                             </div>
                                                         </td>
                                                     </tr>
-                                                )
+                                                );
                                             })}
                                         </tbody>
                                     </table>
@@ -824,10 +902,10 @@ const SuperAdminDashboard = () => {
                                                     <button onClick={() => setRenewModal({ isOpen: true, restaurant: rest, selectedPlan: PLANS[1], customDays: 0 })} className="py-2.5 rounded-xl bg-green-900/20 text-green-400 border border-green-900/50 flex flex-col items-center justify-center gap-1 transition-all text-[9px] font-bold"><span>💳</span><span>RENOVAR</span></button>
                                                     <button onClick={() => handlePopulateDemo(rest.id, rest.name)} className="py-2.5 rounded-xl bg-blue-900/20 text-blue-400 border border-blue-900/50 flex flex-col items-center justify-center gap-1 transition-all text-[9px] font-bold"><span>🪄</span><span>DEMO</span></button>
                                                     <button onClick={() => handleMasquerade(rest.id)} className="py-2.5 rounded-xl bg-white/5 text-white border border-white/10 flex flex-col items-center justify-center gap-1 transition-all text-[9px] font-bold"><span>🕵️‍♂️</span><span>ENTRAR</span></button>
-                                                    <button onClick={() => setDeleteModal({ isOpen: true, restaurant: rest, confirmName: '' })} className="py-2.5 rounded-xl bg-red-900/20 text-red-500 border border-red-900/50 flex flex-col items-center justify-center gap-1 transition-all text-[9px] font-bold"><span>🗑️</span><span>APAGAR</span></button>
+                                                    <button onClick={() => setDeleteModal({ isOpen: true, restaurant: rest, confirmName: '' })} className="py-2.5 rounded-xl bg-red-900/20 text-red-400 border border-red-900/50 flex flex-col items-center justify-center gap-1 transition-all text-[9px] font-bold"><span>🗑️</span><span>APAGAR</span></button>
                                                 </div>
                                             </div>
-                                        )
+                                        );
                                     })}
                                 </div>
 
@@ -893,7 +971,7 @@ const SuperAdminDashboard = () => {
                                     <table className="min-w-full divide-y divide-white/5">
                                         <thead className="bg-black/40">
                                             <tr>
-                                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Email</th>
+                                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Cliente / Contacto</th>
                                                 <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Nível de Acesso (Role)</th>
                                                 <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Status / Bloqueio</th>
                                                 <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Controlos</th>
@@ -904,10 +982,14 @@ const SuperAdminDashboard = () => {
                                                 <tr key={user.id} className="hover:bg-white/5 transition duration-300 group">
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-gray-400 group-hover:bg-white/10 group-hover:text-white transition-all">
-                                                                {user.email?.charAt(0).toUpperCase() || 'U'}
+                                                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 group-hover:bg-white/10 group-hover:text-white transition-all">
+                                                                {user.full_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
                                                             </div>
-                                                            <div className="text-sm font-medium text-white group-hover:text-[#D4AF37] transition-colors">{user.email}</div>
+                                                            <div>
+                                                                <div className="text-sm font-bold text-white group-hover:text-[#D4AF37] transition-colors">{user.full_name || 'Sem Nome'}</div>
+                                                                <div className="text-[10px] text-gray-400 mt-0.5">{user.email}</div>
+                                                                <div className="text-[10px] text-gray-500 mt-0.5 font-mono">{user.phone || 'Sem Telf'}</div>
+                                                            </div>
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -919,29 +1001,52 @@ const SuperAdminDashboard = () => {
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                        <span className={`px-3 py-1 inline-flex items-center gap-2 text-xs leading-5 font-bold rounded-lg border ${user.status === 'banned' ? 'bg-red-900/20 text-red-500 border-red-900/50' : 'bg-green-900/20 text-green-400 border-green-900/50'
+                                                        <span className={`px-3 py-1 inline-flex items-center gap-2 text-xs leading-5 font-bold rounded-lg border ${
+                                                            user.status === 'banned' ? 'bg-red-900/20 text-red-500 border-red-900/50' : 
+                                                            user.status === 'pending' ? 'bg-orange-900/20 text-orange-400 border-orange-900/50 animate-pulse' :
+                                                            'bg-green-900/20 text-green-400 border-green-900/50'
                                                             }`}>
-                                                            <span className={`w-2 h-2 rounded-full ${user.status === 'banned' ? 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]' : 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]'}`}></span>
-                                                            {user.status === 'banned' ? 'Banned' : 'Ativo'}
+                                                            <span className={`w-2 h-2 rounded-full ${
+                                                                user.status === 'banned' ? 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]' : 
+                                                                user.status === 'pending' ? 'bg-orange-500 shadow-[0_0_5px_rgba(249,115,22,0.5)]' :
+                                                                'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]'
+                                                                }`}></span>
+                                                            {user.status === 'banned' ? 'Banned' : user.status === 'pending' ? 'Pendente' : 'Ativo'}
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                         <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                            <button
-                                                                onClick={() => setEditingUser(user)}
-                                                                className="px-3 py-1.5 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all shadow-sm hover:scale-105"
-                                                            >
-                                                                Permissões
-                                                            </button>
-                                                            <button
-                                                                onClick={() => toggleUserProfileBan(user.id, user.status)}
-                                                                className={`px-3 py-1.5 rounded-lg border font-bold text-xs transition-all shadow-sm hover:scale-105 ${user.status === 'banned'
-                                                                    ? 'bg-green-900/20 text-green-400 border-green-900/50 hover:bg-green-500 hover:text-white'
-                                                                    : 'bg-red-900/20 text-red-400 border-red-900/50 hover:bg-red-500 hover:text-white'
-                                                                    }`}
-                                                            >
-                                                                {user.status === 'banned' ? 'Desbloquear' : 'Banir'}
-                                                            </button>
+                                                            {user.status === 'pending' && (
+                                                                <Tooltip text="Aprovar Registo">
+                                                                    <button
+                                                                        onClick={() => approveUser(user.id, user.email)}
+                                                                        className="px-4 py-1.5 rounded-lg bg-orange-600 text-white border border-orange-500 hover:bg-orange-500 font-bold text-xs transition-all shadow-sm hover:scale-105 animate-pulse hover:animate-none"
+                                                                    >
+                                                                        ✅ Aprovar Cliente
+                                                                    </button>
+                                                                </Tooltip>
+                                                            )}
+                                                            <Tooltip text="Nível de Acesso">
+                                                                <button
+                                                                    onClick={() => setEditingUser(user)}
+                                                                    className="px-3 py-1.5 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all shadow-sm hover:scale-105"
+                                                                >
+                                                                    Permissões
+                                                                </button>
+                                                            </Tooltip>
+                                                            {user.status !== 'pending' && (
+                                                                <Tooltip text="Banir / Ativar">
+                                                                    <button
+                                                                        onClick={() => toggleUserProfileBan(user.id, user.status)}
+                                                                        className={`px-3 py-1.5 rounded-lg border font-bold text-xs transition-all shadow-sm hover:scale-105 ${user.status === 'banned'
+                                                                            ? 'bg-green-900/20 text-green-400 border-green-900/50 hover:bg-green-500 hover:text-white'
+                                                                            : 'bg-red-900/20 text-red-400 border-red-900/50 hover:bg-red-500 hover:text-white'
+                                                                            }`}
+                                                                    >
+                                                                        {user.status === 'banned' ? 'Desbloquear' : 'Banir'}
+                                                                    </button>
+                                                                </Tooltip>
+                                                            )}
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -957,34 +1062,51 @@ const SuperAdminDashboard = () => {
                                             <div className="flex justify-between items-start">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 border border-white/10 font-bold">
-                                                        {user.email?.charAt(0).toUpperCase() || 'U'}
+                                                        {user.full_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
                                                     </div>
                                                     <div className="space-y-0.5">
-                                                        <div className="text-sm font-bold text-white truncate max-w-[180px]">{user.email}</div>
-                                                        <div className="flex gap-2">
+                                                        <div className="text-sm font-bold text-white truncate max-w-[180px]">{user.full_name || 'Sem Nome'}</div>
+                                                        <div className="text-[10px] text-gray-400 truncate max-w-[180px]">{user.email}</div>
+                                                        <div className="text-[10px] text-gray-500 font-mono">{user.phone || 'Sem Telf'}</div>
+                                                        <div className="flex gap-2 mt-1">
                                                             <span className={`px-1.5 py-0.5 text-[9px] font-black rounded border uppercase tracking-widest ${user.role === 'super_admin' ? 'bg-purple-900/20 text-purple-400 border-purple-900/50' : 'bg-blue-900/20 text-blue-400 border-blue-900/50'}`}>
                                                                 {user.role}
                                                             </span>
-                                                            <span className={`px-1.5 py-0.5 text-[9px] font-black rounded border uppercase tracking-widest ${user.status === 'banned' ? 'bg-red-900/20 text-red-400 border-red-900/50' : 'bg-green-900/20 text-green-400 border-green-900/50'}`}>
-                                                                {user.status === 'banned' ? 'BAN' : 'OK'}
+                                                            <span className={`px-1.5 py-0.5 text-[9px] font-black rounded border uppercase tracking-widest ${
+                                                                user.status === 'banned' ? 'bg-red-900/20 text-red-400 border-red-900/50' : 
+                                                                user.status === 'pending' ? 'bg-orange-900/20 text-orange-400 border-orange-900/50 animate-pulse' :
+                                                                'bg-green-900/20 text-green-400 border-green-900/50'
+                                                                }`}>
+                                                                {user.status === 'banned' ? 'BAN' : user.status === 'pending' ? 'PENDENTE' : 'OK'}
                                                             </span>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div className="grid grid-cols-2 gap-3">
-                                                <button 
-                                                    onClick={() => setEditingUser(user)} 
-                                                    className="py-2.5 rounded-xl bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 font-bold text-[10px] uppercase tracking-widest active:scale-95 transition-all shadow-sm"
-                                                >
-                                                    Permissões
-                                                </button>
-                                                <button 
-                                                    onClick={() => toggleUserProfileBan(user.id, user.status)} 
-                                                    className={`py-2.5 rounded-xl border font-bold text-[10px] uppercase tracking-widest active:scale-95 transition-all shadow-sm ${user.status === 'banned' ? 'bg-green-900/20 text-green-400 border-green-900/50' : 'bg-red-900/20 text-red-400 border-red-900/50'}`}
-                                                >
-                                                    {user.status === 'banned' ? 'Ativar' : 'Banir'}
-                                                </button>
+                                                {user.status === 'pending' ? (
+                                                    <button 
+                                                        onClick={() => approveUser(user.id, user.email, user.phone, user.full_name)} 
+                                                        className="col-span-2 py-2.5 rounded-xl bg-orange-600 text-white border border-orange-500 font-bold text-[10px] uppercase tracking-widest active:scale-95 transition-all shadow-[0_0_15px_rgba(234,88,12,0.4)] animate-pulse"
+                                                    >
+                                                        ✅ Aprovar Cliente
+                                                    </button>
+                                                ) : (
+                                                    <>
+                                                        <button 
+                                                            onClick={() => setEditingUser(user)} 
+                                                            className="py-2.5 rounded-xl bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 font-bold text-[10px] uppercase tracking-widest active:scale-95 transition-all shadow-sm"
+                                                        >
+                                                            Permissões
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => toggleUserProfileBan(user.id, user.status)} 
+                                                            className={`py-2.5 rounded-xl border font-bold text-[10px] uppercase tracking-widest active:scale-95 transition-all shadow-sm ${user.status === 'banned' ? 'bg-green-900/20 text-green-400 border-green-900/50' : 'bg-red-900/20 text-red-400 border-red-900/50'}`}
+                                                        >
+                                                            {user.status === 'banned' ? 'Ativar' : 'Banir'}
+                                                        </button>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                     ))}

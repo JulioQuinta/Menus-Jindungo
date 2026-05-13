@@ -1,13 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { orderService } from '../services/orderService';
-import { Bike, Navigation, MapPin, PackageCheck, Phone, AlertTriangle, CheckCircle, Banknote } from 'lucide-react';
+import { Bike, Navigation, MapPin, PackageCheck, Phone, AlertTriangle, CheckCircle, Banknote, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function MotoboyDashboard() {
     const { orderId } = useParams();
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    const loadOrder = async () => {
+        const { data, error } = await orderService.getOrderById(orderId);
+        if (data) setOrder(data);
+        if (error) console.error(error);
+        setLoading(false);
+    };
 
     useEffect(() => {
         if (orderId) loadOrder();
@@ -16,13 +23,6 @@ export default function MotoboyDashboard() {
         const timer = setInterval(loadOrder, 30000);
         return () => clearInterval(timer);
     }, [orderId]);
-
-    const loadOrder = async () => {
-        const { data, error } = await orderService.getOrderById(orderId);
-        if (data) setOrder(data);
-        if (error) console.error(error);
-        setLoading(false);
-    };
 
     const updateStatus = async (status, msg) => {
         const loadingId = toast.loading('A atualizar...');
@@ -162,5 +162,4 @@ export default function MotoboyDashboard() {
     );
 }
 
-// User Icon Stub because the import might lack User for a second
-function User({ size, className }) { return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> }
+

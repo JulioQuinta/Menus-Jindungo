@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { staffService } from '../services/staffService';
-import { Plus, Search, User, Trash2, Key, Users, Mail, ShieldCheck } from 'lucide-react';
+import { Plus, Search, User, Trash2, Key, Users, Mail, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const StaffManager = ({ restaurantId }) => {
@@ -8,6 +8,7 @@ const StaffManager = ({ restaurantId }) => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
+    const [showPin, setShowPin] = useState(false);
 
     // Form State
     const [newStaff, setNewStaff] = useState({
@@ -64,6 +65,7 @@ const StaffManager = ({ restaurantId }) => {
             fetchStaff();
             setShowAddModal(false);
             setNewStaff({ name: '', role: 'waiter', pin_code: '', email: '' });
+            setShowPin(false);
 
         } catch (error) {
             console.error("Erro ao adicionar staff:", error);
@@ -293,17 +295,26 @@ const StaffManager = ({ restaurantId }) => {
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
+                                <div className="relative">
                                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 text-white">PIN (4 DÍGITOS)</label>
-                                    <input
-                                        type="password"
-                                        required
-                                        maxLength="6"
-                                        value={newStaff.pin_code}
-                                        onChange={e => setNewStaff({ ...newStaff, pin_code: e.target.value.replace(/\D/g, '') })}
-                                        placeholder="1234"
-                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white font-mono tracking-widest focus:border-[#D4AF37] outline-none"
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            type={showPin ? "text" : "password"}
+                                            required
+                                            maxLength="6"
+                                            value={newStaff.pin_code}
+                                            onChange={e => setNewStaff({ ...newStaff, pin_code: e.target.value.replace(/\D/g, '') })}
+                                            placeholder="1234"
+                                            className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white font-mono tracking-widest focus:border-[#D4AF37] outline-none pr-12"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPin(!showPin)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                                        >
+                                            {showPin ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 text-white">Função</label>

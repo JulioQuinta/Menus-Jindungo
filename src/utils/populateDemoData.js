@@ -91,6 +91,8 @@ export const populateDemoData = async (restaurantId) => {
         }
     ];
 
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+
     try {
         let insertedCategoriesCount = 0;
         let insertedItemsCount = 0;
@@ -111,10 +113,18 @@ export const populateDemoData = async (restaurantId) => {
 
             if (catError) {
                 console.error("Erro ao criar categoria:", catError);
-                return { success: false, message: `Erro Categoria: ${catError.message || catError.details || 'Permissão negada (RLS)'}` };
+                // If it's an AbortError, it might be transient or a network issue.
+                const isAbort = catError.message?.includes('Abort') || catError.name === 'AbortError';
+                return { 
+                    success: false, 
+                    message: isAbort 
+                        ? 'Erro de Conexão: A operação foi interrompida pelo navegador. Tente novamente em alguns segundos.'
+                        : `Erro Categoria: ${catError.message || catError.details || 'Permissão negada (RLS)'}` 
+                };
             }
 
             insertedCategoriesCount++;
+            await delay(100); // Small pause to stabilize the connection
 
             // 2. Inserir Produtos dessa categoria
             if (catData && cat.items && cat.items.length > 0) {
@@ -139,6 +149,8 @@ export const populateDemoData = async (restaurantId) => {
                 } else {
                     insertedItemsCount += itemsToInsert.length;
                 }
+                
+                await delay(100); // Small pause after items batch
             }
         }
 

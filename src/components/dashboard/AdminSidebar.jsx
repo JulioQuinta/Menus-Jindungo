@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, LogOut } from 'lucide-react';
+import { Menu, LogOut, ExternalLink, ShieldCheck } from 'lucide-react';
 
 const AdminSidebar = memo(({ 
     isSidebarOpen, 
@@ -10,7 +10,9 @@ const AdminSidebar = memo(({
     menuItems, 
     location, 
     globalLogoUrl, 
-    signOut 
+    signOut,
+    restaurantName,
+    restaurantSlug
 }) => {
     const isActive = (path) => {
         if (path === '/admin') return location.pathname === '/admin';
@@ -18,31 +20,64 @@ const AdminSidebar = memo(({
     };
 
     return (
-        <aside className={`fixed lg:relative z-50 glass-dark border-r border-white/5 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] h-screen flex flex-col shadow-2xl will-change-transform
+        <aside className={`fixed lg:relative z-50 bg-[#0D0D0D] border-r border-white/5 transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] h-screen flex flex-col shadow-[10px_0_40px_rgba(0,0,0,0.4)] will-change-transform
             ${isMobileMenuOpen ? 'translate-x-0 w-72' : '-translate-x-full lg:translate-x-0'} 
             ${isSidebarOpen ? 'lg:w-72' : 'lg:w-24'}`}>
 
-            <div className="p-8 border-b border-white/5 flex items-center justify-between">
-                <div className={`flex items-center gap-3 transition-all duration-300 ${isSidebarOpen || isMobileMenuOpen ? 'opacity-100' : 'lg:opacity-0 lg:hidden pointer-events-none'}`}>
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl overflow-hidden bg-white/10 flex items-center justify-center shadow-[0_0_20px_rgba(212,175,55,0.3)] transform hover:scale-105 transition-transform cursor-pointer border border-[#D4AF37]/30">
-                        <img src={globalLogoUrl || "/jindungo_logo_v3.png"} className="w-full h-full object-contain" alt="Global App Logo" />
+            {/* Premium Header / Logo Area */}
+            <div className="p-6 sm:p-8 flex items-center justify-between border-b border-white/5 relative overflow-hidden group">
+                <div className={`flex items-center gap-4 transition-all duration-500 ${isSidebarOpen || isMobileMenuOpen ? 'opacity-100' : 'lg:opacity-0 lg:scale-50 pointer-events-none'}`}>
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-[#D4AF37] blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                        <div className="relative w-12 h-12 rounded-2xl overflow-hidden bg-gradient-to-br from-white/10 to-transparent flex items-center justify-center border border-white/10 shadow-2xl">
+                            <img src={globalLogoUrl || "/jindungo_logo_v3.png"} className="w-full h-full object-contain p-1" alt="Jindungo" />
+                        </div>
                     </div>
-                    <span className="font-serif text-2xl font-bold text-white tracking-tight cursor-pointer">
-                        Jindu<span className="text-[#D4AF37]">ngo</span>
-                    </span>
+                    <div className="flex flex-col">
+                        <span className="font-serif text-xl font-black text-white tracking-tighter leading-none">
+                            Menús <span className="text-[#D4AF37]">Jindungo</span>
+                        </span>
+                        <span className="text-[9px] font-black text-[#D4AF37]/60 uppercase tracking-[0.3em] mt-1">SISTEMA PREMIUM</span>
+                    </div>
                 </div>
+                
                 <button
                     onClick={() => {
                         if (window.innerWidth < 1024) setIsMobileMenuOpen(false);
                         else setIsSidebarOpen(!isSidebarOpen);
                     }}
-                    className={`p-2 hover:bg-white/10 rounded-xl transition-all ${(!isSidebarOpen && !isMobileMenuOpen) && 'mx-auto'}`}
+                    className={`p-2.5 hover:bg-white/5 rounded-xl transition-all border border-transparent hover:border-white/10 ${(!isSidebarOpen && !isMobileMenuOpen) && 'mx-auto'}`}
                 >
-                    <Menu size={20} className="text-gray-400 hover:text-white" />
+                    <Menu size={18} className="text-gray-500 group-hover:text-white" />
                 </button>
             </div>
 
-            <nav className="p-4 space-y-2 flex-1 min-h-[0px] overflow-y-auto custom-scrollbar mt-4">
+            {/* Restaurant Quick Card (Shown when open) */}
+            {(isSidebarOpen || isMobileMenuOpen) && (
+                <div className="px-6 py-6 border-b border-white/5 bg-gradient-to-b from-white/[0.02] to-transparent">
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col gap-3 group/card hover:bg-white/[0.08] transition-all">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <ShieldCheck size={12} className="text-[#D4AF37]" />
+                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Loja Ativa</span>
+                            </div>
+                            <Link 
+                                to={restaurantSlug ? `/${restaurantSlug}` : '#'} 
+                                target="_blank"
+                                className="text-gray-500 hover:text-[#D4AF37] transition-colors"
+                            >
+                                <ExternalLink size={14} />
+                            </Link>
+                        </div>
+                        <h4 className="text-sm font-bold text-white truncate group-hover/card:text-[#D4AF37] transition-colors">
+                            {restaurantName || 'O seu Restaurante'}
+                        </h4>
+                    </div>
+                </div>
+            )}
+
+            {/* Navigation Navigation */}
+            <nav className="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar-sidebar mt-2">
                 {menuItems.map((item) => {
                     const active = isActive(item.path);
                     return (
@@ -50,33 +85,44 @@ const AdminSidebar = memo(({
                             key={item.path}
                             to={item.path}
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className={`group flex items-center gap-4 px-4 py-4 rounded-xl transition-all duration-200 relative overflow-hidden ${active
-                                ? 'bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20 shadow-[0_4px_20px_rgba(212,175,55,0.1)]'
-                                : 'text-gray-400 hover:bg-white/5 hover:text-white hover:pl-6'
+                            className={`group relative flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 ${active
+                                ? 'bg-gradient-to-r from-[#D4AF37]/20 to-transparent text-[#D4AF37] border-l-4 border-[#D4AF37]'
+                                : 'text-gray-500 hover:bg-white/5 hover:text-white'
                                 }`}
                         >
-                            <div className={`relative z-10 transition-transform duration-200 ${active ? 'scale-110 drop-shadow-[0_0_8px_rgba(212,175,55,0.5)]' : 'group-hover:scale-110'}`}>
-                                <item.icon size={22} />
+                            {active && (
+                                <div className="absolute inset-0 bg-[#D4AF37]/5 blur-xl pointer-events-none"></div>
+                            )}
+                            <div className={`transition-transform duration-300 ${active ? 'scale-110' : 'group-hover:scale-110 group-hover:rotate-6'}`}>
+                                <item.icon size={active ? 20 : 18} />
                             </div>
-                            <span className={`font-medium tracking-wide whitespace-nowrap transition-all duration-300 ${(isSidebarOpen || isMobileMenuOpen) ? 'opacity-100 translate-x-0' : 'lg:opacity-0 lg:-translate-x-10 lg:absolute'}`}>
+                            <span className={`text-sm font-bold tracking-tight whitespace-nowrap transition-all duration-500 ${(isSidebarOpen || isMobileMenuOpen) ? 'opacity-100 translate-x-0' : 'lg:opacity-0 lg:-translate-x-10 lg:absolute'}`}>
                                 {item.label}
                             </span>
-                            {active && (
-                                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-[#D4AF37] rounded-l-full shadow-[0_0_10px_rgba(212,175,55,0.8)]"></div>
+                            
+                            {/* Hover Indicator for Collapsed State */}
+                            {!isSidebarOpen && !isMobileMenuOpen && (
+                                <div className="absolute left-full ml-4 px-3 py-2 bg-[#1A1A1A] border border-white/10 rounded-lg text-white text-xs font-bold opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-[100] shadow-2xl">
+                                    {item.label}
+                                </div>
                             )}
                         </Link>
                     )
                 })}
             </nav>
 
-            <div className="p-4 border-t border-white/5 mt-auto shrink-0 pb-6 lg:pb-4">
+            {/* Footer / Logout */}
+            <div className="p-6 border-t border-white/5 shrink-0 bg-gradient-to-t from-black/20 to-transparent">
                 <button
                     onClick={signOut}
-                    className={`w-full flex items-center gap-4 px-4 py-4 rounded-xl text-gray-500 hover:bg-red-500/10 hover:text-red-400 hover:border hover:border-red-500/20 transition-all group ${(!isSidebarOpen && !isMobileMenuOpen) && 'justify-center border border-transparent'}`}
+                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-gray-500 hover:bg-red-500/10 hover:text-red-400 transition-all group ${(!isSidebarOpen && !isMobileMenuOpen) && 'justify-center'}`}
                 >
-                    <LogOut size={22} className="group-hover:-translate-x-1 transition-transform" />
-                    <span className={`${(isSidebarOpen || isMobileMenuOpen) ? 'block' : 'hidden'} font-medium`}>Terminar Sessão</span>
+                    <LogOut size={18} className="group-hover:-translate-x-1 transition-transform" />
+                    <span className={`${(isSidebarOpen || isMobileMenuOpen) ? 'block' : 'hidden'} text-sm font-bold`}>Sair da Conta</span>
                 </button>
+                <div className={`mt-4 text-center transition-opacity duration-500 ${isSidebarOpen || isMobileMenuOpen ? 'opacity-30' : 'opacity-0'}`}>
+                    <p className="text-[9px] font-mono tracking-widest">JINDUNGO v3.1</p>
+                </div>
             </div>
         </aside>
     );

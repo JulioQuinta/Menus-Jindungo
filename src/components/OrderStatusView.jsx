@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { orderService } from '../services/orderService';
-import { CheckCircle, Clock, ChefHat, Truck, XCircle } from 'lucide-react';
+import { CheckCircle, Clock, ChefHat, Truck, XCircle, Award } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { generateWhatsAppLink } from '../utils/whatsappGenerator';
 
@@ -220,7 +220,7 @@ export const OrderStatusView = ({ order, status, whatsappNumber }) => {
             </div>
 
             <p className="mt-6 text-[10px] text-gray-400 uppercase tracking-tighter">
-                O status atualizará automaticamente • Jindungo Menus 🌶️
+                O status atualizará automaticamente • Menús Jindungo 🌶️
             </p>
         </div>
     );

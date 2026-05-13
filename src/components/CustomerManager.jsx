@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { Search, User, Phone, ShoppingBag, TrendingUp, History, Download, ExternalLink, Ticket, Target, Send, X } from 'lucide-react';
+import { Search, User, Phone, ShoppingBag, TrendingUp, History, Download, ExternalLink, Ticket, Target, Send, X, Award, Calendar } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const CustomerManager = ({ restaurantId }) => {
@@ -259,7 +259,7 @@ const CustomerManager = ({ restaurantId }) => {
                 </div>
             </div>
 
-            {/* List */}
+            {/* List Section */}
             <div className="bg-black/40 backdrop-blur-md rounded-3xl border border-white/10 shadow-xl overflow-hidden">
                 <div className="p-6 border-b border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
                     <h3 className="text-lg font-bold text-gray-200">Base de Contactos</h3>
@@ -276,76 +276,121 @@ const CustomerManager = ({ restaurantId }) => {
                 </div>
 
                 {loading ? (
-                    <div className="p-12 text-center text-gray-500">A carregar banco de dados...</div>
+                    <div className="p-12 text-center text-gray-500 italic">A carregar base de dados Jindungo...</div>
                 ) : filteredCustomers.length === 0 ? (
                     <div className="p-12 text-center text-gray-400">
-                        <p>Nenhum cliente com telemóvel identificado ainda.</p>
-                        <p className="text-sm mt-2">A base será construída à medida que novos pedidos forem feitos.</p>
+                        <p>Nenhum cliente identificado ainda.</p>
+                        <p className="text-sm mt-2">A base é construída automaticamente através dos pedidos.</p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-white/5 text-gray-400 text-xs uppercase tracking-wider">
-                                    <th className="px-6 py-4 font-bold border-b border-white/5">Cliente</th>
-                                    <th className="px-6 py-4 font-bold border-b border-white/5 text-center">Pedidos</th>
-                                    <th className="px-6 py-4 font-bold border-b border-white/5 text-center">Total Gasto</th>
-                                    <th className="px-6 py-4 font-bold border-b border-white/5 text-center">Prêmios</th>
-                                    <th className="px-6 py-4 font-bold border-b border-white/5">Última Visita</th>
-                                    <th className="px-6 py-4 font-bold border-b border-white/5 text-right">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5">
-                                {filteredCustomers.map((c, idx) => (
-                                    <tr key={idx} className="hover:bg-white/5 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-800 to-black border border-white/10 flex items-center justify-center text-[#D4AF37] font-bold">
-                                                    {c.name.charAt(0).toUpperCase()}
-                                                </div>
-                                                <div>
-                                                    <div className="font-bold text-gray-200">{c.name}</div>
-                                                    <div className="text-xs text-gray-500 flex items-center gap-1">
-                                                        <Phone size={10} /> {c.phone}
-                                                    </div>
+                    <>
+                        {/* Mobile Card View */}
+                        <div className="sm:hidden p-4 space-y-4">
+                            {filteredCustomers.map((c, idx) => (
+                                <div key={idx} className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-800 to-black border border-white/10 flex items-center justify-center text-[#D4AF37] font-bold">
+                                                {c.name.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <div className="font-bold text-gray-100">{c.name}</div>
+                                                <div className="text-[10px] text-gray-500 flex items-center gap-1 uppercase tracking-tighter">
+                                                    <Calendar size={10} /> Último: {new Date(c.lastOrder).toLocaleDateString()}
                                                 </div>
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className="bg-white/5 px-3 py-1 rounded-full text-sm font-bold border border-white/5">
-                                                {c.totalOrders}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <div className="font-bold text-[#D4AF37]">{c.totalSpent.toLocaleString()} Kz</div>
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            {c.totalRedemptions > 0 ? (
-                                                <span className="flex items-center justify-center gap-1 bg-[#D4AF37]/20 text-[#D4AF37] px-2 py-1 rounded-lg text-xs font-bold border border-[#D4AF37]/30">
-                                                    <Award size={12} /> {c.totalRedemptions}
-                                                </span>
-                                            ) : (
-                                                <span className="text-gray-600 text-xs">-</span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm text-gray-400">{new Date(c.lastOrder).toLocaleDateString()}</div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button
-                                                onClick={() => openWhatsApp(c.phone)}
-                                                className="p-2 bg-green-500/10 text-green-400 hover:bg-green-500 hover:text-white rounded-lg transition-all flex items-center gap-2 ml-auto"
-                                                title="Re-conectar via WhatsApp"
-                                            >
-                                                <ExternalLink size={16} />
-                                                <span className="text-xs font-bold">WhatsApp</span>
-                                            </button>
-                                        </td>
+                                        </div>
+                                        <button
+                                            onClick={() => openWhatsApp(c.phone)}
+                                            className="p-2.5 bg-green-500/10 text-green-400 rounded-xl"
+                                        >
+                                            <ExternalLink size={18} />
+                                        </button>
+                                    </div>
+
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <div className="bg-black/20 rounded-xl p-2 text-center border border-white/5">
+                                            <p className="text-[9px] text-gray-500 font-bold uppercase">Pedidos</p>
+                                            <p className="text-sm font-bold text-white">{c.totalOrders}</p>
+                                        </div>
+                                        <div className="bg-black/20 rounded-xl p-2 text-center border border-white/5">
+                                            <p className="text-[9px] text-gray-500 font-bold uppercase">Gasto</p>
+                                            <p className="text-sm font-bold text-[#D4AF37]">{Math.round(c.totalSpent / 1000)}k</p>
+                                        </div>
+                                        <div className="bg-black/20 rounded-xl p-2 text-center border border-white/5">
+                                            <p className="text-[9px] text-gray-500 font-bold uppercase">Prémios</p>
+                                            <p className="text-sm font-bold text-purple-400">{c.totalRedemptions}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Desktop Table View */}
+                        <div className="hidden sm:block overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-white/5 text-gray-400 text-xs uppercase tracking-wider">
+                                        <th className="px-6 py-4 font-bold border-b border-white/5">Cliente</th>
+                                        <th className="px-6 py-4 font-bold border-b border-white/5 text-center">Pedidos</th>
+                                        <th className="px-6 py-4 font-bold border-b border-white/5 text-center">Total Gasto</th>
+                                        <th className="px-6 py-4 font-bold border-b border-white/5 text-center">Prêmios</th>
+                                        <th className="px-6 py-4 font-bold border-b border-white/5">Última Visita</th>
+                                        <th className="px-6 py-4 font-bold border-b border-white/5 text-right">Ações</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {filteredCustomers.map((c, idx) => (
+                                        <tr key={idx} className="hover:bg-white/5 transition-colors group">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-800 to-black border border-white/10 flex items-center justify-center text-[#D4AF37] font-bold">
+                                                        {c.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-gray-200">{c.name}</div>
+                                                        <div className="text-xs text-gray-500 flex items-center gap-1">
+                                                            <Phone size={10} /> {c.phone}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className="bg-white/5 px-3 py-1 rounded-full text-sm font-bold border border-white/5">
+                                                    {c.totalOrders}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <div className="font-bold text-[#D4AF37]">{c.totalSpent.toLocaleString()} Kz</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                {c.totalRedemptions > 0 ? (
+                                                    <span className="flex items-center justify-center gap-1 bg-[#D4AF37]/20 text-[#D4AF37] px-2 py-1 rounded-lg text-xs font-bold border border-[#D4AF37]/30">
+                                                        <Award size={12} /> {c.totalRedemptions}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-gray-600 text-xs">-</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm text-gray-400">{new Date(c.lastOrder).toLocaleDateString()}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button
+                                                    onClick={() => openWhatsApp(c.phone)}
+                                                    className="p-2 bg-green-500/10 text-green-400 hover:bg-green-500 hover:text-white rounded-lg transition-all flex items-center gap-2 ml-auto"
+                                                    title="Re-conectar via WhatsApp"
+                                                >
+                                                    <ExternalLink size={16} />
+                                                    <span className="text-xs font-bold">WhatsApp</span>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
                 )}
             </div>
         </div>

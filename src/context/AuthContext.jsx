@@ -34,6 +34,11 @@ export const AuthProvider = ({ children }) => {
                             alert("Sua conta foi suspensa.");
                             return;
                         }
+                        if (data.status === 'pending') {
+                            await supabase.auth.signOut();
+                            alert("O seu pedido de acesso foi recebido e está a aguardar aprovação da nossa equipa. Entraremos em contacto brevemente!");
+                            return;
+                        }
                         setRole(data.role || 'client');
                     } else {
                         // No profile found
@@ -73,8 +78,8 @@ export const AuthProvider = ({ children }) => {
         return supabase.auth.signInWithPassword({ email, password });
     };
 
-    const signUp = (email, password) => {
-        return supabase.auth.signUp({ email, password });
+    const signUp = (email, password, options) => {
+        return supabase.auth.signUp({ email, password, options });
     };
 
     const signOut = async () => {

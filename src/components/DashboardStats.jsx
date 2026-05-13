@@ -13,42 +13,41 @@ const StatCard = ({ title, value, icon: Icon, colorClass, trend, trendValue, isP
     return (
         <div 
             onClick={onClick}
-            className={`bg-gradient-to-br from-black/80 to-[#141414] backdrop-blur-md p-3 sm:p-8 rounded-2xl sm:rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-white/5 flex flex-col justify-between h-28 sm:h-40 relative overflow-hidden group hover:border-white/20 transition-all duration-500 ${onClick ? 'cursor-pointer active:scale-[0.98]' : ''}`}
+            className={`bg-[#111111]/80 backdrop-blur-3xl p-6 rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.6)] border border-white/5 flex flex-col justify-between h-36 sm:h-44 relative overflow-hidden group hover:border-[#D4AF37]/30 transition-all duration-700 ${onClick ? 'cursor-pointer active:scale-[0.98]' : ''}`}
         >
-            {/* Dynamic Glow */}
-            <div className={`absolute right-0 top-0 w-32 h-32 rounded-full blur-[60px] -mr-10 -mt-10 transition-transform duration-700 group-hover:scale-150 opacity-20 bg-${colorBase}-500`}></div>
+            {/* Dynamic Ambient Glow */}
+            <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-[50px] opacity-10 group-hover:opacity-30 transition-opacity duration-1000 bg-${colorBase}-500`}></div>
 
             <div className="flex justify-between items-start z-10 relative">
                 <div className="min-w-0 flex-1">
-                    <p className="text-gray-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.2em] mb-1 sm:mb-2 truncate">{title}</p>
-                    <h3 className="text-xl sm:text-4xl font-serif font-bold text-white leading-none drop-shadow-md group-hover:text-[#D4AF37] transition-colors truncate">{value}</h3>
+                    <p className="text-gray-500 text-[9px] font-black uppercase tracking-[0.2em] mb-2 truncate opacity-60">{title}</p>
+                    <h3 className="text-xl sm:text-3xl font-serif font-black text-white leading-none group-hover:text-[#D4AF37] transition-colors truncate tracking-tighter">
+                        {value}
+                    </h3>
                 </div>
-                <div className={`p-2 sm:p-3 rounded-xl sm:rounded-2xl border border-${colorBase}-500/30 bg-${colorBase}-500/10 text-${colorBase}-400 shadow-[0_0_20px_rgba(0,0,0,0.3)] group-hover:scale-110 transition-transform flex-shrink-0 ml-2`}>
-                    <Icon size={18} className="sm:w-6 sm:h-6" />
+                <div className={`p-3 rounded-2xl border border-white/5 bg-white/5 text-gray-400 group-hover:bg-[#D4AF37]/10 group-hover:text-[#D4AF37] group-hover:border-[#D4AF37]/20 transition-all duration-500`}>
+                    <Icon size={20} />
                 </div>
             </div>
 
-            <div className="z-10 flex items-center justify-between mt-auto pt-4 border-t border-white/5">
+            <div className="z-10 flex items-center justify-between mt-auto pt-4">
                 {trend ? (
-                    <div className={`flex items-center gap-1.5 text-[10px] font-bold ${isPositive ? 'text-green-400 bg-green-900/20' : 'text-red-400 bg-red-900/20'} px-2 py-1 rounded-lg border ${isPositive ? 'border-green-500/20' : 'border-red-500/20'}`}>
-                        <span className="flex h-1.5 w-1.5 relative">
-                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isPositive ? 'bg-green-400' : 'bg-red-400'} opacity-75`}></span>
-                            <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${isPositive ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                        </span>
+                    <div className={`flex items-center gap-2 text-[9px] font-black uppercase tracking-wider ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${isPositive ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></span>
                         {trend}
                     </div>
                 ) : trendValue ? (
-                    <div className={`flex items-center gap-1 text-[10px] font-bold ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                    <div className={`flex items-center gap-1.5 text-[9px] font-black ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
                         {isPositive ? <TrendingUp size={12} /> : <TrendingUp size={12} className="rotate-180" />}
-                        {trendValue}% <span className="text-gray-500 font-medium ml-1">vs anterior</span>
+                        {trendValue}% <span className="text-gray-500 opacity-50 ml-0.5 uppercase tracking-tighter">vs anterior</span>
                     </div>
                 ) : (
-                    <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest opacity-50">
-                        Painel Jindungo
-                    </div>
+                    <div className="text-[9px] text-gray-600 font-black uppercase tracking-[0.2em]">Dashboard</div>
                 )}
 
-                <ChevronRight size={14} className="text-gray-600 group-hover:text-[#D4AF37] group-hover:translate-x-1 transition-all" />
+                <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-[#D4AF37]/20 transition-colors">
+                    <ChevronRight size={12} className="text-gray-600 group-hover:text-[#D4AF37] transition-all" />
+                </div>
             </div>
         </div>
     );
@@ -290,33 +289,113 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
 
     return (
         <div ref={componentRef} className="space-y-8 animate-fade-in p-2 sm:p-4 print:bg-white print:text-black">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
-                <div>
-                    <h2 className="text-3xl font-serif font-bold text-white mb-2">Visão Geral</h2>
-                    <p className="text-gray-400">Acompanhe o desempenho do seu menu</p>
+            {/* Welcome & Quick Actions Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                {/* Welcome Card */}
+                <div className="lg:col-span-2 relative overflow-hidden bg-gradient-to-br from-[#D4AF37] to-[#B8860B] rounded-[2.5rem] p-8 sm:p-10 shadow-[0_20px_50px_rgba(212,175,55,0.3)] group">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
+                        <Utensils size={120} className="text-black rotate-12" />
+                    </div>
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-2 mb-4 bg-black/10 w-fit px-3 py-1 rounded-full border border-black/5">
+                            <span className="flex h-2 w-2 relative">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-black opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-black"></span>
+                            </span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-black/60">Sistema Operacional</span>
+                        </div>
+                        <h1 className="text-3xl sm:text-5xl font-serif font-black text-black tracking-tight mb-4">
+                            Boas-vindas,<br/> ao seu Jindungo.
+                        </h1>
+                        <p className="text-black/70 text-sm sm:text-base max-w-md font-medium leading-relaxed">
+                            O seu menu digital está ativo e a processar pedidos. <br className="hidden sm:block" />
+                            O que deseja fazer hoje para elevar o seu negócio?
+                        </p>
+
+                        {/* Daily Goal Progress [NEW] */}
+                        {salesFilter === 'today' && (
+                            <div className="mt-8 bg-black/10 backdrop-blur-md rounded-2xl p-4 border border-black/5 max-w-sm">
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-black/60">Meta Diária (50k Kz)</span>
+                                    <span className="text-xs font-black text-black">{Math.min(100, Math.round((salesStats.revenue / 50000) * 100))}%</span>
+                                </div>
+                                <div className="w-full bg-black/20 h-2 rounded-full overflow-hidden">
+                                    <div 
+                                        className="bg-black h-full transition-all duration-1000 ease-out" 
+                                        style={{ width: `${Math.min(100, (salesStats.revenue / 50000) * 100)}%` }}
+                                    ></div>
+                                </div>
+                                <div className="flex justify-between mt-2 text-[10px] font-bold text-black/40">
+                                    <span>{salesStats.revenue.toLocaleString()} Kz</span>
+                                    <span>Objetivo</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                {/* Sales Filter */}
-                <div className="flex flex-col sm:flex-row gap-2 items-center w-full sm:w-auto mt-4 sm:mt-0">
-                    <div className="flex flex-wrap justify-center bg-white/10 p-1 rounded-xl backdrop-blur-md border border-white/5">
-                        {[
-                            { id: 'today', label: 'Dia' },
-                            { id: 'month', label: 'Mês' },
-                            { id: 'trimester', label: 'Trimestre' },
-                            { id: 'semester', label: 'Semestre' },
-                            { id: 'year', label: 'Ano' },
-                            { id: 'custom', label: 'Personalizado' }
-                        ].map(f => (
-                            <button
-                                key={f.id}
-                                onClick={() => setSalesFilter(f.id)}
-                                className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${salesFilter === f.id ? 'bg-primary text-gray-900 shadow-md' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                            >
-                                {f.label}
-                            </button>
-                        ))}
+                {/* Quick Actions Grid */}
+                <div className="bg-white/5 border border-white/10 rounded-[2.5rem] p-6 sm:p-8 flex flex-col justify-center gap-4">
+                    <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-2 px-2">Ações Rápidas</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                        <button 
+                            onClick={() => navigate('/admin/menu')}
+                            className="flex flex-col items-center justify-center gap-3 p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-[#D4AF37] hover:text-black transition-all group/btn"
+                        >
+                            <Utensils size={20} className="text-[#D4AF37] group-hover/btn:text-black transition-colors" />
+                            <span className="text-[10px] font-black uppercase tracking-wider">Novo Prato</span>
+                        </button>
+                        <button 
+                            onClick={() => navigate('/admin/orders')}
+                            className="flex flex-col items-center justify-center gap-3 p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-[#D4AF37] hover:text-black transition-all group/btn"
+                        >
+                            <ClipboardList size={20} className="text-[#D4AF37] group-hover/btn:text-black transition-colors" />
+                            <span className="text-[10px] font-black uppercase tracking-wider">Cozinha</span>
+                        </button>
+                        <button 
+                            onClick={() => navigate('/admin/qrcode')}
+                            className="flex flex-col items-center justify-center gap-3 p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-[#D4AF37] hover:text-black transition-all group/btn"
+                        >
+                            <QrCode size={20} className="text-[#D4AF37] group-hover/btn:text-black transition-colors" />
+                            <span className="text-[10px] font-black uppercase tracking-wider">QR Code</span>
+                        </button>
+                        <button 
+                            onClick={() => window.open('https://wa.me/244900000000', '_blank')}
+                            className="flex flex-col items-center justify-center gap-3 p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-green-500 hover:text-white transition-all group/btn"
+                        >
+                            <Mail size={20} className="text-green-500 group-hover/btn:text-white transition-colors" />
+                            <span className="text-[10px] font-black uppercase tracking-wider">Suporte</span>
+                        </button>
                     </div>
+                </div>
+            </div>
+
+            {/* Original Header & Filter (Cleaned Up) */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 pb-6 border-b border-white/5">
+                <div>
+                    <h2 className="text-2xl font-serif font-black text-white flex items-center gap-3">
+                        <TrendingUp size={24} className="text-[#D4AF37]" />
+                        Análise de Performance
+                    </h2>
+                    <p className="text-gray-500 text-sm mt-1">Métricas em tempo real sobre o seu estabelecimento.</p>
+                </div>
+
+                <div className="flex items-center bg-white/5 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl">
+                    {[
+                        { id: 'today', label: 'Hoje' },
+                        { id: 'month', label: 'Mês' },
+                        { id: 'trimester', label: 'T3' },
+                        { id: 'year', label: 'Ano' },
+                        { id: 'custom', label: 'Custom' }
+                    ].map(f => (
+                        <button
+                            key={f.id}
+                            onClick={() => setSalesFilter(f.id)}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${salesFilter === f.id ? 'bg-[#D4AF37] text-black shadow-lg shadow-[#D4AF37]/20' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
+                        >
+                            {f.label}
+                        </button>
+                    ))}
                 </div>
             </div>
 

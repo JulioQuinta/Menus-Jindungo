@@ -3,20 +3,23 @@ import SmartImage from './SmartImage';
 import Skeleton from './Skeleton';
 import { Plus, Minus, ChevronDown, ChevronUp } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { getTranslation } from '../utils/i18n';
 
-const QuantityControls = ({ item, isEditing, primaryColor, darkMode, restaurantClosed }) => {
+const QuantityControls = ({ item, isEditing, primaryColor, darkMode, restaurantClosed, onItemAdded, selectedLanguage }) => {
     const { getItemQuantity, addToCart, removeFromCart } = useCart();
     const quantity = getItemQuantity(item.id);
     const [showVariants, setShowVariants] = React.useState(false);
+
+    const t = (key) => getTranslation(selectedLanguage, key);
 
     const hasVariants = Array.isArray(item.translations?.variants) && item.translations.variants.length > 0;
 
     if (isEditing) return null;
 
-    if (item.available === false) {
+    if (item.available === false || (item.track_stock && item.stock_quantity <= 0)) {
         return (
             <div className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1 ${darkMode ? 'bg-red-900/40 text-red-400 border border-red-800/50' : 'bg-red-50 text-red-600 border border-red-100'}`}>
-                <span className="text-[10px]">🚫</span> Esgotado
+                <span className="text-[10px]">🚫</span> {t('soldOut')}
             </div>
         );
     }
@@ -24,7 +27,7 @@ const QuantityControls = ({ item, isEditing, primaryColor, darkMode, restaurantC
     if (restaurantClosed) {
         return (
             <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${darkMode ? 'bg-gray-800 text-gray-500' : 'bg-gray-100 text-gray-400'}`}>
-                Pedidos Suspensos
+                {t('ordersSuspended')}
             </div>
         );
     }
@@ -35,6 +38,7 @@ const QuantityControls = ({ item, isEditing, primaryColor, darkMode, restaurantC
             setShowVariants(true);
         } else {
             addToCart(item);
+            if (onItemAdded) onItemAdded(item);
         }
     };
 
@@ -51,8 +55,9 @@ const QuantityControls = ({ item, isEditing, primaryColor, darkMode, restaurantC
                 <span className="font-bold text-gray-800 min-w-[28px] text-center text-lg">{quantity}</span>
                 <button
                     onClick={handleAddClick}
-                    className="w-10 h-10 flex items-center justify-center rounded-xl text-white shadow-lg hover:brightness-110 transition-all duration-200 active:scale-90 active:shadow-inner relative group overflow-hidden"
+                    className="w-10 h-10 flex items-center justify-center rounded-xl text-white shadow-lg hover:brightness-110 transition-all duration-200 active:scale-90 active:shadow-inner relative group overflow-hidden disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed"
                     style={{ backgroundColor: primaryColor }}
+                    disabled={item.track_stock && quantity >= item.stock_quantity}
                 >
                     {/* Haptic Glow Effect */}
                     <span className="absolute inset-0 bg-white/20 opacity-0 group-active:opacity-100 transition-opacity" />
@@ -83,6 +88,7 @@ const QuantityControls = ({ item, isEditing, primaryColor, darkMode, restaurantC
                                         e.stopPropagation();
                                         addToCart(item, v);
                                         setShowVariants(false);
+                                        if (onItemAdded) onItemAdded(item);
                                     }}
                                     className={`w-full px-5 py-4 rounded-2xl font-semibold text-left transition-all ${darkMode ? 'bg-gray-800/50 hover:bg-gray-800 text-gray-200' : 'bg-gray-50 hover:bg-gray-100/80 text-gray-800 border border-gray-100 hover:border-gray-200'} active:scale-[0.98] flex justify-between items-center`}
                                 >
@@ -96,7 +102,7 @@ const QuantityControls = ({ item, isEditing, primaryColor, darkMode, restaurantC
                             onClick={(e) => { e.stopPropagation(); setShowVariants(false); }}
                             className={`w-full mt-6 py-4 rounded-2xl font-bold ${darkMode ? 'bg-gray-800 text-gray-400 hover:text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'} transition-colors`}
                         >
-                            Cancelar
+                            {t('cancel')}
                         </button>
                     </div>
                 </div>
@@ -141,9 +147,10 @@ const getCompositionStyle = (darkMode, customBg) => {
     return darkMode ? 'text-[#F9BF00] font-semibold' : 'text-[#3E2723] font-medium';
 };
 
-const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguage, customBgInfo, restaurantClosed }) => {
+const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguage, customBgInfo, restaurantClosed, onItemAdded }) => {
     const [isOpen, setIsOpen] = useState(false);
     const composition = getTrans(item, selectedLanguage, 'composition');
+    const t = (key) => getTranslation(selectedLanguage, key);
 
     return (
         <div
@@ -155,7 +162,7 @@ const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
             {/* Image Section */}
             <div className="relative aspect-[4/3] overflow-hidden rounded-t-xl">
                 <SmartImage
-                    src={item.img}
+                    src={item.img_url || item.img}
                     alt={item.name}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
@@ -171,7 +178,7 @@ const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
             <div className="p-3 sm:p-5 flex-1 flex flex-col justify-between relative">
                 <div>
                     <div className="flex flex-col mb-1">
-                        <h3 className={`font-bold text-sm sm:text-xl leading-tight line-clamp-2 ${getTextStyle(darkMode, customBgInfo)}`}>
+                        <h3 className={`font-serif font-bold text-base sm:text-xl leading-tight line-clamp-2 ${getTextStyle(darkMode, customBgInfo)}`}>
                             {getTrans(item, selectedLanguage, 'name')}
                         </h3>
                         <span className="font-bold text-sm sm:text-lg mt-1" style={{ color: primaryColor }}>
@@ -188,7 +195,7 @@ const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
                                 onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
                                 className={`text-[10px] sm:text-[11px] font-bold flex items-center gap-1.5 py-1 px-2 rounded-lg transition-all ${darkMode ? 'bg-white/5 text-[#D4AF37] hover:bg-white/10' : 'bg-black/5 text-[#5D4037] hover:bg-black/10'}`}
                             >
-                                {isOpen ? 'Esconder detalhes' : 'Ver detalhes'}
+                                {isOpen ? t('hideDetails') : t('viewDetails')}
                                 {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                             </button>
                             
@@ -203,16 +210,17 @@ const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
                 </div>
 
                 <div className="flex justify-end mt-2 pt-2 border-t border-dashed border-gray-700/20">
-                    <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} restaurantClosed={restaurantClosed} />
+                    <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} restaurantClosed={restaurantClosed} onItemAdded={onItemAdded} />
                 </div>
             </div>
         </div>
     );
 };
 
-const MenuItemList = ({ item, primaryColor, isEditing, darkMode, selectedLanguage, customBgInfo, restaurantClosed }) => {
+const MenuItemList = ({ item, primaryColor, isEditing, darkMode, selectedLanguage, customBgInfo, restaurantClosed, onItemAdded }) => {
     const [isOpen, setIsOpen] = useState(false);
     const composition = getTrans(item, selectedLanguage, 'composition');
+    const t = (key) => getTranslation(selectedLanguage, key);
 
     return (
         <div
@@ -223,7 +231,7 @@ const MenuItemList = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
             {/* Image */}
             <div className="w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 rounded-xl overflow-hidden relative group self-start sm:self-center">
                 <SmartImage
-                    src={item.img}
+                    src={item.img_url || item.img}
                     alt={item.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
@@ -233,7 +241,7 @@ const MenuItemList = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
             <div className="flex-1 flex flex-col justify-between py-1">
                 <div>
                     <div className="flex justify-between items-start">
-                        <h3 className={`font-bold text-lg leading-tight ${getTextStyle(darkMode, customBgInfo)}`}>
+                        <h3 className={`font-serif font-bold text-lg leading-tight ${getTextStyle(darkMode, customBgInfo)}`}>
                             {getTrans(item, selectedLanguage, 'name')}
                         </h3>
                         <span className="font-bold text-sm sm:text-base whitespace-nowrap ml-2" style={{ color: primaryColor }}>
@@ -250,7 +258,7 @@ const MenuItemList = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
                                 onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
                                 className={`text-[10px] sm:text-[11px] font-bold flex items-center gap-1 py-1 sm:py-1.5 px-2.5 rounded-lg transition-all ${darkMode ? 'bg-white/5 text-[#D4AF37] hover:bg-white/10' : 'bg-black/5 text-[#5D4037] hover:bg-black/10'}`}
                             >
-                                {isOpen ? 'Ocultar detalhes' : 'Ver detalhes'}
+                                {isOpen ? t('hideDetails') : t('viewDetails')}
                                 {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                             </button>
                             
@@ -265,7 +273,7 @@ const MenuItemList = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
                 </div>
 
                 <div className="flex justify-end mt-2">
-                    <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} restaurantClosed={restaurantClosed} />
+                    <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} restaurantClosed={restaurantClosed} onItemAdded={onItemAdded} />
                 </div>
             </div>
         </div>
@@ -301,7 +309,7 @@ export const MinimalLayout = ({ items = [], primaryColor, fontFamily, isEditing,
                 `}>
                     <div className="flex-1">
                         <div className="flex items-baseline justify-between mb-1">
-                            <h3 className={`font-medium text-lg group-hover:text-primary transition-colors ${getTextStyle(darkMode, customBgInfo)}`}>
+                            <h3 className={`font-serif font-medium text-lg group-hover:text-primary transition-colors ${getTextStyle(darkMode, customBgInfo)}`}>
                                 {getTrans(item, selectedLanguage, 'name')}
                             </h3>
                             <div className={`flex-1 mx-4 border-b border-dotted h-4 opacity-30 hidden sm:block ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}></div>
@@ -317,7 +325,7 @@ export const MinimalLayout = ({ items = [], primaryColor, fontFamily, isEditing,
                     </div>
 
                     <div>
-                        <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} restaurantClosed={restaurantClosed} />
+                        <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} restaurantClosed={restaurantClosed} selectedLanguage={selectedLanguage} />
                     </div>
                 </div>
             ))}

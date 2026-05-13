@@ -1,11 +1,11 @@
 // Deployment Test V1.1 - 2026-03-15
 import React, { useState, useEffect } from 'react';
+import { getTranslation } from '../utils/i18n';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 
 
-import { menuService } from '../services/menuService';
-import { themeService } from '../services/themeService'; // Assuming this exists or using default
+
 // import { analyticsService } from '../services/analyticsService';
 import LivePreview from '../components/LivePreview';
 import { CartProvider } from '../context/CartContext';
@@ -16,6 +16,8 @@ import LoyaltyWidget from '../components/LoyaltyWidget';
 import BookingModal from '../components/BookingModal';
 import StaffPinModal from '../components/StaffPinModal';
 import ActiveOrderTracker from '../components/ActiveOrderTracker';
+import UpsellModal from '../components/UpsellModal';
+import { useCart } from '../context/CartContext';
 import { getPlanFeatures } from '../utils/planLimits';
 import { Info, Share2, MapPin, Clock, Instagram, Facebook, Phone, X, Calendar, BellRing, Lock } from 'lucide-react';
 
@@ -45,6 +47,11 @@ const PublicMenu = () => {
     const [showBookingModal, setShowBookingModal] = useState(false);
     const [showStaffModal, setShowStaffModal] = useState(false);
     const [activeStaff, setActiveStaff] = useState(null);
+    const [selectedLanguage, setSelectedLanguage] = useState(() => {
+        return localStorage.getItem('jindungo_lang') || 'PT';
+    });
+
+    const t = (key) => getTranslation(selectedLanguage, key);
 
     // Initial check for active staff session
     useEffect(() => {
@@ -131,13 +138,28 @@ const PublicMenu = () => {
                             composition: item.composition, // [NEW]
                             isHighlight: item.is_highlight,
                             badge: item.badge,
+                            track_stock: item.track_stock,
+                            stock_quantity: item.stock_quantity,
+                            upsell_ids: item.upsell_ids || [],
                             translations: {
-                                pt: { name: item.name, desc: item.desc_text, composition: item.composition },
-                                en: { name: item.name_en || item.name, desc: item.desc_en || item.desc_text, composition: (item.translations?.en?.composition || item.composition) },
-                                fr: { name: item.name_fr || item.name, desc: item.desc_fr || item.desc_text, composition: (item.translations?.fr?.composition || item.composition) },
-                                es: { name: item.name_es || item.name, desc: item.desc_es || item.desc_text, composition: (item.translations?.es?.composition || item.composition) },
-                                ar: { name: item.name_ar || item.name, desc: item.desc_ar || item.desc_text, composition: (item.translations?.ar?.composition || item.composition) },
-                                zh: { name: item.name_zh || item.name, desc: item.desc_zh || item.desc_text, composition: (item.translations?.zh?.composition || item.composition) },
+                                pt: { 
+                                    name: item.translations?.pt?.name || item.name, 
+                                    desc: item.translations?.pt?.desc || item.desc_text, 
+                                    composition: item.translations?.pt?.composition || item.composition 
+                                },
+                                en: { 
+                                    name: item.translations?.en?.name || item.name, 
+                                    desc: item.translations?.en?.desc || item.desc_text, 
+                                    composition: item.translations?.en?.composition || item.composition 
+                                },
+                                fr: { 
+                                    name: item.translations?.fr?.name || item.name, 
+                                    desc: item.translations?.fr?.desc || item.desc_text, 
+                                    composition: item.translations?.fr?.composition || item.composition 
+                                },
+                                es: { name: item.name, desc: item.desc_text, composition: item.composition },
+                                ar: { name: item.name, desc: item.desc_text, composition: item.composition },
+                                zh: { name: item.name, desc: item.desc_text, composition: item.composition },
                             }
                         }))
                 }));
@@ -246,7 +268,7 @@ const PublicMenu = () => {
 
     const handleShare = async () => {
         const shareData = {
-            title: restaurant?.name || 'Jindungo Menu',
+            title: restaurant?.name || 'Menus Jindungo',
             text: businessInfo?.share_text || 'Vem conhecer o nosso menu digital!',
             url: window.location.href
         };
@@ -349,36 +371,87 @@ const PublicMenu = () => {
 
     return (
         <CartProvider>
-            <div className="min-h-screen bg-gray-100 flex justify-center sm:py-8 overflow-x-hidden w-full max-w-[100vw]">
-                <div className="w-full sm:max-w-[480px] bg-white sm:rounded-[30px] sm:shadow-2xl overflow-hidden min-h-screen sm:min-h-0 sm:h-[850px] relative ring-1 ring-gray-900/5 flex flex-col max-w-[100vw]">
+            <PublicMenuInner 
+                slug={slug}
+                restaurant={restaurant}
+                features={features}
+                config={config}
+                categories={categories}
+                loading={loading}
+                error={error}
+                isCheckoutOpen={isCheckoutOpen}
+                setIsCheckoutOpen={setIsCheckoutOpen}
+                initialTable={initialTable}
+                businessInfo={businessInfo}
+                isCurrentlyClosed={isCurrentlyClosed}
+                showInfo={showInfo}
+                setShowInfo={setShowInfo}
+                showBookingModal={showBookingModal}
+                setShowBookingModal={setShowBookingModal}
+                showStaffModal={showStaffModal}
+                setShowStaffModal={setShowStaffModal}
+                activeStaff={activeStaff}
+                setActiveStaff={setActiveStaff}
+                handleShare={handleShare}
+                selectedLanguage={selectedLanguage}
+                setSelectedLanguage={setSelectedLanguage}
+            />
+        </CartProvider>
+    );
+};
+const PublicMenuInner = ({ 
+    slug, restaurant, features, config, categories, loading, error, 
+    isCheckoutOpen, setIsCheckoutOpen, initialTable, businessInfo, 
+    isCurrentlyClosed, showInfo, setShowInfo, showBookingModal, 
+    setShowBookingModal, showStaffModal, setShowStaffModal, 
+    activeStaff, setActiveStaff, handleShare,
+    selectedLanguage, setSelectedLanguage 
+}) => {
+    const { addToCart } = useCart();
+    const t = (key) => getTranslation(selectedLanguage, key);
+    const [upsellState, setUpsellState] = useState({ isOpen: false, mainItem: null, upsellItems: [] });
 
-                    {/* [NEW] Closed Banner */}
-                    {(isCurrentlyClosed || config.isOpen === false) && (
-                        <div className="absolute top-0 left-0 right-0 z-[1000] bg-red-600 text-white px-4 py-3 text-center font-bold shadow-lg animate-pulse">
-                            🚨 Restaurante Fechado no Momento
-                            <p className="text-[10px] font-normal opacity-90">
-                                {isCurrentlyClosed ? 'Estamos fora do horário de funcionamento.' : 'Apenas visualização. Pedidos temporariamente suspensos.'}
-                            </p>
-                        </div>
-                    )}
+    const handleItemAdded = (item) => {
+        if (item.upsell_ids && item.upsell_ids.length > 0) {
+            const items = categories.flatMap(c => c.items).filter(i => item.upsell_ids.includes(i.id));
+            if (items.length > 0) {
+                setUpsellState({ isOpen: true, mainItem: item, upsellItems: items });
+            }
+        }
+    };
 
-                    <div className="flex-1 overflow-y-auto scrollbar-hide">
+    return (
+        <div className="min-h-screen bg-gray-100 flex justify-center sm:py-8 overflow-x-hidden w-full max-w-[100vw]">
+            <div className="w-full sm:max-w-[480px] bg-white sm:rounded-[30px] sm:shadow-2xl overflow-hidden min-h-screen sm:min-h-0 sm:h-[850px] relative ring-1 ring-gray-900/5 flex flex-col max-w-[100vw]">
 
-                        <LivePreview
-                            config={config}
-                            categories={categories}
-                            isEditing={false}
-                            isLoading={loading}
-                            isFullPage={true} // It thinks it's full page, but it's contained
-                            restaurantId={restaurant?.id}
-                            features={features}
-                        />
+                {(isCurrentlyClosed || config.isOpen === false) && (
+                    <div className="absolute top-0 left-0 right-0 z-[1000] bg-red-600 text-white px-4 py-3 text-center font-bold shadow-lg animate-pulse">
+                        🚨 Restaurante Fechado no Momento
+                        <p className="text-[10px] font-normal opacity-90">
+                            {isCurrentlyClosed ? 'Estamos fora do horário de funcionamento.' : 'Apenas visualização. Pedidos temporariamente suspensos.'}
+                        </p>
                     </div>
+                )}
 
-                    {/* Floating Elements (Hidden when Checkout is open) */}
+                <div className="flex-1 overflow-y-auto scrollbar-hide">
+
+                    <LivePreview 
+                        config={config} 
+                        categories={categories} 
+                        isEditing={false} 
+                        isLoading={loading} 
+                        restaurantId={restaurant?.id}
+                        features={features}
+                        onItemAdded={(item) => {
+                            handleItemAdded(item);
+                        }}
+                        selectedLanguage={selectedLanguage}
+                        onLanguageChange={setSelectedLanguage}
+                    />
+                </div>
+
                     {!isCheckoutOpen && (
                         <>
-                            {/* Floating Cart Button - Hidden if closed */}
                             {config.isOpen !== false && (
                                 <CartFloatingButton
                                     onClick={() => setIsCheckoutOpen(true)}
@@ -387,43 +460,35 @@ const PublicMenu = () => {
                                 />
                             )}
 
-                            {/* Waiter Button - Restricted by Plan AND isOpen */}
                             {features.canCallWaiter && config.isOpen !== false && (
                                 <div className="fixed bottom-24 right-6 z-50 flex flex-col gap-2">
                                     <button
                                         onClick={async () => {
                                             let tableId = initialTable;
-
                                             if (!tableId) {
                                                 const urlParams = new URLSearchParams(window.location.search);
                                                 tableId = urlParams.get('mesa');
                                             }
-
                                             if (!tableId) {
                                                 const userInput = window.prompt("Por favor, digite o número/nome ou letra da sua mesa para o garçom saber onde ir:");
                                                 if (!userInput || userInput.trim() === '') {
                                                     toast.error("Identificação da mesa é necessária para chamar o garçom.");
-                                                    return; // Cancel the request
+                                                    return;
                                                 }
                                                 tableId = userInput.trim();
                                             }
-
                                             const btn = document.getElementById('waiter-btn');
                                             if (btn) btn.classList.add('animate-ping');
                                             setTimeout(() => btn?.classList.remove('animate-ping'), 1000);
-
                                             try {
                                                 const { error } = await supabase
                                                     .from('notificacoes_garcom')
                                                     .insert([{ mesa_id: tableId, status: 'pendente', restaurant_id: restaurant?.id }]);
-
                                                 if (error) throw error;
-
                                                 toast.success(`🔔 O garçom está a caminho da Mesa ${tableId}!`, {
                                                     duration: 4000,
                                                     position: 'top-center'
                                                 });
-
                                             } catch (e) {
                                                 console.error("Erro ao chamar garçom:", e);
                                                 toast.error("Erro ao conectar com o serviço. Tente novamente.");
@@ -437,18 +502,13 @@ const PublicMenu = () => {
                                         }}
                                         title="Chamar Garçom"
                                     >
-                                        {/* Animated background glow */}
                                         <span className="absolute inset-0 bg-white/20 animate-pulse"></span>
-
-                                        {/* Ripple focus effect */}
                                         <span className="absolute inset-0 rounded-full border-2 border-white/30 scale-90 group-hover:scale-150 group-hover:opacity-0 transition-all duration-700"></span>
-
                                         <BellRing size={28} className="text-white relative z-10 drop-shadow-lg" strokeWidth={2.5} />
                                     </button>
                                 </div>
                             )}
 
-                            {/* Unified Action Group */}
                             <div className="fixed top-24 right-4 z-50 flex flex-col bg-black/60 backdrop-blur-2xl rounded-2xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden animate-in slide-in-from-right duration-500">
                                 <button
                                     onClick={() => setShowBookingModal(true)}
@@ -484,7 +544,6 @@ const PublicMenu = () => {
                         </>
                     )}
 
-                    {/* [NEW] Loyalty Widget for Corporate users */}
                     {features.canCollectClientData && restaurant && (
                         <LoyaltyWidget
                             restaurantId={restaurant.id}
@@ -493,7 +552,6 @@ const PublicMenu = () => {
                         />
                     )}
 
-                    {/* Active Order Tracker (Restored with Manual Dismissal) */}
                     <ActiveOrderTracker restaurantId={restaurant?.id} primaryColor={config?.primaryColor} />
 
                     <CheckoutModal
@@ -505,6 +563,7 @@ const PublicMenu = () => {
                         initialTable={initialTable}
                         deliveryConfig={restaurant?.delivery_config}
                         activeStaff={activeStaff}
+                        selectedLanguage={selectedLanguage}
                     />
 
                     <BookingModal
@@ -513,22 +572,35 @@ const PublicMenu = () => {
                         restaurantId={restaurant?.id}
                         restaurantName={restaurant?.name}
                         whatsappNumber={config?.whatsappNumber}
+                        selectedLanguage={selectedLanguage}
                     />
 
                     <StaffPinModal
-                        isOpen={showStaffModal}
-                        onClose={() => setShowStaffModal(false)}
-                        restaurantId={restaurant?.id}
-                        onLogin={(staff) => setActiveStaff(staff)}
-                    />
+                    isOpen={showStaffModal}
+                    onClose={() => setShowStaffModal(false)}
+                    restaurantId={restaurant?.id}
+                    onLogin={(staff) => setActiveStaff(staff)}
+                />
 
-                    {/* [NEW] Info Overlay */}
+                <UpsellModal 
+                    isOpen={upsellState.isOpen}
+                    onClose={() => setUpsellState({ ...upsellState, isOpen: false })}
+                    mainItem={upsellState.mainItem}
+                    upsellItems={upsellState.upsellItems}
+                    primaryColor={config?.primaryColor}
+                    darkMode={config?.darkMode}
+                    onAddUpsell={(item) => {
+                        addToCart(item);
+                        toast.success(`${item.name} adicionado!`, { icon: '✨' });
+                    }}
+                />
+
                     {showInfo && (
                         <div className="absolute inset-0 z-[2000] bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-300">
                             <div className="w-full max-w-sm bg-[#121212] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl animate-in slide-in-from-bottom-10 duration-500">
                                 <div className="p-6">
                                     <div className="flex justify-between items-center mb-6">
-                                        <h3 className="text-xl font-serif font-bold text-white">Sobre o Restaurante</h3>
+                                        <h3 className="text-xl font-serif font-bold text-white">{t('aboutRestaurant')}</h3>
                                         <button onClick={() => setShowInfo(false)} className="text-gray-400 hover:text-white transition-colors">
                                             <X size={24} />
                                         </button>
@@ -541,8 +613,8 @@ const PublicMenu = () => {
                                                 <Clock size={20} />
                                             </div>
                                             <div className="flex-1">
-                                                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Horário de Hoje</h4>
-                                                <p className="text-sm text-gray-200">
+                                                <h4 className="text-[10px] font-display text-gray-500 mb-1.5">{t('openingHours')}</h4>
+                                                <p className="text-sm font-sans text-gray-200">
                                                     {businessInfo?.opening_hours?.find(h => h.day === ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'][new Date().getDay()])?.closed ? (
                                                         <span className="text-red-400 font-bold">Fechado</span>
                                                     ) : (
@@ -560,8 +632,8 @@ const PublicMenu = () => {
                                                 <MapPin size={20} />
                                             </div>
                                             <div className="flex-1">
-                                                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Localização</h4>
-                                                <p className="text-sm text-gray-200 mb-2">{businessInfo?.location?.address || 'Consulte o nosso link abaixo.'}</p>
+                                                <h4 className="text-[10px] font-display text-gray-500 mb-1.5">{t('location')}</h4>
+                                                <p className="text-sm font-sans text-gray-200 mb-2">{businessInfo?.location?.address || 'Consulte o nosso link abaixo.'}</p>
                                                 {businessInfo?.location?.maps_link && (
                                                     <a
                                                         href={businessInfo.location.maps_link}
@@ -581,7 +653,7 @@ const PublicMenu = () => {
                                                 <Share2 size={20} />
                                             </div>
                                             <div className="flex-1">
-                                                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Contactos & Redes</h4>
+                                                <h4 className="text-[10px] font-display text-gray-500 mb-1.5">{t('contactsSocials')}</h4>
                                                 <div className="flex flex-wrap gap-3 mb-3">
                                                     {businessInfo?.socials?.phone && (
                                                         <a href={`tel:${businessInfo.socials.phone}`} className="p-2 bg-white/5 rounded-lg text-gray-300 hover:text-white" title="Ligar">
@@ -621,15 +693,14 @@ const PublicMenu = () => {
                                         onClick={() => setShowInfo(false)}
                                         className="w-full mt-8 bg-white/10 text-white py-4 rounded-2xl font-bold text-sm hover:bg-white/20 transition-all border border-white/5"
                                     >
-                                        Fechar
+                                        {t('back')}
                                     </button>
                                 </div>
                             </div>
                         </div>
                     )}
-                </div>
-            </div>
-        </CartProvider>
+        </div>
+    </div>
     );
 };
 

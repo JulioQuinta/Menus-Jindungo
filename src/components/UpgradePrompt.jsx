@@ -11,7 +11,7 @@ const UpgradePrompt = ({ title, requiredPlan = "Business", features = [] }) => {
     const supportNumber = "244923000000";
 
     const handleUpgradeClick = () => {
-        const text = `Olá Equipa Jindungo! 🚀 Gostaria de saber mais sobre o Plano ${requiredPlan} para desbloquear a funcionalidade: ${title}. Como posso avançar?`;
+        const text = `Olá Equipa Menús Jindungo! 🚀 Gostaria de saber mais sobre o Plano ${requiredPlan} para desbloquear a funcionalidade: ${title}. Como posso avançar?`;
         const url = `https://wa.me/${supportNumber}?text=${encodeURIComponent(text)}`;
         window.open(url, '_blank');
     };

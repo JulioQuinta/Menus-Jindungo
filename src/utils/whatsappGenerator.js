@@ -51,7 +51,22 @@ export const generateWhatsAppLink = (cartItems, total, orderType, details, resta
     }
 
     message += `\n*Total: ${formattedTotal}*\n`;
-    message += `\n_Pedido enviado via Menú Jindungo_`;
+    message += `\n_Pedido enviado via Menús Jindungo_`;
+
+    // [NEW] WhatsApp Bot Lite - Structured Block for Automation
+    try {
+        const automationData = {
+            v: 1,
+            type: orderType,
+            items: cartItems.map(i => ({ id: i.id, q: i.quantity })),
+            total: total,
+            customer: details.customerName || 'Anonymous',
+            phone: details.customerPhone || ''
+        };
+        message += `\n\n[[DATA:${JSON.stringify(automationData)}]]`;
+    } catch (e) {
+        console.error("Automation block error:", e);
+    }
 
     const encodedMessage = encodeURIComponent(message);
     return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;

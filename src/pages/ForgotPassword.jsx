@@ -1,12 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { Link } from 'react-router-dom';
+import { Mail, ArrowLeft, ShieldCheck } from 'lucide-react';
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState(null);
     const [error, setError] = useState(null);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const handleReset = async (e) => {
         e.preventDefault();
@@ -21,7 +27,7 @@ const ForgotPassword = () => {
 
             if (error) throw error;
 
-            setMessage("Se um conta existir com este email, você receberá um link para redefinir sua senha.");
+            setMessage("Se existir uma conta com este e-mail, receberá um link de recuperação.");
         } catch (err) {
             setError(err.message);
         } finally {
@@ -30,65 +36,75 @@ const ForgotPassword = () => {
     };
 
     return (
-        <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden">
-            {/* Background Image same as Login */}
-            <div className="absolute inset-0 z-0">
-                <img
-                    src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=2070&auto=format&fit=crop"
-                    alt="Fine Dining"
-                    className="w-full h-full object-cover opacity-40 blur-sm"
-                />
-                <div className="absolute inset-0 bg-black/60"></div>
+        <div className="min-h-screen relative flex items-center justify-center overflow-hidden bg-[#0A0A0A] font-sans">
+            {/* Animated Refraction Background */}
+            <div className="absolute inset-0 z-0 pointer-events-none">
+                <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-[#D4AF37]/10 to-transparent blur-[120px] animate-pulse-slow"></div>
+                <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-gradient-to-tl from-white/5 to-transparent blur-[120px]"></div>
             </div>
 
-            <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-8 rounded-2xl shadow-2xl w-full max-w-md relative z-10">
-                <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-white mb-2">Recuperar Senha</h2>
-                    <p className="text-gray-400 text-sm">Digite seu email de cadastro</p>
-                </div>
-
-                {message ? (
-                    <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-lg text-green-200 text-center mb-6">
-                        {message}
-                        <div className="mt-4">
-                            <Link to="/login" className="text-green-400 font-bold hover:underline">Voltar ao Login</Link>
+            <div className={`relative z-10 w-full max-w-[440px] px-6 transition-all duration-1000 ease-out transform ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+                
+                <div className="bg-[#111111]/90 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-8 sm:p-12 shadow-[0_30px_100px_rgba(0,0,0,0.8)]">
+                    
+                    <div className="text-center mb-10">
+                        <div className="w-20 h-20 bg-gradient-to-br from-white/5 to-transparent rounded-3xl border border-white/10 flex items-center justify-center mx-auto mb-6 shadow-2xl">
+                             <ShieldCheck size={32} className="text-[#D4AF37]" />
                         </div>
+                        <h2 className="text-3xl font-serif font-black text-white tracking-tight mb-2">Recuperar Senha</h2>
+                        <p className="text-gray-500 text-sm">Introduza o seu e-mail de acesso.</p>
                     </div>
-                ) : (
-                    <form onSubmit={handleReset} className="space-y-6">
-                        {error && (
-                            <div className="bg-red-500/10 border border-red-500/20 p-3 rounded text-red-200 text-sm">
-                                {error}
+
+                    {message ? (
+                        <div className="space-y-8 animate-fade-in">
+                            <div className="bg-green-500/10 border border-green-500/20 p-6 rounded-[2rem] text-center">
+                                <p className="text-green-300 text-sm leading-relaxed">{message}</p>
                             </div>
-                        )}
-
-                        <div>
-                            <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider">Email</label>
-                            <input
-                                type="email"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="block w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 transition-all"
-                                placeholder="seu@email.com"
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full py-3 px-4 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-bold rounded-xl shadow-lg transition-all transform active:scale-95 disabled:opacity-50"
-                        >
-                            {loading ? 'Enviando...' : 'Enviar Link'}
-                        </button>
-
-                        <div className="text-center">
-                            <Link to="/login" className="text-gray-400 hover:text-white text-sm transition-colors">
-                                Voltar
+                            <Link to="/login" className="flex items-center justify-center gap-2 text-[#D4AF37] font-black uppercase tracking-widest text-[10px] hover:underline transition-all">
+                                <ArrowLeft size={14} /> Voltar ao Login
                             </Link>
                         </div>
-                    </form>
-                )}
+                    ) : (
+                        <form onSubmit={handleReset} className="space-y-6">
+                            {error && (
+                                <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl text-red-300 text-xs animate-shake">
+                                    {error}
+                                </div>
+                            )}
+
+                            <div className="relative group/field">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within/field:text-[#D4AF37] transition-colors">
+                                    <Mail size={18} />
+                                </div>
+                                <input
+                                    type="email"
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37]/40 transition-all text-sm"
+                                    placeholder="email@exemplo.com"
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full group relative overflow-hidden py-4 rounded-2xl bg-gradient-to-r from-[#D4AF37] to-[#F1C40F] text-black font-black text-sm uppercase tracking-widest shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                            >
+                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                                <span className="relative flex items-center justify-center gap-2">
+                                    {loading ? 'A processar...' : 'Enviar Link de Redefinição'}
+                                </span>
+                            </button>
+
+                            <div className="text-center pt-4">
+                                <Link to="/login" className="text-xs text-gray-500 hover:text-white transition-colors flex items-center justify-center gap-2">
+                                    <ArrowLeft size={12} /> Voltar
+                                </Link>
+                            </div>
+                        </form>
+                    )}
+                </div>
             </div>
         </div>
     );

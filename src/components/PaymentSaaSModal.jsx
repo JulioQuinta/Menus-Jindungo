@@ -33,7 +33,7 @@ const PaymentSaaSModal = ({ isOpen, onClose, restaurant }) => {
                 return;
             }
 
-            toast.success("Abra a sua App Multicaixa Express ou consulte o SMS para confirmar a renovação do SaaS!", { id: 'mcx-saas', duration: 10000 });
+            toast.success("Abra a sua App Multicaixa Express ou consulte o SMS para confirmar a renovação do Menús Jindungo!", { id: 'mcx-saas', duration: 10000 });
             
             // Aqui normalmente haveria um polling para saber quando foi pago com sucesso
             // Mas o Webhook "webhook-subscription" irá atualizar a BD em background.
@@ -60,7 +60,7 @@ const PaymentSaaSModal = ({ isOpen, onClose, restaurant }) => {
                 <h2 className="text-xl font-black mb-2 flex items-center gap-2">
                     <CreditCard className="text-[#D4AF37]" /> Pagamento Automático
                 </h2>
-                <p className="text-sm text-gray-400 mb-6">Renovação Mensal Jindungo para <strong>{restaurant?.name}</strong>.</p>
+                <p className="text-sm text-gray-400 mb-6">Renovação Mensal Menús Jindungo para <strong>{restaurant?.name}</strong>.</p>
                 
                 <div className="mb-6 bg-white/5 border border-white/10 rounded-xl p-4">
                     <div className="flex justify-between items-center mb-2">

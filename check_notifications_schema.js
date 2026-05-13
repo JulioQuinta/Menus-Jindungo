@@ -1,0 +1,27 @@
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+dotenv.config();
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+async function checkCols() {
+    console.log("Fetching notifications schema...");
+    const { data, error } = await supabase.from('system_notifications').select('*').limit(1);
+    if (error) {
+        console.error("Error:", error);
+    } else {
+        console.log("Columns:", data && data.length > 0 ? Object.keys(data[0]) : "Empty table, but it exists!");
+        // We can't see columns if table is empty unless we use an RPC. Let's just do an insert that we know will fail RLS to see if columns are valid.
+        const { error: insErr } = await supabase.from('system_notifications').insert({
+            message: 'test',
+            type: 'info',
+            is_active: true,
+            created_by: '00000000-0000-0000-0000-000000000000'
+        });
+        console.log("Insert Error (RLS expected):", insErr);
+    }
+}
+
+checkCols();

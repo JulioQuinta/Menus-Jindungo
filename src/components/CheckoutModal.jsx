@@ -11,9 +11,11 @@ import { couponService } from '../services/couponService';
 import { Ticket, X, CheckCircle2, Award, Star, UtensilsCrossed, Bike, User, Smartphone, MapPin, Banknote, CreditCard, ChevronRight } from 'lucide-react';
 import { loyaltyService } from '../services/loyaltyService';
 import MapPicker from './MapPicker';
+import { getTranslation } from '../utils/i18n';
 
-const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features = {}, initialTable = '', deliveryConfig = {}, activeStaff = null }) => {
+const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features = {}, initialTable = '', deliveryConfig = {}, activeStaff = null, selectedLanguage = 'PT' }) => {
     const { cartItems, getCartTotal, clearCart } = useCart();
+    const t = (key) => getTranslation(selectedLanguage, key);
 
     // Form State
     const [orderType, setOrderType] = useState('dine-in'); // 'dine-in' | 'delivery'
@@ -150,7 +152,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
         if (result.valid) {
             // Check min purchase
             if (result.coupon.min_purchase > 0 && subtotal < result.coupon.min_purchase) {
-                setCouponError(`Compra mínima para este cupão: ${result.coupon.min_purchase} Kz`);
+                setCouponError(`${t('invalidCoupon')}: ${result.coupon.min_purchase} Kz`);
                 setAppliedCoupon(null);
             } else {
                 setAppliedCoupon(result.coupon);
@@ -172,8 +174,8 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
     const isSystemOrder = !!restaurantId; // If we have an ID, we use the system. If not (preview), we default to WhatsApp?
 
     const handleSendOrder = async () => {
-        if (orderType === 'dine-in' && !tableNumber) return toast.error("Informe o número da mesa.");
-        if (orderType === 'delivery' && !address) return toast.error("Informe o endereço.");
+        if (orderType === 'dine-in' && !tableNumber) return toast.error(selectedLanguage === 'PT' ? "Informe o número da mesa." : "Please enter the table number.");
+        if (orderType === 'delivery' && !address) return toast.error(selectedLanguage === 'PT' ? "Informe o endereço." : "Please enter the address.");
 
         setIsSending(true);
 
@@ -181,7 +183,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
         const mapsLink = gpsCoords ? ` | Maps: https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : '';
         const refNote = addressReference ? ` | Ref: ${addressReference}` : '';
         const baseTableOrAddress = orderType === 'dine-in' ? tableNumber : `Entrega: ${address}${refNote}${mapsLink} ${zoneInfo}`;
-        const paymentInfo = paymentMethod === 'cash' ? 'Dinheiro' : 'Multicaixa Express';
+        const paymentInfo = paymentMethod === 'cash' ? t('cash') : t('multicaixa');
 
         const orderData = {
             restaurant_id: restaurantId,
@@ -210,7 +212,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
 
                 // Fluxo de Pagamento MCX Real
                 if (paymentMethod === 'multicaixa') {
-                    toast.loading("A iniciar pagamento seguro no Multicaixa Express...", { id: 'mcx-toast' });
+                    toast.loading(selectedLanguage === 'PT' ? "A iniciar pagamento seguro no Multicaixa Express..." : "Starting secure payment on Multicaixa Express...", { id: 'mcx-toast' });
                     const { data: mcxData, error: mcxError } = await supabase.functions.invoke('process-payment', {
                         body: { 
                             amount: total, 
@@ -221,13 +223,13 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                     });
 
                     if (mcxError || mcxData?.error) {
-                        toast.error(mcxData?.error || "Falha na comunicação com o provedor de pagamentos.", { id: 'mcx-toast' });
+                        toast.error(mcxData?.error || (selectedLanguage === 'PT' ? "Falha na comunicação com o provedor de pagamentos." : "Payment provider communication failure."), { id: 'mcx-toast' });
                         await orderService.updateOrderStatus(newOrder.id, 'cancelled', 'Falha no gateway MCX');
                         setIsSending(false);
                         return; // Stop flow
                     }
 
-                    toast.success("Abra a sua App Multicaixa Express ou consulte o SMS para confirmar o PIN!", { id: 'mcx-toast', duration: 10000 });
+                    toast.success(selectedLanguage === 'PT' ? "Abra a sua App Multicaixa Express ou consulte o SMS para confirmar o PIN!" : "Open your Multicaixa Express App or check SMS to confirm PIN!", { id: 'mcx-toast', duration: 10000 });
                 }
 
                 setCreatedOrder(newOrder);
@@ -268,7 +270,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                 }
             } else {
                 // Since we use the sophisticated tracker now, just close the modal
-                toast.success("Pedido Enviado com Sucesso! Acompanhe o status no ecrã principal.", {
+                toast.success(selectedLanguage === 'PT' ? "Pedido Enviado com Sucesso! Acompanhe o status no ecrã principal." : "Order Sent Successfully! Track status on the main screen.", {
                     icon: '🚀',
                     duration: 5000
                 });
@@ -276,7 +278,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
             }
 
         } catch (err) {
-            toast.error("Erro ao enviar pedido: " + err.message);
+            toast.error("Erro: " + err.message);
             console.error(err);
         } finally {
             setIsSending(false);
@@ -312,10 +314,10 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                 <div className="flex justify-between items-center mb-8">
                     <div>
                         <h2 className="text-2xl font-serif font-black text-gray-900 leading-tight">
-                            {features?.hasUpsell && showUpsell ? 'Sugestões para Si' : 'Finalizar Pedido'}
+                            {features?.hasUpsell && showUpsell ? (selectedLanguage === 'PT' ? 'Sugestões para Si' : 'Suggestions for You') : t('checkout')}
                         </h2>
                         <p className="text-[10px] uppercase tracking-[0.2em] font-black text-gray-400 mt-1">
-                            {cartItems.length} {cartItems.length === 1 ? 'Artigo Selecionado' : 'Artigos Selecionados'}
+                            {cartItems.length} {t('itemsSelected')}
                         </p>
                     </div>
                     <button 
@@ -342,14 +344,14 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                 className={`flex-1 py-3 px-4 rounded-[14px] flex items-center justify-center gap-2 transition-all duration-500 font-bold text-sm ${orderType === 'dine-in' ? 'bg-white text-primary shadow-[0_4px_12px_rgba(0,0,0,0.1)] ring-1 ring-black/5 scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}
                             >
                                 <UtensilsCrossed size={16} className={orderType === 'dine-in' ? 'animate-bounce-short' : ''} />
-                                <span>No Local</span>
+                                <span>{t('dineIn')}</span>
                             </button>
                             <button
                                 onClick={() => setOrderType('delivery')}
                                 className={`flex-1 py-3 px-4 rounded-[14px] flex items-center justify-center gap-2 transition-all duration-500 font-bold text-sm ${orderType === 'delivery' ? 'bg-white text-primary shadow-[0_4px_12px_rgba(0,0,0,0.1)] ring-1 ring-black/5 scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}
                             >
                                 <Bike size={16} className={orderType === 'delivery' ? 'animate-bounce-short' : ''} />
-                                <span>Entrega</span>
+                                <span>{t('delivery')}</span>
                             </button>
                         </div>
 
@@ -360,7 +362,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                     <span style={{ fontWeight: 'bold', color: '#1a202c' }}>{item.price}</span>
                                 </div>
                             ))}
-                            {(cartItems.length === 0) && <p className="text-gray-500"> Carrinho vazio.</p>}
+                            {(cartItems.length === 0) && <p className="text-gray-500"> {t('emptyCart')}</p>}
                         </div>
 
                         <div style={{ borderTop: '1px dashed #e2e8f0', margin: '1rem 0' }} />
@@ -368,14 +370,14 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                         <div className="bg-gray-50/50 rounded-3xl p-5 mb-8 border border-gray-100 shadow-sm">
                             <div className="space-y-3">
                                 <div className="flex justify-between items-center text-sm font-medium text-gray-500">
-                                    <span>Subtotal</span>
+                                    <span>{t('subtotal')}</span>
                                     <span className="text-gray-900">{new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(subtotal).replace('AOA', 'Kz')}</span>
                                 </div>
                                 {deliveryFee > 0 && (
                                     <div className="flex justify-between items-center text-sm font-bold text-blue-600">
                                         <div className="flex items-center gap-1.5">
                                             <Bike size={14} />
-                                            <span>Taxa de Entrega</span>
+                                            <span>{t('deliveryFee')}</span>
                                         </div>
                                         <span>+{new Intl.NumberFormat('pt-AO').format(deliveryFee)} Kz</span>
                                     </div>
@@ -384,14 +386,14 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                     <div className="flex justify-between items-center text-sm font-bold text-green-600">
                                         <div className="flex items-center gap-1.5">
                                             <Ticket size={14} />
-                                            <span>Desconto ({appliedCoupon?.code})</span>
+                                            <span>{t('discount')} ({appliedCoupon?.code})</span>
                                         </div>
                                         <span>-{new Intl.NumberFormat('pt-AO').format(discount)} Kz</span>
                                     </div>
                                 )}
                                 <div className="pt-3 border-t border-gray-200/50 flex justify-between items-end">
                                     <div className="flex flex-col">
-                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Total a Pagar</span>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">{t('totalToPay')}</span>
                                         <span className="text-3xl font-serif font-black text-gray-900 leading-none mt-1">
                                             {new Intl.NumberFormat('pt-AO').format(total)}
                                             <span className="text-xs ml-1 text-gray-400">Kz</span>
@@ -408,14 +410,14 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                         {/* Coupon Section */}
                         <div style={{ marginBottom: '1.5rem', background: 'rgba(212,175,55,0.05)', padding: '1rem', borderRadius: '16px', border: '1px dashed rgba(212,175,55,0.2)' }}>
                             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.8rem', fontWeight: '800', color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                Cupão de Desconto
+                                {t('couponCode')}
                             </label>
 
                             {!appliedCoupon ? (
                                 <div style={{ display: 'flex', gap: '8px' }}>
                                     <input
                                         type="text"
-                                        placeholder="Tens um código?"
+                                        placeholder={t('couponPlaceholder')}
                                         className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900 bg-white"
                                         style={{ margin: 0, textTransform: 'uppercase' }}
                                         value={couponCode}
@@ -427,7 +429,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                         disabled={!couponCode || isValidating}
                                         style={{ background: '#D4AF37', color: 'black', border: 'none', padding: '0 1rem', borderRadius: '12px', fontWeight: 'bold', fontSize: '0.9rem', cursor: 'pointer' }}
                                     >
-                                        {isValidating ? '...' : 'OK'}
+                                        {isValidating ? '...' : t('apply')}
                                     </button>
                                 </div>
                             ) : (
@@ -450,7 +452,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                             <div className="space-y-2">
                                 <label className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider">
                                     <User size={12} className="text-gray-400" />
-                                    Seu Nome
+                                    {t('name')}
                                 </label>
                                 <input
                                     type="text"
@@ -463,7 +465,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                             <div className="space-y-2">
                                 <label className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider">
                                     <Smartphone size={12} className="text-gray-400" />
-                                    Telemóvel
+                                    {t('phone')}
                                 </label>
                                 <input
                                     type="tel"
@@ -485,16 +487,16 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                 border: '1px solid rgba(212,175,55,0.2)',
                                 animation: 'fadeIn 0.4s'
                             }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: '1rem' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         <Award size={18} style={{ color: '#D4AF37' }} />
                                         <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                            Cartão VIP {loyaltyPoints}/{loyaltyConfig.goal}
+                                            {t('loyaltyCard')} {loyaltyPoints}/{loyaltyConfig.goal}
                                         </span>
                                     </div>
                                     {loyaltyPoints >= loyaltyConfig.goal && (
                                         <span style={{ fontSize: '0.7rem', background: '#38a169', color: 'white', padding: '2px 8px', borderRadius: '8px', fontWeight: 'bold' }}>
-                                            RECOMPENSA!
+                                            {t('rewardReady')}
                                         </span>
                                     )}
                                 </div>
@@ -519,8 +521,8 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
 
                                 <p style={{ fontSize: '0.75rem', color: '#666', marginTop: '1rem', textAlign: 'center', fontStyle: 'italic' }}>
                                     {loyaltyPoints >= loyaltyConfig.goal
-                                        ? `Parabéns! Recompensa: ${loyaltyConfig.reward_text}`
-                                        : `Faltam ${loyaltyConfig.goal - loyaltyPoints} pedidos para o seu prémio!`
+                                        ? `${selectedLanguage === 'PT' ? 'Parabéns!' : 'Congratulations!'} ${t('rewardReady')}: ${loyaltyConfig.reward_text}`
+                                        : `${selectedLanguage === 'PT' ? 'Faltam' : 'Only'} ${loyaltyConfig.goal - loyaltyPoints} ${selectedLanguage === 'PT' ? 'pedidos para o seu prémio!' : 'orders left for your reward!'}`
                                     }
                                 </p>
 
@@ -531,7 +533,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                                 <Award size={18} />
                                             </div>
                                             <div>
-                                                <p className="text-xs font-bold text-gray-800">Usar Recompensa agora?</p>
+                                                <p className="text-xs font-bold text-gray-800">{t('useReward')}</p>
                                                 <p className="text-[10px] text-gray-500">{loyaltyConfig.reward_text}</p>
                                             </div>
                                         </div>
@@ -549,10 +551,10 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                         {orderType === 'dine-in' ? (
                             <div style={{ marginBottom: '1.5rem', animation: 'fadeIn 0.3s' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                    <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>Mesa (Número, Nome ou Letra)</label>
+                                    <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>{t('table')} (Número, Nome ou Letra)</label>
                                     {initialTable && tableNumber === initialTable && (
                                         <span style={{ fontSize: '0.7rem', background: '#e6fffa', color: '#2c7a7b', padding: '2px 8px', borderRadius: '10px', fontWeight: 'bold', border: '1px solid #b2f5ea' }}>
-                                            ✓ Detectada via QR Code
+                                            ✓ {selectedLanguage === 'PT' ? 'Detectada via QR Code' : 'Detected via QR Code'}
                                         </span>
                                     )}
                                 </div>
@@ -562,14 +564,14 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                             <div style={{ marginBottom: '1.5rem', animation: 'fadeIn 0.3s' }}>
                                 {deliveryConfig?.enabled && deliveryConfig?.zones?.length > 0 && (
                                     <div style={{ marginBottom: '1rem' }}>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>Bairro / Zona de Entrega</label>
+                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>{t('address')}</label>
                                         <select
                                             className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900"
                                             value={selectedZone ? JSON.stringify(selectedZone) : ''}
                                             onChange={(e) => setSelectedZone(e.target.value ? JSON.parse(e.target.value) : null)}
                                             style={{ appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23000000%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right .7em top 50%', backgroundSize: '.65em auto' }}
                                         >
-                                            <option value="" className="text-gray-500">Selecione o seu bairro...</option>
+                                            <option value="" className="text-gray-500">{selectedLanguage === 'PT' ? 'Selecione o seu bairro...' : 'Select your neighborhood...'}</option>
                                             {deliveryConfig.zones.map((zone, idx) => (
                                                 <option key={idx} value={JSON.stringify(zone)} className="text-gray-900">
                                                     {zone.name} (+{zone.fee} Kz)
@@ -581,7 +583,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                 {/* Interactive Map Picker */}
                                 <div style={{ marginBottom: '1rem' }}>
                                     <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>
-                                        Toque no Mapa para assinalar a Morada
+                                        {selectedLanguage === 'PT' ? 'Toque no Mapa para assinalar a Morada' : 'Tap on the map to pin your address'}
                                     </label>
                                     <MapPicker 
                                         onLocationSelected={(pos, addr) => {
@@ -595,7 +597,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                 </div>
 
                                 <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>
-                                    Endereço / Bairro
+                                    {t('address')}
                                 </label>
                                 <textarea
                                     value={address}
@@ -607,7 +609,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                 />
 
                                 <label style={{ display: 'block', margin: '0.75rem 0 0.5rem', fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>
-                                    Ponto de Referência
+                                    {t('reference')}
                                 </label>
                                 <input
                                     type="text"
@@ -620,28 +622,28 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                         )}
 
                         <div className="mb-6 sm:mb-8 p-4 sm:p-5 bg-gray-50 rounded-2xl sm:rounded-[24px] border border-gray-100 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Forma de Pagamento</label>
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">{t('paymentMethod')}</label>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                                 <button
                                     onClick={() => setPaymentMethod('cash')}
                                     className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${paymentMethod === 'cash' ? 'bg-green-50 border-green-500 text-green-700 shadow-sm' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300'}`}
                                 >
                                     <Banknote size={18} />
-                                    <span>Dinheiro</span>
+                                    <span>{t('cash')}</span>
                                 </button>
                                 <button
                                     onClick={() => setPaymentMethod('multicaixa')}
                                     className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${paymentMethod === 'multicaixa' ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300'}`}
                                 >
                                     <CreditCard size={18} />
-                                    <span>Multicaixa Express</span>
+                                    <span>{t('multicaixa')}</span>
                                 </button>
                             </div>
                             {paymentMethod === 'cash' && (
                                 <div className="mt-2 animate-in slide-in-from-right duration-300">
                                     <input
                                         type="number"
-                                        placeholder="Troco para que valor?"
+                                        placeholder={t('changeFor')}
                                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-100 focus:border-green-400 outline-none transition-all text-sm font-medium text-gray-900 placeholder-gray-400"
                                         value={changeFor}
                                         onChange={e => setChangeFor(e.target.value)}
@@ -651,20 +653,20 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                             {paymentMethod === 'multicaixa' && (
                                 <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-xl animate-in slide-in-from-right duration-300">
                                     <h4 className="text-[10px] font-black text-blue-800 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                        <Smartphone size={14} /> Pagamento Automático
+                                        <Smartphone size={14} /> {selectedLanguage === 'PT' ? 'Pagamento Automático' : 'Automatic Payment'}
                                     </h4>
                                     <div className="space-y-3">
                                         <input
                                             type="tel"
-                                            placeholder="Nº de Telemóvel Associado (Ex: 9xx xxx xxx)"
+                                            placeholder={selectedLanguage === 'PT' ? "Nº de Telemóvel Associado (Ex: 9xx xxx xxx)" : "Associated Phone Number (Ex: 9xx xxx xxx)"}
                                             className="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none transition-all text-sm font-bold text-gray-900 placeholder-gray-400"
                                             value={customerPhone} // Aproveitando o telefone do cliente
                                             onChange={e => setCustomerPhone(e.target.value)}
                                         />
                                         <div className="text-xs text-blue-600/80 font-medium space-y-1 ml-1 border-l-2 border-blue-200 pl-3">
-                                            <p>1. Ao enviar, receberá uma notificação no telemóvel.</p>
-                                            <p>2. Abre a app <b>MCX Express</b> e confirma com o teu PIN.</p>
-                                            <p>3. O pedido irá direto para a cozinha após o sucesso.</p>
+                                            <p>1. {selectedLanguage === 'PT' ? 'Ao enviar, receberá uma notificação no telemóvel.' : 'Upon sending, you will receive a notification on your phone.'}</p>
+                                            <p>2. {selectedLanguage === 'PT' ? 'Abra a app MCX Express e confirma com o teu PIN.' : 'Open the MCX Express app and confirm with your PIN.'}</p>
+                                            <p>3. {selectedLanguage === 'PT' ? 'O pedido irá direto para a cozinha após o sucesso.' : 'The order will go straight to the kitchen upon success.'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -688,7 +690,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                     <div className="w-6 h-6 border-4 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full animate-spin" />
                                 ) : (
                                     <>
-                                        <span>{(features?.canUseKDS && restaurantId) ? 'Enviar Pedido à Cozinha' : 'Pedir via WhatsApp'}</span>
+                                        <span>{(features?.canUseKDS && restaurantId) ? t('sendOrder') : t('sendOrderWhatsapp')}</span>
                                         <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
                                     </>
                                 )}

@@ -2,15 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
-import { isNotificationSupported, sendNotification, requestNotificationPermission } from '../utils/notificationHelper';
+import { useAdminData } from '../hooks/useAdminData';
+import { useAdminAlerts } from '../hooks/useAdminAlerts';
+import { useDashboardStats } from '../hooks/useDashboardStats';
 import toast, { Toaster } from 'react-hot-toast';
-import { compressImage } from '../lib/imageUtils';
-import { QrCode, ClipboardList, TrendingUp, Settings, LogOut, ChevronRight, Menu, Bell, LinkIcon, MapPin, Search, Star, Utensils, MonitorSmartphone, Mail, Smartphone, Eye, Calendar, Tag, Info, UserX, MessageSquare, Volume2, Shield, LayoutDashboard, UtensilsCrossed, User, Award, Ticket, Users, ExternalLink } from 'lucide-react';
+import { QrCode, ClipboardList, TrendingUp, Settings, LogOut, ChevronRight, Menu, Bell, LinkIcon, MapPin, Search, Star, Utensils, MonitorSmartphone, Mail, Smartphone, Eye, Calendar, Tag, Info, UserX, MessageSquare, Volume2, Shield, LayoutDashboard, UtensilsCrossed, User, Award, Ticket, Users, ExternalLink, X, Package } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 import { getPlanFeatures } from '../utils/planLimits';
 import { Suspense } from 'react';
-import { lazyWithRetry, clearReloadFlag } from '../utils/lazyWithRetry';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
+import DashboardStatsGrid from '../components/dashboard/DashboardStatsGrid';
+import QuickActionGrid from '../components/dashboard/QuickActionGrid';
+import UpgradePromoSection from '../components/dashboard/UpgradePromoSection';
+import DashboardAlertSystem from '../components/dashboard/DashboardAlertSystem';
+import ExpirationModal from '../components/dashboard/ExpirationModal';
+
 // Global Audio instance to prevent repeated allocation and browser lag
 const notificationSound = new Audio('/bell.mp3');
 notificationSound.volume = 0.5;
@@ -33,6 +40,7 @@ const ReservationManager = lazyWithRetry(() => import('../components/Reservation
 const FeedbackManager = lazyWithRetry(() => import('../components/FeedbackManager'));
 const CouponManager = lazyWithRetry(() => import('../components/CouponManager'));
 const UpgradePrompt = lazyWithRetry(() => import('../components/UpgradePrompt'));
+const InventoryManager = lazyWithRetry(() => import('../components/InventoryManager'));
 
 // Refactored Sub-components
 import AdminSidebar from '../components/dashboard/AdminSidebar';
@@ -42,372 +50,123 @@ import MasqueradeBanner from '../components/dashboard/MasqueradeBanner';
 import AdminMobileNav from '../components/dashboard/AdminMobileNav';
 import StaffPinModal from '../components/StaffPinModal';
 import PaymentSaaSModal from '../components/PaymentSaaSModal';
+import CommandPalette from '../components/dashboard/CommandPalette';
+import HypnoticStats from '../components/dashboard/HypnoticStats';
 
 const AdminDashboard = () => {
-    const { user, signOut, loading: authLoading } = useAuth();
-    const { logoUrl: globalLogoUrl } = useSettings();
+    const { user, role, signOut } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const { logoUrl: globalLogoUrl } = useSettings();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     
-    // [NEW] Staff State for Expresso Login
+    // [NEW] Hooks for Data & Alerts (Performance & Cleanliness)
+    const { 
+        restaurant, setRestaurant, categories, businessInfo, loading: dataLoading, config, 
+        handleConfigChange, handleBusinessInfoSave, handleLogoUpload, handleHeaderBgUpload, fetchRestaurantData 
+    } = useAdminData(user);
+    const { activeAlerts, handleDismissAlert } = useAdminAlerts(restaurant?.id, navigate);
+    const stats = useDashboardStats(restaurant?.id);
+
     const [activeStaff, setActiveStaff] = useState(null);
     const [showStaffModal, setShowStaffModal] = useState(false);
-    
-    // [NEW] SaaS Payment Modal state
     const [showPaymentModal, setShowPaymentModal] = useState(false);
-
-    // Explicit logout to ensure redirect even if ProtectedRoute logic is delayed
-    const handleLogout = async () => {
-        await signOut();
-        navigate('/login', { replace: true });
-    };
-
-    // Data State
-    const [restaurant, setRestaurant] = useState(null);
-
-    useEffect(() => {
-        if (restaurant?.id) {
-            const savedName = localStorage.getItem(`jindungo_staff_name_${restaurant.id}`);
-            const savedId = localStorage.getItem(`jindungo_staff_id_${restaurant.id}`);
-            if (savedName && savedId) {
-                setActiveStaff({ id: savedId, name: savedName });
-            }
-        }
-    }, [restaurant?.id]);
-    const [categories, setCategories] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [showCategoryModal, setShowCategoryModal] = useState(false);
-
-    // [MODIFIED] Clear retry flag once main dashboard is ready
-    useEffect(() => {
-        if (!loading) {
-            clearReloadFlag();
-        }
-    }, [loading]);
-
-    // [NEW] Alerts State
-    const [activeAlerts, setActiveAlerts] = useState([]);
-
-    // [NEW] Expiration Modal State
-    const [showExpirationModal, setShowExpirationModal] = useState(false);
-
-    // [NEW] Global Notifications State
+    const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
     const [globalNotifications, setGlobalNotifications] = useState([]);
+    const [showExpirationModal, setShowExpirationModal] = useState(false);
+    const [showCategoryModal, setShowCategoryModal] = useState(false);
+    const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+    const [dismissedNotifIds, setDismissedNotifIds] = useState(() => JSON.parse(localStorage.getItem('jindungo_dismissed_notifications') || '[]'));
+    const [isExpirationDismissed, setIsExpirationDismissed] = useState(() => localStorage.getItem('jindungo_expiration_dismissed') === 'true');
 
-    // Fetch Global Notifications
+    // [NEW] Fetch Global Admin Notifications (Filtered by audience)
     useEffect(() => {
         const fetchGlobalNotifications = async () => {
             try {
-                const { data } = await supabase
+                // Determine which notifications to show based on user role
+                let query = supabase
                     .from('system_notifications')
                     .select('*')
-                    .eq('is_active', true)
-                    .order('created_at', { ascending: false });
+                    .eq('is_active', true);
+                
+                // If not super_admin, only show 'all' or 'admin' targeted notifications
+                if (role !== 'super_admin') {
+                    query = query.in('target_role', ['all', 'admin']);
+                }
 
-                if (data) setGlobalNotifications(data);
-            } catch (error) {
-                console.error("Error fetching global notifications", error);
+                const { data, error } = await query.order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                // Filter out already dismissed ones
+                setGlobalNotifications(data?.filter(n => !dismissedNotifIds.includes(n.id)) || []);
+            } catch (err) {
+                console.error("Error fetching system notifications:", err);
             }
         };
+        if (user) fetchGlobalNotifications();
+    }, [role, user, dismissedNotifIds]);
 
-        fetchGlobalNotifications();
+    const handleDismissNotif = (id) => {
+        const newDismissed = [...dismissedNotifIds, id];
+        setDismissedNotifIds(newDismissed);
+        localStorage.setItem('jindungo_dismissed_notifications', JSON.stringify(newDismissed));
+    };
 
-        // Listen for new global notifications
-        const channel = supabase
-            .channel('global-notifs')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'system_notifications' },
-                () => {
-                    fetchGlobalNotifications(); // Simply refetch on any change
-                }
-            )
-            .subscribe();
+    const handleDismissExpiration = () => {
+        setIsExpirationDismissed(true);
+        localStorage.setItem('jindungo_expiration_dismissed', 'true');
+    };
 
-        return () => supabase.removeChannel(channel);
-    }, []);
-
-    // [NEW] Realtime Listener
+    // [NEW] Staff Session Expiry Check (8 Hours)
     useEffect(() => {
-        if (!restaurant) return;
+        if (restaurant?.id) {
+            const STAFF_EXPIRY_MS = 8 * 60 * 60 * 1000; // 8 Hours
+            const savedName = localStorage.getItem(`jindungo_staff_name_${restaurant.id}`);
+            const savedId = localStorage.getItem(`jindungo_staff_id_${restaurant.id}`);
+            const loginTime = localStorage.getItem(`jindungo_staff_login_time_${restaurant.id}`);
 
-        const playAlertSound = () => {
-            notificationSound.currentTime = 0;
-            notificationSound.play().catch(e => console.log("Audio autoplay blocked", e));
-        };
-
-        const waiterChannel = supabase
-            .channel('waiter-alerts')
-            .on(
-                'postgres_changes',
-                {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'notificacoes_garcom',
-                    filter: `restaurant_id=eq.${restaurant.id}`
-                },
-                (payload) => {
-                    playAlertSound();
-                    setActiveAlerts(prev => [...prev, payload.new]);
+            if (savedName && savedId && loginTime) {
+                const elapsed = Date.now() - parseInt(loginTime);
+                if (elapsed < STAFF_EXPIRY_MS) {
+                    setActiveStaff({ id: savedId, name: savedName });
+                } else {
+                    // Session Expired
+                    localStorage.removeItem(`jindungo_staff_id_${restaurant.id}`);
+                    localStorage.removeItem(`jindungo_staff_name_${restaurant.id}`);
+                    localStorage.removeItem(`jindungo_staff_login_time_${restaurant.id}`);
+                    toast.error("Sessão de staff expirada (Turno de 8h). Por favor, entre novamente.");
+                    setActiveStaff(null);
                 }
-            )
-            .subscribe();
-
-        const ordersChannel = supabase
-            .channel('new-orders-alerts')
-            .on(
-                'postgres_changes',
-                {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'orders',
-                    filter: `restaurant_id=eq.${restaurant.id}`
-                },
-                (payload) => {
-                    playAlertSound();
-                    const newOrderAlert = {
-                        id: `order-${payload.new.id}`,
-                        isOrder: true,
-                        mesa_id: 'Online',
-                        request_type: `De: ${payload.new.customer_name || 'Cliente Desconhecido'}`,
-                        created_at: payload.new.created_at
-                    };
-                    setActiveAlerts(prev => [...prev, newOrderAlert]);
-
-                    // Browser Notification
-                    if (isNotificationSupported() && Notification?.permission === 'granted') {
-                        sendNotification("Novo Pedido Jindungo!", {
-                            body: `De: ${payload.new.customer_name || 'Cliente'} - ${payload.new.total} Kz`,
-                            icon: '/jindungo_logo_v3.png'
-                        });
-                    }
-                }
-            )
-            .subscribe();
-
-        const reservationsChannel = supabase
-            .channel('new-reservations-alerts')
-            .on(
-                'postgres_changes',
-                {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'reservations',
-                    filter: `restaurant_id=eq.${restaurant.id}`
-                },
-                (payload) => {
-                    playAlertSound();
-                    const newResAlert = {
-                        id: `res-${payload.new.id}`,
-                        isReservation: true,
-                        mesa_id: `${payload.new.num_tables} Mesas`,
-                        request_type: `Reserva: ${payload.new.customer_name}`,
-                        created_at: payload.new.created_at
-                    };
-                    setActiveAlerts(prev => [...prev, newResAlert]);
-                    toast.success(`Nova Reserva de ${payload.new.customer_name}!`, { icon: '📅', duration: 6000 });
-
-                    // Browser Notification
-                    if (isNotificationSupported() && Notification?.permission === 'granted') {
-                        sendNotification("Nova Reserva Jindungo!", {
-                            body: `Cliente: ${payload.new.customer_name} para ${payload.new.num_tables} mesas`,
-                            icon: '/jindungo_logo_v3.png'
-                        });
-                    }
-                }
-            )
-            .subscribe();
-
-        // Also fetch existing pending alerts on load
-        const fetchPending = async () => {
-            const { data } = await supabase
-                .from('notificacoes_garcom')
-                .select('*')
-                .eq('restaurant_id', restaurant.id)
-                .eq('status', 'pendente');
-            if (data) setActiveAlerts(data);
-        };
-        fetchPending();
-
-        return () => {
-            supabase.removeChannel(waiterChannel);
-            supabase.removeChannel(ordersChannel);
-            supabase.removeChannel(reservationsChannel);
-        };
+            }
+        }
+    }, [restaurant?.id]);
+    
+    // [NEW] Show Welcome Modal for First Time Users
+    useEffect(() => {
+        const welcomed = localStorage.getItem('jindungo_welcome_dismissed');
+        if (!welcomed && restaurant) {
+            setShowWelcomeModal(true);
+            localStorage.setItem('jindungo_welcome_dismissed', 'true');
+        }
     }, [restaurant]);
 
-    const handleDismissAlert = async (id) => {
-        const alertToDismiss = activeAlerts.find(a => a.id === id);
-
-        // Optimistic Remove
-        setActiveAlerts(prev => prev.filter(a => a.id !== id));
-
-        if (alertToDismiss && (alertToDismiss.isOrder || alertToDismiss.isReservation)) {
-            if (alertToDismiss.isOrder) navigate('/admin/orders');
-            if (alertToDismiss.isReservation) navigate('/admin/reservations');
-        } else {
-            // DB Update for Waiter Alerts
-            await supabase
-                .from('notificacoes_garcom')
-                .update({ status: 'atendido' })
-                .eq('id', id);
-        }
-    };
-
-    // Config State (lifted from StyleControls/LivePreview)
-    const [config, setConfig] = useState({
-        primaryColor: '#D4AF37',
-        fontFamily: '"Plus Jakarta Sans", sans-serif',
-        layoutMode: 'list',
-        darkMode: false,
-        whatsappNumber: '',
-        logoUrl: ''
-    });
-
-    const [businessInfo, setBusinessInfo] = useState(null);
-
+    // [NEW] Command Palette Shortcut (Ctrl+K)
     useEffect(() => {
-        if (user) {
-            fetchRestaurantData();
-
-            // Request Notification Permission
-            if (isNotificationSupported() && Notification?.permission === 'default') {
-                requestNotificationPermission();
+        const handleKeyDown = (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                setIsCommandPaletteOpen(prev => !prev);
             }
-        }
-    }, [user]);
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
-    const fetchRestaurantData = async () => {
-        try {
-            setLoading(true);
-
-            // [NEW] Check for masquerade mode (Super Admin feature)
-            const masqueradeId = localStorage.getItem('masquerade_restaurant_id');
-
-            let query = supabase.from('restaurants').select('*');
-            if (masqueradeId) {
-                query = query.eq('id', masqueradeId);
-            } else {
-                query = query.eq('owner_id', user.id);
-            }
-
-            // 1. Get Restaurant associated with user (or masqueraded)
-            const { data: restaurants, error: rError } = await query;
-
-            if (rError) throw rError;
-
-            let currentRestaurant = restaurants?.[0];
-
-            if (!currentRestaurant) {
-                console.warn("No restaurant found for user. Creating default...");
-                // Free Trial logic: 7 days default
-                const trialEndDate = new Date();
-                trialEndDate.setDate(trialEndDate.getDate() + 7);
-
-                const { data: newRest, error: insertError } = await supabase
-                    .from('restaurants')
-                    .insert([{
-                        owner_id: user.id,
-                        name: '',
-                        slug: `novo-restaurante-${Date.now().toString().slice(-6)}`,
-                        plan: 'Free Trial',
-                        valid_until: trialEndDate.toISOString(),
-                        theme_config: {
-                            primaryColor: '#D4AF37',
-                            fontFamily: '"Plus Jakarta Sans", sans-serif',
-                            layoutMode: 'list',
-                            darkMode: false,
-                            whatsappNumber: '',
-                            logoUrl: ''
-                        }
-                    }])
-                    .select()
-                    .single();
-
-                if (insertError) {
-                    console.error("Failed to create default restaurant:", insertError);
-                } else {
-                    setRestaurant(newRest);
-                    setConfig(newRest.theme_config);
-                    setCategories([]);
-                }
-            } else {
-                setRestaurant(currentRestaurant);
-                // Parse config if it exists in DB, otherwise keep defaults
-                if (currentRestaurant.theme_config) {
-                    setConfig(prev => ({ ...prev, ...currentRestaurant.theme_config }));
-                }
-
-                if (currentRestaurant.business_info) {
-                    setBusinessInfo(currentRestaurant.business_info);
-                }
-
-                // 2. Get Categories & Items
-                const { data: cats, error: cError } = await supabase
-                    .from('categories')
-                    .select('*, items:menu_items(*)')
-                    .eq('restaurant_id', currentRestaurant.id)
-                    .order('sort_order');
-
-                if (cError) throw cError;
-                setCategories(cats || []);
-
-                // Check Expiration
-                const daysUntilExpiration = currentRestaurant.valid_until 
-                    ? Math.ceil((new Date(currentRestaurant.valid_until) - new Date()) / (1000 * 60 * 60 * 24)) 
-                    : null;
-                if (daysUntilExpiration !== null && daysUntilExpiration <= 7 && daysUntilExpiration > 0) {
-                    // Check if already acknowledged in this session
-                    if (!sessionStorage.getItem('expiration_acknowledged')) {
-                        setShowExpirationModal(true);
-                    }
-                }
-
-            }
-        } catch (error) {
-            console.error("Error fetching dashboard data:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleConfigChange = async (newConfig) => {
-        // Optimistic update
-        const updated = typeof newConfig === 'function' ? newConfig(config) : newConfig;
-        setConfig(updated);
-
-        // Debounced save to DB would go here
-        if (restaurant) {
-            try {
-                const { error } = await supabase
-                    .from('restaurants')
-                    .update({ theme_config: updated }) // updated is now guaranteed to be the evaluated object
-                    .eq('id', restaurant.id);
-
-                if (error) throw error;
-            } catch (err) {
-                console.error("Erro ao salvar config:", err);
-            }
-        }
-    };
-
-    const handleBusinessInfoSave = async (newInfo) => {
-        setBusinessInfo(newInfo);
-        if (restaurant) {
-            try {
-                const { error } = await supabase
-                    .from('restaurants')
-                    .update({ business_info: newInfo })
-                    .eq('id', restaurant.id);
-                if (error) throw error;
-                toast.success("Informações do negócio atualizadas!");
-            } catch (err) {
-                console.error("Erro ao salvar info:", err);
-                toast.error("Erro ao salvar as informações.");
-            }
-        }
+    // Explicit logout
+    const handleLogout = async () => {
+        await signOut();
+        navigate('/login', { replace: true });
     };
 
     // [NEW] Handle Name Update (for Demo purposes)
@@ -464,69 +223,6 @@ const AdminDashboard = () => {
         }
     };
 
-    // [NEW] Handle Logo Upload (Supabase Storage)
-    const handleLogoUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file || !restaurant) return;
-
-        try {
-            toast.loading("Otimizando logotipo...", { id: 'logo-upload' });
-
-            // Compress logo to smaller size (maxWidth 400 for logos)
-            const uploadFile = await compressImage(file, 400, 0.85);
-
-            const fileExt = uploadFile.name.split('.').pop() || 'png';
-            const fileName = `logos/${restaurant.id}/logo_${Date.now()}.${fileExt}`;
-
-            const { error: uploadError } = await supabase.storage.from('menus').upload(fileName, uploadFile, {
-                cacheControl: '3600',
-                upsert: true
-            });
-
-            if (uploadError) throw uploadError;
-
-            const { data: { publicUrl } } = supabase.storage.from('menus').getPublicUrl(fileName);
-            if (!publicUrl) throw new Error("Falha ao obter URL pública");
-
-            await handleConfigChange(prev => ({ ...prev, logoUrl: publicUrl }));
-            toast.success("Logotipo atualizado com sucesso!", { id: 'logo-upload' });
-        } catch (error) {
-            console.error('Error saving logo:', error);
-            toast.error("Erro ao salvar logotipo.", { id: 'logo-upload' });
-        }
-    };
-
-    // [NEW] Handle Header Background Upload
-    const handleHeaderBgUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file || !restaurant) return;
-
-        try {
-            toast.loading("Otimizando capa...", { id: 'capa-upload' });
-
-            const uploadFile = await compressImage(file, 1600, 0.75);
-
-            const fileExt = uploadFile.name.split('.').pop() || 'jpg';
-            const fileName = `headers/${restaurant.id}/headbg_${Date.now()}.${fileExt}`;
-
-            const { error: uploadError } = await supabase.storage.from('menus').upload(fileName, uploadFile, {
-                cacheControl: '3600',
-                upsert: true
-            });
-
-            if (uploadError) throw uploadError;
-
-            const { data: { publicUrl } } = supabase.storage.from('menus').getPublicUrl(fileName);
-            if (!publicUrl) throw new Error("Falha ao obter URL pública");
-
-            await handleConfigChange(prev => ({ ...prev, headerBgUrl: publicUrl }));
-            toast.success("Capa atualizada com sucesso!", { id: 'capa-upload' });
-        } catch (error) {
-            console.error("Error uploading header bg:", error);
-            toast.error("Erro ao carregar a imagem de capa.", { id: 'capa-upload' });
-        }
-    };
-
     const handleMenuUpdate = () => {
         fetchRestaurantData(); // Refresh data
     };
@@ -536,6 +232,7 @@ const AdminDashboard = () => {
         { icon: MessageSquare, label: 'Assistente IA', path: '/admin/chat' },
         { icon: UtensilsCrossed, label: 'Menu Digital', path: '/admin/menu' },
         { icon: ClipboardList, label: 'Pedidos (Cozinha)', path: '/admin/orders' },
+        { icon: Package, label: 'Gestão de Stock', path: '/admin/inventory' },
         { icon: Calendar, label: 'Reservas', path: '/admin/reservations' },
         { icon: User, label: 'CRM Clientes', path: '/admin/crm', feature: 'canCollectClientData' },
         { icon: MessageSquare, label: 'Avaliações', path: '/admin/feedbacks', feature: 'canCollectClientData' },
@@ -554,10 +251,10 @@ const AdminDashboard = () => {
     const isExpiringSoon = daysUntilExpiration !== null && daysUntilExpiration <= 7 && daysUntilExpiration > 0;
     const features = getPlanFeatures(restaurant?.plan);
 
-    if (loading) return (
+    if (dataLoading) return (
         <div className="flex bg-[#121212] flex-col h-screen items-center justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D4AF37] mb-4"></div>
-            <p className="text-gray-400 font-mono text-sm animate-pulse">Verificando Credenciais SaaS...</p>
+            <p className="text-gray-400 font-mono text-sm animate-pulse">Verificando Credenciais Menús Jindungo...</p>
         </div>
     );
 
@@ -640,7 +337,7 @@ const AdminDashboard = () => {
         <div className="flex h-screen bg-[#121212] text-gray-100 overflow-hidden max-w-[100vw] font-sans">
             {/* Ambient Background */}
             <div className="absolute inset-0 z-0 pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[150px]"></div>
+                <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[150px] "></div>
                 <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-secondary/20 blur-[150px]"></div>
             </div>
 
@@ -661,130 +358,33 @@ const AdminDashboard = () => {
                 location={location}
                 globalLogoUrl={globalLogoUrl}
                 signOut={handleLogout}
+                restaurantName={restaurant?.name}
+                restaurantSlug={restaurant?.slug}
             />
 
             {/* Main Content */}
             <main className="flex-1 overflow-y-auto custom-scrollbar relative z-10 bg-[#121212]">
 
+                <DashboardAlertSystem 
+                    activeAlerts={activeAlerts}
+                    handleDismissAlert={handleDismissAlert}
+                    restaurant={restaurant}
+                    globalNotifications={globalNotifications}
+                    handleDismissNotif={handleDismissNotif}
+                    isExpiringSoon={isExpiringSoon}
+                    isExpirationDismissed={isExpirationDismissed}
+                    daysUntilExpiration={daysUntilExpiration}
+                    setShowExpirationModal={setShowExpirationModal}
+                    handleDismissExpiration={handleDismissExpiration}
+                />
 
-                {/* [NEW] Waiter & Order Alerts Section */}
-                <AdminAlerts activeAlerts={activeAlerts} onDismiss={handleDismissAlert} />
-
-                {/* [NEW] Masquerade Warning Banner */}
-                <MasqueradeBanner restaurantName={restaurant?.name} />
-
-                {/* [NEW] Global Notifications Banner */}
-                {globalNotifications.map(notif => (
-                    <div
-                        key={notif.id}
-                        className={`px-4 py-3 flex items-start gap-3 shadow-lg sticky top-0 z-40 backdrop-blur-md border-b text-sm font-medium ${notif.type === 'danger' ? 'bg-red-900/90 text-white border-red-500/50' :
-                            notif.type === 'warning' ? 'bg-orange-600/90 text-white border-orange-500/50' :
-                                notif.type === 'success' ? 'bg-green-700/90 text-white border-green-500/50' :
-                                    'bg-blue-800/90 text-white border-blue-500/50'
-                            }`}
-                        // Adjusting top position if masquerade banner is active so they stack
-                        style={{ marginTop: localStorage.getItem('masquerade_restaurant_id') ? '0' : '0' }}
-                    >
-                        <span className="text-xl mt-0.5">
-                            {notif.type === 'danger' ? '🚨' : notif.type === 'warning' ? '⚠️' : notif.type === 'success' ? '🎉' : 'ℹ️'}
-                        </span>
-                        <div className="flex-1">
-                            <strong className="block mb-0.5 uppercase tracking-wider text-[10px] opacity-80">
-                                Mensagem da Administração Jindungo
-                            </strong>
-                            {notif.message}
-                        </div>
-                    </div>
-                ))}
-
-                {/* [NEW] Expiration Alert Banner */}
-                {isExpiringSoon && (
-                    <div className="px-4 py-3 flex items-center justify-between gap-3 shadow-lg sticky top-0 z-[35] backdrop-blur-md border-b text-sm font-medium bg-gradient-to-r from-orange-600/95 to-red-600/95 text-white border-orange-500/50 animate-pulse-slow">
-                        <div className="flex items-center gap-3">
-                            <span className="text-xl">⚠️</span>
-                            <div>
-                                <strong className="block mb-0.5 uppercase tracking-wider text-[10px] opacity-80">
-                                    Aviso de Renovação de Licença
-                                </strong>
-                                O seu plano termina em <strong>{daysUntilExpiration} {daysUntilExpiration === 1 ? 'dia' : 'dias'}</strong>. Para evitar a suspensão do seu Menu Digital, efetue a regularização.
-                            </div>
-                        </div>
-                        <button
-                            onClick={() => setShowExpirationModal(true)}
-                            className="bg-white text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-100 transition whitespace-nowrap shadow-sm"
-                        >
-                            Ver Detalhes
-                        </button>
-                    </div>
-                )}
-
-                {/* [NEW] Aggressive Expiration Modal */}
-                {showExpirationModal && (
-                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in">
-                        <div className="bg-[#1a1a1a] border border-red-500/30 rounded-3xl p-6 sm:p-10 max-w-lg w-full shadow-2xl relative overflow-hidden animate-in slide-in-from-bottom-5">
-                            {/* Warning glow background */}
-                            <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-red-900/40 blur-[80px] pointer-events-none"></div>
-                            
-                            <div className="w-16 h-16 bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/30">
-                                <span className="text-3xl text-red-500">⚠️</span>
-                            </div>
-
-                            <h2 className="text-2xl font-black text-center text-white mb-2">Renovação de Licença</h2>
-                            <p className="text-center text-gray-300 text-sm mb-6">
-                                Informamos que a sua subscrição da plataforma Jindungo para o restaurante <strong className="text-white">{restaurant?.name}</strong> expira em <strong className="text-red-400 font-black text-lg">{daysUntilExpiration} {daysUntilExpiration === 1 ? 'dia' : 'dias'}</strong>.
-                            </p>
-
-                            <div className="bg-black/50 border border-white/10 rounded-2xl p-5 mb-8">
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 border-b border-white/10 pb-2">Como Renovar</p>
-                                <div className="space-y-4">
-                                    <div className="flex gap-3 items-start">
-                                        <div className="w-6 h-6 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">1</div>
-                                        <p className="text-sm text-gray-300">Faça o pagamento via Multicaixa Express ou Depósito Bancário para o IBAN: <br /><strong className="text-[#D4AF37] font-mono tracking-wider">AO06 0000 0000 0000 0000 0</strong></p>
-                                    </div>
-                                    <div className="flex gap-3 items-start">
-                                        <div className="w-6 h-6 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">2</div>
-                                        <p className="text-sm text-gray-300">Envie o comprovativo para o nosso suporte no WhatsApp.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col gap-3">
-                                <a
-                                    href={`https://wa.me/244900000000?text=Olá, o meu restaurante (${restaurant?.name}) vai expirar em ${daysUntilExpiration} dias. Venho renovar a licença.`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg flex justify-center items-center gap-2 group"
-                                    onClick={() => {
-                                        sessionStorage.setItem('expiration_acknowledged', 'true');
-                                        setShowExpirationModal(false);
-                                    }}
-                                >
-                                    Falar com o Suporte e Renovar <ExternalLink size={16} className="group-hover:translate-x-1 transition-transform" />
-                                </a>
-                                <button
-                                    onClick={() => {
-                                        setShowExpirationModal(false);
-                                        setShowPaymentModal(true);
-                                    }}
-                                    className="w-full bg-[#D4AF37] hover:bg-[#AA8B2C] text-black font-black py-4 rounded-xl transition-all shadow-lg flex justify-center items-center gap-2"
-                                >
-                                    Pagar com MCX (Automático)
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        sessionStorage.setItem('expiration_acknowledged', 'true');
-                                        setShowExpirationModal(false);
-                                    }}
-                                    className="w-full bg-transparent text-gray-400 hover:text-white py-3 font-bold text-xs uppercase tracking-widest transition-colors"
-                                >
-                                    Lembrar-me mais tarde
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Removed InstallPWA from here since it is now global in App.jsx */}
+                <ExpirationModal 
+                    isOpen={showExpirationModal}
+                    onClose={() => setShowExpirationModal(false)}
+                    restaurant={restaurant}
+                    daysUntilExpiration={daysUntilExpiration}
+                    onShowPayment={() => setShowPaymentModal(true)}
+                />
 
                 <StaffPinModal 
                     isOpen={showStaffModal} 
@@ -808,6 +408,7 @@ const AdminDashboard = () => {
                     restaurant={restaurant}
                     activeStaff={activeStaff}
                     setShowStaffModal={setShowStaffModal}
+                    onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
                 />
 
                 <div className="p-4 sm:p-8 max-w-7xl mx-auto pb-32 lg:pb-24">
@@ -819,7 +420,16 @@ const AdminDashboard = () => {
                     }>
                         <Routes>
                         <Route path="/" element={
-                            <DashboardStats restaurantId={restaurant?.id} features={features} />
+                            <div className="space-y-12 animate-fade-in-up">
+                                <DashboardStatsGrid stats={stats} />
+                                
+                                <div className="space-y-6">
+                                    <h2 className="text-2xl font-serif font-black text-white tracking-tight">Atalhos de Impacto</h2>
+                                    <QuickActionGrid />
+                                </div>
+
+                                <UpgradePromoSection restaurant={restaurant} navigate={navigate} />
+                            </div>
                         } /><Route path="/menu" element={<MenuManager categories={categories} restaurantId={restaurant?.id} onUpdate={handleMenuUpdate} />} />
 
                         <Route path="/orders" element={
@@ -829,6 +439,7 @@ const AdminDashboard = () => {
                                 <OrderHistory restaurantId={restaurant?.id} />
                             )
                         } />
+                        <Route path="/inventory" element={<InventoryManager restaurantId={restaurant?.id} />} />
 
                         <Route path="/staff" element={
                             features.canManageStaff ? (
@@ -905,7 +516,7 @@ const AdminDashboard = () => {
                             <BusinessInfoManager
                                 info={businessInfo}
                                 onSave={handleBusinessInfoSave}
-                                isLoading={loading}
+                                isLoading={dataLoading}
                                 features={features}
                             />
                         } />
@@ -991,9 +602,68 @@ const AdminDashboard = () => {
                     </a>
                 )}
 
+                {/* [NEW] Welcome Modal */}
+                {showWelcomeModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+                        <div className="bg-[#121212] border border-white/10 rounded-[2.5rem] p-8 max-w-lg w-full relative overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                            {/* Decorative Background */}
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/10 rounded-full blur-[80px] -mr-32 -mt-32"></div>
+                            <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full blur-[80px] -ml-32 -mb-32"></div>
+
+                            <div className="relative z-10 text-center">
+                                <div className="w-20 h-20 bg-gradient-to-br from-[#D4AF37] to-[#F1C40F] rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-3 shadow-xl">
+                                    <Award size={40} className="text-black" />
+                                </div>
+
+                                <h2 className="text-3xl font-serif font-black text-white mb-4">
+                                    Bem-vindo à Família Menús Jindungo!
+                                </h2>
+                                
+                                <p className="text-gray-400 text-lg leading-relaxed mb-8">
+                                    Parabéns! A sua conta foi ativada com sucesso. Já pode começar a configurar o seu menu digital e receber pedidos.
+                                </p>
+
+                                <div className="space-y-4 mb-8">
+                                    <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
+                                        <div className="w-10 h-10 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center border border-green-500/20">
+                                            <Utensils size={20} />
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="text-xs text-gray-500 uppercase font-black tracking-widest">Passo 1</p>
+                                            <p className="text-sm font-bold text-white">Adicione as suas categorias e pratos</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
+                                        <div className="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/20">
+                                            <QrCode size={20} />
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="text-xs text-gray-500 uppercase font-black tracking-widest">Passo 2</p>
+                                            <p className="text-sm font-bold text-white">Imprima o seu QR Code único</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => setShowWelcomeModal(false)}
+                                    className="w-full py-4 bg-gradient-to-r from-[#D4AF37] to-[#F1C40F] text-black font-black rounded-2xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest text-sm"
+                                >
+                                    Começar Agora
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <AdminMobileNav 
                     onOpenSidebar={() => setIsMobileMenuOpen(true)} 
                     restaurantSlug={restaurant?.slug}
+                />
+
+                <CommandPalette 
+                    isOpen={isCommandPaletteOpen} 
+                    onClose={() => setIsCommandPaletteOpen(false)}
+                    menuItems={menuItems}
                 />
 
                 <Toaster position="top-right" />

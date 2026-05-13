@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { staffService } from '../services/staffService';
 import { Lock, User, CheckCircle2, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -6,12 +6,22 @@ import { toast } from 'react-hot-toast';
 const StaffPinModal = ({ isOpen, onClose, restaurantId, onLogin }) => {
     const [pin, setPin] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isShaking, setIsShaking] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setPin('');
+            setIsShaking(false);
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
     const handleNumberClick = (num) => {
         if (pin.length < 6) {
             setPin(prev => prev + num);
+            // Haptic feedback if available
+            if (window.navigator.vibrate) window.navigator.vibrate(10);
         }
     };
 
@@ -26,23 +36,32 @@ const StaffPinModal = ({ isOpen, onClose, restaurantId, onLogin }) => {
         }
 
         setIsLoading(true);
-        const result = await staffService.validatePin(restaurantId, pin);
-        
-        if (result.valid) {
-            // Save to local storage for persistence across tabs
-            localStorage.setItem(`jindungo_staff_id_${restaurantId}`, result.staff.id);
-            localStorage.setItem(`jindungo_staff_name_${restaurantId}`, result.staff.name);
-            localStorage.setItem(`jindungo_staff_role_${restaurantId}`, result.staff.role);
+        try {
+            const result = await staffService.validatePin(restaurantId, pin);
             
-            toast.success(`Bem-vindo, ${result.staff.name}!`);
-            onLogin(result.staff);
-            setPin('');
-            onClose();
-        } else {
-            toast.error(result.message);
-            setPin(''); // clear wrong pin
+            if (result.valid) {
+                // Save to local storage for persistence across tabs
+                localStorage.setItem(`jindungo_staff_id_${restaurantId}`, result.staff.id);
+                localStorage.setItem(`jindungo_staff_name_${restaurantId}`, result.staff.name);
+                localStorage.setItem(`jindungo_staff_role_${restaurantId}`, result.staff.role);
+                localStorage.setItem(`jindungo_staff_login_time_${restaurantId}`, Date.now().toString());
+                
+                toast.success(`Bem-vindo, ${result.staff.name}!`);
+                onLogin(result.staff);
+                setPin('');
+                onClose();
+            } else {
+                setIsShaking(true);
+                if (window.navigator.vibrate) window.navigator.vibrate([100, 50, 100]);
+                toast.error(result.message);
+                setPin(''); 
+                setTimeout(() => setIsShaking(false), 500);
+            }
+        } catch (error) {
+            toast.error("Erro na ligação ao servidor");
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
 
     const handleClearStaff = () => {
@@ -58,7 +77,7 @@ const StaffPinModal = ({ isOpen, onClose, restaurantId, onLogin }) => {
 
     return (
         <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-xl">
-            <div className="bg-[#121212] w-full max-w-sm rounded-[32px] p-8 relative border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-fade-in-up">
+            <div className={`bg-[#121212] w-full max-w-sm rounded-[32px] p-8 relative border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ${isShaking ? 'animate-shake border-red-500/50' : 'animate-fade-in-up'}`}>
                 <button 
                     onClick={onClose}
                     className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors"
@@ -67,11 +86,11 @@ const StaffPinModal = ({ isOpen, onClose, restaurantId, onLogin }) => {
                 </button>
 
                 <div className="text-center mb-8 mt-4">
-                    <div className="w-16 h-16 bg-[#D4AF37]/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-[#D4AF37]/30 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
-                        <Lock size={28} className="text-[#D4AF37]" />
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border transition-all duration-500 ${isShaking ? 'bg-red-500/10 border-red-500/30' : 'bg-[#D4AF37]/10 border-[#D4AF37]/30 shadow-[0_0_15px_rgba(212,175,55,0.2)]'}`}>
+                        <Lock size={28} className={isShaking ? 'text-red-400' : 'text-[#D4AF37]'} />
                     </div>
                     <h2 className="text-2xl font-serif font-bold text-white mb-2">Acesso Restrito</h2>
-                    <p className="text-gray-400 text-sm">Insira o seu PIN de Garçom ou Gerente para assumir o POS</p>
+                    <p className="text-gray-400 text-sm">Insira o seu PIN de Garçom ou Gerente</p>
                 </div>
 
                 {/* PIN Display */}
@@ -132,7 +151,7 @@ const StaffPinModal = ({ isOpen, onClose, restaurantId, onLogin }) => {
                                     <User size={16} />
                                 </div>
                                 <div>
-                                    <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Sessão Ativa</p>
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Logado como</p>
                                     <p className="text-sm font-bold text-white">{currentStaffName}</p>
                                 </div>
                             </div>

@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { X, Calendar, Users, Clock, Send, CheckCircle2, Phone, User } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
+import { getTranslation } from '../utils/i18n';
 
-const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName, whatsappNumber }) => {
+const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName, whatsappNumber, selectedLanguage = 'PT' }) => {
+    const t = (key) => getTranslation(selectedLanguage, key);
     const [step, setStep] = useState(1); // 1: Info, 2: Contacts, 3: Success
     const [bookingData, setBookingData] = useState({
         customer_name: '',
@@ -37,20 +39,20 @@ const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName, whatsappN
                 let cleanPhone = String(whatsappNumber).replace(/\D/g, '');
                 if (cleanPhone.length === 9) cleanPhone = '244' + cleanPhone;
                 
-                let msg = `*Nova Solicitação de Reserva* 🗓️\n\n`;
-                msg += `*Cliente:* ${bookingData.customer_name}\n`;
-                msg += `*Contacto:* ${bookingData.customer_phone}\n`;
+                let msg = `*${selectedLanguage === 'PT' ? 'Nova Solicitação de Reserva' : 'New Reservation Request'}* 🗓️\n\n`;
+                msg += `*${selectedLanguage === 'PT' ? 'Cliente' : 'Customer'}:* ${bookingData.customer_name}\n`;
+                msg += `*${selectedLanguage === 'PT' ? 'Contacto' : 'Contact'}:* ${bookingData.customer_phone}\n`;
                 
                 // Formatar Data
                 const dateParts = bookingData.reservation_date.split('-');
                 const formattedDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : bookingData.reservation_date;
                 
-                msg += `*Data:* ${formattedDate}\n`;
-                msg += `*Hora:* ${bookingData.reservation_time}\n`;
-                msg += `*Pessoas:* ${bookingData.num_people}\n`;
-                msg += `*Mesas:* ${bookingData.num_tables}\n`;
-                if (bookingData.notes) msg += `\n*Observações:* ${bookingData.notes}\n`;
-                msg += `\n_Reserva solicitada via Menú Jindungo_`;
+                msg += `*${selectedLanguage === 'PT' ? 'Data' : 'Date'}:* ${formattedDate}\n`;
+                msg += `*${selectedLanguage === 'PT' ? 'Hora' : 'Time'}:* ${bookingData.reservation_time}\n`;
+                msg += `*${selectedLanguage === 'PT' ? 'Pessoas' : 'People'}:* ${bookingData.num_people}\n`;
+                msg += `*${selectedLanguage === 'PT' ? 'Mesas' : 'Tables'}:* ${bookingData.num_tables}\n`;
+                if (bookingData.notes) msg += `\n*${selectedLanguage === 'PT' ? 'Observações' : 'Notes'}:* ${bookingData.notes}\n`;
+                msg += `\n_${selectedLanguage === 'PT' ? 'Reserva solicitada via Menú Jindungo' : 'Reservation requested via Jindungo Menu'}_`;
                 
                 const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
                 window.open(url, '_blank');
@@ -58,7 +60,7 @@ const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName, whatsappN
             
         } catch (error) {
             console.error('Error saving reservation:', error);
-            toast.error("Erro ao solicitar reserva. Tente novamente.");
+            toast.error(selectedLanguage === 'PT' ? "Erro ao solicitar reserva. Tente novamente." : "Error requesting reservation. Try again.");
         } finally {
             setLoading(false);
         }
@@ -74,9 +76,9 @@ const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName, whatsappN
                     <div>
                         <h3 className="text-xl font-bold text-white flex items-center gap-2">
                             <Calendar className="text-[#D4AF37]" size={20} />
-                            Reservar Mesa
+                            {t('bookTable')}
                         </h3>
-                        <p className="text-gray-400 text-xs mt-1">Reserve no {restaurantName}</p>
+                        <p className="text-gray-400 text-xs mt-1">{t('reserveAt')} {restaurantName}</p>
                     </div>
                     <button
                         onClick={onClose}
@@ -93,7 +95,7 @@ const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName, whatsappN
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-2">
-                                        <Calendar size={12} /> Data
+                                        <Calendar size={12} /> {selectedLanguage === 'PT' ? 'Data' : 'Date'}
                                     </label>
                                     <input
                                         type="date"
@@ -105,7 +107,7 @@ const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName, whatsappN
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-2">
-                                        <Clock size={12} /> Hora
+                                        <Clock size={12} /> {selectedLanguage === 'PT' ? 'Hora' : 'Time'}
                                     </label>
                                     <input
                                         type="time"
@@ -119,7 +121,7 @@ const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName, whatsappN
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-2">
-                                        <Users size={12} /> Pessoas
+                                        <Users size={12} /> {selectedLanguage === 'PT' ? 'Pessoas' : 'People'}
                                     </label>
                                     <div className="flex items-center gap-4 bg-white/5 p-2 rounded-2xl border border-white/10">
                                         <button
@@ -138,7 +140,7 @@ const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName, whatsappN
 
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-2">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v18" /><path d="m5 8 14 0" /><path d="m5 16 14 0" /></svg> Mesas
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v18" /><path d="m5 8 14 0" /><path d="m5 16 14 0" /></svg> {selectedLanguage === 'PT' ? 'Mesas' : 'Tables'}
                                     </label>
                                     <div className="flex items-center gap-4 bg-white/5 p-2 rounded-2xl border border-white/10">
                                         <button
@@ -160,7 +162,7 @@ const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName, whatsappN
                                 onClick={() => setStep(2)}
                                 className="w-full bg-[#D4AF37] text-black font-bold py-4 rounded-2xl shadow-lg hover:shadow-[#D4AF37]/20 transition-all flex items-center justify-center gap-2 mt-4"
                             >
-                                Continuar <ChevronRight size={18} />
+                                {selectedLanguage === 'PT' ? 'Continuar' : 'Continue'} <ChevronRight size={18} />
                             </button>
                         </div>
                     )}
@@ -169,12 +171,12 @@ const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName, whatsappN
                         <form onSubmit={handleSubmit} className="space-y-6 animate-in slide-in-from-right duration-300">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-2">
-                                    <User size={12} /> Nome Completo
+                                    <User size={12} /> {selectedLanguage === 'PT' ? 'Nome Completo' : 'Full Name'}
                                 </label>
                                 <input
                                     type="text"
                                     required
-                                    placeholder="Como devemos chamar-lhe?"
+                                    placeholder={selectedLanguage === 'PT' ? "Como devemos chamar-lhe?" : "How should we call you?"}
                                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#D4AF37] outline-none"
                                     value={bookingData.customer_name}
                                     onChange={(e) => setBookingData({ ...bookingData, customer_name: e.target.value })}
@@ -183,12 +185,12 @@ const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName, whatsappN
 
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-2">
-                                    <Phone size={12} /> Telemóvel / WhatsApp
+                                    <Phone size={12} /> {selectedLanguage === 'PT' ? 'Telemóvel / WhatsApp' : 'Phone / WhatsApp'}
                                 </label>
                                 <input
                                     type="tel"
                                     required
-                                    placeholder="Para confirmar o seu lugar"
+                                    placeholder={selectedLanguage === 'PT' ? "Para confirmar o seu lugar" : "To confirm your spot"}
                                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#D4AF37] outline-none"
                                     value={bookingData.customer_phone}
                                     onChange={(e) => setBookingData({ ...bookingData, customer_phone: e.target.value })}
@@ -197,10 +199,10 @@ const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName, whatsappN
 
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-2">
-                                    Observações (Opcional)
+                                    {selectedLanguage === 'PT' ? 'Observações (Opcional)' : 'Observations (Optional)'}
                                 </label>
                                 <textarea
-                                    placeholder="Ex: Aniversário, lugar calmo, alergias..."
+                                    placeholder={selectedLanguage === 'PT' ? "Ex: Aniversário, lugar calmo, alergias..." : "Ex: Birthday, quiet place, allergies..."}
                                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#D4AF37] outline-none min-h-[80px]"
                                     value={bookingData.notes}
                                     onChange={(e) => setBookingData({ ...bookingData, notes: e.target.value })}
@@ -213,14 +215,14 @@ const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName, whatsappN
                                     onClick={() => setStep(1)}
                                     className="flex-1 bg-white/5 text-gray-400 font-bold py-4 rounded-2xl border border-white/10 hover:bg-white/10 transition-all"
                                 >
-                                    Voltar
+                                    {t('back')}
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={loading}
                                     className="flex-[2] bg-[#D4AF37] text-black font-bold py-4 rounded-2xl shadow-lg hover:shadow-[#D4AF37]/20 transition-all flex items-center justify-center gap-2"
                                 >
-                                    {loading ? 'Poder d@ Jindungo...' : <><Send size={18} /> Solicitar Reserva</>}
+                                    {loading ? (selectedLanguage === 'PT' ? 'Poder d@ Jindungo...' : 'Jindungo power...') : <><Send size={18} /> {t('bookTable')}</>}
                                 </button>
                             </div>
                         </form>
@@ -231,15 +233,17 @@ const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName, whatsappN
                             <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-green-500/30">
                                 <CheckCircle2 className="text-green-500" size={40} />
                             </div>
-                            <h3 className="text-2xl font-bold text-white mb-2">Pedido Enviado!</h3>
+                            <h3 className="text-2xl font-bold text-white mb-2">{selectedLanguage === 'PT' ? 'Pedido Enviado!' : 'Request Sent!'}</h3>
                             <p className="text-gray-400 mb-8 max-w-[250px] mx-auto text-sm">
-                                O seu pedido de reserva foi enviado. O restaurante entrará em contacto para confirmar.
+                                {selectedLanguage === 'PT' 
+                                    ? 'O seu pedido de reserva foi enviado. O restaurante entrará em contacto para confirmar.' 
+                                    : 'Your reservation request has been sent. The restaurant will contact you to confirm.'}
                             </p>
                             <button
                                 onClick={onClose}
                                 className="w-full bg-white/5 text-white font-bold py-4 rounded-2xl border border-white/10 hover:bg-[#D4AF37] hover:text-black transition-all"
                             >
-                                Fechar
+                                {t('back')}
                             </button>
                         </div>
                     )}

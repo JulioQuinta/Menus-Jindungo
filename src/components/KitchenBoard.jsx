@@ -2,12 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { orderService } from '../services/orderService';
 import { Clock, CheckCircle, ChefHat, Truck, XCircle, AlertCircle, Banknote, Printer, Ticket, Smartphone, Volume2, VolumeX, Award, RefreshCw, Bike } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { generateWhatsAppLink } from '../utils/whatsappGenerator';
 import toast from 'react-hot-toast';
 import TableBillTemplate from './TableBillTemplate';
 import { printerService } from '../utils/bluetoothPrinter';
 
-const OrderCard = ({ order, onStatusChange, onPrint, enablePrint, restaurantName }) => {
+const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, restaurantName }) => {
     // Calculate waiting time
     const [elapsed, setElapsed] = useState('');
     const [showTimeSelector, setShowTimeSelector] = useState(false);
@@ -22,12 +21,12 @@ const OrderCard = ({ order, onStatusChange, onPrint, enablePrint, restaurantName
         updateTimer();
         const interval = setInterval(updateTimer, 60000);
         return () => clearInterval(interval);
-    }, [order.created_at]);
+    }, [order.created_at, order.status]);
 
     const statusColors = {
-        pending: 'border-[#F1C40F] bg-black/40 shadow-[0_5px_20px_rgba(241,196,15,0.1)]',
-        preparing: 'border-[#E67E22] bg-black/40 shadow-[0_5px_20px_rgba(230,126,34,0.1)]',
-        ready: 'border-[#2ECC71] bg-black/40 shadow-[0_5px_20px_rgba(46,204,113,0.1)]',
+        pending: `border-[#F1C40F] bg-[#111111]/80 shadow-[0_10px_30px_rgba(241,196,15,0.05)] ${parseInt(elapsed) > 15 ? 'ring-2 ring-red-500/50 animate-pulse-slow shadow-[0_0_40px_rgba(239,68,68,0.2)]' : ''}`,
+        preparing: 'border-[#E67E22] bg-[#111111]/80 shadow-[0_10px_30px_rgba(230,126,34,0.05)]',
+        ready: 'border-[#2ECC71] bg-[#111111]/80 shadow-[0_10px_30px_rgba(46,204,113,0.05)]',
     };
 
     // Data Extraction for Delivery and Maps
@@ -53,21 +52,27 @@ const OrderCard = ({ order, onStatusChange, onPrint, enablePrint, restaurantName
     }
 
     return (
-        <div className={`p-5 rounded-2xl border-l-4 backdrop-blur-md mb-4 animate-slide-in transition-all hover:scale-[1.02] hover:-translate-y-1 ${statusColors[order.status] || 'border-white/10 bg-black/40'} border-y border-y-white/5 border-r border-r-white/5`}>
-            <div className="flex justify-between items-start mb-3">
-                <div className="flex-1 pr-3">
-                    <h4 className="font-bold text-sm text-white leading-tight break-words">
-                        {isDelivery ? (
-                            <span className="flex items-start gap-1"><Bike size={16} className="text-cyan-400 shrink-0 mt-0.5"/> {displayAddress}</span>
-                        ) : (
-                            <span>#Mesa {displayAddress}</span>
-                        )}
+        <div className={`p-6 rounded-[2rem] border-l-8 backdrop-blur-3xl mb-6 animate-slide-up transition-all hover:scale-[1.01] hover:border-r hover:border-r-[#D4AF37]/20 ${statusColors[order.status] || 'border-white/10 bg-black/40'} border-y border-y-white/5 border-r border-r-white/5 relative overflow-hidden group`}>
+            {/* Background Glow */}
+            <div className="absolute -right-10 -top-10 w-32 h-32 rounded-full bg-[#D4AF37]/5 blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            
+            <div className="flex justify-between items-start mb-4 relative z-10">
+                <div className="flex-1 pr-4">
+                    <div className="flex items-center gap-2 mb-1">
+                        {isDelivery ? <Bike size={16} className="text-cyan-400" /> : <ChefHat size={16} className="text-[#D4AF37]" />}
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{isDelivery ? 'Entrega ao Domicílio' : 'Pedido de Sala'}</span>
+                    </div>
+                    <h4 className="text-lg font-serif font-black text-white leading-tight">
+                        {isDelivery ? displayAddress : `#Mesa ${displayAddress}`}
                     </h4>
-                    <span className="text-sm text-gray-400 font-medium mt-1 inline-block">{order.customer_name}</span>
+                    <p className="text-xs text-[#D4AF37] font-bold mt-1 opacity-80">{order.customer_name}</p>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-gray-300 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10 shadow-sm shrink-0">
-                    <Clock size={12} className={order.status === 'pending' && parseInt(elapsed) > 15 ? 'text-red-400 animate-pulse' : 'text-[#D4AF37]'} />
-                    {elapsed}
+                <div className="flex flex-col items-end gap-2">
+                    <div className="flex items-center gap-2 text-[10px] font-black text-white bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
+                        <Clock size={12} className={order.status === 'pending' && parseInt(elapsed) > 15 ? 'text-red-500 animate-pulse' : 'text-[#D4AF37]'} />
+                        {elapsed}
+                    </div>
+                    <span className="text-[10px] font-mono text-gray-600">#{order.id.slice(0, 6)}</span>
                 </div>
             </div>
 
@@ -91,11 +96,24 @@ const OrderCard = ({ order, onStatusChange, onPrint, enablePrint, restaurantName
 
             <div className="space-y-2 mb-4">
                 {order.items.map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-sm border-b border-white/5 last:border-0 pb-2 mb-2 last:mb-0 last:pb-0">
-                        <span className="font-semibold text-gray-300">
-                            <span className="bg-white/10 text-[#D4AF37] font-bold px-2 py-0.5 rounded-md mr-3 text-xs shadow-sm border border-white/5">{item.quantity}</span>
-                            {item.name}
-                        </span>
+                    <div key={idx} className="flex flex-col border-b border-white/5 last:border-0 pb-2 mb-2 last:mb-0 last:pb-0">
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="font-semibold text-gray-300">
+                                <span className="bg-white/10 text-[#D4AF37] font-bold px-2 py-0.5 rounded-md mr-3 text-xs shadow-sm border border-white/5">{item.quantity}</span>
+                                {item.name}
+                            </span>
+                        </div>
+                        {/* Variant/Options Display */}
+                        {item.variant_name && (
+                            <span className="text-[10px] text-[#D4AF37] font-black ml-10 mt-0.5 uppercase tracking-wider">
+                                ↳ {item.variant_name}
+                            </span>
+                        )}
+                        {item.notes && (
+                            <span className="text-[10px] text-orange-400 font-bold ml-10 mt-1 italic bg-orange-400/5 px-2 py-1 rounded-lg border border-orange-400/10">
+                                Obs: {item.notes}
+                            </span>
+                        )}
                     </div>
                 ))}
             </div>
@@ -242,6 +260,27 @@ const OrderCard = ({ order, onStatusChange, onPrint, enablePrint, restaurantName
                                 <Smartphone size={14} /> Avisar no WhatsApp
                             </button>
                         )}
+
+                        <button
+                            onClick={() => {
+                                const automationData = {
+                                    id: order.id,
+                                    customer: order.customer_name,
+                                    phone: order.customer_phone,
+                                    items: order.items,
+                                    total: order.total,
+                                    type: isDelivery ? 'delivery' : 'dine-in',
+                                    address: displayAddress,
+                                    created: order.created_at
+                                };
+                                navigator.clipboard.writeText(JSON.stringify(automationData, null, 2));
+                                toast.success('Dados de automação copiados!', { icon: '🤖' });
+                            }}
+                            className="bg-white/5 border border-white/10 text-gray-400 py-2 rounded-xl font-bold text-[10px] flex justify-center items-center gap-2 hover:bg-white/10 transition-all uppercase"
+                            title="Copiar JSON para Automação"
+                        >
+                            <RefreshCw size={14} /> Dados Bot
+                        </button>
                     </div>
                 )}
 
@@ -340,7 +379,7 @@ const OrderCard = ({ order, onStatusChange, onPrint, enablePrint, restaurantName
             </div>
         </div>
     );
-};
+});
 
 const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
     const [orders, setOrders] = useState([]);
@@ -350,6 +389,13 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
     // Native Printing State
     const [printingOrder, setPrintingOrder] = useState(null);
     const [isBluetoothReady, setIsBluetoothReady] = useState(false);
+    const [autoPrint, setAutoPrint] = useState(() => {
+        return localStorage.getItem(`jindungo_autoprint_${restaurantId}`) === 'true';
+    });
+
+    useEffect(() => {
+        localStorage.setItem(`jindungo_autoprint_${restaurantId}`, autoPrint);
+    }, [autoPrint, restaurantId]);
 
     const toggleAudio = () => {
         if (!isAudioEnabled) {
@@ -366,19 +412,51 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
 
     const toggleBluetoothPrinter = async () => {
         try {
-            if (isBluetoothReady) {
+            if (isBluetoothReady && printerService.type === 'bluetooth') {
                 printerService.disconnect();
                 setIsBluetoothReady(false);
-                toast.success('Impressora Térmica desligada.');
+                toast.success('Impressora Bluetooth desligada.');
             } else {
                 toast.loading('Selecione a Impressora Bluetooth...', { id: 'bt-loading' });
-                await printerService.connect();
+                await printerService.connectBluetooth();
                 setIsBluetoothReady(true);
-                toast.success('Impressora Emparelhada!', { id: 'bt-loading' });
+                toast.success('Bluetooth Emparelhado!', { id: 'bt-loading' });
             }
         } catch (error) {
             console.error(error);
             toast.error(error.message || 'Falha ao emparelhar Bluetooth.', { id: 'bt-loading' });
+        }
+    };
+
+    const toggleUSBPrinter = async () => {
+        try {
+            if (isBluetoothReady && printerService.type === 'usb') {
+                printerService.disconnect();
+                setIsBluetoothReady(false);
+                toast.success('Impressora USB desligada.');
+            } else {
+                toast.loading('Selecione a Impressora USB...', { id: 'usb-loading' });
+                await printerService.connectUSB();
+                setIsBluetoothReady(true);
+                toast.success('Impressora USB Conectada!', { id: 'usb-loading' });
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error(error.message || 'Falha ao conectar USB.', { id: 'usb-loading' });
+        }
+    };
+
+    const handleTestPrint = async () => {
+        if (!isBluetoothReady) {
+            toast.error('Ligue uma impressora primeiro (BT ou USB)');
+            return;
+        }
+        try {
+            toast.loading('A imprimir teste...', { id: 'test-print' });
+            await printerService.sendText("\x1B\x40\x1B\x61\x01\x1B\x21\x30TESTE JINDUNGO\n\x1B\x21\x00\nImpressora OK!\x0A\x0A\x0A\x0A\x1D\x56\x41");
+            toast.success('Teste Concluido!', { id: 'test-print' });
+        } catch (error) {
+            toast.error('Erro no teste: ' + error.message, { id: 'test-print' });
         }
     };
 
@@ -388,7 +466,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                 toast.loading('A Imprimir...', { id: 'print' });
                 await printerService.printOrder(order, restaurantName);
                 toast.success('Talão Impresso!', { id: 'print' });
-            } catch (error) {
+            } catch {
                 toast.error('Erro na impressão Bluetooth. Modificando para fallback visual.', { id: 'print' });
                 // Fallback on fail
                 setPrintingOrder(order);
@@ -436,14 +514,19 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                     }
                 }
 
-                // Prepend new order so it's always at the top/visible
+                // Prepend new order
                 setOrders(prev => {
-                    // Avoid double-inserting if it's already there
                     if (prev.find(o => o.id === payload.new.id)) return prev;
                     return [payload.new, ...prev];
                 });
                 
-                // Show a quick toast notification
+                // [NEW] Auto-Print logic
+                if (autoPrint && isBluetoothReady) {
+                    setTimeout(() => {
+                        handlePrintOrder(payload.new);
+                    }, 1000);
+                }
+
                 toast.success(`Novo Pedido de ${payload.new.customer_name || 'Cliente'}!`, {
                     icon: '🔔',
                     duration: 5000
@@ -456,11 +539,29 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
             }
         });
 
+        // 3. Periodic Audio Reminder (Every 2 minutes if pending orders exist)
+        const reminderInterval = setInterval(() => {
+            if (isAudioEnabled) {
+                const hasPending = orders.some(o => o.status === 'pending');
+                if (hasPending) {
+                    try {
+                        const audio = new Audio('/bell.mp3');
+                        audio.volume = 0.2;
+                        audio.play().catch(e => console.log('Audio blocked', e));
+                        toast('Pedidos pendentes na cozinha!', { icon: '👨‍🍳', position: 'bottom-center' });
+                    } catch (err) {
+                        console.log('Reminder audio error', err);
+                    }
+                }
+            }
+        }, 120000); // 2 minutes
+
         return () => {
-            // Cleanup handled by service implicitly or we should explicit unsubscribe
             supabase.removeChannel(channel);
+            clearInterval(reminderInterval);
         };
-    }, [restaurantId]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [restaurantId, isAudioEnabled]);
 
     const handleStatusUpdate = async (id, status, reason = null) => {
         // Keep previous state for rollback
@@ -531,43 +632,50 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                     <button
                         onClick={toggleBluetoothPrinter}
                         className={`hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs transition-all ${
-                            isBluetoothReady 
+                            isBluetoothReady && printerService.type === 'bluetooth'
                                 ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30' 
                                 : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'
                         }`}
-                        title="Emparelhar Impressora Térmica POS"
+                        title="Emparelhar Impressora Bluetooth"
                     >
-                        <Printer size={16} />
-                        {isBluetoothReady ? 'POS ATIVO' : 'CONECTAR POS'}
+                        <Smartphone size={16} />
+                        {isBluetoothReady && printerService.type === 'bluetooth' ? 'BT ATIVO' : 'CONECTAR BT'}
                     </button>
 
-                    <div className="flex bg-black/40 border border-white/5 p-1 rounded-2xl backdrop-blur-md">
-                        <button 
-                            onClick={() => {
-                                setLoading(true);
-                                const loadOrders = async () => {
-                                    const { data } = await orderService.getActiveOrders(restaurantId);
-                                    setOrders(data);
-                                    setLoading(false);
-                                    toast.success('Lista atualizada!');
-                                };
-                                loadOrders();
-                            }}
-                            className="p-2.5 text-gray-400 hover:text-white transition-colors border-r border-white/5"
-                            title="Recarregar quadro"
-                        >
-                            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-                        </button>
-                        <div className="px-4 py-2 text-center">
-                            <div className="text-xs font-black text-white">
-                                {orders.filter(o => {
-                                    const s = (o.status || '').toLowerCase().trim();
-                                    return s === 'pending' || s === 'preparing' || s === 'ready' || s === 'paid' || s === 'out_for_delivery';
-                                }).length}
-                            </div>
-                            <div className="text-[8px] uppercase font-bold text-gray-500 tracking-tighter">Ativos</div>
-                        </div>
-                    </div>
+                    <button
+                        onClick={toggleUSBPrinter}
+                        className={`hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs transition-all ${
+                            isBluetoothReady && printerService.type === 'usb'
+                                ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30' 
+                                : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'
+                        }`}
+                        title="Conectar Impressora USB"
+                    >
+                        <Printer size={16} />
+                        {isBluetoothReady && printerService.type === 'usb' ? 'USB ATIVO' : 'CONECTAR USB'}
+                    </button>
+
+                    <button
+                        onClick={handleTestPrint}
+                        className={`hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs transition-all bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 ${!isBluetoothReady ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        title="Imprimir Talão de Teste"
+                    >
+                        <Ticket size={16} />
+                        TESTE
+                    </button>
+
+                    <button
+                        onClick={() => setAutoPrint(!autoPrint)}
+                        className={`hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs transition-all ${
+                            autoPrint 
+                                ? 'bg-orange-500/10 text-orange-400 border border-orange-500/30' 
+                                : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'
+                        }`}
+                        title="Imprimir automaticamente ao chegar novo pedido"
+                    >
+                        <RefreshCw size={16} className={autoPrint ? 'animate-spin-slow' : ''} />
+                        {autoPrint ? 'AUTO: ON' : 'AUTO: OFF'}
+                    </button>
                 </div>
             </div>
 

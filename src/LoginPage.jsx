@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { toast } from 'react-hot-toast';
-import { Lock, User, ChefHat, Briefcase } from 'lucide-react'; // Using icons for visual cues
+import { Lock, User, ChefHat, Briefcase, Eye, EyeOff, Shield } from 'lucide-react';
 import { useSettings } from './context/SettingsContext';
 import { supabase } from './lib/supabaseClient';
 
@@ -12,6 +12,7 @@ const LoginPage = () => {
     const [loading, setLoading] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [loginType, setLoginType] = useState('restaurant'); // 'restaurant' or 'internal'
+    const [showPassword, setShowPassword] = useState(false);
     const [errorShake, setErrorShake] = useState(false);
     const { signIn, user, role } = useAuth();
     const navigate = useNavigate();
@@ -23,7 +24,6 @@ const LoginPage = () => {
 
     useEffect(() => {
         if (!loading && user && role) {
-            console.log("LOGIN REDIRECT - User Role Is:", role);
             if (role === 'super_admin') navigate('/super-admin');
             else if (role === 'admin' || role === 'owner') navigate('/admin');
             else navigate('/menu');
@@ -38,178 +38,186 @@ const LoginPage = () => {
             const { data: authData, error } = await signIn(email, password);
             if (error) throw error;
 
-            // Enforce role based on selected tab
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('role')
+                .select('role, status')
                 .eq('id', authData.user.id)
                 .single();
+            
             const fetchedRole = profile?.role || 'client';
+            const fetchedStatus = profile?.status || 'active';
+
+            if (fetchedStatus === 'pending') {
+                await supabase.auth.signOut();
+                toast.error("A sua conta está em análise. Aguarde contacto.", { duration: 6000 });
+                setErrorShake(true);
+                return;
+            }
 
             if (loginType === 'restaurant' && fetchedRole === 'super_admin') {
                 await supabase.auth.signOut();
-                toast.error("Por favor, utilize a aba de Gestão.");
+                toast.error("Utilize a aba de Gestão.");
                 setErrorShake(true);
-                setTimeout(() => setErrorShake(false), 500);
-                return; // Stop here, finally block handles loading
+                return;
             }
             if (loginType === 'internal' && fetchedRole !== 'super_admin') {
                 await supabase.auth.signOut();
-                toast.error("Acesso restrito. Utilize a aba de Restaurante.");
+                toast.error("Acesso restrito à Administração.");
                 setErrorShake(true);
-                setTimeout(() => setErrorShake(false), 500);
-                return; // Stop here
+                return;
             }
 
-            toast.success("Bem-vindo de volta!");
+            toast.success("Bem-vindo aos Menús Jindungo!");
         } catch (error) {
-            console.error(error);
-            console.error(error);
-            // Shake animation for lock icon and form
             setErrorShake(true);
             setTimeout(() => setErrorShake(false), 500);
-
-            const form = document.getElementById('login-form');
-            form.classList.add('animate-shake');
-            setTimeout(() => form.classList.remove('animate-shake'), 500);
-
-            toast.error("Credenciais inválidas. Tente novamente.");
+            toast.error("Dados de acesso incorretos.");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen relative flex items-center justify-center overflow-hidden bg-[#121212]">
-            {/* Ambient Background */}
-            <div className="absolute inset-0 z-0">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[#D4AF37]/10 blur-[120px] animate-pulse-slow"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-white/5 blur-[120px]"></div>
+        <div className="min-h-screen relative flex items-center justify-center overflow-hidden bg-[#0A0A0A] font-sans selection:bg-[#D4AF37] selection:text-black">
+            {/* Animated Refraction Background */}
+            <div className="absolute inset-0 z-0 pointer-events-none">
+                <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-transparent blur-[120px] animate-pulse-slow"></div>
+                <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-gradient-to-tl from-white/5 to-transparent blur-[120px]"></div>
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]"></div>
             </div>
 
             {/* Login Card */}
-            <div className={`relative z-10 w-full max-w-md px-6 transition-all duration-1000 ease-out transform ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-
-                <div className="glass-dark border border-white/10 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden backdrop-blur-xl">
-
-                    {/* Header */}
-                    <div className="text-center mb-8 sm:mb-10">
-                        <div className="inline-block p-1 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 mb-4 sm:mb-6 border border-primary/20 shadow-[0_10px_40px_rgba(212,175,55,0.2)] overflow-hidden">
-                            <img src={logoUrl || "/jindungo_logo_v3.png"} className="w-20 h-20 sm:w-28 sm:h-28 object-contain transition-all" alt="Jindungo Logo Global" />
+            <div className={`relative z-10 w-full max-w-[440px] px-6 transition-all duration-1000 ease-out transform ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
+                
+                <div className="relative group">
+                    <div className="absolute -inset-[1px] bg-gradient-to-b from-white/20 via-white/5 to-white/20 rounded-[2.5rem] blur-sm"></div>
+                    
+                    <div className="relative bg-[#111111]/90 backdrop-blur-3xl rounded-[2.5rem] p-8 sm:p-12 shadow-[0_30px_100px_rgba(0,0,0,0.8)] border border-white/10">
+                        
+                        {/* Header Area */}
+                        <div className="text-center mb-10">
+                            <div className="relative inline-block mb-6 group/logo">
+                                <div className="absolute inset-0 bg-[#D4AF37] blur-3xl opacity-20 group-hover/logo:opacity-40 transition-opacity duration-700"></div>
+                                <div className="relative p-1 bg-gradient-to-b from-white/10 to-transparent rounded-3xl border border-white/10 shadow-2xl">
+                                    <img 
+                                        src={logoUrl || "/jindungo_logo_v3.png"} 
+                                        className="w-24 h-24 object-contain brightness-110 drop-shadow-2xl" 
+                                        alt="Jindungo Premium Logo" 
+                                    />
+                                </div>
+                            </div>
+                            
+                            <h1 className="text-3xl font-serif font-black text-white tracking-tight mb-2">
+                                Menús <span className="text-[#D4AF37]">Jindungo</span>
+                            </h1>
+                            
+                            <div className="flex items-center justify-center gap-3 opacity-60">
+                                <div className="h-px w-8 bg-gradient-to-r from-transparent to-white/40"></div>
+                                <span className="text-[9px] font-display text-gray-300">Acesso Exclusivo</span>
+                                <div className="h-px w-8 bg-gradient-to-l from-transparent to-white/40"></div>
+                            </div>
                         </div>
-                        <h2 className="text-3xl sm:text-4xl font-serif font-black text-white tracking-tighter mb-2 scale-y-105 transition-all">
-                            Menús Jindungo
-                        </h2>
-                        <div className="flex items-center justify-center gap-3">
-                            <span className="h-[1px] w-4 bg-primary/30"></span>
-                            <p className="text-primary text-[10px] font-black tracking-[0.3em] uppercase">
-                                Acesso Premium
+
+                        {/* Login Type Tabs */}
+                        <div className="flex bg-white/5 p-1 rounded-2xl mb-8 border border-white/5 backdrop-blur-md font-display">
+                            <button
+                                type="button"
+                                onClick={() => setLoginType('restaurant')}
+                                className={`flex-1 flex items-center justify-center gap-2 py-3 text-[10px] font-medium rounded-xl transition-all duration-500 ${loginType === 'restaurant' ? 'bg-[#D4AF37] text-black shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                            >
+                                <ChefHat size={16} />
+                                RESTAURANTE
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setLoginType('internal')}
+                                className={`flex-1 flex items-center justify-center gap-2 py-3 text-[10px] font-medium rounded-xl transition-all duration-500 ${loginType === 'internal' ? 'bg-[#D4AF37] text-black shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                            >
+                                <Briefcase size={16} />
+                                GESTÃO
+                            </button>
+                        </div>
+
+                        {/* Form Area */}
+                        <form className={`space-y-6 ${errorShake ? 'animate-shake' : ''}`} onSubmit={handleSubmit}>
+                            <div className="space-y-4">
+                                <div className="relative group/field">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within/field:text-[#D4AF37] transition-colors">
+                                        <User size={18} />
+                                    </div>
+                                    <input
+                                        type="email"
+                                        required
+                                        className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37]/40 transition-all duration-300 text-sm"
+                                        placeholder={loginType === 'restaurant' ? "E-mail do Restaurante" : "E-mail Administrativo"}
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                    />
+                                </div>
+
+                                <div className="relative group/field">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within/field:text-[#D4AF37] transition-colors">
+                                        <Lock size={18} />
+                                    </div>
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        required
+                                        className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-12 py-4 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37]/40 transition-all duration-300 text-sm"
+                                        placeholder="Palavra-passe"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between px-1">
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <input type="checkbox" className="w-4 h-4 rounded border-white/10 bg-white/5 text-[#D4AF37] focus:ring-offset-0 focus:ring-[#D4AF37]/50" />
+                                    <span className="text-[11px] text-gray-500 group-hover:text-gray-300 transition-colors">Manter sessão</span>
+                                </label>
+                                <Link to="/forgot-password" size="xs" className="text-[11px] text-[#D4AF37]/80 hover:text-[#D4AF37] hover:underline font-bold transition-all">
+                                    Recuperar acesso?
+                                </Link>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full group relative overflow-hidden py-4 rounded-2xl bg-gradient-to-r from-[#D4AF37] to-[#F1C40F] text-black font-black text-sm uppercase tracking-widest shadow-[0_10px_30px_rgba(212,175,55,0.3)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.4)] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                            >
+                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                                <span className="relative flex items-center justify-center gap-2">
+                                    {loading ? 'A validar...' : 'Entrar na Plataforma'}
+                                </span>
+                            </button>
+                        </form>
+
+                        {/* Register Link */}
+                        <div className="mt-10 text-center">
+                            <p className="text-sm text-gray-500">
+                                Não tem uma conta? {' '}
+                                <Link to="/register" className="text-[#D4AF37] font-black hover:underline underline-offset-4 decoration-2">
+                                    Solicitar Adesão
+                                </Link>
                             </p>
-                            <span className="h-[1px] w-4 bg-primary/30"></span>
                         </div>
-                    </div>
-
-                    {/* Type Toggle */}
-                    <div className="flex bg-black/40 p-1.5 rounded-xl mb-6 relative border border-white/5">
-                        {/* Sliding Background */}
-                        <div className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-[#D4AF37]/20 border border-[#D4AF37]/30 rounded-lg transition-all duration-300 shadow-[0_0_10px_rgba(212,175,55,0.1)] ${loginType === 'restaurant' ? 'left-1.5' : 'left-[50%]'}`}></div>
-
-                        <button
-                            type="button"
-                            onClick={() => setLoginType('restaurant')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg relative z-10 transition-colors ${loginType === 'restaurant' ? 'text-[#D4AF37]' : 'text-gray-400 hover:text-white'}`}
-                        >
-                            <ChefHat size={18} />
-                            Restaurante
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setLoginType('internal')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg relative z-10 transition-colors ${loginType === 'internal' ? 'text-[#D4AF37]' : 'text-gray-400 hover:text-white'}`}
-                        >
-                            <Briefcase size={18} />
-                            Gestão
-                        </button>
-                    </div>
-
-                    {/* Type Description */}
-                    <div className="text-center mb-8 px-4 h-5">
-                        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold flex items-center justify-center gap-2 animate-fade-in">
-                            {loginType === 'restaurant' ? (
-                                <>
-                                    <span className="w-4 h-[1px] bg-gray-700"></span>
-                                    Painel do Lojista & Ementas
-                                    <span className="w-4 h-[1px] bg-gray-700"></span>
-                                </>
-                            ) : (
-                                <>
-                                    <span className="w-4 h-[1px] bg-gray-700"></span>
-                                    Administração SaaS Jindungo
-                                    <span className="w-4 h-[1px] bg-gray-700"></span>
-                                </>
-                            )}
-                        </p>
-                    </div>
-
-                    {/* Form */}
-                    <form id="login-form" className="space-y-6" onSubmit={handleSubmit}>
-                        <div className="space-y-5">
-                            <div className="group relative">
-                                <User className="absolute left-4 top-4 text-gray-500 group-focus-within:text-primary transition-colors duration-300" size={20} />
-                                <input
-                                    type="email"
-                                    required
-                                    className="block w-full pl-12 pr-4 py-3 sm:py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-primary focus:ring-1 focus:ring-primary focus:shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-all duration-300"
-                                    placeholder={loginType === 'restaurant' ? "email@restaurante.com" : "admin@jindungo.com"}
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                />
-                            </div>
-
-                            <div className="group relative">
-                                <Lock
-                                    className={`absolute left-4 top-4 text-gray-500 group-focus-within:text-primary transition-colors duration-300 ${errorShake ? 'animate-shake text-error' : ''}`}
-                                    size={20}
-                                />
-                                <input
-                                    type="password"
-                                    required
-                                    className="block w-full pl-12 pr-4 py-3 sm:py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-primary focus:ring-1 focus:ring-primary focus:shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-all duration-300"
-                                    placeholder="Sua senha"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex justify-between items-center">
-                            <label className="flex items-center gap-2 cursor-pointer group">
-                                <input type="checkbox" className="w-4 h-4 rounded border-gray-600 bg-white/5 text-primary focus:ring-primary/50" />
-                                <span className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors">Lembrar de mim</span>
-                            </label>
-                            <Link to="/forgot-password" className="text-xs text-primary/80 hover:text-primary transition-colors hover:underline">
-                                Esqueceu a senha?
-                            </Link>
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full py-3.5 sm:py-4 px-4 rounded-xl font-bold text-black bg-gradient-to-r from-[#D4AF37] to-[#F1C40F] shadow-[0_4px_20px_rgba(212,175,55,0.3)] hover:shadow-[0_6px_25px_rgba(212,175,55,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none mt-2 uppercase tracking-wide text-sm"
-                        >
-                            {loading ? 'Acessando...' : 'Entrar na Plataforma'}
-                        </button>
-                    </form>
-
-                    <div className="mt-8 text-center">
-                        <Link to="/register" className="text-sm text-gray-400 hover:text-white transition-colors">
-                            Novo por aqui? <span className="text-primary font-semibold hover:underline">Criar conta</span>
-                        </Link>
                     </div>
                 </div>
 
-                <div className="mt-8 text-center">
-                    <p className="text-xs text-gray-600 font-mono">SECURE ACCESS • JINDUNGO SYSTEMS</p>
+                <div className="mt-12 text-center flex flex-col items-center gap-4">
+                    <div className="flex items-center gap-6 opacity-30 grayscale hover:grayscale-0 transition-all duration-700">
+                        <div className="flex items-center gap-2 text-white/50 text-[9px] font-black tracking-widest">
+                            <Shield size={10} /> PROTEÇÃO BIOMÉTRICA ATIVA
+                        </div>
+                    </div>
+                    <p className="text-[10px] text-gray-700 font-mono">© 2026 MENÚS JINDUNGO • VER 3.1.2</p>
                 </div>
             </div>
         </div>

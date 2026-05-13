@@ -79,6 +79,7 @@ const AdminDashboard = () => {
     const [showWelcomeModal, setShowWelcomeModal] = useState(false);
     const [dismissedNotifIds, setDismissedNotifIds] = useState(() => JSON.parse(localStorage.getItem('jindungo_dismissed_notifications') || '[]'));
     const [isExpirationDismissed, setIsExpirationDismissed] = useState(() => localStorage.getItem('jindungo_expiration_dismissed') === 'true');
+    const [settingsTab, setSettingsTab] = useState('visual'); // 'visual' | 'delivery'
 
     // [NEW] Fetch Global Admin Notifications (Filtered by audience)
     useEffect(() => {
@@ -542,45 +543,67 @@ const AdminDashboard = () => {
                         <Route path="/qrcode" element={<QRCodeGenerator url={`${window.location.origin}/r/${restaurant?.slug}`} restaurantName={restaurant?.name || restaurant?.slug} logoUrl={config?.logoUrl} />} />
                         <Route path="/settings" element={
                             <div className="space-y-6">
-                                <StyleControls
-                                    config={config}
-                                    setConfig={handleConfigChange}
-                                    restaurantName={restaurant?.name}
-                                    onNameChange={handleNameUpdate}
-                                    slug={restaurant?.slug}
-                                    onSlugChange={handleSlugUpdate}
-                                    onReset={() => { }}
-                                    onLogoUpload={handleLogoUpload}
-                                    onHeaderBgUpload={handleHeaderBgUpload}
-                                />
-
-                                <DeliverySettings
-                                    restaurantId={restaurant?.id}
-                                    initialConfig={restaurant?.delivery_config}
-                                    features={features}
-                                />
-
-                                <div className="p-6 sm:p-8 bg-white/90 dark:bg-[#141414]/90 backdrop-blur-md rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 flex justify-between items-center transition-all hover:shadow-md">
-                                    <div>
-                                        <h3 className="text-xl font-bold text-gray-800 dark:text-white">Menu e Categorias</h3>
-                                        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Gerencie pratos, categorias e abas internas do cardápio.</p>
-                                    </div>
+                                {/* Tab Navigation */}
+                                <div className="flex gap-2 p-1 bg-white/5 rounded-2xl w-fit border border-white/5 backdrop-blur-md">
                                     <button
-                                        onClick={() => setShowCategoryModal(true)}
-                                        className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-6 py-3 rounded-xl hover:bg-black dark:hover:bg-white transition-all font-bold flex items-center gap-2 shadow-md hover:-translate-y-0.5"
+                                        onClick={() => setSettingsTab('visual')}
+                                        className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${settingsTab === 'visual' ? 'bg-[#D4AF37] text-black shadow-lg' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
                                     >
-                                        <UtensilsCrossed size={18} />
-                                        Gerenciar Menu
+                                        Personalização
+                                    </button>
+                                    <button
+                                        onClick={() => setSettingsTab('delivery')}
+                                        className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${settingsTab === 'delivery' ? 'bg-[#D4AF37] text-black shadow-lg' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                                    >
+                                        Taxas de Entrega
                                     </button>
                                 </div>
 
-                                {showCategoryModal && (
-                                    <CategoryManager
-                                        restaurantId={restaurant?.id}
-                                        categories={categories}
-                                        onUpdate={handleMenuUpdate}
-                                        onClose={() => setShowCategoryModal(false)}
-                                    />
+                                {settingsTab === 'visual' ? (
+                                    <div className="animate-fade-in space-y-6">
+                                        <StyleControls
+                                            config={config}
+                                            setConfig={handleConfigChange}
+                                            restaurantName={restaurant?.name}
+                                            onNameChange={handleNameUpdate}
+                                            slug={restaurant?.slug}
+                                            onSlugChange={handleSlugUpdate}
+                                            onReset={() => { }}
+                                            onLogoUpload={handleLogoUpload}
+                                            onHeaderBgUpload={handleHeaderBgUpload}
+                                        />
+
+                                        <div className="p-6 sm:p-8 bg-white/90 dark:bg-[#141414]/90 backdrop-blur-md rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 flex justify-between items-center transition-all hover:shadow-md">
+                                            <div>
+                                                <h3 className="text-xl font-bold text-gray-800 dark:text-white">Menu e Categorias</h3>
+                                                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Gerencie pratos, categorias e abas internas do cardápio.</p>
+                                            </div>
+                                            <button
+                                                onClick={() => setShowCategoryModal(true)}
+                                                className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-6 py-3 rounded-xl hover:bg-black dark:hover:bg-white transition-all font-bold flex items-center gap-2 shadow-md hover:-translate-y-0.5"
+                                            >
+                                                <UtensilsCrossed size={18} />
+                                                Gerenciar Menu
+                                            </button>
+                                        </div>
+
+                                        {showCategoryModal && (
+                                            <CategoryManager
+                                                restaurantId={restaurant?.id}
+                                                categories={categories}
+                                                onUpdate={handleMenuUpdate}
+                                                onClose={() => setShowCategoryModal(false)}
+                                            />
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="animate-fade-in">
+                                        <DeliverySettings
+                                            restaurantId={restaurant?.id}
+                                            initialConfig={restaurant?.delivery_config}
+                                            features={features}
+                                        />
+                                    </div>
                                 )}
                             </div>
                         } />

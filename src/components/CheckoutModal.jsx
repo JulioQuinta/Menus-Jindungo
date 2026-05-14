@@ -129,23 +129,33 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
     const [computedDeliveryFee, setComputedDeliveryFee] = useState(0);
     const [distanceKm, setDistanceKm] = useState(0);
 
-    // Calculate Dynamic Delivery Fee
+    // [REAL-TIME] Calculate Dynamic Delivery Fee
     useEffect(() => {
         if (orderType === 'delivery') {
-            if (deliveryConfig?.type === 'distance' && deliveryConfig?.restaurant_location && gpsCoords) {
+            const config = deliveryConfig || {};
+            
+            if (config.type === 'distance' && config.restaurant_location?.lat && gpsCoords?.lat) {
                 const dist = calculateDistance(
-                    deliveryConfig.restaurant_location.lat,
-                    deliveryConfig.restaurant_location.lng,
+                    config.restaurant_location.lat,
+                    config.restaurant_location.lng,
                     gpsCoords.lat,
                     gpsCoords.lng
                 );
+                
                 setDistanceKm(dist);
-                const fee = (deliveryConfig.base_fee || 0) + (dist * (deliveryConfig.fee_per_km || 0));
-                setComputedDeliveryFee(Math.max(deliveryConfig.min_fee || 0, Math.round(fee)));
-            } else if (orderType === 'delivery' && selectedZone) {
-                setComputedDeliveryFee(selectedZone.fee);
+                const base = parseFloat(config.base_fee) || 0;
+                const perKm = parseFloat(config.fee_per_km) || 0;
+                const min = parseFloat(config.min_fee) || 0;
+                
+                const calculatedFee = base + (dist * perKm);
+                const finalFee = Math.max(min, Math.round(calculatedFee));
+                
+                setComputedDeliveryFee(finalFee);
+            } else if (config.type === 'zone' && selectedZone) {
+                setComputedDeliveryFee(parseFloat(selectedZone.fee) || 0);
                 setDistanceKm(0);
             } else {
+                // If no zone selected or no GPS yet, default to 0 or min_fee if distance mode
                 setComputedDeliveryFee(0);
                 setDistanceKm(0);
             }
@@ -159,7 +169,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
 
     const subtotal = getCartTotal();
     const deliveryFee = computedDeliveryFee;
-
+    
     // Calculate Discount
     let discount = 0;
     if (appliedCoupon) {
@@ -406,9 +416,16 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                 </div>
                                 {deliveryFee > 0 && (
                                     <div className="flex justify-between items-center text-sm font-bold text-blue-600">
-                                        <div className="flex items-center gap-1.5">
-                                            <Bike size={14} />
-                                            <span>{t('deliveryFee')}</span>
+                                        <div className="flex flex-col">
+                                            <div className="flex items-center gap-1.5">
+                                                <Bike size={14} />
+                                                <span>{t('deliveryFee')}</span>
+                                            </div>
+                                            {distanceKm > 0 && (
+                                                <span className="text-[10px] font-medium text-blue-400 ml-5 tracking-tight">
+                                                    Distância: {distanceKm.toFixed(1)} km
+                                                </span>
+                                            )}
                                         </div>
                                         <span>+{new Intl.NumberFormat('pt-AO').format(deliveryFee)} Kz</span>
                                     </div>
@@ -593,7 +610,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                             </div>
                         ) : (
                             <div style={{ marginBottom: '1.5rem', animation: 'fadeIn 0.3s' }}>
-                                {deliveryConfig?.enabled && deliveryConfig?.zones?.length > 0 && (
+                                {deliveryConfig?.enabled && deliveryConfig?.type === 'zone' && deliveryConfig?.zones?.length > 0 && (
                                     <div style={{ marginBottom: '1rem' }}>
                                         <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>{t('address')}</label>
                                         <select

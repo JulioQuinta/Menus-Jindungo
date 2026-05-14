@@ -54,8 +54,8 @@ const DeliverySettings = ({ restaurantId, initialConfig = {}, features = {} }) =
     };
 
     return (
-        <div className="bg-white/90 dark:bg-[#141414]/90 backdrop-blur-xl rounded-[32px] p-6 sm:p-8 shadow-2xl border border-gray-100 dark:border-white/5 animate-fade-in">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div className="bg-white/90 dark:bg-[#141414]/90 backdrop-blur-xl rounded-[32px] p-6 sm:p-8 shadow-2xl border border-gray-100 dark:border-white/5 animate-fade-in pb-20 sm:pb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-gray-100 dark:border-white/5 pb-6">
                 <div className="flex items-center gap-4">
                     <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500">
                         <Truck size={24} />
@@ -64,23 +64,35 @@ const DeliverySettings = ({ restaurantId, initialConfig = {}, features = {} }) =
                         <h2 className="text-2xl font-black text-gray-900 dark:text-white">Taxa de Entrega</h2>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                             {config.type === 'distance' 
-                                ? "Cálculo automático baseado na distância do cliente." 
-                                : "Configuração por bairros ou zonas específicas."}
+                                ? "Cálculo automático por KM." 
+                                : "Configuração por bairros."}
                         </p>
                     </div>
                 </div>
-                <div className="flex items-center gap-3 bg-gray-100 dark:bg-white/5 p-1.5 rounded-2xl border border-gray-200 dark:border-white/5">
-                    <button
-                        onClick={() => setConfig(prev => ({ ...prev, enabled: !prev.enabled }))}
-                        className={`relative inline-flex h-10 w-20 flex-shrink-0 cursor-pointer rounded-xl border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${config.enabled ? 'bg-green-500' : 'bg-gray-400'}`}
-                    >
-                        <span className={`pointer-events-none inline-block h-9 w-9 transform rounded-lg bg-white shadow ring-0 transition duration-200 ease-in-out ${config.enabled ? 'translate-x-10' : 'translate-x-0'}`} />
-                    </button>
+                <div className="flex items-center gap-3">
+                    {config.enabled && (
+                        <button
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            className="hidden sm:flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50"
+                        >
+                            <Save size={18} />
+                            {isSaving ? 'A guardar...' : 'Guardar'}
+                        </button>
+                    )}
+                    <div className="bg-gray-100 dark:bg-white/5 p-1.5 rounded-2xl border border-gray-200 dark:border-white/5">
+                        <button
+                            onClick={() => setConfig(prev => ({ ...prev, enabled: !prev.enabled }))}
+                            className={`relative inline-flex h-10 w-20 flex-shrink-0 cursor-pointer rounded-xl border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${config.enabled ? 'bg-green-500' : 'bg-gray-400'}`}
+                        >
+                            <span className={`pointer-events-none inline-block h-9 w-9 transform rounded-lg bg-white shadow ring-0 transition duration-200 ease-in-out ${config.enabled ? 'translate-x-10' : 'translate-x-0'}`} />
+                        </button>
+                    </div>
                 </div>
             </div>
 
             {config.enabled && (
-                <div className="space-y-8">
+                <div className="space-y-6">
                     {/* Delivery Method Selector */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <button
@@ -90,7 +102,7 @@ const DeliverySettings = ({ restaurantId, initialConfig = {}, features = {} }) =
                             <MapPin size={20} />
                             <div className="text-left">
                                 <p className="font-bold text-sm">Por Zonas (Bairros)</p>
-                                <p className="text-[10px] opacity-70 uppercase tracking-wider">Configuração Manual</p>
+                                <p className="text-[10px] opacity-70 uppercase tracking-wider">Manual</p>
                             </div>
                         </button>
                         <button
@@ -100,7 +112,7 @@ const DeliverySettings = ({ restaurantId, initialConfig = {}, features = {} }) =
                             <Navigation size={20} />
                             <div className="text-left">
                                 <p className="font-bold text-sm">Por Distância (KM)</p>
-                                <p className="text-[10px] opacity-70 uppercase tracking-wider">Cálculo Automático</p>
+                                <p className="text-[10px] opacity-70 uppercase tracking-wider">Automático</p>
                             </div>
                         </button>
                     </div>
@@ -111,47 +123,49 @@ const DeliverySettings = ({ restaurantId, initialConfig = {}, features = {} }) =
                                 <p className="text-xs text-blue-500 font-bold mb-4 flex items-center gap-2">
                                     <MapPin size={14} /> ONDE FICA O SEU RESTAURANTE? (Ponto de Partida)
                                 </p>
-                                <MapPicker 
-                                    onLocationSelected={(pos) => setConfig(prev => ({ ...prev, restaurant_location: pos }))}
-                                    defaultLat={config.restaurant_location?.lat || -8.8390}
-                                    defaultLng={config.restaurant_location?.lng || 13.2894}
-                                />
+                                <div className="h-[300px] relative rounded-xl overflow-hidden border border-blue-500/20">
+                                    <MapPicker 
+                                        onLocationSelected={(pos) => setConfig(prev => ({ ...prev, restaurant_location: pos }))}
+                                        defaultLat={config.restaurant_location?.lat || -8.8390}
+                                        defaultLng={config.restaurant_location?.lng || 13.2894}
+                                    />
+                                </div>
                                 {config.restaurant_location && (
-                                    <p className="text-[10px] text-green-500 mt-2 font-mono">
+                                    <p className="text-[10px] text-green-500 mt-2 font-mono bg-green-500/5 p-2 rounded-lg inline-block border border-green-500/20">
                                         ✓ Localização Definida: {config.restaurant_location.lat.toFixed(5)}, {config.restaurant_location.lng.toFixed(5)}
                                     </p>
                                 )}
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Taxa Base (Kz)</label>
+                                <div className="bg-white dark:bg-white/5 p-4 rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Taxa Base (Kz)</label>
                                     <input 
                                         type="number" 
                                         value={config.base_fee} 
                                         onChange={(e) => setConfig(prev => ({ ...prev, base_fee: parseFloat(e.target.value) || 0 }))}
-                                        className="w-full bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 p-3 rounded-xl outline-none focus:border-[#D4AF37] text-gray-900 dark:text-white font-bold"
-                                        placeholder="Ex: 500"
+                                        className="w-full bg-transparent border-none p-0 outline-none text-gray-900 dark:text-white text-xl font-black focus:ring-0"
+                                        placeholder="500"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Preço por KM (Kz)</label>
+                                <div className="bg-white dark:bg-white/5 p-4 rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Preço por KM (Kz)</label>
                                     <input 
                                         type="number" 
                                         value={config.fee_per_km} 
                                         onChange={(e) => setConfig(prev => ({ ...prev, fee_per_km: parseFloat(e.target.value) || 0 }))}
-                                        className="w-full bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 p-3 rounded-xl outline-none focus:border-[#D4AF37] text-gray-900 dark:text-white font-bold"
-                                        placeholder="Ex: 200"
+                                        className="w-full bg-transparent border-none p-0 outline-none text-gray-900 dark:text-white text-xl font-black focus:ring-0"
+                                        placeholder="200"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Taxa Mínima (Kz)</label>
+                                <div className="bg-white dark:bg-white/5 p-4 rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Taxa Mínima (Kz)</label>
                                     <input 
                                         type="number" 
                                         value={config.min_fee} 
                                         onChange={(e) => setConfig(prev => ({ ...prev, min_fee: parseFloat(e.target.value) || 0 }))}
-                                        className="w-full bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 p-3 rounded-xl outline-none focus:border-[#D4AF37] text-gray-900 dark:text-white font-bold"
-                                        placeholder="Ex: 1000"
+                                        className="w-full bg-transparent border-none p-0 outline-none text-gray-900 dark:text-white text-xl font-black focus:ring-0"
+                                        placeholder="1000"
                                     />
                                 </div>
                             </div>
@@ -204,14 +218,16 @@ const DeliverySettings = ({ restaurantId, initialConfig = {}, features = {} }) =
                         </div>
                     )}
 
-                    <button
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        className={`w-full py-5 rounded-[24px] font-black text-lg transition-all flex items-center justify-center gap-3 shadow-xl ${isSaving ? 'opacity-50' : 'bg-blue-600 hover:bg-blue-700 text-white hover:scale-[1.01] active:scale-[0.99]'}`}
-                    >
-                        <Save size={20} />
-                        {isSaving ? 'A guardar...' : 'Guardar Alterações'}
-                    </button>
+                    <div className="pt-6 border-t border-gray-100 dark:border-white/5">
+                        <button
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            className={`w-full py-5 rounded-[24px] font-black text-lg transition-all flex items-center justify-center gap-3 shadow-xl ${isSaving ? 'opacity-50' : 'bg-blue-600 hover:bg-blue-700 text-white hover:scale-[1.01] active:scale-[0.99]'}`}
+                        >
+                            <Save size={20} />
+                            {isSaving ? 'A guardar...' : 'Guardar Todas as Alterações'}
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

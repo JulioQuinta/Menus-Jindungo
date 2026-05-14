@@ -12,6 +12,7 @@ import { Ticket, X, CheckCircle2, Award, Star, UtensilsCrossed, Bike, User, Smar
 import { loyaltyService } from '../services/loyaltyService';
 import MapPicker from './MapPicker';
 import { getTranslation } from '../utils/i18n';
+import { calculateDistance } from '../utils/geoUtils';
 
 const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features = {}, initialTable = '', deliveryConfig = {}, activeStaff = null, selectedLanguage = 'PT' }) => {
     const { cartItems, getCartTotal, clearCart } = useCart();
@@ -125,10 +126,39 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
         }
     }, [customerPhone, loyaltyConfig, restaurantId]);
 
+    const [computedDeliveryFee, setComputedDeliveryFee] = useState(0);
+    const [distanceKm, setDistanceKm] = useState(0);
+
+    // Calculate Dynamic Delivery Fee
+    useEffect(() => {
+        if (orderType === 'delivery') {
+            if (deliveryConfig?.type === 'distance' && deliveryConfig?.restaurant_location && gpsCoords) {
+                const dist = calculateDistance(
+                    deliveryConfig.restaurant_location.lat,
+                    deliveryConfig.restaurant_location.lng,
+                    gpsCoords.lat,
+                    gpsCoords.lng
+                );
+                setDistanceKm(dist);
+                const fee = (deliveryConfig.base_fee || 0) + (dist * (deliveryConfig.fee_per_km || 0));
+                setComputedDeliveryFee(Math.max(deliveryConfig.min_fee || 0, Math.round(fee)));
+            } else if (orderType === 'delivery' && selectedZone) {
+                setComputedDeliveryFee(selectedZone.fee);
+                setDistanceKm(0);
+            } else {
+                setComputedDeliveryFee(0);
+                setDistanceKm(0);
+            }
+        } else {
+            setComputedDeliveryFee(0);
+            setDistanceKm(0);
+        }
+    }, [orderType, selectedZone, gpsCoords, deliveryConfig]);
+
     if (!isOpen) return null;
 
     const subtotal = getCartTotal();
-    const deliveryFee = (orderType === 'delivery' && selectedZone) ? selectedZone.fee : 0;
+    const deliveryFee = computedDeliveryFee;
 
     // Calculate Discount
     let discount = 0;
@@ -179,10 +209,11 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
 
         setIsSending(true);
 
+        const distInfo = distanceKm > 0 ? ` | Distância: ${distanceKm.toFixed(1)}km` : '';
         const zoneInfo = (orderType === 'delivery' && selectedZone) ? `(${selectedZone.name} +${selectedZone.fee}Kz)` : '';
         const mapsLink = gpsCoords ? ` | Maps: https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : '';
         const refNote = addressReference ? ` | Ref: ${addressReference}` : '';
-        const baseTableOrAddress = orderType === 'dine-in' ? tableNumber : `Entrega: ${address}${refNote}${mapsLink} ${zoneInfo}`;
+        const baseTableOrAddress = orderType === 'dine-in' ? tableNumber : `Entrega: ${address}${refNote}${mapsLink}${distInfo} ${zoneInfo}`;
         const paymentInfo = paymentMethod === 'cash' ? t('cash') : t('multicaixa');
 
         const orderData = {

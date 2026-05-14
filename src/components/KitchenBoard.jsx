@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { orderService } from '../services/orderService';
-import { Clock, CheckCircle, ChefHat, Truck, XCircle, AlertCircle, Banknote, Printer, Ticket, Smartphone, Volume2, VolumeX, Award, RefreshCw, Bike } from 'lucide-react';
+import { Clock, CheckCircle, ChefHat, Truck, XCircle, AlertCircle, Banknote, Printer, Ticket, Smartphone, Volume2, VolumeX, Award, RefreshCw, Bike, Settings2 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
 import TableBillTemplate from './TableBillTemplate';
@@ -41,6 +41,7 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, res
         parts.forEach(part => {
              if (part.startsWith('Maps:')) mapsLink = part.replace('Maps:', '').trim();
              if (part.startsWith('Pgto:')) paymentMethod = part.replace('Pgto:', '').trim();
+             if (part.startsWith('Distância:')) displayAddress += ` [${part.replace('Distância:', '').trim()}]`;
              if (part.startsWith('Ref:')) displayAddress += ` (Ref: ${part.replace('Ref:', '').trim()})`;
         });
     } else {
@@ -50,6 +51,19 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, res
             paymentMethod = parts[1].trim();
         }
     }
+
+    const handleEditTotal = async () => {
+        const newTotal = window.prompt(`Total Atual: ${order.total} Kz\nIntroduza o NOVO total (incluindo a taxa de entrega ajustada):`, order.total);
+        if (newTotal && !isNaN(newTotal)) {
+            try {
+                await orderService.updateOrder(order.id, { total: parseFloat(newTotal) });
+                toast.success('Valor do pedido atualizado!');
+                // The realtime subscription will update the UI
+            } catch (err) {
+                toast.error('Erro ao atualizar valor.');
+            }
+        }
+    };
 
     return (
         <div className={`p-6 rounded-[2rem] border-l-8 backdrop-blur-3xl mb-6 animate-slide-up transition-all hover:scale-[1.01] hover:border-r hover:border-r-[#D4AF37]/20 ${statusColors[order.status] || 'border-white/10 bg-black/40'} border-y border-y-white/5 border-r border-r-white/5 relative overflow-hidden group`}>
@@ -74,6 +88,22 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, res
                     </div>
                     <span className="text-[10px] font-mono text-gray-600">#{order.id.slice(0, 6)}</span>
                 </div>
+            </div>
+
+            {/* Total and Edit Action */}
+            <div className="mb-4 flex items-center justify-between bg-white/5 p-3 rounded-2xl border border-white/10">
+                <div>
+                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest block">Total do Pedido</span>
+                    <span className="text-lg font-black text-[#D4AF37]">
+                        {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(order.total).replace('AOA', 'Kz')}
+                    </span>
+                </div>
+                <button 
+                    onClick={handleEditTotal}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#D4AF37]/10 text-[#D4AF37] rounded-xl text-[10px] font-black border border-[#D4AF37]/20 hover:bg-[#D4AF37] hover:text-black transition-all"
+                >
+                    <Settings2 size={12} /> AJUSTAR TAXA
+                </button>
             </div>
 
             {/* Payment Info */}

@@ -39,6 +39,24 @@ export const orderService = {
         }
     },
 
+    // Update general order data
+    async updateOrder(orderId, updateData) {
+        try {
+            const { data, error } = await supabase
+                .from('orders')
+                .update(updateData)
+                .eq('id', orderId)
+                .select()
+                .single();
+
+            if (error) throw error;
+            return { data, error: null };
+        } catch (error) {
+            console.error('Error updating order:', error);
+            throw error;
+        }
+    },
+
     // Get active orders for a restaurant (Admin)
     async getActiveOrders(restaurantId) {
         try {

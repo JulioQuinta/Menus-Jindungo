@@ -174,6 +174,62 @@ const LandingPage = () => {
                 </div>
             </section>
 
+            {/* About Us Section */}
+            <section id="about" className="py-24 px-6 relative overflow-hidden">
+                <div className="absolute top-1/2 right-0 w-[30%] h-[30%] bg-[#D4AF37]/5 blur-[100px] rounded-full"></div>
+                <div className="max-w-7xl mx-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                        <div className="relative">
+                            <div className="absolute -inset-4 bg-[#D4AF37]/10 rounded-[3rem] blur-2xl"></div>
+                            <img 
+                                src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=1200" 
+                                alt="Experiência Gastronómica" 
+                                className="relative rounded-[2.5rem] border border-white/10 shadow-2xl grayscale hover:grayscale-0 transition-all duration-700"
+                            />
+                            <div className="absolute bottom-8 left-8 right-8 glass-dark p-6 rounded-2xl border border-white/10">
+                                <p className="text-[#D4AF37] font-serif font-bold text-xl mb-1 italic">"Modernidade em cada detalhe."</p>
+                                <p className="text-gray-400 text-xs uppercase tracking-widest">Equipa Jindungo</p>
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-8">
+                            <div>
+                                <h2 className="text-[10px] font-display text-[#D4AF37] mb-4 uppercase tracking-[0.3em]">Quem Somos</h2>
+                                <h3 className="text-4xl md:text-5xl font-serif font-black text-white leading-tight">
+                                    Nascidos em Luanda,<br />
+                                    Criados para o <span className="text-[#D4AF37]">Mundo</span>.
+                                </h3>
+                            </div>
+                            
+                            <p className="text-gray-400 text-lg leading-relaxed">
+                                Os **Menus Jindungo** nasceram da necessidade urgente de modernizar o setor da restauração em Angola. Somos uma plataforma tecnológica premium dedicada a transformar a forma como os restaurantes interagem com os seus clientes.
+                            </p>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className="space-y-3">
+                                    <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-[#D4AF37]">
+                                        <CheckCircle2 size={20} />
+                                    </div>
+                                    <h4 className="font-bold text-white">Nossa Missão</h4>
+                                    <p className="text-gray-500 text-sm">Eliminar a fricção operacional e elevar o padrão de serviço em toda Angola.</p>
+                                </div>
+                                <div className="space-y-3">
+                                    <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-[#D4AF37]">
+                                        <Star size={20} />
+                                    </div>
+                                    <h4 className="font-bold text-white">Excelência</h4>
+                                    <p className="text-gray-500 text-sm">Desenvolvemos ferramentas que não só funcionam, mas que encantam ao primeiro toque.</p>
+                                </div>
+                            </div>
+
+                            <p className="text-gray-500 text-xs italic border-l-2 border-[#D4AF37] pl-4">
+                                Orgulhosamente desenvolvido pela SUMBA AQUI COMÉRCIO E SERVIÇOS (SU), LDA.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Call to Action Footer */}
             <section className="py-24 px-6 relative overflow-hidden border-t border-white/5">
                 <div className="absolute inset-0 bg-[#D4AF37]/5 animate-pulse"></div>

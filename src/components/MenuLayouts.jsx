@@ -154,13 +154,13 @@ const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
 
     return (
         <div
-            className={`rounded-xl shadow-md transition-all duration-300 overflow-hidden border flex flex-col h-full group animate-fade-in-up ${getCardStyle(darkMode, customBgInfo)} 
-                ${item.available === false ? 'opacity-60 grayscale-[0.8] cursor-not-allowed' : 'hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(212,175,55,0.2)] hover:border-[#D4AF37]/50'}
+            className={`rounded-2xl shadow-md transition-all duration-300 overflow-hidden border flex flex-col h-full group animate-fade-in-up ${getCardStyle(darkMode, customBgInfo)} 
+                ${item.available === false ? 'opacity-60 grayscale-[0.8] cursor-not-allowed' : 'hover:scale-[1.02] hover:shadow-xl hover:border-[#D4AF37]/50'}
             `}
             style={{ boxShadow: darkMode ? '0 5px 15px -5px rgba(0,0,0,0.5)' : '0 5px 15px -5px rgba(0, 0, 0, 0.1)' }}
         >
             {/* Image Section */}
-            <div className="relative aspect-[4/3] overflow-hidden rounded-t-xl">
+            <div className="relative aspect-square sm:aspect-[4/3] overflow-hidden rounded-t-xl">
                 <SmartImage
                     src={item.img_url || item.img}
                     alt={item.name}
@@ -178,10 +178,10 @@ const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
             <div className="p-3 sm:p-5 flex-1 flex flex-col justify-between relative">
                 <div>
                     <div className="flex flex-col mb-1">
-                        <h3 className={`font-serif font-bold text-base sm:text-xl leading-tight line-clamp-2 ${getTextStyle(darkMode, customBgInfo)}`}>
+                        <h3 className={`font-serif font-bold text-sm sm:text-xl leading-tight line-clamp-2 ${getTextStyle(darkMode, customBgInfo)}`}>
                             {getTrans(item, selectedLanguage, 'name')}
                         </h3>
-                        <span className="font-bold text-sm sm:text-lg mt-1" style={{ color: primaryColor }}>
+                        <span className="font-bold text-xs sm:text-lg mt-1" style={{ color: primaryColor }}>
                             {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(Number(String(item.price).replace(/[^0-9.]/g, '')) || 0)}
                         </span>
                     </div>
@@ -209,7 +209,7 @@ const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
                     )}
                 </div>
 
-                <div className="flex justify-end mt-2 pt-2 border-t border-dashed border-gray-700/20">
+                <div className="flex justify-end mt-2 pt-2 border-t border-dashed border-gray-700/20 scale-90 origin-right">
                     <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} restaurantClosed={restaurantClosed} onItemAdded={onItemAdded} />
                 </div>
             </div>
@@ -229,7 +229,7 @@ const MenuItemList = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
             `}
         >
             {/* Image */}
-            <div className="w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 rounded-xl overflow-hidden relative group self-start sm:self-center">
+            <div className="w-20 h-20 sm:w-32 sm:h-32 flex-shrink-0 rounded-xl overflow-hidden relative group self-start sm:self-center">
                 <SmartImage
                     src={item.img_url || item.img}
                     alt={item.name}
@@ -282,7 +282,7 @@ const MenuItemList = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
 
 export const GridLayout = ({ items = [], ...props }) => {
     return (
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-2 gap-4">
             {items.map(item => (
                 <MenuItemGrid key={item.id} item={item} {...props} />
             ))}

@@ -141,6 +141,75 @@ export const orderService = {
         }
     },
 
+    // [NEW] Get advanced analytics (Categories, Loyalty, etc.)
+    async getAdvancedAnalytics(restaurantId, startDate, endDate) {
+        try {
+            const { data: orders, error } = await this.getSalesByDateRange(restaurantId, startDate, endDate, 'all');
+            if (error) throw error;
+
+            const analytics = {
+                revenueByCategory: {},
+                customerLoyalty: { new: 0, returning: 0 },
+                uniqueCustomers: new Set(),
+                returningPhones: new Set(),
+                topCustomers: [],
+                hourlyDistribution: Array(24).fill(0),
+                totalRevenue: 0,
+                totalOrders: orders.length
+            };
+
+            const customerStats = {};
+
+            orders.forEach(order => {
+                analytics.totalRevenue += (order.total || 0);
+                
+                // Hourly
+                const hour = new Date(order.created_at).getHours();
+                analytics.hourlyDistribution[hour] += (order.total || 0);
+
+                // Category & Items
+                if (order.items && Array.isArray(order.items)) {
+                    order.items.forEach(item => {
+                        const catId = item.category_id || 'uncategorized';
+                        const catName = item.category_name || 'Sem Categoria';
+                        if (!analytics.revenueByCategory[catName]) {
+                            analytics.revenueByCategory[catName] = 0;
+                        }
+                        analytics.revenueByCategory[catName] += (item.price_value || parseInt(String(item.price).replace(/[^0-9]/g, ''), 10) || 0) * (item.quantity || 1);
+                    });
+                }
+
+                // Loyalty
+                if (order.customer_phone) {
+                    if (!customerStats[order.customer_phone]) {
+                        customerStats[order.customer_phone] = { count: 0, total: 0, name: order.customer_name };
+                    }
+                    customerStats[order.customer_phone].count += 1;
+                    customerStats[order.customer_phone].total += (order.total || 0);
+                    
+                    if (customerStats[order.customer_phone].count > 1) {
+                        analytics.returningPhones.add(order.customer_phone);
+                    }
+                    analytics.uniqueCustomers.add(order.customer_phone);
+                }
+            });
+
+            analytics.customerLoyalty.returning = analytics.returningPhones.size;
+            analytics.customerLoyalty.new = Math.max(0, analytics.uniqueCustomers.size - analytics.returningPhones.size);
+
+            // Top Customers
+            analytics.topCustomers = Object.entries(customerStats)
+                .map(([phone, stats]) => ({ phone, ...stats }))
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 5);
+
+            return { data: analytics, error: null };
+        } catch (error) {
+            console.error('Error in getAdvancedAnalytics:', error);
+            return { data: null, error };
+        }
+    },
+
     // Subscribe to realtime updates
     subscribeToOrders(restaurantId, onUpdate) {
         return supabase

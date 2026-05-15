@@ -100,7 +100,7 @@ const CategoryCarousel = ({ categories, activeCategory, onSelect, primaryColor, 
                         data-catid={cat.id}
                         data-active={activeCategory === cat.id}
                         onClick={() => onSelect(cat.id)}
-                        className={`flex-shrink-0 flex flex-col items-center gap-1.5 p-2 min-w-[72px] rounded-xl transition-all border snap-start active:scale-95 ${activeCategory === cat.id
+                        className={`flex-shrink-0 flex flex-col items-center gap-1 p-1.5 min-w-[64px] rounded-xl transition-all border snap-start active:scale-95 ${activeCategory === cat.id
                             ? 'bg-[#1E1E1E] text-white shadow-[0_0_15px_rgba(212,175,55,0.4)] scale-105 border-[#D4AF37]'
                             : 'bg-white/5 text-gray-400 border-white/5 hover:bg-white/10 hover:border-white/10'
                             }`}
@@ -145,14 +145,14 @@ const CategorySection = ({ cat, Layout, commonProps, fontFamily, onItemAdded, se
     if (filteredItems.length === 0 && activeSub !== 'Todos') return null;
 
     return (
-        <div id={`category-${cat.id}`} className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: commonProps.primaryColor }}>
+        <div id={`category-${cat.id}`} className="mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h2 className="text-lg sm:text-xl font-bold mb-2 sm:mb-4 flex items-center gap-2" style={{ color: commonProps.primaryColor }}>
                 <span className="w-1 h-6 rounded-full bg-current block"></span>
                 {translateCat(cat.label)}
             </h2>
 
             {subcategories.length > 0 && (
-                <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex gap-2 mb-3 overflow-x-auto pb-1 scrollbar-hide">
                     <button
                         onClick={() => setActiveSub('Todos')}
                         className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeSub === 'Todos'
@@ -292,7 +292,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
 
             {/* Header / Hero */}
             <div
-                className="relative p-4 sm:p-8 pt-16 pb-8 sm:pb-14 flex flex-col items-center transition-all duration-700 overflow-hidden min-h-[300px] justify-center"
+                className="relative p-3 sm:p-8 pt-12 pb-6 sm:pb-14 flex flex-col items-center transition-all duration-700 overflow-hidden min-h-[220px] sm:min-h-[300px] justify-center"
                 style={{
                     backgroundColor: effectivePrimaryColor,
                     backgroundImage: config.headerBgUrl
@@ -318,7 +318,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
                             <img
                                 src={config.logoUrl}
                                 alt={config.restaurantName || "Logotipo"}
-                                className="w-24 h-24 sm:w-32 sm:h-32 object-contain filter drop-shadow-2xl mb-2 transition-all"
+                                className="w-20 h-20 sm:w-32 sm:h-32 object-contain filter drop-shadow-2xl mb-2 transition-all"
                             />
                         ) : (
                             <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mb-2 border-2 border-[#D4AF37]">
@@ -328,7 +328,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
 
                         {/* Text Stack - Only Restaurant Name */}
                         <div className="flex flex-col items-center leading-tight">
-                            <span className="text-3xl sm:text-4xl font-serif font-bold text-[#D4AF37] drop-shadow-md tracking-wider text-center px-4 transition-all">
+                            <span className="text-2xl sm:text-4xl font-serif font-bold text-[#D4AF37] drop-shadow-md tracking-wider text-center px-4 transition-all">
                                 {config.restaurantName || 'Restaurante'}
                             </span>
                         </div>
@@ -405,7 +405,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
                 </div>
             )}
 
-            <div key={searchTerm ? 'search' : activeCategory} className="p-4 pb-32 space-y-2 animate-fade-in-up">
+            <div key={searchTerm ? 'search' : activeCategory} className="p-3 pb-32 space-y-1 sm:space-y-2 animate-fade-in-up">
                 {renderLayout()}
             </div>
 

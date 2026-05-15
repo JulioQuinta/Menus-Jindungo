@@ -90,6 +90,21 @@ const InventoryManager = ({ restaurantId }) => {
         return matchesSearch && (!filterLowStock || isLowStock);
     });
 
+    // [NEW] Calculate Stock Value Metrics
+    const totalPotentialRevenue = items.reduce((sum, item) => {
+        if (!item.track_stock) return sum;
+        const price = parseInt(String(item.price).replace(/[^0-9]/g, ''), 10) || 0;
+        return sum + (price * (item.stock_quantity || 0));
+    }, 0);
+
+    const valueAtRisk = items.reduce((sum, item) => {
+        if (item.track_stock && item.stock_quantity < 5) {
+            const price = parseInt(String(item.price).replace(/[^0-9]/g, ''), 10) || 0;
+            return sum + (price * (item.stock_quantity || 0));
+        }
+        return sum;
+    }, 0);
+
     const hasChanges = Object.keys(pendingChanges).length > 0;
 
     if (loading) return (
@@ -101,6 +116,35 @@ const InventoryManager = ({ restaurantId }) => {
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* [NEW] Stock Value Dashboard */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="bg-[#111111]/60 backdrop-blur-xl p-6 rounded-3xl border border-white/5">
+                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Valor Total em Stock</p>
+                    <p className="text-2xl font-serif font-black text-[#D4AF37]">{totalPotentialRevenue.toLocaleString()} Kz</p>
+                    <p className="text-[10px] text-gray-500 mt-2 font-medium">Faturação potencial baseada no inventário atual.</p>
+                </div>
+                <div className="bg-[#111111]/60 backdrop-blur-xl p-6 rounded-3xl border border-white/5">
+                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Valor em Risco</p>
+                    <p className="text-2xl font-serif font-black text-red-500">{valueAtRisk.toLocaleString()} Kz</p>
+                    <p className="text-[10px] text-gray-500 mt-2 font-medium">Itens com stock baixo (menos de 5 unidades).</p>
+                </div>
+                <div className="bg-[#111111]/60 backdrop-blur-xl p-6 rounded-3xl border border-white/5">
+                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Saúde do Inventário</p>
+                    <div className="flex items-center gap-3 mt-2">
+                        <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
+                            <div 
+                                className="h-full bg-green-500 transition-all duration-1000" 
+                                style={{ width: `${Math.round(((items.length - items.filter(i => i.track_stock && i.stock_quantity < 5).length) / items.length) * 100)}%` }}
+                            ></div>
+                        </div>
+                        <span className="text-xs font-bold text-white">
+                            {Math.round(((items.length - items.filter(i => i.track_stock && i.stock_quantity < 5).length) / items.length) * 100)}%
+                        </span>
+                    </div>
+                    <p className="text-[10px] text-gray-500 mt-2 font-medium uppercase tracking-tighter">Percentagem de itens com stock normal.</p>
+                </div>
+            </div>
+
             {/* Header Controls */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="relative flex-1 w-full max-w-md group">

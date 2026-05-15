@@ -422,7 +422,7 @@ const AdminDashboard = () => {
                         <Routes>
                         <Route path="/" element={
                             <div className="space-y-12 animate-fade-in-up">
-                                <DashboardStatsGrid stats={stats} />
+                                <DashboardStats restaurantId={restaurant?.id} features={features} />
                                 
                                 <div className="space-y-6">
                                     <h2 className="text-2xl font-serif font-black text-white tracking-tight">Atalhos de Impacto</h2>

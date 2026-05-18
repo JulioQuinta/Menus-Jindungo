@@ -130,6 +130,7 @@ const PublicMenu = () => {
                     items: (cat.menu_items || [])
                         .map(item => ({
                             id: item.id,
+                            restaurant_id: restaurantData.id, // [SECURITY] Guard against cross-restaurant cart mixing
                             name: item.name,
                             price: item.price,
                             desc: item.desc_text,
@@ -192,6 +193,36 @@ const PublicMenu = () => {
 
         fetchData();
     }, [slug]);
+
+    // [NEW] Realtime Subscription para Disponibilidade dos Pratos
+    useEffect(() => {
+        if (!restaurant?.id) return;
+
+        const channel = supabase.channel(`public-menu-${restaurant.id}`)
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'menu_items',
+                filter: `restaurant_id=eq.${restaurant.id}`
+            }, (payload) => {
+                const updatedItem = payload.new;
+                
+                // Atualiza a disponibilidade no estado local instantaneamente
+                setCategories(prevCats => prevCats.map(cat => ({
+                    ...cat,
+                    items: cat.items.map(item => 
+                        item.id === updatedItem.id 
+                            ? { ...item, available: updatedItem.available }
+                            : item
+                    )
+                })));
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [restaurant?.id]);
 
     // [DYNAMIC FAVICON] Changes browser tab icon to the restaurant's logo
     useEffect(() => {
@@ -407,9 +438,25 @@ const PublicMenuInner = ({
     activeStaff, setActiveStaff, handleShare,
     selectedLanguage, setSelectedLanguage 
 }) => {
-    const { addToCart } = useCart();
+    const { addToCart, cartItems, clearCart } = useCart();
     const t = (key) => getTranslation(selectedLanguage, key);
     const [upsellState, setUpsellState] = useState({ isOpen: false, mainItem: null, upsellItems: [] });
+
+    // [SECURITY] Validação rigorosa de Sessão / Mesa contra mistura de restaurantes no carrinho
+    useEffect(() => {
+        if (restaurant?.id && cartItems.length > 0) {
+            const firstItem = cartItems[0];
+            if (firstItem.restaurant_id && String(firstItem.restaurant_id) !== String(restaurant.id)) {
+                clearCart();
+                toast.error(
+                    selectedLanguage === 'PT' 
+                        ? 'Carrinho limpo: Iniciou sessão num novo restaurante.' 
+                        : 'Cart cleared: Switched to a different restaurant.',
+                    { duration: 5000, icon: '⚠️' }
+                );
+            }
+        }
+    }, [restaurant?.id, cartItems, clearCart, selectedLanguage]);
 
     const handleItemAdded = (item) => {
         if (item.upsell_ids && item.upsell_ids.length > 0) {
@@ -470,9 +517,9 @@ const PublicMenuInner = ({
                                                 tableId = urlParams.get('mesa');
                                             }
                                             if (!tableId) {
-                                                const userInput = window.prompt("Por favor, digite o número/nome ou letra da sua mesa para o garçom saber onde ir:");
+                                                const userInput = window.prompt("Por favor, digite o número/nome ou letra da sua mesa para o empregado de mesa saber onde ir:");
                                                 if (!userInput || userInput.trim() === '') {
-                                                    toast.error("Identificação da mesa é necessária para chamar o garçom.");
+                                                    toast.error("A identificação da mesa é necessária para chamar o atendimento.");
                                                     return;
                                                 }
                                                 tableId = userInput.trim();
@@ -485,12 +532,12 @@ const PublicMenuInner = ({
                                                     .from('notificacoes_garcom')
                                                     .insert([{ mesa_id: tableId, status: 'pendente', restaurant_id: restaurant?.id }]);
                                                 if (error) throw error;
-                                                toast.success(`🔔 O garçom está a caminho da Mesa ${tableId}!`, {
+                                                toast.success(`🔔 O empregado de mesa está a caminho da Mesa ${tableId}!`, {
                                                     duration: 4000,
                                                     position: 'top-center'
                                                 });
                                             } catch (e) {
-                                                console.error("Erro ao chamar garçom:", e);
+                                                console.error("Erro ao chamar mesa:", e);
                                                 toast.error("Erro ao conectar com o serviço. Tente novamente.");
                                             }
                                         }}
@@ -500,7 +547,7 @@ const PublicMenuInner = ({
                                             backgroundColor: config?.primaryColor || '#D4AF37',
                                             boxShadow: `0 8px 32px ${config?.primaryColor}40`
                                         }}
-                                        title="Chamar Garçom"
+                                        title="Chamar Empregado de Mesa"
                                     >
                                         <span className="absolute inset-0 bg-white/20 animate-pulse"></span>
                                         <span className="absolute inset-0 rounded-full border-2 border-white/30 scale-90 group-hover:scale-150 group-hover:opacity-0 transition-all duration-700"></span>

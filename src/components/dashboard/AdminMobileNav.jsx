@@ -8,7 +8,7 @@ const AdminMobileNav = ({ onOpenSidebar, restaurantSlug }) => {
 
     const navItems = [
         { label: 'Início', icon: LayoutDashboard, path: '/admin', id: 'dashboard' },
-        { label: 'Cardápio', icon: UtensilsCrossed, path: '/admin/menu', id: 'menu' },
+        { label: 'Ementa', icon: UtensilsCrossed, path: '/admin/menu', id: 'menu' },
         { label: 'Ver Menu', icon: Eye, path: `/r/${restaurantSlug}`, id: 'view_menu', external: true },
         { label: 'Pedidos', icon: ClipboardList, path: '/admin/orders', id: 'orders' },
         { label: 'Mais', icon: MenuIcon, onClick: onOpenSidebar, id: 'more' },

@@ -61,6 +61,17 @@ export const useAdminAlerts = (restaurantId, navigate) => {
             (payload) => {
                 playAlertSound();
                 setActiveAlerts(prev => [...prev, payload.new]);
+                toast.success(`🔔 CHAMADA DE MESA!\nMesa ${payload.new.mesa_id || '?'} solicitou atendimento!`, {
+                    duration: 10000,
+                    position: 'top-center',
+                    style: { background: '#ef4444', color: '#fff', border: '2px solid #b91c1c', fontWeight: 'bold', fontSize: '16px', padding: '16px', boxShadow: '0 10px 25px rgba(239, 68, 68, 0.5)' }
+                });
+                if (isNotificationSupported() && Notification?.permission === 'granted') {
+                    sendNotification("🔔 Chamada de Mesa Jindungo!", {
+                        body: `A Mesa ${payload.new.mesa_id || '?'} solicitou um empregado de mesa!`,
+                        icon: '/jindungo_logo_v3.png'
+                    });
+                }
             })
             .subscribe();
 

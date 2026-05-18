@@ -56,7 +56,7 @@ const Register = () => {
                 navigate('/login');
             }, 6000);
         } catch (err) {
-            setError('Falha ao cadastrar: ' + err.message);
+            setError('Falha ao registar: ' + err.message);
             setIsLoading(false);
         }
     };

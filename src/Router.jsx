@@ -13,11 +13,19 @@ const UpdatePassword = lazy(() => import('./pages/UpdatePassword'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const Explorar = lazy(() => import('./pages/Explorar'));
 const MotoboyDashboard = lazy(() => import('./pages/MotoboyDashboard'));
+const QuemSomos = lazy(() => import('./pages/QuemSomos'));
 
-// Basic Loading Fallback
+// Enhanced Loading Fallback (Better UX for slow networks)
 const PageLoader = () => (
-    <div className="min-h-screen bg-[#121212] flex items-center justify-center p-4">
-        <div className="w-12 h-12 border-4 border-yellow-500/20 border-t-yellow-500 rounded-full animate-spin"></div>
+    <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center p-4">
+        <div className="relative w-24 h-24 mb-8">
+            <div className="absolute inset-0 border-4 border-[#D4AF37]/20 rounded-full animate-ping"></div>
+            <div className="absolute inset-2 border-4 border-[#D4AF37]/40 rounded-full animate-spin shadow-[0_0_15px_rgba(212,175,55,0.5)]"></div>
+            <div className="absolute inset-4 bg-[#D4AF37] rounded-full animate-pulse flex items-center justify-center">
+                <span className="text-black font-serif font-black text-xl">J</span>
+            </div>
+        </div>
+        <p className="text-[#D4AF37] font-serif font-bold text-sm tracking-[0.2em] uppercase animate-pulse">A Preparar a Cozinha...</p>
     </div>
 );
 
@@ -28,6 +36,8 @@ const Router = () => {
                 {/* Public Routes */}
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/explorar" element={<Explorar />} />
+                <Route path="/quem-somos" element={<QuemSomos />} />
+                <Route path="/sobre" element={<QuemSomos />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />

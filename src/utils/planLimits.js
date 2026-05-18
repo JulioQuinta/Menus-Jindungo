@@ -28,7 +28,7 @@ export const getPlanFeatures = (planString) => {
         // --- 1. Operações (KDS & Gestão de Staff) ---
         canUseKDS: hasBusiness,          // Aba Pedidos (Cozinha) no Painel
         canManageStaff: hasBusiness,     // Aba Clientes/Staff no Painel
-        canCallWaiter: hasBusiness,      // Botão "Chamar Garçom" no Menu Público
+        canCallWaiter: hasBusiness,      // Botão "Chamar Mesa" no Menu Público
         canMarkSoldOut: true,            // Botão Esgotar no Gestor de Menu
         hasTableQR: hasBusiness,         // Gera QR codes pré-associados com a mesa
         hasPrivateFeedback: hasBusiness, // Sistema de estrelas 1-5 escondido do Google

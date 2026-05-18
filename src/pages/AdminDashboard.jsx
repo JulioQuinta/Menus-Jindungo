@@ -41,6 +41,7 @@ const FeedbackManager = lazyWithRetry(() => import('../components/FeedbackManage
 const CouponManager = lazyWithRetry(() => import('../components/CouponManager'));
 const UpgradePrompt = lazyWithRetry(() => import('../components/UpgradePrompt'));
 const InventoryManager = lazyWithRetry(() => import('../components/InventoryManager'));
+const SettingsManager = lazyWithRetry(() => import('../components/SettingsManager'));
 
 // Refactored Sub-components
 import AdminSidebar from '../components/dashboard/AdminSidebar';
@@ -52,6 +53,7 @@ import StaffPinModal from '../components/StaffPinModal';
 import PaymentSaaSModal from '../components/PaymentSaaSModal';
 import CommandPalette from '../components/dashboard/CommandPalette';
 import HypnoticStats from '../components/dashboard/HypnoticStats';
+import ComponentErrorBoundary from '../components/ComponentErrorBoundary'; // [NEW] QA & Performance
 
 const AdminDashboard = () => {
     const { user, role, signOut } = useAuth();
@@ -335,11 +337,12 @@ const AdminDashboard = () => {
     }
 
     return (
-        <div className="flex h-screen bg-[#121212] text-gray-100 overflow-hidden max-w-[100vw] font-sans">
-            {/* Ambient Background */}
-            <div className="absolute inset-0 z-0 pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[150px] "></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-secondary/20 blur-[150px]"></div>
+        <div className="flex h-screen bg-[#121212] text-gray-100 overflow-hidden max-w-[100vw] font-sans relative">
+            {/* Ambient Background Incandescente Dourado Suave */}
+            <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-[-10%] left-[10%] w-[70vw] h-[70vh] rounded-full bg-[#F5C542]/15 blur-[200px]"></div>
+                <div className="absolute top-[25%] right-[-5%] w-[60vw] h-[60vh] rounded-full bg-[#EAC775]/10 blur-[180px]"></div>
+                <div className="absolute bottom-[-10%] left-[15%] w-[65vw] h-[65vh] rounded-full bg-[#D4AF37]/15 blur-[220px]"></div>
             </div>
 
             {/* Sidebar Overlay (Mobile only) */}
@@ -364,7 +367,7 @@ const AdminDashboard = () => {
             />
 
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto custom-scrollbar relative z-10 bg-[#121212]">
+            <main className="flex-1 overflow-y-auto custom-scrollbar relative z-10 bg-transparent">
 
                 <DashboardAlertSystem 
                     activeAlerts={activeAlerts}
@@ -410,6 +413,8 @@ const AdminDashboard = () => {
                     activeStaff={activeStaff}
                     setShowStaffModal={setShowStaffModal}
                     onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+                    businessInfo={businessInfo}
+                    onSaveBusinessInfo={handleBusinessInfoSave}
                 />
 
                 <div className="p-4 sm:p-8 max-w-7xl mx-auto pb-32 lg:pb-24">
@@ -419,19 +424,14 @@ const AdminDashboard = () => {
                             <span className="text-xs font-mono uppercase tracking-widest text-[#D4AF37]">A carregar módulo...</span>
                         </div>
                     }>
-                        <Routes>
-                        <Route path="/" element={
-                            <div className="space-y-12 animate-fade-in-up">
-                                <DashboardStats restaurantId={restaurant?.id} features={features} />
-                                
-                                <div className="space-y-6">
-                                    <h2 className="text-2xl font-serif font-black text-white tracking-tight">Atalhos de Impacto</h2>
-                                    <QuickActionGrid />
-                                </div>
-
-                                <UpgradePromoSection restaurant={restaurant} navigate={navigate} />
-                            </div>
-                        } /><Route path="/menu" element={<MenuManager categories={categories} restaurantId={restaurant?.id} onUpdate={handleMenuUpdate} />} />
+                        <ComponentErrorBoundary componentName="Admin Main Area">
+                            <Routes>
+                                <Route path="/" element={
+                                    <div className="animate-fade-in-up">
+                                        <DashboardStats restaurantId={restaurant?.id} features={features} />
+                                    </div>
+                                } />
+                                <Route path="/menu" element={<MenuManager categories={categories} restaurantId={restaurant?.id} onUpdate={handleMenuUpdate} />} />
 
                         <Route path="/orders" element={
                             features.canUseKDS ? (
@@ -542,74 +542,24 @@ const AdminDashboard = () => {
                         <Route path="/chat" element={<ChatAdminPanel categories={categories} onUpdate={handleMenuUpdate} restaurantId={restaurant?.id} />} />
                         <Route path="/qrcode" element={<QRCodeGenerator url={`${window.location.origin}/r/${restaurant?.slug}`} restaurantName={restaurant?.name || restaurant?.slug} logoUrl={config?.logoUrl} />} />
                         <Route path="/settings" element={
-                            <div className="space-y-6">
-                                {/* Tab Navigation */}
-                                <div className="flex gap-2 p-1 bg-white/5 rounded-2xl w-fit border border-white/5 backdrop-blur-md">
-                                    <button
-                                        onClick={() => setSettingsTab('visual')}
-                                        className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${settingsTab === 'visual' ? 'bg-[#D4AF37] text-black shadow-lg' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                                    >
-                                        Personalização
-                                    </button>
-                                    <button
-                                        onClick={() => setSettingsTab('delivery')}
-                                        className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${settingsTab === 'delivery' ? 'bg-[#D4AF37] text-black shadow-lg' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                                    >
-                                        Taxas de Entrega
-                                    </button>
-                                </div>
-
-                                {settingsTab === 'visual' ? (
-                                    <div className="animate-fade-in space-y-6">
-                                        <StyleControls
-                                            config={config}
-                                            setConfig={handleConfigChange}
-                                            restaurantName={restaurant?.name}
-                                            onNameChange={handleNameUpdate}
-                                            slug={restaurant?.slug}
-                                            onSlugChange={handleSlugUpdate}
-                                            onReset={() => { }}
-                                            onLogoUpload={handleLogoUpload}
-                                            onHeaderBgUpload={handleHeaderBgUpload}
-                                        />
-
-                                        <div className="p-6 sm:p-8 bg-white/90 dark:bg-[#141414]/90 backdrop-blur-md rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 flex justify-between items-center transition-all hover:shadow-md">
-                                            <div>
-                                                <h3 className="text-xl font-bold text-gray-800 dark:text-white">Menu e Categorias</h3>
-                                                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Gerencie pratos, categorias e abas internas do cardápio.</p>
-                                            </div>
-                                            <button
-                                                onClick={() => setShowCategoryModal(true)}
-                                                className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-6 py-3 rounded-xl hover:bg-black dark:hover:bg-white transition-all font-bold flex items-center gap-2 shadow-md hover:-translate-y-0.5"
-                                            >
-                                                <UtensilsCrossed size={18} />
-                                                Gerenciar Menu
-                                            </button>
-                                        </div>
-
-                                        {showCategoryModal && (
-                                            <CategoryManager
-                                                restaurantId={restaurant?.id}
-                                                categories={categories}
-                                                onUpdate={handleMenuUpdate}
-                                                onClose={() => setShowCategoryModal(false)}
-                                            />
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="animate-fade-in">
-                                        <DeliverySettings
-                                            restaurantId={restaurant?.id}
-                                            initialConfig={restaurant?.delivery_config}
-                                            features={features}
-                                        />
-                                    </div>
-                                )}
-                            </div>
+                            <SettingsManager
+                                restaurantId={restaurant?.id}
+                                restaurantName={restaurant?.name}
+                                slug={restaurant?.slug}
+                                config={config}
+                                setConfig={handleConfigChange}
+                                onNameChange={handleNameUpdate}
+                                onSlugChange={handleSlugUpdate}
+                                onLogoUpload={handleLogoUpload}
+                                onHeaderBgUpload={handleHeaderBgUpload}
+                                categories={categories}
+                                onCategoryUpdate={handleMenuUpdate}
+                            />
                         } />
-                    </Routes>
-                </Suspense>
-            </div>
+                            </Routes>
+                        </ComponentErrorBoundary>
+                    </Suspense>
+                </div>
 
                 {/* [NEW] Floating Action Button: View Menu (Hidden on Mobile to use Bottom Nav space) */}
                 {restaurant?.slug && (

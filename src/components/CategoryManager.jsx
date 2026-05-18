@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 const inputClasses = "w-full flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary focus:bg-white outline-none transition-all text-gray-900 font-medium";
 const labelClasses = "block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-4 first:mt-0";
 
-const CategoryManager = ({ categories, restaurantId, onUpdate, onClose }) => {
+const CategoryManager = ({ categories, restaurantId, onUpdate, onClose, isInline = false }) => {
     const [newCategory, setNewCategory] = useState('');
     const [editingId, setEditingId] = useState(null);
     const [editName, setEditName] = useState('');
@@ -126,6 +126,100 @@ const CategoryManager = ({ categories, restaurantId, onUpdate, onClose }) => {
         setEditSubcats(editSubcats.filter(s => s !== sub));
     };
 
+    if (isInline) {
+        return (
+            <div className="space-y-6 text-white font-sans w-full">
+                {/* List Categories */}
+                <div className="custom-scrollbar space-y-3 max-h-[50vh] overflow-y-auto pr-2">
+                    {categories.map(cat => (
+                        <div key={cat.id} className={`p-5 rounded-2xl border transition-all ${editingId === cat.id ? 'bg-[#D4AF37]/10 border-[#D4AF37] ring-1 ring-[#D4AF37]' : 'bg-black/40 border-white/10 hover:border-white/20'}`}>
+                            {editingId === cat.id ? (
+                                <div className="space-y-4">
+                                    <div className="flex gap-2 items-center">
+                                        <input
+                                            value={editName}
+                                            onChange={e => setEditName(e.target.value)}
+                                            className="w-full flex-1 px-4 py-3 bg-black/60 border border-white/20 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] outline-none transition-all text-white font-bold"
+                                            placeholder="Nome da Categoria"
+                                            autoFocus
+                                        />
+                                        <button onClick={() => handleUpdate(cat.id)} disabled={isLoading} className="bg-emerald-500 text-black px-4 py-3 rounded-xl font-bold hover:bg-emerald-400 transition shadow-sm flex items-center justify-center cursor-pointer">✓ Guardar</button>
+                                        <button onClick={() => setEditingId(null)} className="bg-white/10 text-gray-300 px-4 py-3 rounded-xl font-bold hover:bg-white/20 transition shadow-sm flex items-center justify-center cursor-pointer">✕</button>
+                                    </div>
+
+                                    {/* Subcategories Editor */}
+                                    <div className="bg-black/40 p-4 rounded-xl border border-white/10 space-y-3">
+                                        <label className="block text-xs font-bold text-[#D4AF37] uppercase tracking-wider">Sub-categorias (Abas Internas)</label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {editSubcats.map(sub => (
+                                                <span key={sub} className="bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] font-bold text-xs px-3 py-1.5 rounded-full flex items-center gap-2">
+                                                    {sub}
+                                                    <button onClick={() => removeSubcat(sub)} className="hover:text-red-400 hover:scale-110 transition-transform cursor-pointer">✕</button>
+                                                </span>
+                                            ))}
+                                            {editSubcats.length === 0 && <span className="text-xs text-gray-400 italic font-medium py-1">Nenhuma aba interna criada.</span>}
+                                        </div>
+                                        <div className="flex gap-2 items-stretch pt-2">
+                                            <input
+                                                value={newSubcat}
+                                                onChange={e => setNewSubcat(e.target.value)}
+                                                onKeyDown={e => e.key === 'Enter' && addSubcat()}
+                                                placeholder="Adicionar sub. Ex: Sobremesas Frias"
+                                                className="flex-1 text-sm px-4 py-2.5 bg-black/50 border border-white/10 focus:border-[#D4AF37] rounded-xl outline-none text-white transition-colors font-medium"
+                                            />
+                                            <button onClick={addSubcat} className="text-black font-bold text-xs uppercase tracking-wider bg-[#D4AF37] hover:bg-amber-400 px-5 py-2.5 rounded-xl transition-colors cursor-pointer">Adicionar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex justify-between items-center group">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-3">
+                                            <span className="font-serif font-bold text-white text-base">{cat.label || cat.name}</span>
+                                            <span className="text-xs bg-white/10 text-[#D4AF37] px-2.5 py-0.5 rounded-full font-mono font-bold">{cat.items?.length || 0} itens</span>
+                                        </div>
+                                        {cat.subcategories && cat.subcategories.length > 0 && (
+                                            <div className="flex flex-wrap gap-1.5 mt-2 opacity-80 group-hover:opacity-100 transition-opacity">
+                                                {cat.subcategories.map(s => (
+                                                    <span key={s} className="text-[11px] bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-md text-gray-300 font-medium">{s}</span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => startEditing(cat)} className="px-3 py-2 bg-white/10 hover:bg-[#D4AF37] hover:text-black rounded-xl text-xs font-bold text-white transition-all flex items-center gap-1.5 cursor-pointer">
+                                            <span>Editar</span>
+                                        </button>
+                                        <button onClick={() => handleDelete(cat.id, cat.items?.length || 0)} className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer">
+                                            <span>Apagar</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+
+                {/* Add New Category Input */}
+                <div className="flex gap-3 pt-4 border-t border-white/10">
+                    <input
+                        value={newCategory}
+                        onChange={e => setNewCategory(e.target.value)}
+                        placeholder="Nome da Nova Categoria Principal..."
+                        className="w-full flex-1 px-4 py-3.5 bg-black/60 border border-white/10 rounded-2xl focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] outline-none transition-all text-white font-bold text-sm shadow-inner"
+                    />
+                    <button
+                        onClick={handleAdd}
+                        disabled={isLoading || !newCategory.trim()}
+                        className="bg-gradient-to-r from-[#F5C542] via-[#EAC775] to-[#D4AF37] text-gray-950 px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-lg disabled:opacity-50 disabled:shadow-none whitespace-nowrap cursor-pointer"
+                    >
+                        Criar Categoria
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="category-manager-overlay" style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -140,7 +234,7 @@ const CategoryManager = ({ categories, restaurantId, onUpdate, onClose }) => {
                 boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h3 className="text-xl font-bold text-gray-800">Gerenciar Categorias & Abas</h3>
+                    <h3 className="text-xl font-bold text-gray-800">Gerir Categorias & Abas</h3>
                     <button onClick={onClose} className="p-2 text-gray-500 hover:text-red-500 hover:bg-gray-100 rounded-full transition-colors font-bold text-xl">✕</button>
                 </div>
 

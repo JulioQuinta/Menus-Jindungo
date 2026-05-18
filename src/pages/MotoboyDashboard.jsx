@@ -46,12 +46,24 @@ export default function MotoboyDashboard() {
     </div>;
 
     // Delivery fields logic
-    const isDelivery = order.table_number?.includes('Entrega:');
+    const isDelivery = order.table_number?.includes('Entrega:') || order.order_type === 'delivery';
     let displayAddress = order.table_number;
     let mapsLink = null;
     let paymentMethod = null;
 
-    if (isDelivery) {
+    if (order.order_type === 'delivery' && order.delivery_address) {
+        displayAddress = order.delivery_address;
+        if (order.delivery_neighborhood) displayAddress += ` (${order.delivery_neighborhood})`;
+        if (order.delivery_reference) displayAddress += `\nReferência: ${order.delivery_reference}`;
+        if (order.table_number?.includes('| Pgto:')) {
+            const parts = order.table_number.split('| Pgto:');
+            paymentMethod = parts[1]?.trim();
+        }
+        if (order.table_number?.includes('Maps:')) {
+            const mPart = order.table_number.split('|').find(p => p.trim().startsWith('Maps:'));
+            if (mPart) mapsLink = mPart.replace('Maps:', '').trim();
+        }
+    } else if (isDelivery && order.table_number?.includes('Entrega:')) {
         const parts = order.table_number.split('|').map(p => p.trim());
         displayAddress = parts[0].replace('Entrega:', '').trim();
         parts.forEach(part => {
@@ -60,7 +72,7 @@ export default function MotoboyDashboard() {
              if (part.startsWith('Ref:')) displayAddress += `\nReferência: ${part.replace('Ref:', '').trim()}`;
         });
     } else {
-         displayAddress = "Dine-in Order #" + order.table_number;
+         displayAddress = "Pedido #" + order.table_number;
     }
 
     return (
@@ -71,7 +83,13 @@ export default function MotoboyDashboard() {
                     <Bike size={80} />
                 </div>
                 <div>
-                    <h1 className="text-xl font-black text-white tracking-tight leading-tight uppercase font-serif">Motorista <br/><span className="text-[#D4AF37]">Jindungo</span></h1>
+                    <h1 className="text-xl font-black text-white tracking-tight leading-tight uppercase font-serif">
+                        {order.courier_name ? (
+                            <>Estafeta <span className="text-[#D4AF37]">{order.courier_name}</span></>
+                        ) : (
+                            <>Motorista <br/><span className="text-[#D4AF37]">Jindungo</span></>
+                        )}
+                    </h1>
                     <p className="text-[9px] uppercase tracking-widest text-[#D4AF37] font-bold opacity-80 mt-1">HUB LOGÍSTICO</p>
                 </div>
             </header>

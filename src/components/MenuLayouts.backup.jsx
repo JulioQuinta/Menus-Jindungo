@@ -1,0 +1,385 @@
+import React, { useState } from 'react';
+import SmartImage from './SmartImage';
+import Skeleton from './Skeleton';
+import { Plus, Minus, ChevronDown, ChevronUp } from 'lucide-react';
+import { useCart } from '../context/CartContext';
+import { getTranslation } from '../utils/i18n';
+
+const QuantityControls = ({ item, isEditing, primaryColor, darkMode, restaurantClosed, onItemAdded, selectedLanguage }) => {
+    const { getItemQuantity, addToCart, removeFromCart } = useCart();
+    const quantity = getItemQuantity(item.id);
+    const [showVariants, setShowVariants] = React.useState(false);
+
+    const t = (key) => getTranslation(selectedLanguage, key);
+
+    const hasVariants = Array.isArray(item.translations?.variants) && item.translations.variants.length > 0;
+
+    if (isEditing) return null;
+
+    if (item.available === false || (item.track_stock && item.stock_quantity <= 0)) {
+        return (
+            <div className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1 ${darkMode ? 'bg-red-900/40 text-red-400 border border-red-800/50' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                <span className="text-[10px]">🚫</span> {t('soldOut')}
+            </div>
+        );
+    }
+
+    if (restaurantClosed) {
+        return (
+            <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${darkMode ? 'bg-gray-800 text-gray-500' : 'bg-gray-100 text-gray-400'}`}>
+                {t('ordersSuspended')}
+            </div>
+        );
+    }
+
+    const handleAddClick = (e) => {
+        e.stopPropagation();
+        if (hasVariants) {
+            setShowVariants(true);
+        } else {
+            addToCart(item);
+            if (onItemAdded) onItemAdded(item);
+        }
+    };
+
+    return (
+        <>
+            <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-1 shadow-sm border border-gray-100">
+                <button
+                    onClick={(e) => { e.stopPropagation(); removeFromCart(item.id); }}
+                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white text-gray-600 shadow-sm hover:bg-gray-100 disabled:opacity-30 transition-all duration-200 active:scale-90"
+                    disabled={quantity === 0}
+                >
+                    <Minus size={18} />
+                </button>
+                <span className="font-bold text-gray-800 min-w-[28px] text-center text-lg">{quantity}</span>
+                <button
+                    onClick={handleAddClick}
+                    className="w-10 h-10 flex items-center justify-center rounded-xl text-white shadow-lg hover:brightness-110 transition-all duration-200 active:scale-90 active:shadow-inner relative group overflow-hidden disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed"
+                    style={{ backgroundColor: primaryColor }}
+                    disabled={item.track_stock && quantity >= item.stock_quantity}
+                >
+                    {/* Haptic Glow Effect */}
+                    <span className="absolute inset-0 bg-white/20 opacity-0 group-active:opacity-100 transition-opacity" />
+                    <Plus size={18} strokeWidth={3} />
+                </button>
+            </div>
+
+            {/* Variants Modal */}
+            {showVariants && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-[100] flex flex-col justify-end sm:justify-center items-center p-4 sm:p-0"
+                    onClick={(e) => { e.stopPropagation(); setShowVariants(false); }}
+                >
+                    <div
+                        className={`w-full max-w-sm rounded-[2rem] sm:rounded-3xl p-6 ${darkMode ? 'bg-[#1a1a1a] border border-gray-800' : 'bg-white'} shadow-2xl transform transition-all animate-slide-up sm:animate-fade-in`}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mb-6 sm:hidden" />
+
+                        <h3 className={`text-xl font-bold mb-2 ${getTextStyle(darkMode)}`}>Escolha uma opção</h3>
+                        <p className={`text-sm mb-6 ${getSubTextStyle(darkMode)}`}>{item.name}</p>
+
+                        <div className="space-y-3 max-h-[50vh] overflow-y-auto custom-scrollbar pr-2">
+                            {item.translations.variants.map((v, i) => (
+                                <button
+                                    key={i}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        addToCart(item, v);
+                                        setShowVariants(false);
+                                        if (onItemAdded) onItemAdded(item);
+                                    }}
+                                    className={`w-full px-5 py-4 rounded-2xl font-semibold text-left transition-all ${darkMode ? 'bg-gray-800/50 hover:bg-gray-800 text-gray-200' : 'bg-gray-50 hover:bg-gray-100/80 text-gray-800 border border-gray-100 hover:border-gray-200'} active:scale-[0.98] flex justify-between items-center`}
+                                >
+                                    <span>{v}</span>
+                                    <Plus size={18} className="text-gray-400" />
+                                </button>
+                            ))}
+                        </div>
+
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setShowVariants(false); }}
+                            className={`w-full mt-6 py-4 rounded-2xl font-bold ${darkMode ? 'bg-gray-800 text-gray-400 hover:text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'} transition-colors`}
+                        >
+                            {t('cancel')}
+                        </button>
+                    </div>
+                </div>
+            )}
+        </>
+    );
+};
+
+// Helper for dark mode conditional styles - now supporting custom background overrides
+const getCardStyle = (darkMode, customBg) => {
+    if (customBg?.isCustom) {
+        return customBg.textColor === '#ffffff' ? 'bg-black/30 border-white/10 backdrop-blur-md' : 'bg-white/70 border-gray-800/10 backdrop-blur-md';
+    }
+    return darkMode ? 'bg-[#1E1E1E] border-white/5' : 'bg-white border-gray-100';
+};
+const getTextStyle = (darkMode, customBg) => {
+    if (customBg?.isCustom) {
+        return customBg.textColor === '#ffffff' ? 'text-white' : 'text-gray-900';
+    }
+    return darkMode ? 'text-gray-100' : 'text-gray-900';
+};
+const getSubTextStyle = (darkMode, customBg) => {
+    if (customBg?.isCustom) {
+        return customBg.textColor === '#ffffff' ? 'text-gray-300' : 'text-gray-600';
+    }
+    return darkMode ? 'text-gray-400' : 'text-gray-500';
+};
+
+// [NEW] Helper to get translated text
+const getTrans = (item, lang, field) => {
+    if (!item.translations || !item.translations[lang.toLowerCase()]) return item[field];
+    return item.translations[lang.toLowerCase()][field] || item[field];
+};
+
+const getCompositionStyle = (darkMode, customBg) => {
+    if (customBg?.isCustom) {
+        // Se o fundo é escuro (textColor branco), usar amarelo/gold vibrante
+        if (customBg.textColor === '#ffffff') return 'text-[#F9BF00] font-semibold';
+        // Se o fundo é claro, usar castanho profundo/charcoal
+        return 'text-[#1a1a1a] font-medium'; 
+    }
+    return darkMode ? 'text-[#F9BF00] font-semibold' : 'text-[#3E2723] font-medium';
+};
+
+const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguage, customBgInfo, restaurantClosed, onItemAdded }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const composition = getTrans(item, selectedLanguage, 'composition');
+    const t = (key) => getTranslation(selectedLanguage, key);
+
+    return (
+        <div
+            className={`rounded-2xl shadow-md transition-all duration-300 overflow-hidden border flex flex-col h-full group animate-fade-in-up ${getCardStyle(darkMode, customBgInfo)} 
+                ${item.available === false ? 'opacity-60 grayscale-[0.8] cursor-not-allowed' : 'hover:scale-[1.02] hover:shadow-xl hover:border-[#D4AF37]/50'}
+            `}
+            style={{ boxShadow: darkMode ? '0 5px 15px -5px rgba(0,0,0,0.5)' : '0 5px 15px -5px rgba(0, 0, 0, 0.1)' }}
+        >
+            {/* Image Section */}
+            <div className="relative aspect-square sm:aspect-[4/3] overflow-hidden rounded-t-xl">
+                <SmartImage
+                    src={item.img_url || item.img}
+                    alt={item.name}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80"></div>
+                {item.isHighlight && (
+                    <span className="absolute top-3 left-3 bg-[#D4AF37] text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg z-10 tracking-widest uppercase border border-white/20">
+                        ★ Destaque
+                    </span>
+                )}
+            </div>
+
+            {/* Content Section */}
+            <div className="p-3 sm:p-5 flex-1 flex flex-col justify-between relative">
+                <div>
+                    <div className="flex flex-col mb-1">
+                        <h3 className={`font-serif font-bold text-sm sm:text-xl leading-tight line-clamp-2 ${getTextStyle(darkMode, customBgInfo)}`}>
+                            {getTrans(item, selectedLanguage, 'name')}
+                        </h3>
+                        <span className="font-bold text-xs sm:text-lg mt-1" style={{ color: primaryColor }}>
+                            {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(Number(String(item.price).replace(/[^0-9.]/g, '')) || 0)}
+                        </span>
+                    </div>
+                    <p className={`text-[10px] sm:text-sm line-clamp-2 mb-2 font-light ${getSubTextStyle(darkMode, customBgInfo)}`}>
+                        {getTrans(item, selectedLanguage, 'desc')}
+                    </p>
+
+                    {composition && (
+                        <div className="mt-2">
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
+                                className={`text-[10px] sm:text-[11px] font-bold flex items-center gap-1.5 py-1 px-2 rounded-lg transition-all ${darkMode ? 'bg-white/5 text-[#D4AF37] hover:bg-white/10' : 'bg-black/5 text-[#5D4037] hover:bg-black/10'}`}
+                            >
+                                {isOpen ? t('hideDetails') : t('viewDetails')}
+                                {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                            </button>
+                            
+                            <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-40 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
+                                <div className={`text-[10px] sm:text-[12px] italic leading-relaxed p-2 rounded-lg ${darkMode ? 'bg-black/20' : 'bg-gray-50/50'} ${getCompositionStyle(darkMode, customBgInfo)}`}>
+                                    <span className="opacity-60 mr-1.5 font-normal">✨</span>
+                                    {composition}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex justify-end mt-2 pt-2 border-t border-dashed border-gray-700/20 scale-90 origin-right">
+                    <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} restaurantClosed={restaurantClosed} onItemAdded={onItemAdded} />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const MenuItemList = ({ item, primaryColor, isEditing, darkMode, selectedLanguage, customBgInfo, restaurantClosed, onItemAdded }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const composition = getTrans(item, selectedLanguage, 'composition');
+    const t = (key) => getTranslation(selectedLanguage, key);
+
+    return (
+        <div
+            className={`rounded-2xl shadow-sm border p-3 flex gap-4 transition-all animate-fade-in-up ${getCardStyle(darkMode, customBgInfo)}
+                ${item.available === false ? 'opacity-60 grayscale-[0.8] cursor-not-allowed' : 'hover:shadow-lg hover:translate-x-1'}
+            `}
+        >
+            {/* Image */}
+            <div className="w-20 h-20 sm:w-32 sm:h-32 flex-shrink-0 rounded-xl overflow-hidden relative group self-start sm:self-center">
+                <SmartImage
+                    src={item.img_url || item.img}
+                    alt={item.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 flex flex-col justify-between py-1">
+                <div>
+                    <div className="flex justify-between items-start">
+                        <h3 className={`font-serif font-bold text-lg leading-tight ${getTextStyle(darkMode, customBgInfo)}`}>
+                            {getTrans(item, selectedLanguage, 'name')}
+                        </h3>
+                        <span className="font-bold text-sm sm:text-base whitespace-nowrap ml-2" style={{ color: primaryColor }}>
+                            {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(Number(String(item.price).replace(/[^0-9.]/g, '')) || 0)}
+                        </span>
+                    </div>
+                    <p className={`text-xs sm:text-sm line-clamp-2 mt-1 font-light ${getSubTextStyle(darkMode, customBgInfo)}`}>
+                        {getTrans(item, selectedLanguage, 'desc')}
+                    </p>
+
+                    {composition && (
+                        <div className="mt-2">
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
+                                className={`text-[10px] sm:text-[11px] font-bold flex items-center gap-1 py-1 sm:py-1.5 px-2.5 rounded-lg transition-all ${darkMode ? 'bg-white/5 text-[#D4AF37] hover:bg-white/10' : 'bg-black/5 text-[#5D4037] hover:bg-black/10'}`}
+                            >
+                                {isOpen ? t('hideDetails') : t('viewDetails')}
+                                {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                            </button>
+                            
+                            <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-40 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
+                                <div className={`text-[11px] sm:text-[13px] italic leading-relaxed p-2.5 rounded-lg ${darkMode ? 'bg-black/20' : 'bg-gray-50/50'} ${getCompositionStyle(darkMode, customBgInfo)}`}>
+                                    <span className="opacity-60 mr-1.5 font-normal">•</span>
+                                    {composition}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex justify-end mt-2">
+                    <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} restaurantClosed={restaurantClosed} onItemAdded={onItemAdded} />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export const GridLayout = ({ items = [], ...props }) => {
+    return (
+        <div className="grid grid-cols-2 gap-4">
+            {items.map(item => (
+                <MenuItemGrid key={item.id} item={item} {...props} />
+            ))}
+        </div>
+    );
+};
+
+export const ListLayout = ({ items = [], ...props }) => {
+    return (
+        <div className="flex flex-col gap-4">
+            {items.map(item => (
+                <MenuItemList key={item.id} item={item} {...props} />
+            ))}
+        </div>
+    );
+};
+
+export const MinimalLayout = ({ items = [], primaryColor, fontFamily, isEditing, darkMode, selectedLanguage = 'PT', customBgInfo, restaurantClosed }) => {
+    return (
+        <div className={`flex flex-col divide-y divide-dashed ${darkMode ? 'divide-gray-800' : 'divide-gray-200'}`}>
+            {items.map(item => (
+                <div key={item.id} className={`py-5 flex justify-between items-center gap-4 rounded-lg px-3 transition-colors group animate-fade-in-up 
+                    ${item.available === false ? 'opacity-50 grayscale-50' : 'hover:bg-white/5'}
+                `}>
+                    <div className="flex-1">
+                        <div className="flex items-baseline justify-between mb-1">
+                            <h3 className={`font-serif font-medium text-lg group-hover:text-primary transition-colors ${getTextStyle(darkMode, customBgInfo)}`}>
+                                {getTrans(item, selectedLanguage, 'name')}
+                            </h3>
+                            <div className={`flex-1 mx-4 border-b border-dotted h-4 opacity-30 hidden sm:block ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}></div>
+                            <span className="font-semibold text-lg" style={{ color: primaryColor }}>
+                                {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(Number(String(item.price).replace(/[^0-9.]/g, '')) || 0)}
+                            </span>
+                        </div>
+                        {item.desc && (
+                            <p className={`text-xs line-clamp-1 italic ${getSubTextStyle(darkMode, customBgInfo)}`}>
+                                {getTrans(item, selectedLanguage, 'desc')}
+                            </p>
+                        )}
+                    </div>
+
+                    <div>
+                        <QuantityControls item={item} isEditing={isEditing} primaryColor={primaryColor} darkMode={darkMode} restaurantClosed={restaurantClosed} selectedLanguage={selectedLanguage} />
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+export const GridLayoutSkeleton = ({ darkMode }) => (
+    <div className="grid grid-cols-1 gap-4">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className={`rounded-xl overflow-hidden border ${darkMode ? 'bg-[#1E1E1E] border-white/5' : 'bg-white border-gray-100'} h-64`}>
+                <Skeleton height="120px" darkMode={darkMode} className="rounded-none" />
+                <div className="p-5 space-y-4">
+                    <Skeleton height="24px" width="70%" darkMode={darkMode} />
+                    <div className="space-y-2">
+                        <Skeleton height="14px" width="100%" darkMode={darkMode} />
+                        <Skeleton height="14px" width="60%" darkMode={darkMode} />
+                    </div>
+                </div>
+            </div>
+        ))}
+    </div>
+);
+
+export const ListLayoutSkeleton = ({ darkMode }) => (
+    <div className="flex flex-col gap-4">
+        {[1, 2, 3, 4].map((i) => (
+            <div key={i} className={`rounded-2xl border p-3 flex gap-4 h-32 ${darkMode ? 'bg-[#1E1E1E] border-white/5' : 'bg-white border-gray-100'}`}>
+                <Skeleton width="128px" height="100%" darkMode={darkMode} className="rounded-xl" />
+                <div className="flex-1 py-1 space-y-3">
+                    <div className="flex justify-between items-start">
+                        <Skeleton height="20px" width="50%" darkMode={darkMode} />
+                        <Skeleton height="20px" width="20%" darkMode={darkMode} />
+                    </div>
+                    <Skeleton height="14px" width="90%" darkMode={darkMode} />
+                    <Skeleton height="14px" width="70%" darkMode={darkMode} />
+                </div>
+            </div>
+        ))}
+    </div>
+);
+
+export const MinimalLayoutSkeleton = ({ darkMode }) => (
+    <div className="flex flex-col divide-y divide-dashed divide-gray-200">
+        {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="py-5 flex justify-between items-center gap-4 px-3">
+                <div className="flex-1 space-y-2">
+                    <div className="flex justify-between items-baseline">
+                        <Skeleton height="20px" width="40%" darkMode={darkMode} />
+                        <Skeleton height="20px" width="15%" darkMode={darkMode} />
+                    </div>
+                    <Skeleton height="12px" width="60%" darkMode={darkMode} />
+                </div>
+            </div>
+        ))}
+    </div>
+);

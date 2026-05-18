@@ -8,7 +8,7 @@ import { supabase } from '../lib/supabaseClient';
 import OrderStatusView from './OrderStatusView';
 import CheckoutUpsell from './CheckoutUpsell';
 import { couponService } from '../services/couponService';
-import { Ticket, X, CheckCircle2, Award, Star, UtensilsCrossed, Bike, User, Smartphone, MapPin, Banknote, CreditCard, ChevronRight } from 'lucide-react';
+import { Ticket, X, CheckCircle2, Award, Star, UtensilsCrossed, Bike, User, Smartphone, MapPin, Banknote, CreditCard, ChevronRight, Clock, ShoppingBag } from 'lucide-react';
 import { loyaltyService } from '../services/loyaltyService';
 import MapPicker from './MapPicker';
 import { getTranslation } from '../utils/i18n';
@@ -214,6 +214,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
     const isSystemOrder = !!restaurantId; // If we have an ID, we use the system. If not (preview), we default to WhatsApp?
 
     const handleSendOrder = async () => {
+        if (isSending) return; // [SECURITY] Prevent Double-Click Race Condition
         if (orderType === 'dine-in' && !tableNumber) return toast.error(selectedLanguage === 'PT' ? "Informe o número da mesa." : "Please enter the table number.");
         if (orderType === 'delivery' && !address) return toast.error(selectedLanguage === 'PT' ? "Informe o endereço." : "Please enter the address.");
 
@@ -223,14 +224,32 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
         const zoneInfo = (orderType === 'delivery' && selectedZone) ? `(${selectedZone.name} +${selectedZone.fee}Kz)` : '';
         const mapsLink = gpsCoords ? ` | Maps: https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : '';
         const refNote = addressReference ? ` | Ref: ${addressReference}` : '';
-        const baseTableOrAddress = orderType === 'dine-in' ? tableNumber : `Entrega: ${address}${refNote}${mapsLink}${distInfo} ${zoneInfo}`;
-        const paymentInfo = paymentMethod === 'cash' ? t('cash') : t('multicaixa');
+        
+        let baseTableOrAddress = '';
+        if (orderType === 'dine-in') {
+            baseTableOrAddress = `Mesa: ${tableNumber}`;
+        } else if (orderType === 'takeaway') {
+            baseTableOrAddress = `Takeaway / Recolha (Pronto em 30-40 min)`;
+        } else {
+            baseTableOrAddress = `Entrega: ${address}${refNote}${mapsLink}${distInfo} ${zoneInfo}`;
+        }
+        
+        let paymentInfo = '';
+        if (paymentMethod === 'cash') {
+            paymentInfo = t('cash') + (changeFor ? ` (Troco para: ${changeFor})` : '');
+        } else if (paymentMethod === 'express') {
+            paymentInfo = 'Express';
+        } else if (paymentMethod === 'transferencia') {
+            paymentInfo = 'Transferência';
+        } else {
+            paymentInfo = paymentMethod;
+        }
 
         const orderData = {
             restaurant_id: restaurantId,
             items: cartItems,
             total: total,
-            status: paymentMethod === 'multicaixa' ? 'waiting_payment' : 'pending',
+            status: (paymentMethod === 'express' || paymentMethod === 'multicaixa') ? 'waiting_payment' : 'pending',
             customer_name: customerName || 'Cliente',
             customer_phone: customerPhone,
             table_number: `${baseTableOrAddress} | Pgto: ${paymentInfo}`,
@@ -240,7 +259,14 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
             is_loyalty_redemption: isRedeemingLoyalty,
             loyalty_reward_text: isRedeemingLoyalty ? loyaltyConfig?.reward_text : null,
             staff_member_id: activeStaff ? activeStaff.id : null,
-            staff_member_name: activeStaff ? activeStaff.name : null
+            staff_member_name: activeStaff ? activeStaff.name : null,
+            // [NEW] Logistics fields
+            order_type: orderType,
+            delivery_address: orderType === 'delivery' ? address : null,
+            delivery_neighborhood: orderType === 'delivery' && selectedZone ? selectedZone.name : null,
+            delivery_reference: orderType === 'delivery' ? addressReference : null,
+            delivery_fee: orderType === 'delivery' ? deliveryFee : 0,
+            takeaway_time: orderType === 'takeaway' ? '30-40 min' : null
         };
 
         try {
@@ -300,7 +326,13 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                 if (!restaurantId) {
                     toast.success("Modo Preview: Pedido simulado via WhatsApp.");
                 }
-                const link = generateWhatsAppLink(cartItems, total, orderType, { ...orderData, paymentMethod, changeFor }, whatsappNumber);
+                const effectiveWhatsapp = whatsappNumber || '244923000000';
+                const link = generateWhatsAppLink(cartItems, total, orderType, { ...orderData, paymentMethod, changeFor }, effectiveWhatsapp);
+                if (!link) {
+                    toast.error(selectedLanguage === 'PT' ? "Número de WhatsApp do restaurante não configurado ou inválido." : "Restaurant WhatsApp number is not configured or invalid.");
+                    setIsSending(false);
+                    return;
+                }
                 const cacheBusterLink = link + (link.includes('?') ? '&' : '?') + 't=' + Date.now();
                 window.location.href = cacheBusterLink;
 
@@ -379,13 +411,20 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                 ) : (
                     <>
                         {/* Premium Tabs Order Type */}
-                        <div className="flex bg-gray-100/80 backdrop-blur-sm p-1.5 rounded-[20px] mb-8 border border-gray-200/50 shadow-inner group">
+                        <div className="flex flex-col sm:flex-row bg-gray-100/80 backdrop-blur-sm p-1.5 rounded-[20px] mb-8 border border-gray-200/50 shadow-inner gap-1.5">
                             <button
                                 onClick={() => setOrderType('dine-in')}
                                 className={`flex-1 py-3 px-4 rounded-[14px] flex items-center justify-center gap-2 transition-all duration-500 font-bold text-sm ${orderType === 'dine-in' ? 'bg-white text-primary shadow-[0_4px_12px_rgba(0,0,0,0.1)] ring-1 ring-black/5 scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}
                             >
                                 <UtensilsCrossed size={16} className={orderType === 'dine-in' ? 'animate-bounce-short' : ''} />
                                 <span>{t('dineIn')}</span>
+                            </button>
+                            <button
+                                onClick={() => setOrderType('takeaway')}
+                                className={`flex-1 py-3 px-4 rounded-[14px] flex items-center justify-center gap-2 transition-all duration-500 font-bold text-sm ${orderType === 'takeaway' ? 'bg-white text-primary shadow-[0_4px_12px_rgba(0,0,0,0.1)] ring-1 ring-black/5 scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}
+                            >
+                                <ShoppingBag size={16} className={orderType === 'takeaway' ? 'animate-bounce-short' : ''} />
+                                <span>Takeaway / Recolha</span>
                             </button>
                             <button
                                 onClick={() => setOrderType('delivery')}
@@ -400,7 +439,9 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                             {cartItems.map(item => (
                                 <div key={item.cartItemId || item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#4a5568' }}>
                                     <span>{item.quantity}x {item.name} {item.selectedVariant ? `(${item.selectedVariant})` : ''}</span>
-                                    <span style={{ fontWeight: 'bold', color: '#1a202c' }}>{item.price}</span>
+                                    <span style={{ fontWeight: 'bold', color: '#1a202c' }}>
+                                        {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(item.price).replace('AOA', 'Kz')}
+                                    </span>
                                 </div>
                             ))}
                             {(cartItems.length === 0) && <p className="text-gray-500"> {t('emptyCart')}</p>}
@@ -596,7 +637,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                             </div>
                         )}
 
-                        {orderType === 'dine-in' ? (
+                        {orderType === 'dine-in' && (
                             <div style={{ marginBottom: '1.5rem', animation: 'fadeIn 0.3s' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                                     <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>{t('table')} (Número, Nome ou Letra)</label>
@@ -608,7 +649,26 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                 </div>
                                 <input type="text" value={tableNumber} onChange={e => setTableNumber(e.target.value)} placeholder="Ex: Mesa 4, Esplanada A..." className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900 placeholder-gray-400" />
                             </div>
-                        ) : (
+                        )}
+
+                        {orderType === 'takeaway' && (
+                            <div className="mb-6 p-5 bg-amber-500/10 border border-amber-500/30 rounded-3xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                <div className="flex items-center gap-3.5 mb-3.5">
+                                    <div className="p-3 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-500/20">
+                                        <Clock size={22} />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-black text-amber-900 dark:text-amber-400">Tempo de Preparação Estimado</h4>
+                                        <p className="text-xs text-amber-700 dark:text-amber-500 font-bold">Pronto em 30-40 minutos</p>
+                                    </div>
+                                </div>
+                                <div className="text-xs text-amber-900 dark:text-amber-300 bg-amber-500/10 p-4 rounded-2xl border border-amber-500/20 leading-relaxed font-semibold">
+                                    📌 <strong>Instruções de Recolha:</strong> O seu pedido estará disponível ao balcão. Dirija-se à zona de recolha/takeaway no restaurante e apresente o seu nome ou número do pedido.
+                                </div>
+                            </div>
+                        )}
+
+                        {orderType === 'delivery' && (
                             <div style={{ marginBottom: '1.5rem', animation: 'fadeIn 0.3s' }}>
                                 {deliveryConfig?.enabled && deliveryConfig?.type === 'zone' && deliveryConfig?.zones?.length > 0 && (
                                     <div style={{ marginBottom: '1rem' }}>
@@ -671,7 +731,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
 
                         <div className="mb-6 sm:mb-8 p-4 sm:p-5 bg-gray-50 rounded-2xl sm:rounded-[24px] border border-gray-100 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
                             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">{t('paymentMethod')}</label>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                                 <button
                                     onClick={() => setPaymentMethod('cash')}
                                     className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${paymentMethod === 'cash' ? 'bg-green-50 border-green-500 text-green-700 shadow-sm' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300'}`}
@@ -680,25 +740,32 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                     <span>{t('cash')}</span>
                                 </button>
                                 <button
-                                    onClick={() => setPaymentMethod('multicaixa')}
-                                    className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${paymentMethod === 'multicaixa' ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300'}`}
+                                    onClick={() => setPaymentMethod('express')}
+                                    className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${paymentMethod === 'express' ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300'}`}
+                                >
+                                    <Smartphone size={18} />
+                                    <span>Express</span>
+                                </button>
+                                <button
+                                    onClick={() => setPaymentMethod('transferencia')}
+                                    className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${paymentMethod === 'transferencia' ? 'bg-purple-50 border-purple-500 text-purple-700 shadow-sm' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300'}`}
                                 >
                                     <CreditCard size={18} />
-                                    <span>{t('multicaixa')}</span>
+                                    <span>Transferência</span>
                                 </button>
                             </div>
                             {paymentMethod === 'cash' && (
                                 <div className="mt-2 animate-in slide-in-from-right duration-300">
                                     <input
-                                        type="number"
-                                        placeholder={t('changeFor')}
+                                        type="text"
+                                        placeholder={selectedLanguage === 'PT' ? "Precisa de troco para quanto? (Ex: 5000 Kz)" : "Do you need change for how much?"}
                                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-100 focus:border-green-400 outline-none transition-all text-sm font-medium text-gray-900 placeholder-gray-400"
                                         value={changeFor}
                                         onChange={e => setChangeFor(e.target.value)}
                                     />
                                 </div>
                             )}
-                            {paymentMethod === 'multicaixa' && (
+                            {(paymentMethod === 'express' || paymentMethod === 'multicaixa') && (
                                 <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-xl animate-in slide-in-from-right duration-300">
                                     <h4 className="text-[10px] font-black text-blue-800 uppercase tracking-widest mb-3 flex items-center gap-2">
                                         <Smartphone size={14} /> {selectedLanguage === 'PT' ? 'Pagamento Automático' : 'Automatic Payment'}

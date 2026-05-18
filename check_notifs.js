@@ -6,11 +6,15 @@ const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function checkRest() {
-    console.log("Fetching restaurants...");
-    const { data, error } = await supabase.from('restaurants').select('id, name, slug, owner_id');
+async function testNotifs() {
+    console.log("Fetching all pending waiter notifications...");
+    const { data, error } = await supabase
+        .from('notificacoes_garcom')
+        .select('*')
+        .eq('status', 'pendente');
+    
     if (error) console.error("Error:", error);
-    else console.log("Restaurants:", data);
+    else console.log("Pending Notifications:", data);
 }
 
-checkRest();
+testNotifs();

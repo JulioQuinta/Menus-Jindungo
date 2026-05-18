@@ -4,13 +4,13 @@ const AdminAlerts = ({ activeAlerts, onDismiss }) => {
     return (
         <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:bottom-6 sm:right-6 z-50 flex flex-col gap-3 sm:w-80 pointer-events-none">
             {activeAlerts.map(alert => (
-                <div key={alert.id} className={`pointer-events-auto text-white p-4 rounded-xl shadow-2xl border-2 animate-bounce flex items-center justify-between ${alert.isOrder ? 'bg-green-600 border-green-400' : 'bg-red-600 border-red-400'}`}>
+                <div key={alert.id} className={`pointer-events-auto text-white p-4 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] border-2 animate-in slide-in-from-bottom duration-300 hover:scale-[1.02] transition-all flex items-center justify-between ${alert.isOrder ? 'bg-green-600 border-green-400' : 'bg-gradient-to-r from-red-600 to-red-700 border-red-400 ring-4 ring-red-500/30'}`}>
                     <div>
-                        <h4 className="font-bold text-lg flex items-center gap-2">
-                            {alert.isOrder ? '🛍️ Novo Pedido' : `🔔 Mesa ${alert.mesa_id}`}
+                        <h4 className="font-bold text-lg flex items-center gap-2 drop-shadow-md">
+                            {alert.isOrder ? '🛍️ Novo Pedido' : `🔔 Mesa: ${alert.mesa_id}`}
                         </h4>
-                        <p className={`text-xs ${alert.isOrder ? 'text-green-100' : 'text-red-100'}`}>
-                            {alert.isOrder ? alert.request_type : 'Chamou o garçom!'}
+                        <p className={`text-xs font-semibold mt-0.5 ${alert.isOrder ? 'text-green-100' : 'text-red-100 uppercase tracking-wide'}`}>
+                            {alert.isOrder ? alert.request_type : '🛎️ Chamou o empregado de mesa!'}
                         </p>
                     </div>
                     <div className="flex gap-2">
@@ -28,9 +28,9 @@ const AdminAlerts = ({ activeAlerts, onDismiss }) => {
                         )}
                         <button
                             onClick={() => onDismiss(alert.id)}
-                            className={`bg-white px-3 py-1 rounded-lg font-bold text-sm hover:bg-opacity-90 transition-colors shadow-sm ${alert.isOrder ? 'text-green-600' : 'text-red-600'}`}
+                            className={`bg-white px-3 py-1.5 rounded-lg font-extrabold text-sm hover:bg-gray-100 active:scale-95 transition-all shadow-md ${alert.isOrder ? 'text-green-700' : 'text-red-700'}`}
                         >
-                            {alert.isOrder ? 'Ver' : 'Atendido'}
+                            {alert.isOrder ? 'Ver' : 'Atendido ✓'}
                         </button>
                     </div>
                 </div>

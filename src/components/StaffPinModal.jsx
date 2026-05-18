@@ -90,7 +90,7 @@ const StaffPinModal = ({ isOpen, onClose, restaurantId, onLogin }) => {
                         <Lock size={28} className={isShaking ? 'text-red-400' : 'text-[#D4AF37]'} />
                     </div>
                     <h2 className="text-2xl font-serif font-bold text-white mb-2">Acesso Restrito</h2>
-                    <p className="text-gray-400 text-sm">Insira o seu PIN de Garçom ou Gerente</p>
+                    <p className="text-gray-400 text-sm">Insira o seu PIN de Colaborador ou Gerente</p>
                 </div>
 
                 {/* PIN Display */}

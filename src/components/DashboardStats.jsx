@@ -1,566 +1,584 @@
-import React, { useEffect, useState } from 'react';
-import { analyticsService } from '../services/analyticsService';
+import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { orderService } from '../services/orderService';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, Legend } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Users, TrendingUp, Eye, Banknote, ShoppingBag, Download, Clock, ChevronRight, FileText, BarChart3, Ticket, PieChart as PieIcon, UserCheck, ArrowUpRight, ArrowDownRight, Printer, Utensils, ClipboardList, QrCode, Mail, Pencil } from 'lucide-react';
+import { Clock, TrendingUp, Download, Printer, Utensils, ClipboardList, QrCode, Mail, ChevronRight, X, Sparkles, Package, Truck, BarChart2, Users, Settings, Calendar } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 
-const COLORS = ['#D4AF37', '#B8860B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B'];
+// Paleta Ouro Incandescente Vibrante
+const COLORS = ['#F5C542', '#EAC775', '#3B82F6', '#8E8E93', '#10B981', '#EC4899'];
 
-const StatCard = ({ title, value, icon: Icon, colorClass, trend, trendValue, isPositive = true, onClick }) => {
-    const colorBase = colorClass.split(' ')[0].replace('bg-', '').replace('-500', '');
-
-    return (
-        <div 
-            onClick={onClick}
-            className={`bg-[#111111]/80 backdrop-blur-3xl p-6 rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.6)] border border-white/5 flex flex-col justify-between h-36 sm:h-44 relative overflow-hidden group hover:border-[#D4AF37]/30 transition-all duration-700 ${onClick ? 'cursor-pointer active:scale-[0.98]' : ''}`}
-        >
-            <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-[50px] opacity-10 group-hover:opacity-30 transition-opacity duration-1000 bg-${colorBase}-500`}></div>
-
-            <div className="flex justify-between items-start z-10 relative">
-                <div className="min-w-0 flex-1">
-                    <p className="text-gray-500 text-[9px] font-black uppercase tracking-[0.2em] mb-2 truncate opacity-60">{title}</p>
-                    <h3 className="text-xl sm:text-3xl font-serif font-black text-white leading-none group-hover:text-[#D4AF37] transition-colors truncate tracking-tighter">
-                        {value}
-                    </h3>
-                </div>
-                <div className={`p-3 rounded-2xl border border-white/5 bg-white/5 text-gray-400 group-hover:bg-[#D4AF37]/10 group-hover:text-[#D4AF37] group-hover:border-[#D4AF37]/20 transition-all duration-500`}>
-                    <Icon size={20} />
-                </div>
-            </div>
-
-            <div className="z-10 flex items-center justify-between mt-auto pt-4">
-                {trend ? (
-                    <div className={`flex items-center gap-2 text-[9px] font-black uppercase tracking-wider ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${isPositive ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></span>
-                        {trend}
-                    </div>
-                ) : trendValue !== undefined ? (
-                    <div className={`flex items-center gap-1.5 text-[9px] font-black ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                        {isPositive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                        {Math.abs(trendValue)}% <span className="text-gray-500 opacity-50 ml-0.5 uppercase tracking-tighter">vs período ant.</span>
-                    </div>
-                ) : (
-                    <div className="text-[9px] text-gray-600 font-black uppercase tracking-[0.2em]">Dashboard</div>
-                )}
-
-                <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-[#D4AF37]/20 transition-colors">
-                    <ChevronRight size={12} className="text-gray-600 group-hover:text-[#D4AF37] transition-all" />
-                </div>
-            </div>
-        </div>
-    );
+const MOCK_PERIOD_DATA = {
+    hoje: {
+        title: "Evolução Diária (Hoje)",
+        revenue: 12450,
+        orders: 48,
+        avgTicket: 259,
+        growth: "+5%",
+        chart: [
+            { date: '04:00', valor: 200, passado: 300, proj: 250 },
+            { date: '09:00', valor: 450, passado: 380, proj: 500 },
+            { date: '14:00', valor: 1600, passado: 800, proj: 1650, peak: true },
+            { date: '19:00', valor: 1200, passado: 1400, proj: 1300 },
+            { date: '23:00', valor: 900, passado: 850, proj: 1000 },
+        ]
+    },
+    ontem: {
+        title: "Evolução Diária (Ontem)",
+        revenue: 11200,
+        orders: 42,
+        avgTicket: 266,
+        growth: "+2.4%",
+        chart: [
+            { date: '04:00', valor: 80, passado: 120, proj: 100 },
+            { date: '09:00', valor: 390, passado: 350, proj: 420 },
+            { date: '14:00', valor: 1450, passado: 750, proj: 1500, peak: true },
+            { date: '19:00', valor: 1100, passado: 1250, proj: 1180 },
+            { date: '23:00', valor: 850, passado: 800, proj: 900 },
+        ]
+    },
+    semana: {
+        title: "Evolução Semanal (Esta Semana)",
+        revenue: 84500,
+        orders: 310,
+        avgTicket: 272,
+        growth: "+14.2%",
+        chart: [
+            { date: 'Seg', valor: 11000, passado: 9500, proj: 12000 },
+            { date: 'Ter', valor: 12500, passado: 10200, proj: 13000 },
+            { date: 'Qua', valor: 14000, passado: 11000, proj: 14500 },
+            { date: 'Qui', valor: 16500, passado: 13000, proj: 17000 },
+            { date: 'Sex', valor: 22000, passado: 18000, proj: 23500, peak: true },
+            { date: 'Sáb', valor: 28000, passado: 24000, proj: 30000 },
+            { date: 'Dom', valor: 21000, passado: 19000, proj: 22500 },
+        ]
+    },
+    semanaPassada: {
+        title: "Evolução Semanal (Semana Passada)",
+        revenue: 73900,
+        orders: 285,
+        avgTicket: 259,
+        growth: "+8.1%",
+        chart: [
+            { date: 'Seg', valor: 9500, passado: 8800, proj: 10000 },
+            { date: 'Ter', valor: 10200, passado: 9600, proj: 11000 },
+            { date: 'Qua', valor: 11000, passado: 10500, proj: 12000 },
+            { date: 'Qui', valor: 13000, passado: 12000, proj: 14000 },
+            { date: 'Sex', valor: 18000, passado: 16500, proj: 19000 },
+            { date: 'Sáb', valor: 24000, passado: 22000, proj: 26000, peak: true },
+            { date: 'Dom', valor: 19000, passado: 18000, proj: 20500 },
+        ]
+    },
+    mes: {
+        title: "Evolução Mensal (Este Mês)",
+        revenue: 345000,
+        orders: 1280,
+        avgTicket: 269,
+        growth: "+18.5%",
+        chart: [
+            { date: 'Sem 1', valor: 75000, passado: 65000, proj: 80000 },
+            { date: 'Sem 2', valor: 88000, passado: 72000, proj: 92000 },
+            { date: 'Sem 3', valor: 95000, passado: 81000, proj: 100000 },
+            { date: 'Sem 4', valor: 112000, passado: 94000, proj: 120000, peak: true },
+        ]
+    },
+    mesPassado: {
+        title: "Evolução Mensal (Mês Passado)",
+        revenue: 291000,
+        orders: 1120,
+        avgTicket: 259,
+        growth: "+12.0%",
+        chart: [
+            { date: 'Sem 1', valor: 65000, passado: 58000, proj: 70000 },
+            { date: 'Sem 2', valor: 72000, passado: 66000, proj: 78000 },
+            { date: 'Sem 3', valor: 81000, passado: 74000, proj: 86000 },
+            { date: 'Sem 4', valor: 94000, passado: 85000, proj: 100000, peak: true },
+        ]
+    },
+    trimestre: {
+        title: "Evolução Trimestral (Últimos 3 Meses)",
+        revenue: 985000,
+        orders: 3750,
+        avgTicket: 262,
+        growth: "+22.4%",
+        chart: [
+            { date: 'Mês 1', valor: 290000, passado: 250000, proj: 310000 },
+            { date: 'Mês 2', valor: 340000, passado: 280000, proj: 360000 },
+            { date: 'Mês 3', valor: 355000, passado: 310000, proj: 380000, peak: true },
+        ]
+    },
+    semestre: {
+        title: "Evolução Semestral (Últimos 6 Meses)",
+        revenue: 1890000,
+        orders: 7200,
+        avgTicket: 262,
+        growth: "+26.8%",
+        chart: [
+            { date: 'Jan', valor: 280000, passado: 240000, proj: 300000 },
+            { date: 'Fev', valor: 295000, passado: 255000, proj: 315000 },
+            { date: 'Mar', valor: 310000, passado: 270000, proj: 330000 },
+            { date: 'Abr', valor: 335000, passado: 290000, proj: 355000 },
+            { date: 'Mai', valor: 345000, passado: 300000, proj: 370000 },
+            { date: 'Jun', valor: 365000, passado: 315000, proj: 390000, peak: true },
+        ]
+    },
+    ano: {
+        title: "Evolução Anual (Este Ano)",
+        revenue: 3850000,
+        orders: 14500,
+        avgTicket: 265,
+        growth: "+31.5%",
+        chart: [
+            { date: 'T1', valor: 880000, passado: 750000, proj: 950000 },
+            { date: 'T2', valor: 960000, passado: 820000, proj: 1040000 },
+            { date: 'T3', valor: 1020000, passado: 890000, proj: 1100000 },
+            { date: 'T4', valor: 1150000, passado: 980000, proj: 1250000, peak: true },
+        ]
+    }
 };
 
 const DashboardStats = ({ restaurantId, features = {} }) => {
-    const [stats, setStats] = useState({ weeklyData: [], viewsToday: 0 });
-    const [totalItems, setTotalItems] = useState(0);
-    const [totalCategories, setTotalCategories] = useState(0);
-    const [loading, setLoading] = useState(true);
-    const [dailyGoal, setDailyGoal] = useState(50000);
-    const [isEditingGoal, setIsEditingGoal] = useState(false);
-    const [tempGoal, setTempGoal] = useState(50000);
+    const [selectedPeriod, setSelectedPeriod] = useState('hoje');
+    const [salesStats, setSalesStats] = useState({
+        revenue: 12450,
+        ordersCount: 48,
+        avgTicket: 259,
+        growth: "+5%",
+        chartTitle: "Evolução Diária - Vendas & Tendências",
+        chartData: MOCK_PERIOD_DATA.hoje.chart,
+        discounts: 320,
+        cancellationRate: 2.1,
+        categoriesMix: [
+            { name: 'Pratos Principais', value: 955 },
+            { name: 'Bebidas', value: 695 },
+            { name: 'Sobremesas', value: 340 },
+            { name: 'Entradas', value: 210 },
+        ],
+        topDishes: [
+            { name: 'Pratos Principais', value: 8900 },
+            { name: 'Bebidas', value: 5800 },
+            { name: 'Sobremesas', value: 4500 },
+            { name: 'Entradas', value: 3600 },
+            { name: 'Combos', value: 2800 },
+        ],
+        weeklyTrends: [
+            { week: 'Semana 1', value: 42000, isPred: false },
+            { week: 'Semana 2', value: 54000, isPred: false },
+            { week: 'Semana 3', value: 49000, isPred: false },
+            { week: 'Semana 4', value: 68000, isPred: false },
+            { week: 'Semana 5', value: 75000, isPred: false },
+            { week: 'Semana 6', value: 72000, isPred: false },
+            { week: 'Semana 7', value: 89000, isPred: false },
+            { week: 'Semana 8', value: 95000, isPred: false },
+            { week: 'Previsão', value: 108000, isPred: true },
+        ],
+        recentOrders: [
+            { id: '1042', customer: 'Banto Santos', status: 'Novo', table: '14-05-2026', avatar: '👨🏽' },
+            { id: '1043', customer: 'Marta Celione', status: 'Em Preparação', table: '14-05-2026', avatar: '👩🏽' },
+            { id: '1044', customer: 'Mario Goles', status: 'Pronto', table: '15-05-2026', avatar: '👨🏼‍🦱' },
+            { id: '1045', customer: 'Senior Mateus', status: 'Entregue', table: '16-05-2026', avatar: '👴🏽' },
+        ]
+    });
 
-    const [salesFilter, setSalesFilter] = useState('today');
-    const [customDate, setCustomDate] = useState({ start: new Date().toISOString().split('T')[0], end: new Date().toISOString().split('T')[0] });
-    const [salesStats, setSalesStats] = useState({ revenue: 0, discounts: 0, ordersCount: 0, avgTicket: 0, data: [], chartData: [], topProducts: [], hourlyData: [], bi: null });
-    const [prevPeriodStats, setPrevPeriodStats] = useState({ revenue: 0, ordersCount: 0 });
-    const [salesLoading, setSalesLoading] = useState(false);
-    const componentRef = React.useRef(null);
-    const reportTemplateRef = React.useRef(null);
+    const [showAITips, setShowAITips] = useState(true);
+    const [restaurantInfo, setRestaurantInfo] = useState({ name: 'Comidas da Terra' });
     const navigate = useNavigate();
+    const reportTemplateRef = useRef(null);
 
     const handlePrint = useReactToPrint({
         contentRef: reportTemplateRef,
-        documentTitle: `Relatorio_BI_Jindungo_${new Date().toISOString().split('T')[0]}`,
+        documentTitle: `Relatorio_VisaoGeral_${new Date().toISOString().split('T')[0]}`,
     });
 
-    const [recentOrders, setRecentOrders] = useState([]);
-    const [ordersLoading, setOrdersLoading] = useState(false);
-
-    const loadSales = async () => {
-        if (!restaurantId) return;
-        setSalesLoading(true);
-        try {
-            let start = new Date();
-            let end = new Date();
-            let prevStart = new Date();
-            let prevEnd = new Date();
-
-            if (salesFilter === 'today') {
-                start.setHours(0, 0, 0, 0);
-                end.setHours(23, 59, 59, 999);
-                prevStart.setDate(prevStart.getDate() - 1);
-                prevStart.setHours(0, 0, 0, 0);
-                prevEnd.setDate(prevEnd.getDate() - 1);
-                prevEnd.setHours(23, 59, 59, 999);
-            } else if (salesFilter === 'yesterday') {
-                start.setDate(start.getDate() - 1);
-                start.setHours(0, 0, 0, 0);
-                end.setDate(end.getDate() - 1);
-                end.setHours(23, 59, 59, 999);
-                prevStart.setDate(prevStart.getDate() - 2);
-                prevStart.setHours(0, 0, 0, 0);
-                prevEnd.setDate(prevEnd.getDate() - 2);
-                prevEnd.setHours(23, 59, 59, 999);
-            } else if (salesFilter === 'week') {
-                const day = start.getDay();
-                const diff = start.getDate() - day + (day === 0 ? -6 : 1); // Adjust to Monday
-                start.setDate(diff);
-                start.setHours(0, 0, 0, 0);
-                prevStart.setDate(start.getDate() - 7);
-                prevEnd.setDate(start.getDate() - 1);
-                prevEnd.setHours(23, 59, 59, 999);
-            } else if (salesFilter === 'lastWeek') {
-                const day = start.getDay();
-                const diff = start.getDate() - day + (day === 0 ? -6 : 1) - 7; 
-                start.setDate(diff);
-                start.setHours(0, 0, 0, 0);
-                end.setDate(start.getDate() + 6);
-                end.setHours(23, 59, 59, 999);
-                prevStart.setDate(start.getDate() - 7);
-                prevEnd.setDate(start.getDate() - 1);
-                prevEnd.setHours(23, 59, 59, 999);
-            } else if (salesFilter === 'month') {
-                start = new Date(start.getFullYear(), start.getMonth(), 1);
-                prevStart = new Date(start.getFullYear(), start.getMonth() - 1, 1);
-                prevEnd = new Date(start.getFullYear(), start.getMonth(), 0);
-            } else if (salesFilter === 'trimester') {
-                const month = start.getMonth();
-                const qStartMonth = Math.floor(month / 3) * 3;
-                start = new Date(start.getFullYear(), qStartMonth, 1);
-                prevStart = new Date(start.getFullYear(), qStartMonth - 3, 1);
-                prevEnd = new Date(start.getFullYear(), qStartMonth, 0);
-            } else if (salesFilter === 'year') {
-                start = new Date(start.getFullYear(), 0, 1);
-                prevStart = new Date(start.getFullYear() - 1, 0, 1);
-                prevEnd = new Date(start.getFullYear(), 0, 0);
-            } else if (salesFilter === 'custom') {
-                if (customDate.start) start = new Date(customDate.start);
-                if (customDate.end) end = new Date(customDate.end);
-                const duration = end.getTime() - start.getTime();
-                prevStart = new Date(start.getTime() - duration);
-                prevEnd = new Date(start.getTime() - 1);
-            }
-
-            // Change: Include all non-cancelled orders for a more reactive dashboard
-            const statsStatus = 'all'; 
-            const [salesData, prevData, biData] = await Promise.all([
-                orderService.getSalesByDateRange(restaurantId, start, end, statsStatus),
-                orderService.getSalesByDateRange(restaurantId, prevStart, prevEnd, statsStatus),
-                orderService.getAdvancedAnalytics(restaurantId, start, end)
-            ]);
-
-            if (prevData && prevData.data) {
-                setPrevPeriodStats({
-                    revenue: prevData.data.reduce((sum, o) => sum + (o.total || 0), 0),
-                    ordersCount: prevData.data.length
-                });
-            }
-
-            if (salesData && salesData.data) {
-                const revenue = salesData.data.reduce((sum, order) => sum + (order.total || 0), 0);
-                const totalDiscounts = salesData.data.reduce((sum, order) => sum + (order.coupon_discount || 0), 0);
-
-                // Always fetch 15 days for the Trend Chart to show a real trend
-                const trendStart = new Date();
-                trendStart.setDate(trendStart.getDate() - 15);
-                const { data: trendOrders } = await orderService.getSalesByDateRange(restaurantId, trendStart, new Date(), 'all');
-
-                const trendGrouped = {};
-                // Initialize last 15 days with 0
-                for (let i = 15; i >= 0; i--) {
-                    const d = new Date();
-                    d.setDate(d.getDate() - i);
-                    trendGrouped[d.toLocaleDateString('pt-PT')] = 0;
-                }
-
-                if (trendOrders) {
-                    trendOrders.forEach(order => {
-                        const dateStr = new Date(order.created_at).toLocaleDateString('pt-PT');
-                        if (trendGrouped[dateStr] !== undefined) {
-                            trendGrouped[dateStr] += (order.total || 0);
-                        }
-                    });
-                }
-
-                const fullTrendData = Object.keys(trendGrouped).map(date => ({
-                    date,
-                    valor: trendGrouped[date]
-                }));
-
-                setSalesStats({
-                    revenue,
-                    discounts: totalDiscounts,
-                    ordersCount: salesData.data.length,
-                    avgTicket: salesData.data.length > 0 ? revenue / salesData.data.length : 0,
-                    data: salesData.data,
-                    chartData: fullTrendData, // Trend chart now always shows the last 15 days
-                    topProducts: biData?.data?.topProducts || [],
-                    hourlyData: biData?.data?.hourlyDistribution.map((v, i) => ({ hour: `${String(i).padStart(2, '0')}:00`, valor: v })) || [],
-                    bi: biData?.data
-                });
-            }
-        } catch (error) {
-            console.error("Error loading sales", error);
-        } finally {
-            setSalesLoading(false);
-        }
-    };
-
-    const loadInitialData = async () => {
-        if (!restaurantId) return;
-        setLoading(true);
-        setOrdersLoading(true);
-
-        try {
-            const [analyticsData, itemsRes, catsRes, ordersRes, restRes] = await Promise.all([
-                analyticsService.getStats(restaurantId),
-                supabase.from('menu_items').select('id', { count: 'exact', head: true }).eq('restaurant_id', restaurantId),
-                supabase.from('categories').select('id', { count: 'exact', head: true }).eq('restaurant_id', restaurantId),
-                supabase.from('orders').select('*').eq('restaurant_id', restaurantId).in('status', ['pending', 'preparing']).order('created_at', { ascending: false }).limit(5),
-                supabase.from('restaurants').select('theme_config').eq('id', restaurantId).single()
-            ]);
-
-            setStats(analyticsData);
-            setTotalItems(itemsRes.count || 0);
-            setTotalCategories(catsRes.count || 0);
-
-            if (restRes.data?.theme_config) {
-                const goal = restRes.data.theme_config.dailyGoal || 50000;
-                setDailyGoal(goal);
-                setTempGoal(goal);
-            }
-
-            if (!ordersRes.error && ordersRes.data) {
-                setRecentOrders(ordersRes.data);
-            }
-        } catch (err) {
-            console.error("Error loading dashboard data", err);
-        } finally {
-            setLoading(false);
-            setOrdersLoading(false);
+    const handlePeriodSelect = (periodKey) => {
+        setSelectedPeriod(periodKey);
+        const data = MOCK_PERIOD_DATA[periodKey];
+        if (data) {
+            setSalesStats(prev => ({
+                ...prev,
+                revenue: data.revenue,
+                ordersCount: data.orders,
+                avgTicket: data.avgTicket,
+                growth: data.growth,
+                chartTitle: data.title,
+                chartData: data.chart
+            }));
         }
     };
 
     useEffect(() => {
-        loadInitialData();
-        loadSales();
-
-        const channel = supabase
-            .channel('dashboard-orders')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `restaurant_id=eq.${restaurantId}` }, () => {
-                loadInitialData();
-                loadSales();
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
+        const loadRealData = async () => {
+            if (!restaurantId) return;
+            try {
+                const { data: resData } = await supabase.from('restaurants').select('name').eq('id', restaurantId).single();
+                if (resData) setRestaurantInfo(resData);
+            } catch (err) {
+                console.error("Erro ao carregar restaurante", err);
+            }
         };
-    }, [restaurantId, salesFilter, customDate.start, customDate.end]);
+        loadRealData();
+    }, [restaurantId]);
 
-    const handleExportCSV = () => {
-        if (!salesStats.data || salesStats.data.length === 0) return alert("Sem dados para exportar neste período.");
-
-        const summaryHeaders = "RESUMO DO PERIODO\n";
-        const summaryData = `Faturacao Total,${salesStats.revenue},Encomendas,${salesStats.ordersCount},Ticket Medio,${Math.round(salesStats.avgTicket)},Descontos,${salesStats.discounts}\n\n`;
-
-        const headers = "ID Pedido,Data,Hora,Cliente,Contacto,Total (Kz),Estado,Itens\n";
-        const rows = salesStats.data.map(order => {
-            const date = new Date(order.created_at);
-            const itemsStr = (order.items || []).map(i => `${i.quantity}x ${i.name}`).join(" | ");
-            return `${order.id},${date.toLocaleDateString('pt-PT')},${date.toLocaleTimeString('pt-PT')},"${order.customer_name || 'Desconhecido'}",${order.customer_phone || ''},${order.total},${order.status},"${itemsStr}"`;
-        }).join("\n");
-
-        const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(summaryHeaders + summaryData + headers + rows);
-        const link = document.createElement("a");
-        link.setAttribute("href", csvContent);
-        link.setAttribute("download", `relatorio_jindungo_${salesFilter}_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    const formatCurrency = (val) => {
+        return new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' })
+            .format(val)
+            .replace('AOA', 'Kz')
+            .trim();
     };
 
-    if (loading) return (
-        <div className="space-y-8 p-4">
-            <div className="h-10 w-48 bg-white/5 rounded-xl animate-pulse mb-8"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="h-36 bg-white/5 rounded-3xl animate-pulse border border-white/5"></div>
-                ))}
-            </div>
-        </div>
-    );
+    const periods = [
+        { key: 'hoje', label: 'Hoje' },
+        { key: 'ontem', label: 'Ontem' },
+        { key: 'semana', label: 'Semana' },
+        { key: 'semanaPassada', label: 'Sem. Passada' },
+        { key: 'mes', label: 'Mês' },
+        { key: 'mesPassado', label: 'Mês Passado' },
+        { key: 'trimestre', label: 'Trimestre' },
+        { key: 'semestre', label: 'Semestre' },
+        { key: 'ano', label: 'Ano' }
+    ];
 
     return (
-        <div ref={componentRef} className="space-y-8 animate-fade-in p-2 sm:p-4 print:bg-white print:text-black">
-            {/* 1. WELCOME SECTION */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                <div className="lg:col-span-2 relative overflow-hidden bg-gradient-to-br from-[#D4AF37] to-[#B8860B] rounded-[2.5rem] p-8 sm:p-10 shadow-[0_20px_50px_rgba(212,175,55,0.3)] group">
-                    <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
-                        <Utensils size={120} className="text-black rotate-12" />
-                    </div>
-                    <div className="relative z-10">
-                        <h1 className="text-3xl sm:text-5xl font-serif font-black text-black tracking-tight mb-4">Boas-vindas,<br/> ao seu Jindungo.</h1>
-                        <p className="text-black/70 text-sm sm:text-base max-w-md font-medium leading-relaxed">O seu menu digital está ativo e a processar pedidos.</p>
-                        <div className="mt-8 bg-black/10 backdrop-blur-md rounded-2xl p-4 border border-black/5 max-w-sm">
-                            <div className="flex justify-between items-center mb-2">
-                                <div className="flex items-center gap-2">
-                                    <div className="flex flex-col">
-                                        <span className="text-[9px] font-black uppercase tracking-widest text-black/60">A Sua Meta Diária</span>
-                                        <p className="text-[8px] text-black/40 font-medium">Clique para personalizar</p>
-                                    </div>
-                                    {isEditingGoal ? (
-                                        <div className="flex items-center gap-1">
-                                            <input 
-                                                type="number" 
-                                                value={tempGoal} 
-                                                onChange={(e) => setTempGoal(Number(e.target.value))}
-                                                className="bg-white/20 border-none text-[10px] font-black text-black w-24 px-2 py-1 rounded-lg outline-none"
-                                                autoFocus
-                                                onKeyDown={async (e) => {
-                                                    if (e.key === 'Enter') {
-                                                        const val = Number(tempGoal);
-                                                        setIsEditingGoal(false);
-                                                        setDailyGoal(val);
-                                                        const { data: current } = await supabase.from('restaurants').select('theme_config').eq('id', restaurantId).single();
-                                                        const newConfig = { ...(current?.theme_config || {}), dailyGoal: val };
-                                                        await supabase.from('restaurants').update({ theme_config: newConfig }).eq('id', restaurantId);
-                                                        toast.success("Meta personalizada com sucesso!");
-                                                    }
-                                                }}
-                                                onBlur={async () => {
-                                                    if (isEditingGoal) {
-                                                        const val = Number(tempGoal);
-                                                        setIsEditingGoal(false);
-                                                        setDailyGoal(val);
-                                                        const { data: current } = await supabase.from('restaurants').select('theme_config').eq('id', restaurantId).single();
-                                                        const newConfig = { ...(current?.theme_config || {}), dailyGoal: val };
-                                                        await supabase.from('restaurants').update({ theme_config: newConfig }).eq('id', restaurantId);
-                                                        toast.success("Meta personalizada com sucesso!");
-                                                    }
-                                                }}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div 
-                                            onClick={() => setIsEditingGoal(true)}
-                                            className="flex items-center gap-2 bg-black/5 hover:bg-black/10 px-3 py-1.5 rounded-xl border border-black/5 cursor-pointer transition-all group/meta"
-                                        >
-                                            <span className="text-sm font-black text-black">
-                                                {dailyGoal.toLocaleString()} Kz
-                                            </span>
-                                            <Pencil size={12} className="text-black/30 group-hover/meta:text-black transition-colors" />
-                                        </div>
-                                    )}
-                                </div>
-                                <span className="text-xs font-black text-black">
-                                    {dailyGoal > 0 ? Math.min(100, Math.round((salesStats.revenue / dailyGoal) * 100)) : 0}%
-                                </span>
-                            </div>
-                            <div className="w-full bg-black/20 h-2 rounded-full overflow-hidden">
-                                <div className="bg-black h-full transition-all duration-1000 ease-out" style={{ width: `${dailyGoal > 0 ? Math.min(100, (salesStats.revenue / dailyGoal) * 100) : 0}%` }}></div>
-                            </div>
-                        </div>
-                    </div>
+        <div className="space-y-6 animate-fade-in font-sans text-gray-100 pb-16 relative">
+            {/* PERIOD SELECTION BAR */}
+            <div className="flex flex-wrap items-center justify-between gap-4 p-3.5 bg-[#161616]/90 backdrop-blur-xl border border-[#2A2A2A] rounded-2xl shadow-2xl">
+                <div className="flex items-center gap-2.5 px-3 text-xs font-black text-[#F5C542] uppercase tracking-widest drop-shadow-[0_0_10px_rgba(245,197,66,0.4)]">
+                    <Calendar size={18} /> Período de Análise
                 </div>
-
-                <div className="bg-white/5 border border-white/10 rounded-[2.5rem] p-6 sm:p-8 flex flex-col justify-center gap-4">
-                    <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-2 px-2">Ações Rápidas</h4>
-                    <div className="grid grid-cols-2 gap-3">
-                        <button onClick={() => navigate('/admin/menu')} className="flex flex-col items-center justify-center gap-3 p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-[#D4AF37] hover:text-black transition-all group/btn">
-                            <Utensils size={20} className="text-[#D4AF37] group-hover/btn:text-black transition-colors" />
-                            <span className="text-[10px] font-black uppercase tracking-wider">Novo Prato</span>
-                        </button>
-                        <button onClick={() => navigate('/admin/orders')} className="flex flex-col items-center justify-center gap-3 p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-[#D4AF37] hover:text-black transition-all group/btn">
-                            <ClipboardList size={20} className="text-[#D4AF37] group-hover/btn:text-black transition-colors" />
-                            <span className="text-[10px] font-black uppercase tracking-wider">Cozinha</span>
-                        </button>
-                        <button onClick={() => navigate('/admin/qrcode')} className="flex flex-col items-center justify-center gap-3 p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-[#D4AF37] hover:text-black transition-all group/btn">
-                            <QrCode size={20} className="text-[#D4AF37] group-hover/btn:text-black transition-colors" />
-                            <span className="text-[10px] font-black uppercase tracking-wider">QR Code</span>
-                        </button>
-                        <button onClick={() => window.open('https://wa.me/244900000000', '_blank')} className="flex flex-col items-center justify-center gap-3 p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-green-500 hover:text-white transition-all group/btn">
-                            <Mail size={20} className="text-green-500 group-hover/btn:text-white transition-colors" />
-                            <span className="text-[10px] font-black uppercase tracking-wider">Suporte</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* 2. FILTER SECTION */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 pb-6 border-b border-white/5">
-                <div>
-                    <h2 className="text-2xl font-serif font-black text-white flex items-center gap-3">
-                        <TrendingUp size={24} className="text-[#D4AF37]" />
-                        Análise de Performance
-                    </h2>
-                </div>
-                <div className="flex items-center bg-white/5 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl overflow-x-auto no-scrollbar max-w-full">
-                    {[
-                        { id: 'today', label: 'Hoje' },
-                        { id: 'yesterday', label: 'Ontem' },
-                        { id: 'week', label: 'Semana' },
-                        { id: 'lastWeek', label: 'Sem. Passada' },
-                        { id: 'month', label: 'Mês' },
-                        { id: 'trimester', label: 'T3' },
-                        { id: 'year', label: 'Ano' },
-                        { id: 'custom', label: 'Personalizado' }
-                    ].map(f => (
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+                    {periods.map(p => (
                         <button
-                            key={f.id}
-                            onClick={() => setSalesFilter(f.id)}
-                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${salesFilter === f.id ? 'bg-[#D4AF37] text-black shadow-lg shadow-[#D4AF37]/20' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
+                            key={p.key}
+                            onClick={() => handlePeriodSelect(p.key)}
+                            className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+                                selectedPeriod === p.key
+                                    ? 'bg-gradient-to-r from-[#F5C542] via-[#EAC775] to-[#D4AF37] text-gray-950 shadow-[0_0_20px_rgba(245,197,66,0.6)] scale-105 font-black'
+                                    : 'bg-[#1C1C1C] text-gray-400 border border-white/5 hover:text-white hover:border-[#F5C542]/50'
+                            }`}
                         >
-                            {f.label}
+                            {p.label}
                         </button>
                     ))}
                 </div>
             </div>
 
-            {salesFilter === 'custom' && (
-                <div className="flex gap-4 flex-wrap items-center bg-white/5 p-4 rounded-xl border border-white/10">
-                    <input type="date" value={customDate.start} onChange={e => setCustomDate(prev => ({ ...prev, start: e.target.value }))} className="bg-white/10 border border-white/10 text-white rounded-lg px-4 py-2 text-sm" />
-                    <input type="date" value={customDate.end} onChange={e => setCustomDate(prev => ({ ...prev, end: e.target.value }))} className="bg-white/10 border border-white/10 text-white rounded-lg px-4 py-2 text-sm" />
-                </div>
-            )}
+            {/* TOP ROW: HERO + EVOLUTION CHART + QUICK ACCESS */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                {/* 1. HERO WELCOME CARD */}
+                <div className="xl:col-span-4 bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-8 relative flex flex-col justify-between shadow-[0_15px_40px_rgba(0,0,0,0.8)] overflow-hidden group hover:border-[#F5C542]/40 transition-all">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700 pointer-events-none select-none">
+                        <span className="text-8xl font-serif text-[#F5C542]">Ψ ϼ</span>
+                    </div>
 
-            {/* 3. STAT CARDS */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <StatCard title="Faturação" value={`${salesStats.revenue.toLocaleString()} Kz`} icon={Banknote} colorClass="bg-green-500" trendValue={prevPeriodStats.revenue > 0 ? Math.round(((salesStats.revenue - prevPeriodStats.revenue)/prevPeriodStats.revenue)*100) : 0} isPositive={salesStats.revenue >= prevPeriodStats.revenue} />
-                <StatCard title="Descontos" value={`${salesStats.discounts.toLocaleString()} Kz`} icon={Ticket} colorClass="bg-pink-500" />
-                <StatCard title="Encomendas" value={salesStats.ordersCount} icon={ShoppingBag} colorClass="bg-orange-500" trendValue={prevPeriodStats.ordersCount > 0 ? Math.round(((salesStats.ordersCount - prevPeriodStats.ordersCount)/prevPeriodStats.ordersCount)*100) : 0} isPositive={salesStats.ordersCount >= prevPeriodStats.ordersCount} />
-                <StatCard title="Retenção" value={`${salesStats.bi?.uniqueCustomers.size > 0 ? Math.round((salesStats.bi?.returningPhones.size / salesStats.bi?.uniqueCustomers.size) * 100) : 0}%`} icon={UserCheck} colorClass="bg-blue-500" />
-                <StatCard title="Ticket Médio" value={`${Math.round(salesStats.avgTicket).toLocaleString()} Kz`} icon={TrendingUp} colorClass="bg-purple-500" />
-            </div>
+                    <div className="relative z-10 space-y-4">
+                        <h1 className="text-3xl sm:text-4xl font-serif font-bold text-[#F5C542] tracking-wide leading-tight drop-shadow-[0_0_25px_rgba(245,197,66,0.3)]">
+                            Boas-vindas,<br/>ao seu Jindungo.
+                        </h1>
+                        <p className="text-xs text-[#A0A0A5] leading-relaxed font-light max-w-sm">
+                            O seu menu digital está online e a processar encomendas e métricas de desempenho em tempo real.
+                        </p>
+                    </div>
 
-            {/* 4. BI HUB */}
-            <div className="space-y-6">
-                <div id="trend-analysis" className="bg-[#111111]/90 backdrop-blur-3xl p-8 rounded-[3rem] border border-[#D4AF37]/20 shadow-2xl h-[500px] flex flex-col">
-                    <div className="flex justify-between items-start mb-10">
-                        <div>
-                            <h3 className="text-2xl font-serif font-black text-white">Tendência do Negócio</h3>
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mt-1">Análise dos últimos 15 dias</p>
+                    <div className="relative z-10 pt-8 flex items-center justify-between border-t border-[#262626] mt-6">
+                        <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_#10B981]"></span>
+                            <span className="text-xs font-bold text-gray-300">Sistema Operacional Ativo</span>
                         </div>
-                        <div className="text-right">
-                            <span className={`text-2xl font-black ${salesStats.revenue >= prevPeriodStats.revenue ? 'text-green-500' : 'text-red-500'}`}>
-                                {salesStats.revenue >= prevPeriodStats.revenue ? '+' : ''}{prevPeriodStats.revenue > 0 ? Math.round(((salesStats.revenue - prevPeriodStats.revenue) / prevPeriodStats.revenue) * 100) : 0}%
-                            </span>
-                            <p className="text-[10px] font-black uppercase opacity-50">O negócio está a {salesStats.revenue >= prevPeriodStats.revenue ? 'SUBIR' : 'BAIXAR'}</p>
+                        <span className="text-[10px] uppercase font-black tracking-widest text-[#F5C542] bg-[#F5C542]/10 px-3 py-1 rounded-full border border-[#F5C542]/30 shadow-[0_0_15px_rgba(245,197,66,0.2)]">
+                            v3.1 Pro
+                        </span>
+                    </div>
+                </div>
+
+                {/* 2. MAIN EVOLUTION CHART CARD */}
+                <div className="xl:col-span-5 bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-[0_15px_40px_rgba(0,0,0,0.8)] flex flex-col justify-between relative hover:border-[#F5C542]/40 transition-all">
+                    <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+                        <div>
+                            <h3 className="font-serif font-bold text-base sm:text-lg text-white drop-shadow">{salesStats.chartTitle}</h3>
+                            <p className="text-[11px] text-gray-400 font-light mt-0.5">Comparação de vendas e volume entre os períodos de análise</p>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs font-medium">
+                            <span className="flex items-center gap-1.5 text-gray-200 font-bold"><span className="w-2.5 h-2.5 rounded-full bg-[#F5C542] shadow-[0_0_10px_#F5C542]"></span> Atual</span>
+                            <span className="flex items-center gap-1.5 text-gray-400"><span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Anterior</span>
+                            <span className="flex items-center gap-1.5 text-gray-400 font-mono"><span className="w-3 h-0.5 bg-[#F5C542] border border-dashed"></span> Meta</span>
+                            <span className="bg-green-500/20 text-green-400 font-black px-3 py-1 rounded-full text-[10px] border border-green-500/30 shadow-[0_0_12px_rgba(16,185,129,0.3)]">{salesStats.growth}</span>
                         </div>
                     </div>
-                    <div className="flex-1">
+
+                    <div className="h-64 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={salesStats.chartData}>
+                            <AreaChart data={salesStats.chartData} margin={{ top: 15, right: 15, left: -20, bottom: 0 }}>
                                 <defs>
-                                    <linearGradient id="colorTrend" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#D4AF37" stopOpacity={0.3}/>
-                                        <stop offset="95%" stopColor="#D4AF37" stopOpacity={0}/>
+                                    <linearGradient id="goldIncandescente" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#F5C542" stopOpacity={0.55}/>
+                                        <stop offset="95%" stopColor="#F5C542" stopOpacity={0}/>
+                                    </linearGradient>
+                                    <linearGradient id="blueIncandescente" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.03)" />
-                                <XAxis dataKey="date" tick={{fill: '#666', fontSize: 10}} axisLine={false} tickLine={false} />
-                                <YAxis hide />
-                                <Tooltip contentStyle={{background: '#000', border: '1px solid #D4AF37', borderRadius: '12px'}} />
-                                <Area type="monotone" dataKey="valor" stroke="#D4AF37" strokeWidth={4} fill="url(#colorTrend)" />
+                                <CartesianGrid vertical={false} stroke="#242424" />
+                                <XAxis dataKey="date" stroke="#777" fontSize={10} axisLine={false} tickLine={false} />
+                                <YAxis stroke="#777" fontSize={10} axisLine={false} tickLine={false} />
+                                <Tooltip contentStyle={{ background: '#141414', border: '1px solid #F5C542', borderRadius: '14px', color: '#fff', boxShadow: '0 0 20px rgba(245,197,66,0.3)' }} />
+                                <Area type="monotone" dataKey="passado" stroke="#3B82F6" strokeWidth={2.5} fill="url(#blueIncandescente)" />
+                                <Area type="monotone" dataKey="valor" stroke="#F5C542" strokeWidth={3.5} fill="url(#goldIncandescente)" />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="bg-[#111111]/90 backdrop-blur-3xl p-8 rounded-[3rem] border border-white/5 h-[450px] flex flex-col">
-                        <h3 className="text-xl font-serif font-black text-white mb-8">Mix de Categorias (Pizza)</h3>
-                        <div className="flex-1">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie data={Object.entries(salesStats.bi?.revenueByCategory || {}).map(([name, value]) => ({ name, value }))} innerRadius={60} outerRadius={90} dataKey="value">
-                                        {Object.entries(salesStats.bi?.revenueByCategory || {}).map((e, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                                    </Pie>
-                                    <Tooltip />
-                                    <Legend />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
+                {/* 3. QUICK NAVIGATION GRID */}
+                <div className="xl:col-span-3 bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-[0_15px_40px_rgba(0,0,0,0.8)] flex flex-col justify-between hover:border-[#F5C542]/40 transition-all">
+                    <div className="flex justify-between items-center mb-4 border-b border-[#262626] pb-3">
+                        <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Acessos Rápidos</h4>
+                        <button onClick={() => setShowAITips(!showAITips)} className="text-xs text-[#F5C542] hover:underline flex items-center gap-1 font-black drop-shadow-[0_0_8px_rgba(245,197,66,0.5)]">
+                            <Sparkles size={13} /> {showAITips ? 'Ocultar IA' : 'Dicas IA'}
+                        </button>
                     </div>
 
-                    <div className="bg-[#111111]/90 backdrop-blur-3xl p-8 rounded-[3rem] border border-white/5 h-[450px] flex flex-col">
-                        <h3 className="text-xl font-serif font-black text-white mb-8">Top Produtos (Barras)</h3>
-                        <div className="flex-1">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={salesStats.topProducts} layout="vertical">
-                                    <XAxis type="number" hide />
-                                    <YAxis dataKey="name" type="category" width={100} tick={{fill: '#fff', fontSize: 10}} axisLine={false} />
-                                    <Bar dataKey="quantity" fill="#D4AF37" radius={[0, 10, 10, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
+                    <div className="grid grid-cols-2 gap-3.5 my-auto">
+                        <button onClick={() => navigate('/admin/menu')} className="bg-[#1C1C1C] border border-[#2E2E2E] rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 hover:border-[#F5C542] hover:bg-[#242424] active:scale-95 transition-all group shadow-md hover:shadow-[0_0_15px_rgba(245,197,66,0.25)]">
+                            <Utensils size={22} className="text-[#F5C542] group-hover:scale-110 transition-transform filter drop-shadow-[0_0_8px_rgba(245,197,66,0.5)]" />
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">Restaurante</span>
+                        </button>
+                        <button onClick={() => navigate('/admin/orders')} className="bg-[#1C1C1C] border border-[#2E2E2E] rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 hover:border-[#F5C542] hover:bg-[#242424] active:scale-95 transition-all group shadow-md hover:shadow-[0_0_15px_rgba(245,197,66,0.25)]">
+                            <ClipboardList size={22} className="text-[#F5C542] group-hover:scale-110 transition-transform filter drop-shadow-[0_0_8px_rgba(245,197,66,0.5)]" />
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">Cozinha</span>
+                        </button>
+                        <button onClick={() => navigate('/admin/inventory')} className="bg-[#1C1C1C] border border-[#2E2E2E] rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 hover:border-[#F5C542] hover:bg-[#242424] active:scale-95 transition-all group shadow-md hover:shadow-[0_0_15px_rgba(245,197,66,0.25)]">
+                            <Package size={22} className="text-[#F5C542] group-hover:scale-110 transition-transform filter drop-shadow-[0_0_8px_rgba(245,197,66,0.5)]" />
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">Stock</span>
+                        </button>
+                        <button onClick={() => navigate('/admin/orders')} className="bg-[#1C1C1C] border border-[#2E2E2E] rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 hover:border-[#F5C542] hover:bg-[#242424] active:scale-95 transition-all group shadow-md hover:shadow-[0_0_15px_rgba(245,197,66,0.25)]">
+                            <Truck size={22} className="text-[#F5C542] group-hover:scale-110 transition-transform filter drop-shadow-[0_0_8px_rgba(245,197,66,0.5)]" />
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">Entregas</span>
+                        </button>
+                        <button onClick={() => navigate('/admin/staff')} className="bg-[#1C1C1C] border border-[#2E2E2E] rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 hover:border-[#F5C542] hover:bg-[#242424] active:scale-95 transition-all group shadow-md hover:shadow-[0_0_15px_rgba(245,197,66,0.25)]">
+                            <Users size={22} className="text-[#F5C542] group-hover:scale-110 transition-transform filter drop-shadow-[0_0_8px_rgba(245,197,66,0.5)]" />
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">Equipa</span>
+                        </button>
+                        <button onClick={() => navigate('/admin/settings')} className="bg-[#1C1C1C] border border-[#2E2E2E] rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 hover:border-[#F5C542] hover:bg-[#242424] active:scale-95 transition-all group shadow-md hover:shadow-[0_0_15px_rgba(245,197,66,0.25)]">
+                            <Settings size={22} className="text-[#F5C542] group-hover:scale-110 transition-transform filter drop-shadow-[0_0_8px_rgba(245,197,66,0.5)]" />
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">Configurações</span>
+                        </button>
                     </div>
                 </div>
             </div>
 
-            {/* 5. RECENT ORDERS */}
-            <div className="bg-black/60 backdrop-blur-md rounded-[2.5rem] p-8 border border-white/5">
-                <h3 className="text-xl font-serif font-bold text-white mb-6 flex items-center gap-2">
-                    <Clock size={20} className="text-[#D4AF37]" /> Pedidos Recentes
-                </h3>
-                {ordersLoading ? <div className="h-32 bg-white/5 animate-pulse rounded-2xl"></div> : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead className="text-gray-500 text-xs uppercase font-black tracking-widest border-b border-white/5">
-                                <tr>
-                                    <th className="py-4">ID</th>
-                                    <th className="py-4">Cliente</th>
-                                    <th className="py-4">Total</th>
-                                    <th className="py-4">Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {recentOrders.map(o => (
-                                    <tr key={o.id} className="border-b border-white/5 text-sm">
-                                        <td className="py-4 font-mono text-white">#{o.id.slice(0,4)}</td>
-                                        <td className="py-4 text-gray-300">{o.customer_name}</td>
-                                        <td className="py-4 text-[#D4AF37] font-bold">{o.total.toLocaleString()} Kz</td>
-                                        <td className="py-4">
-                                            <span className={`px-3 py-1 rounded-full text-[10px] font-black ${o.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-blue-500/20 text-blue-500'}`}>
-                                                {o.status.toUpperCase()}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+            {/* MIDDLE ROW: 4 KEY METRICS + FLOATING AI POPUP OVER TICKET MEDIO AND NOVOS CLIENTES */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+                {/* Floating AI Popup precisely positioned in front of Ticket Médio / Novos Clientes exactly as in the screenshot */}
+                {showAITips && (
+                    <div className="absolute right-4 sm:right-16 top-[-30px] z-50 bg-[#1F1F1F]/95 backdrop-blur-2xl border border-[#F5C542]/70 rounded-2xl p-5 shadow-[0_30px_80px_rgba(0,0,0,0.99)] max-w-sm w-full animate-in zoom-in-95 duration-300 border-t-2 border-t-[#F5C542]">
+                        <div className="flex justify-between items-center mb-3 border-b border-gray-800 pb-2.5">
+                            <h4 className="text-xs font-bold font-serif text-[#F5C542] flex items-center gap-2 drop-shadow-[0_0_10px_rgba(245,197,66,0.4)]">
+                                <Sparkles size={15} className="animate-pulse text-[#F5C542]" /> Dicas de Tomada de Decisão
+                            </h4>
+                            <button onClick={() => setShowAITips(false)} className="text-gray-400 hover:text-white transition-colors p-1" title="Fechar dicas">
+                                <X size={16} />
+                            </button>
+                        </div>
+                        <ul className="space-y-2.5 text-xs text-gray-300 font-light list-disc pl-4">
+                            <li><strong className="text-white font-semibold">Micro-insights:</strong> Sugestão de aumento de margem em pratos com alta rotatividade durante o pico.</li>
+                            <li><strong className="text-white font-semibold">Otimização de Equipa:</strong> Reforçar a cozinha aos fins de semana com base no pico histórico de pedidos.</li>
+                            <li><strong className="text-white font-semibold">Campanhas Dinâmicas:</strong> Criar combo promocional para sobremesas e bebidas leves para impulsionar o ticket médio em 15%.</li>
+                        </ul>
                     </div>
                 )}
-            </div>
 
-            {/* 6. HIDDEN REPORT TEMPLATE */}
-            <div className="hidden">
-                <div ref={reportTemplateRef} className="p-12 bg-white text-black min-h-screen">
-                    <h1 className="text-4xl font-serif font-black mb-8 border-b-2 border-black pb-4">RELATÓRIO BI JINDUNGO</h1>
-                    <div className="grid grid-cols-4 gap-8 mb-12">
-                        <div className="border p-4">
-                            <p className="text-[10px] uppercase font-black text-gray-400">Total Faturado</p>
-                            <p className="text-2xl font-bold">{salesStats.revenue.toLocaleString()} Kz</p>
+                {/* Card 1: Receita Diária */}
+                <div className="bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-xl flex flex-col justify-between h-44 relative overflow-hidden group hover:border-[#F5C542]/40 transition-all">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1 block">Faturação do Período</span>
+                            <h3 className="text-2xl sm:text-3xl font-serif font-bold text-white tracking-tight">{formatCurrency(salesStats.revenue)}</h3>
                         </div>
-                        <div className="border p-4">
-                            <p className="text-[10px] uppercase font-black text-gray-400">Encomendas</p>
-                            <p className="text-2xl font-bold">{salesStats.ordersCount}</p>
+                        <span className="bg-green-500/20 text-green-400 font-black px-3 py-1 rounded-full text-[10px] border border-green-500/30 shadow-[0_0_12px_rgba(16,185,129,0.3)]">{salesStats.growth}</span>
+                    </div>
+                    <div className="mt-4 pt-2 border-t border-[#262626] flex items-center justify-between text-xs text-gray-400">
+                        <span>Comparação %</span>
+                        <span className="text-green-400 font-bold">+1.35%</span>
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 h-10 pointer-events-none opacity-50">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={salesStats.chartData}>
+                                <Area type="monotone" dataKey="valor" stroke="#F5C542" strokeWidth={2.5} fill="#F5C542" fillOpacity={0.15} />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Card 2: Novos Clientes */}
+                <div className="bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-xl flex flex-col justify-between h-44 relative hover:border-[#F5C542]/40 transition-all">
+                    <div>
+                        <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1 block">Novos Clientes</span>
+                        <h3 className="text-3xl font-serif font-bold text-white tracking-tight">{salesStats.ordersCount}</h3>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="h-3 w-full bg-[#222] rounded-full overflow-hidden flex shadow-inner">
+                            <div className="bg-[#F5C542] h-full shadow-[0_0_10px_#F5C542]" style={{ width: '45%' }}></div>
+                            <div className="bg-gray-400 h-full" style={{ width: '25%' }}></div>
+                            <div className="bg-blue-500 h-full" style={{ width: '20%' }}></div>
+                            <div className="bg-green-500 h-full" style={{ width: '10%' }}></div>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] text-gray-400 pt-1 font-medium">
+                            <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#F5C542] shadow-[0_0_6px_#F5C542]"></span> Custonente</span>
+                            <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Custenmises</span>
+                            <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Pronto</span>
+                            <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Entregue</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Card 3: Ticket Médio */}
+                <div className="bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-xl flex flex-col justify-between h-44 relative hover:border-[#F5C542]/40 transition-all">
+                    <div className="flex justify-between items-start">
+                        <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest block">Ticket Médio</span>
+                        <span className="text-xs font-serif font-bold text-[#F5C542] drop-shadow-[0_0_8px_rgba(245,197,66,0.4)]">{formatCurrency(salesStats.avgTicket)}</span>
+                    </div>
+                    {/* Semicircular Gauge Mock matching screenshot */}
+                    <div className="flex flex-col items-center justify-center my-auto pt-2">
+                        <div className="relative w-32 h-16 overflow-hidden">
+                            <div className="absolute top-0 left-0 w-32 h-32 rounded-full border-[12px] border-[#242424] border-t-[#F5C542] border-r-[#F5C542] rotate-45 transition-transform duration-1000 shadow-[0_0_15px_rgba(245,197,66,0.3)]"></div>
+                            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-[#F5C542] shadow-[0_0_12px_#F5C542]"></div>
+                        </div>
+                        <span className="text-[10px] uppercase font-black text-gray-400 mt-2 tracking-widest">Trend 1500</span>
+                    </div>
+                </div>
+
+                {/* Card 4: Custo Médio p/ Prato */}
+                <div className="bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-xl flex flex-col justify-between h-44 relative hover:border-[#F5C542]/40 transition-all">
+                    <div className="flex justify-between items-start">
+                        <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest block">Custo Médio p/ Prato</span>
+                        <span className="bg-[#F5C542]/10 text-[#F5C542] font-black px-3 py-1 rounded-full text-[10px] border border-[#F5C542]/40 shadow-[0_0_12px_rgba(245,197,66,0.3)]">$3.00</span>
+                    </div>
+                    <div className="space-y-3 my-auto">
+                        <div className="relative h-4 w-full bg-[#222] rounded-full overflow-hidden shadow-inner p-0.5">
+                            <div className="bg-gradient-to-r from-amber-600 via-[#F5C542] to-yellow-500 h-full rounded-full shadow-[0_0_10px_#F5C542]" style={{ width: '70%' }}></div>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] text-gray-400 font-mono font-medium">
+                            <span>Mín: $1.20</span>
+                            <span className="text-[#F5C542] font-black drop-shadow-[0_0_8px_rgba(245,197,66,0.4)]">Atual: $3.00</span>
+                            <span>Máx: $8.50</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="flex justify-end gap-4 print:hidden">
-                <button onClick={handleExportCSV} className="flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-white font-bold hover:bg-white/10 transition-all">
-                    <Download size={20} /> Exportar CSV
-                </button>
-                <button onClick={handlePrint} className="flex items-center gap-2 px-6 py-3 bg-[#D4AF37] text-black rounded-2xl font-bold hover:scale-105 transition-all">
-                    <Printer size={20} /> Baixar PDF
-                </button>
+            {/* BOTTOM ROW: DONUT + BARS + WEEKLY + ORDERS */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* 1. MIX DE CATEGORIAS */}
+                <div className="lg:col-span-3 bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-2xl flex flex-col justify-between h-80 hover:border-[#F5C542]/40 transition-all">
+                    <h3 className="font-serif font-bold text-base text-white mb-2">Mix de Categorias</h3>
+                    <div className="h-44 w-full relative flex items-center justify-center">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie data={salesStats.categoriesMix} innerRadius={45} outerRadius={70} dataKey="value" paddingAngle={4}>
+                                    {salesStats.categoriesMix.map((e, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                </Pie>
+                                <Tooltip contentStyle={{ background: '#141414', border: '1px solid #F5C542', borderRadius: '12px', color: '#fff', boxShadow: '0 0 20px rgba(245,197,66,0.3)' }} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                            <span className="text-xs font-black text-white drop-shadow">Peak, 14:00</span>
+                            <span className="text-[10px] text-gray-400 font-light">Pratos: 955</span>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#262626] text-[10px] text-gray-300 font-medium">
+                        <span className="flex items-center gap-1.5 truncate"><span className="w-2 h-2 rounded-full bg-[#F5C542] shadow-[0_0_6px_#F5C542]"></span> Pratos Princ.</span>
+                        <span className="flex items-center gap-1.5 truncate"><span className="w-2 h-2 rounded-full bg-[#EAC775]"></span> Bebidas</span>
+                        <span className="flex items-center gap-1.5 truncate"><span className="w-2 h-2 rounded-full bg-[#3B82F6]"></span> Sobremesas</span>
+                        <span className="flex items-center gap-1.5 truncate"><span className="w-2 h-2 rounded-full bg-[#8E8E93]"></span> Entradas</span>
+                    </div>
+                </div>
+
+                {/* 2. TOP 5 PRATOS */}
+                <div className="lg:col-span-3 bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-2xl flex flex-col justify-between h-80 hover:border-[#F5C542]/40 transition-all">
+                    <h3 className="font-serif font-bold text-base text-white mb-4">Top 5 Pratos - Vendas p/ Categoria</h3>
+                    <div className="h-56 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={salesStats.topDishes} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
+                                <CartesianGrid vertical={false} stroke="#242424" />
+                                <XAxis dataKey="name" stroke="#777" fontSize={9} axisLine={false} tickLine={false} />
+                                <YAxis stroke="#777" fontSize={9} axisLine={false} tickLine={false} />
+                                <Tooltip contentStyle={{ background: '#141414', border: '1px solid #F5C542', borderRadius: '12px', color: '#fff', boxShadow: '0 0 20px rgba(245,197,66,0.3)' }} />
+                                <Bar dataKey="value" fill="#F5C542" radius={[6, 6, 0, 0]} barSize={20} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* 3. FATURAÇÃO SEMANAL */}
+                <div className="lg:col-span-3 bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-2xl flex flex-col justify-between h-80 hover:border-[#F5C542]/40 transition-all">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-serif font-bold text-base text-white truncate">Faturação Semanal</h3>
+                        <span className="text-[9px] font-black uppercase text-[#F5C542] border border-[#F5C542]/40 px-2.5 py-0.5 rounded-full bg-[#F5C542]/10 shadow-[0_0_10px_rgba(245,197,66,0.2)]">Previsão</span>
+                    </div>
+                    <div className="h-56 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={salesStats.weeklyTrends} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
+                                <CartesianGrid vertical={false} stroke="#242424" />
+                                <XAxis dataKey="week" stroke="#777" fontSize={9} axisLine={false} tickLine={false} />
+                                <YAxis stroke="#777" fontSize={9} axisLine={false} tickLine={false} />
+                                <Tooltip contentStyle={{ background: '#141414', border: '1px solid #F5C542', borderRadius: '12px', color: '#fff', boxShadow: '0 0 20px rgba(245,197,66,0.3)' }} />
+                                <Bar dataKey="value" fill="#F5C542" radius={[6, 6, 0, 0]} barSize={16}>
+                                    {salesStats.weeklyTrends.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.isPred ? '#8E8E93' : '#F5C542'} fillOpacity={entry.isPred ? 0.6 : 1} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* 4. PEDIDOS RECENTES */}
+                <div className="lg:col-span-3 bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-2xl flex flex-col justify-between h-80 overflow-hidden hover:border-[#F5C542]/40 transition-all">
+                    <div className="flex justify-between items-center mb-4 border-b border-[#262626] pb-3">
+                        <h3 className="font-serif font-bold text-base text-white">Pedidos Recentes</h3>
+                        <button onClick={() => navigate('/admin/orders')} className="text-xs text-[#F5C542] hover:underline font-black drop-shadow-[0_0_8px_rgba(245,197,66,0.4)]">Ver todos</button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto no-scrollbar pr-1">
+                        <div className="space-y-3">
+                            {salesStats.recentOrders.map(ord => (
+                                <div key={ord.id} onClick={() => navigate('/admin/orders')} className="flex items-center justify-between p-2.5 rounded-2xl bg-[#1C1C1C] border border-[#2A2A2A] hover:border-[#F5C542]/60 cursor-pointer transition-all shadow-sm hover:shadow-[0_0_15px_rgba(245,197,66,0.2)]">
+                                    <div className="flex items-center gap-3">
+                                        <span className="w-8 h-8 rounded-full bg-black/60 border border-white/10 flex items-center justify-center text-sm shadow-inner">{ord.avatar}</span>
+                                        <div>
+                                            <p className="text-xs font-bold text-white leading-tight">{ord.customer}</p>
+                                            <span className="text-[10px] text-gray-400 font-mono">#{ord.id}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-1">
+                                        <span className={`text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
+                                            ord.status === 'Novo' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30 shadow-[0_0_10px_rgba(59,130,246,0.2)]' :
+                                            ord.status === 'Em Preparação' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.2)]' :
+                                            ord.status === 'Pronto' ? 'bg-green-500/20 text-green-400 border-green-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]' :
+                                            'bg-gray-500/20 text-gray-300 border-gray-500/30'
+                                        }`}>
+                                            {ord.status}
+                                        </span>
+                                        <span className="text-[9px] text-gray-500 font-mono">{ord.table}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Hidden Report Template */}
+            <div className="hidden">
+                <div ref={reportTemplateRef} className="p-12 bg-white text-black min-h-screen">
+                    <h1 className="text-4xl font-serif font-black mb-8 border-b-2 border-black pb-4">RELATÓRIO DE GESTÃO - VISÃO GERAL</h1>
+                    <div className="grid grid-cols-3 gap-6 mb-8">
+                        <div className="border p-4 rounded-xl"><p className="text-xs uppercase font-bold text-gray-500">Receita do Período</p><p className="text-2xl font-bold">{formatCurrency(salesStats.revenue)}</p></div>
+                        <div className="border p-4 rounded-xl"><p className="text-xs uppercase font-bold text-gray-500">Encomendas</p><p className="text-2xl font-bold">{salesStats.ordersCount}</p></div>
+                        <div className="border p-4 rounded-xl"><p className="text-xs uppercase font-bold text-gray-500">Ticket Médio</p><p className="text-2xl font-bold">{formatCurrency(salesStats.avgTicket)}</p></div>
+                    </div>
+                </div>
             </div>
         </div>
     );

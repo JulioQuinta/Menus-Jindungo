@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 const CartContext = createContext();
 
@@ -25,11 +26,18 @@ export const CartProvider = ({ children }) => {
     const addToCart = (item, selectedVariant = null) => {
         setCartItems(prev => {
             const cartItemId = `${item.id}-${selectedVariant || ''}`;
-            const existing = prev.find(i => i.cartItemId === cartItemId || (i.id === item.id && !i.selectedVariant && !selectedVariant));
+
+            // [SECURITY] Se o item a adicionar for de outro restaurante, limpa o carrinho anterior
+            if (prev.length > 0 && prev[0].restaurant_id && item.restaurant_id && String(prev[0].restaurant_id) !== String(item.restaurant_id)) {
+                toast('Carrinho anterior limpo (outro restaurante).', { icon: '🔄', duration: 4000 });
+                return [{ ...item, cartItemId, selectedVariant, quantity: 1 }];
+            }
+
+            const existing = prev.find(i => i.cartItemId === cartItemId || (String(i.id) === String(item.id) && !i.selectedVariant && !selectedVariant));
 
             if (existing) {
                 // Use the matching ID to increment
-                return prev.map(i => (i.cartItemId === existing.cartItemId || i.id === existing.id) ? { ...i, quantity: i.quantity + 1 } : i);
+                return prev.map(i => (i.cartItemId === existing.cartItemId || String(i.id) === String(existing.id)) ? { ...i, quantity: i.quantity + 1 } : i);
             }
             return [...prev, { ...item, cartItemId, selectedVariant, quantity: 1 }];
         });
@@ -38,7 +46,7 @@ export const CartProvider = ({ children }) => {
     const removeFromCart = (cartItemIdOrId) => {
         setCartItems(prev => {
             // Match either by strict cartItemId or just id (if no variants exist for this item in cart)
-            const existing = prev.find(i => i.cartItemId === cartItemIdOrId || i.id === cartItemIdOrId);
+            const existing = prev.find(i => i.cartItemId === cartItemIdOrId || String(i.id) === String(cartItemIdOrId));
             if (!existing) return prev;
 
             if (existing.quantity > 1) {
@@ -62,7 +70,7 @@ export const CartProvider = ({ children }) => {
 
     const getItemQuantity = (itemId) => {
         // Return total quantity of this item across all variants
-        return cartItems.filter(i => i.id === itemId).reduce((sum, item) => sum + item.quantity, 0);
+        return cartItems.filter(i => String(i.id) === String(itemId)).reduce((sum, item) => sum + item.quantity, 0);
     };
 
     return (

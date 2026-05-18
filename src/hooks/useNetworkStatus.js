@@ -1,31 +1,66 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 export const useNetworkStatus = () => {
-    const [isLowEnd, setIsLowEnd] = useState(false);
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
+    const [isSlow, setIsSlow] = useState(false);
 
     useEffect(() => {
-        const updateNetworkStatus = () => {
-            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-            if (connection) {
-                // Check for generic 'slow-2g', '2g', or '3g'
-                const isSlow = ['slow-2g', '2g', '3g'].includes(connection.effectiveType);
-                const saveData = connection.saveData; // User enabled Data Saver
-                setIsLowEnd(isSlow || saveData);
+        let toastId = null;
+
+        const handleOnline = () => {
+            setIsOnline(true);
+            setIsSlow(false);
+            if (toastId) {
+                toast.dismiss(toastId);
+                toastId = null;
             }
+            toast.success("Ligação restaurada!", { id: 'network-status' });
         };
 
-        updateNetworkStatus();
+        const handleOffline = () => {
+            setIsOnline(false);
+            toastId = toast.error("Sem ligação à internet. Modo offline ativo.", { 
+                id: 'network-status',
+                duration: Infinity 
+            });
+        };
 
-        if (navigator.connection) {
-            navigator.connection.addEventListener('change', updateNetworkStatus);
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        // Opcional: Monitorizar a qualidade da ligação (Connection API) se suportada
+        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        if (connection) {
+            const updateConnectionStatus = () => {
+                if (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g') {
+                    setIsSlow(true);
+                    toast('Aviso: Ligação lenta. Algumas ações podem demorar mais do que o normal.', {
+                        icon: '⚠️',
+                        id: 'network-slow',
+                        duration: 5000
+                    });
+                } else {
+                    setIsSlow(false);
+                }
+            };
+            
+            connection.addEventListener('change', updateConnectionStatus);
+            // Verifica no arranque
+            updateConnectionStatus();
+
+            return () => {
+                window.removeEventListener('online', handleOnline);
+                window.removeEventListener('offline', handleOffline);
+                connection.removeEventListener('change', updateConnectionStatus);
+            };
         }
 
         return () => {
-            if (navigator.connection) {
-                navigator.connection.removeEventListener('change', updateNetworkStatus);
-            }
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
         };
     }, []);
 
-    return { isLowEnd };
+    return { isOnline, isSlow };
 };

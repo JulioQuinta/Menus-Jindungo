@@ -19,9 +19,9 @@ export const orderService = {
     },
 
     // Update order status (Admin)
-    async updateOrderStatus(orderId, status, rejectionReason = null) {
+    async updateOrderStatus(orderId, status, rejectionReason = null, extraData = {}) {
         try {
-            const updateData = { status };
+            const updateData = { status, ...extraData };
             if (rejectionReason) updateData.rejection_reason = rejectionReason;
 
             const { data, error } = await supabase
@@ -120,13 +120,15 @@ export const orderService = {
         try {
             let query = supabase
                 .from('orders')
-                .select('id, created_at, total, items, status')
+                .select('id, created_at, total, items, status, coupon_discount, customer_name, customer_phone')
                 .eq('restaurant_id', restaurantId)
                 .gte('created_at', startDate.toISOString())
                 .lte('created_at', endDate.toISOString());
 
             if (status === 'all') {
-                query = query.neq('status', 'cancelled');
+                query = query.neq('status', 'cancelled').neq('status', 'cancelado');
+            } else if (status === 'raw_all' || status === null) {
+                // Fetch everything, including cancelled orders
             } else if (status) {
                 query = query.eq('status', status);
             }
@@ -141,11 +143,28 @@ export const orderService = {
         }
     },
 
-    // [NEW] Get advanced analytics (Categories, Loyalty, etc.)
+    // [NEW] Get advanced analytics (Categories, Loyalty, Top Products, Cancellation Rate, etc.)
     async getAdvancedAnalytics(restaurantId, startDate, endDate) {
         try {
-            const { data: orders, error } = await this.getSalesByDateRange(restaurantId, startDate, endDate, 'all');
+            // Fetch raw_all to include cancelled orders for cancellation rate calculation
+            const { data: allOrders, error } = await this.getSalesByDateRange(restaurantId, startDate, endDate, 'raw_all');
             if (error) throw error;
+
+            const totalOrders = allOrders.length;
+            const cancelledOrders = allOrders.filter(o => {
+                const s = (o.status || '').toLowerCase().trim();
+                return s === 'cancelled' || s === 'cancelado';
+            });
+            const cancelledCount = cancelledOrders.length;
+            const cancellationRate = totalOrders > 0 ? Number(((cancelledCount / totalOrders) * 100).toFixed(1)) : 0;
+
+            const activeOrders = allOrders.filter(o => {
+                const s = (o.status || '').toLowerCase().trim();
+                return s !== 'cancelled' && s !== 'cancelado';
+            });
+
+            const totalRevenue = activeOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+            const avgTicket = activeOrders.length > 0 ? Math.round(totalRevenue / activeOrders.length) : 0;
 
             const analytics = {
                 revenueByCategory: {},
@@ -153,29 +172,45 @@ export const orderService = {
                 uniqueCustomers: new Set(),
                 returningPhones: new Set(),
                 topCustomers: [],
+                topProducts: [],
                 hourlyDistribution: Array(24).fill(0),
-                totalRevenue: 0,
-                totalOrders: orders.length
+                hourlyVolume: Array(24).fill(0), // Count of orders per hour
+                totalRevenue,
+                totalOrders,
+                activeOrdersCount: activeOrders.length,
+                cancelledCount,
+                cancellationRate,
+                avgTicket
             };
 
             const customerStats = {};
+            const productCounts = {};
 
-            orders.forEach(order => {
-                analytics.totalRevenue += (order.total || 0);
-                
+            activeOrders.forEach(order => {
                 // Hourly
                 const hour = new Date(order.created_at).getHours();
                 analytics.hourlyDistribution[hour] += (order.total || 0);
+                analytics.hourlyVolume[hour] += 1;
 
                 // Category & Items
                 if (order.items && Array.isArray(order.items)) {
                     order.items.forEach(item => {
-                        const catId = item.category_id || 'uncategorized';
                         const catName = item.category_name || 'Sem Categoria';
+                        const itemPrice = item.price_value || parseInt(String(item.price).replace(/[^0-9]/g, ''), 10) || 0;
+                        const itemQty = item.quantity ? parseInt(item.quantity, 10) : 1;
+                        const itemName = item.name || 'Prato Sem Nome';
+
+                        // Revenue by category
                         if (!analytics.revenueByCategory[catName]) {
                             analytics.revenueByCategory[catName] = 0;
                         }
-                        analytics.revenueByCategory[catName] += (item.price_value || parseInt(String(item.price).replace(/[^0-9]/g, ''), 10) || 0) * (item.quantity || 1);
+                        analytics.revenueByCategory[catName] += itemPrice * itemQty;
+
+                        // Quantity by item (for Top Products)
+                        if (!productCounts[itemName]) {
+                            productCounts[itemName] = 0;
+                        }
+                        productCounts[itemName] += itemQty;
                     });
                 }
 
@@ -201,6 +236,12 @@ export const orderService = {
             analytics.topCustomers = Object.entries(customerStats)
                 .map(([phone, stats]) => ({ phone, ...stats }))
                 .sort((a, b) => b.total - a.total)
+                .slice(0, 5);
+
+            // Top Products (Top 5)
+            analytics.topProducts = Object.entries(productCounts)
+                .map(([name, quantity]) => ({ name, quantity }))
+                .sort((a, b) => b.quantity - a.quantity)
                 .slice(0, 5);
 
             return { data: analytics, error: null };

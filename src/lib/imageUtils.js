@@ -1,37 +1,37 @@
+import imageCompression from 'browser-image-compression';
+
 /**
- * High-performance image compression and resizing
+ * High-performance image compression and resizing using browser-image-compression
  * @param {File} file - The raw image file
  * @param {Object} options - Compression options
  */
-export const compressImage = (file, options = {}) => {
+export const compressImage = async (file, options = {}) => {
     const { 
         maxWidth = 1024, 
         quality = 0.75, 
-        forceSquare = false,
-        format = 'image/webp' // Default to WebP for superior compression
+        forceSquare = false, // browser-image-compression doesn't support forceSquare directly, we handle it if needed
+        format = 'image/webp'
     } = options;
 
-    return new Promise((resolve, reject) => {
-        if (!file.type.startsWith('image/')) {
-            resolve(file);
-            return;
-        }
+    if (!file.type.startsWith('image/')) {
+        return file;
+    }
 
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target.result;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-
-                // Square cropping logic
-                if (forceSquare) {
-                    const size = Math.min(width, height);
-                    const startX = (width - size) / 2;
-                    const startY = (height - size) / 2;
+    // Step 1: Crop to square if requested (using canvas before compression)
+    let fileToCompress = file;
+    
+    if (forceSquare) {
+        fileToCompress = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const size = Math.min(img.width, img.height);
+                    const startX = (img.width - size) / 2;
+                    const startY = (img.height - size) / 2;
                     
                     canvas.width = Math.min(size, maxWidth);
                     canvas.height = canvas.width;
@@ -40,34 +40,39 @@ export const compressImage = (file, options = {}) => {
                     ctx.imageSmoothingEnabled = true;
                     ctx.imageSmoothingQuality = 'high';
                     ctx.drawImage(img, startX, startY, size, size, 0, 0, canvas.width, canvas.height);
-                } else {
-                    // Standard resizing
-                    if (width > maxWidth) {
-                        height = (maxWidth / width) * height;
-                        width = maxWidth;
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'high';
-                    ctx.drawImage(img, 0, 0, width, height);
-                }
-
-                canvas.toBlob((blob) => {
-                    if (blob) {
-                        const newFileName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
-                        resolve(new File([blob], newFileName, {
-                            type: format,
-                            lastModified: Date.now(),
-                        }));
-                    } else {
-                        reject(new Error('Canvas toBlob failed'));
-                    }
-                }, format, quality);
+                    
+                    canvas.toBlob((blob) => {
+                        if(blob) {
+                            resolve(new File([blob], file.name, { type: file.type, lastModified: Date.now() }));
+                        } else {
+                            resolve(file); // fallback
+                        }
+                    }, file.type);
+                };
+                img.onerror = () => resolve(file);
             };
-            img.onerror = (err) => reject(err);
-        };
-        reader.onerror = (err) => reject(err);
-    });
+            reader.onerror = () => resolve(file);
+        });
+    }
+
+    // Step 2: Compress using browser-image-compression
+    const compressionOptions = {
+        maxSizeMB: 0.3, // Target under 300KB
+        maxWidthOrHeight: maxWidth,
+        useWebWorker: true,
+        fileType: format,
+        initialQuality: quality
+    };
+
+    try {
+        const compressedBlob = await imageCompression(fileToCompress, compressionOptions);
+        const newFileName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+        return new File([compressedBlob], newFileName, {
+            type: format,
+            lastModified: Date.now(),
+        });
+    } catch (error) {
+        console.error('Image compression error:', error);
+        return fileToCompress; // Return original/squared file if compression fails
+    }
 };

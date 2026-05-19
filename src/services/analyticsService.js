@@ -18,7 +18,55 @@ export const analyticsService = {
             });
             sessionStorage.setItem(sessionKey, 'true');
         } catch (err) {
-            console.error('Analytics error:', err);
+            console.error('Analytics view tracking error:', err);
+        }
+    },
+
+    async incrementOrders(restaurantId, cartItems) {
+        if (!restaurantId) return;
+
+        try {
+            const itemCount = cartItems?.reduce((acc, item) => acc + (item.quantity || 1), 0) || 1;
+            const totalValue = cartItems?.reduce((acc, item) => acc + ((item.price || 0) * (item.quantity || 1)), 0) || 0;
+
+            await supabase.from('analytics_events').insert({
+                restaurant_id: restaurantId,
+                event_type: 'order_completed',
+                metadata: { items_count: itemCount, total_value: totalValue }
+            });
+        } catch (err) {
+            console.error('Analytics order tracking error:', err);
+        }
+    },
+
+    async trackAddToCart(restaurantId, item) {
+        if (!restaurantId || !item) return;
+
+        try {
+            await supabase.from('analytics_events').insert({
+                restaurant_id: restaurantId,
+                event_type: 'add_to_cart',
+                metadata: { item_id: item.id, item_name: item.name, price: item.price }
+            });
+        } catch (err) {
+            console.error('Analytics add_to_cart tracking error:', err);
+        }
+    },
+
+    async trackCheckoutStart(restaurantId, cartItems) {
+        if (!restaurantId) return;
+
+        try {
+            const itemCount = cartItems?.reduce((acc, item) => acc + (item.quantity || 1), 0) || 1;
+            const totalValue = cartItems?.reduce((acc, item) => acc + ((item.price || 0) * (item.quantity || 1)), 0) || 0;
+
+            await supabase.from('analytics_events').insert({
+                restaurant_id: restaurantId,
+                event_type: 'checkout_start',
+                metadata: { items_count: itemCount, total_value: totalValue }
+            });
+        } catch (err) {
+            console.error('Analytics checkout_start tracking error:', err);
         }
     },
 
@@ -45,7 +93,7 @@ export const analyticsService = {
                 viewsToday: todayStats ? todayStats.views : 0
             };
 
-        } catch (err) {
+        } catch {
             return { weeklyData: [], viewsToday: 0 };
         }
     }

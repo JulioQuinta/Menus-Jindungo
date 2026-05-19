@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabaseClient';
 
 
 
-// import { analyticsService } from '../services/analyticsService';
+import { analyticsService } from '../services/analyticsService';
 import LivePreview from '../components/LivePreview';
 import { CartProvider } from '../context/CartContext';
 import { toast } from 'react-hot-toast';
@@ -50,8 +50,6 @@ const PublicMenu = () => {
     const [selectedLanguage, setSelectedLanguage] = useState(() => {
         return localStorage.getItem('jindungo_lang') || 'PT';
     });
-
-    const t = (key) => getTranslation(selectedLanguage, key);
 
     // Initial check for active staff session
     useEffect(() => {
@@ -106,6 +104,7 @@ const PublicMenu = () => {
                 // Set Restaurant & Features
                 setRestaurant(restaurantData);
                 setFeatures(getPlanFeatures(restaurantData.plan));
+                analyticsService.trackView(restaurantData.id);
 
                 // 2. Process Theme/Config (Now derived from Step 1)
                 const themeData = restaurantData.theme_config || DEFAULT_CONFIG;
@@ -431,7 +430,7 @@ const PublicMenu = () => {
     );
 };
 const PublicMenuInner = ({ 
-    slug, restaurant, features, config, categories, loading, error, 
+    restaurant, features, config, categories, loading, 
     isCheckoutOpen, setIsCheckoutOpen, initialTable, businessInfo, 
     isCurrentlyClosed, showInfo, setShowInfo, showBookingModal, 
     setShowBookingModal, showStaffModal, setShowStaffModal, 
@@ -501,7 +500,10 @@ const PublicMenuInner = ({
                         <>
                             {config.isOpen !== false && (
                                 <CartFloatingButton
-                                    onClick={() => setIsCheckoutOpen(true)}
+                                    onClick={() => {
+                                        setIsCheckoutOpen(true);
+                                        analyticsService.trackCheckoutStart(restaurant?.id, cartItems);
+                                    }}
                                     primaryColor={config?.primaryColor}
                                     style={{ position: 'fixed', bottom: '20px', left: '20px', right: '20px', zIndex: 999 }}
                                 />
@@ -599,7 +601,7 @@ const PublicMenuInner = ({
                         />
                     )}
 
-                    <ActiveOrderTracker restaurantId={restaurant?.id} primaryColor={config?.primaryColor} />
+                    <ActiveOrderTracker restaurantId={restaurant?.id} restaurantName={restaurant?.name} primaryColor={config?.primaryColor} />
 
                     <CheckoutModal
                         isOpen={isCheckoutOpen}

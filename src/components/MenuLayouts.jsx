@@ -203,7 +203,7 @@ const CustomizationBottomSheet = ({ item, isOpen, onClose, primaryColor, darkMod
                 </button>
 
                 {/* Hero Image */}
-                <div className="h-56 sm:h-64 w-full relative shrink-0 bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                <div className="h-40 sm:h-64 w-full relative shrink-0 bg-gray-100 dark:bg-gray-800 overflow-hidden">
                     <SmartImage src={item.img_url || item.img} alt={item.name} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                     <div className="absolute bottom-4 left-6 right-6 text-white">
@@ -327,11 +327,11 @@ const MenuItemList = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
     return (
         <div
             onClick={() => { if (!isEditing && !restaurantClosed && item.available !== false) onOpenModal(); }}
-            className={`rounded-3xl shadow-sm border p-3 sm:p-4.5 flex gap-4 transition-all duration-300 animate-fade-in-up group relative overflow-hidden cursor-pointer active:scale-[0.99] ${getCardStyle(darkMode, customBgInfo)}
+            className={`rounded-2xl sm:rounded-3xl shadow-sm border p-2.5 sm:p-4.5 flex gap-3 sm:gap-4 transition-all duration-300 animate-fade-in-up group relative overflow-hidden cursor-pointer active:scale-[0.99] ${getCardStyle(darkMode, customBgInfo)}
                 ${item.available === false ? 'opacity-60 grayscale-[0.8] cursor-not-allowed' : 'hover:shadow-xl hover:border-[#D4AF37]/50'}
             `}
         >
-            <div className="w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 rounded-2xl overflow-hidden relative group-hover:scale-105 transition-transform duration-500 shadow-md">
+            <div className="w-20 h-20 sm:w-32 sm:h-32 flex-shrink-0 rounded-[14px] sm:rounded-2xl overflow-hidden relative group-hover:scale-105 transition-transform duration-500 shadow-md">
                 <SmartImage
                     src={item.img_url || item.img}
                     alt={item.name}
@@ -406,12 +406,12 @@ const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
     return (
         <div
             onClick={() => { if (!isEditing && !restaurantClosed && item.available !== false) onOpenModal(); }}
-            className={`rounded-[28px] shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-300 overflow-hidden border flex flex-col h-full group relative cursor-pointer active:scale-[0.99] bg-[#141414] border-[#262626] hover:border-[#E5C27B]/60 hover:shadow-[0_15px_35px_rgba(0,0,0,0.8)] ${
+            className={`rounded-2xl sm:rounded-[28px] shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-300 overflow-hidden border flex flex-col h-full group relative cursor-pointer active:scale-[0.99] bg-[#141414] border-[#262626] hover:border-[#E5C27B]/60 hover:shadow-[0_15px_35px_rgba(0,0,0,0.8)] ${
                 item.available === false ? 'opacity-50 grayscale cursor-not-allowed' : ''
             }`}
         >
             {/* Top Image Container matching screenshot */}
-            <div className="relative h-44 sm:h-52 w-full overflow-hidden rounded-t-[28px] bg-[#1C1C1C] shadow-inner">
+            <div className="relative h-32 sm:h-52 w-full overflow-hidden rounded-t-2xl sm:rounded-t-[28px] bg-[#1C1C1C] shadow-inner">
                 <SmartImage
                     src={item.img_url || item.img}
                     alt={item.name}
@@ -443,12 +443,12 @@ const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
             </div>
 
             {/* Bottom Text Area matching screenshot */}
-            <div className="p-4.5 flex-1 flex flex-col justify-between relative bg-[#141414]">
+            <div className="p-3 sm:p-4.5 flex-1 flex flex-col justify-between relative bg-[#141414]">
                 <div>
-                    <h3 className="font-serif font-bold text-sm sm:text-base leading-snug text-[#EAEAEC] mb-1.5 group-hover:text-[#E5C27B] transition-colors">
+                    <h3 className="font-serif font-bold text-[13px] sm:text-base leading-snug text-[#EAEAEC] mb-1 group-hover:text-[#E5C27B] transition-colors">
                         {getTrans(item, selectedLanguage, 'name')}
                     </h3>
-                    <p className="text-xs font-light leading-relaxed text-[#8E8E93] line-clamp-2">
+                    <p className="text-[11px] sm:text-xs font-light leading-relaxed text-[#8E8E93] line-clamp-2">
                         {getTrans(item, selectedLanguage, 'desc')}
                     </p>
                     {composition && (

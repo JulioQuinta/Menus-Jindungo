@@ -9,20 +9,21 @@ export default function MotoboyDashboard() {
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const loadOrder = async () => {
+    const loadOrder = React.useCallback(async () => {
+        if (!orderId) return;
         const { data, error } = await orderService.getOrderById(orderId);
         if (data) setOrder(data);
         if (error) console.error(error);
         setLoading(false);
-    };
+    }, [orderId]);
 
     useEffect(() => {
-        if (orderId) loadOrder();
+        setTimeout(loadOrder, 0);
         
         // Polling para caso a cozinha cancele
         const timer = setInterval(loadOrder, 30000);
         return () => clearInterval(timer);
-    }, [orderId]);
+    }, [loadOrder]);
 
     const updateStatus = async (status, msg) => {
         const loadingId = toast.loading('A atualizar...');
@@ -30,7 +31,7 @@ export default function MotoboyDashboard() {
             await orderService.updateOrderStatus(orderId, status);
             toast.success(msg || 'Sucesso!', { id: loadingId });
             loadOrder();
-        } catch (e) {
+        } catch {
             toast.error('Ocorreu um erro. Verifique a internet.', { id: loadingId });
         }
     };
@@ -50,11 +51,23 @@ export default function MotoboyDashboard() {
     let displayAddress = order.table_number;
     let mapsLink = null;
     let paymentMethod = null;
+    let extractedGps = null;
 
     if (order.order_type === 'delivery' && order.delivery_address) {
         displayAddress = order.delivery_address;
         if (order.delivery_neighborhood) displayAddress += ` (${order.delivery_neighborhood})`;
-        if (order.delivery_reference) displayAddress += `\nReferência: ${order.delivery_reference}`;
+        if (order.delivery_reference) {
+            if (order.delivery_reference.includes('| GPS:')) {
+                const parts = order.delivery_reference.split('| GPS:');
+                extractedGps = parts[1]?.trim();
+                displayAddress += `\nReferência: ${parts[0]?.trim()}`;
+            } else if (order.delivery_reference.includes('GPS:')) {
+                const parts = order.delivery_reference.split('GPS:');
+                extractedGps = parts[1]?.trim();
+            } else {
+                displayAddress += `\nReferência: ${order.delivery_reference}`;
+            }
+        }
         if (order.table_number?.includes('| Pgto:')) {
             const parts = order.table_number.split('| Pgto:');
             paymentMethod = parts[1]?.trim();
@@ -69,10 +82,27 @@ export default function MotoboyDashboard() {
         parts.forEach(part => {
              if (part.startsWith('Maps:')) mapsLink = part.replace('Maps:', '').trim();
              if (part.startsWith('Pgto:')) paymentMethod = part.replace('Pgto:', '').trim();
-             if (part.startsWith('Ref:')) displayAddress += `\nReferência: ${part.replace('Ref:', '').trim()}`;
+             if (part.startsWith('Ref:')) {
+                 const refStr = part.replace('Ref:', '').trim();
+                 if (refStr.includes('| GPS:')) {
+                     const rParts = refStr.split('| GPS:');
+                     extractedGps = rParts[1]?.trim();
+                     displayAddress += `\nReferência: ${rParts[0]?.trim()}`;
+                 } else {
+                     displayAddress += `\nReferência: ${refStr}`;
+                 }
+             }
         });
     } else {
          displayAddress = "Pedido #" + order.table_number;
+    }
+
+    if (!mapsLink) {
+        if (extractedGps) {
+            mapsLink = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(extractedGps)}`;
+        } else if (order.delivery_address) {
+            mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.delivery_address + ' ' + (order.delivery_neighborhood || ''))}`;
+        }
     }
 
     return (
@@ -105,16 +135,31 @@ export default function MotoboyDashboard() {
                     <div className="flex-1">
                         <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><MapPin size={10}/> Entrega na Morada</p>
                         <h2 className="text-white font-bold leading-snug whitespace-pre-line text-sm break-words">{displayAddress}</h2>
-                        <p className="text-gray-400 text-sm mt-3 border-t border-white/10 pt-3 flex flex-col gap-1">
-                            <span className="flex items-center gap-2"><User size={14}/> {order.customer_name}</span>
-                            {order.customer_phone && <span className="flex items-center gap-2 text-green-400 font-bold"><Phone size={14}/> {order.customer_phone}</span>}
-                        </p>
+                        <div className="text-gray-400 text-sm mt-3 border-t border-white/10 pt-3 flex flex-col gap-2">
+                            <span className="flex items-center gap-2 text-white font-semibold"><User size={14} className="text-[#D4AF37]"/> {order.customer_name}</span>
+                            {order.customer_phone && (
+                                <div className="flex gap-2.5 mt-1">
+                                    <a href={`tel:${order.customer_phone}`} className="flex-1 bg-green-500/20 hover:bg-green-500/30 text-green-400 font-bold text-xs py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 border border-green-500/30 transition-all shadow-md">
+                                        <Phone size={14} /> Ligar Direto
+                                    </a>
+                                    <a 
+                                        href={`https://wa.me/${order.customer_phone.replace(/\D/g, '')}`} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        className="flex-1 bg-[#25D366]/20 hover:bg-[#25D366]/30 text-[#25D366] font-bold text-xs py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 border border-[#25D366]/30 transition-all shadow-md"
+                                    >
+                                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                                        WhatsApp
+                                    </a>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
                 {mapsLink && (
                     <a href={mapsLink} target="_blank" rel="noopener noreferrer" className="mt-6 w-full animate-pulse bg-gradient-to-r from-blue-600 to-cyan-600 hover:opacity-90 text-white font-bold uppercase tracking-widest text-xs py-4 rounded-xl flex items-center justify-center gap-3 shadow-lg shadow-blue-900/30 transition-all border border-blue-400/30">
-                        <MapPin size={18} /> Abrir GPS (Google Maps)
+                        <MapPin size={18} /> {extractedGps ? 'Navegar no Mapa (App Google Maps)' : 'Procurar no Google Maps'}
                     </a>
                 )}
             </div>

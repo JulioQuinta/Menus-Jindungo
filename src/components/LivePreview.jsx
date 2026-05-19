@@ -122,16 +122,16 @@ const CategoryCarousel = ({ categories, activeCategory, onSelect, selectedLangua
                         <button
                             key={`${cat.id}-${idx}`}
                             onClick={() => onSelect(cat.id)}
-                            className={`flex-shrink-0 flex items-center gap-2.5 py-3 px-5 rounded-full transition-all cursor-pointer active:scale-95 ${
+                            className={`flex-shrink-0 flex items-center gap-2 sm:gap-2.5 py-2 sm:py-3 px-4 sm:px-5 rounded-full transition-all cursor-pointer active:scale-95 ${
                                 isActive
                                     ? 'bg-gradient-to-r from-[#F9BF00] via-[#E5C27B] to-[#D4AF37] text-gray-950 shadow-[0_8px_25px_rgba(212,175,55,0.45)] scale-105 font-black ring-2 ring-[#E5C27B]/50'
                                     : 'bg-[#181818]/90 border border-white/10 text-[#A0A0A5] shadow-md hover:border-white/20 hover:text-white'
                             }`}
                         >
-                            <span className="text-xl filter drop-shadow">
+                            <span className="text-lg sm:text-xl filter drop-shadow">
                                 {getCatIcon(cat.label || cat.name)}
                             </span>
-                            <span className="text-xs tracking-wider font-sans whitespace-nowrap font-bold">
+                            <span className="text-[11px] sm:text-xs tracking-wider font-sans whitespace-nowrap font-bold">
                                 {catName}
                             </span>
                         </button>
@@ -161,21 +161,20 @@ const CategorySection = ({ cat, Layout, commonProps, onItemAdded, selectedLangua
     return (
         <div id={`category-${cat.id}`} data-category-id={cat.id} className="mb-16 scroll-mt-48 animate-in fade-in slide-in-from-bottom-4 duration-500 px-4 sm:px-6">
             {/* Title matching screenshot with intense gold glow shadow */}
-            <div className="flex items-center gap-3 mb-4">
-                <div className="w-2 h-7 rounded-full bg-gradient-to-b from-[#F9BF00] to-[#D4AF37] shadow-[0_0_15px_#E5C27B]"></div>
-                <h2 className="text-xl sm:text-2xl font-serif font-black text-[#E5C27B] lowercase capitalize-first tracking-wide drop-shadow-md flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 mb-4">
+                <div className="w-1.5 sm:w-2 h-6 sm:h-7 rounded-full bg-gradient-to-b from-[#F9BF00] to-[#D4AF37] shadow-[0_0_15px_#E5C27B]"></div>
+                <h2 className="text-lg sm:text-2xl font-serif font-black text-[#E5C27B] lowercase capitalize-first tracking-wide drop-shadow-md flex items-center gap-2">
                     {translateCat(cat.label || cat.name)}
-                    <span className="text-xs font-sans font-normal opacity-40 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/5">
+                    <span className="text-[10px] sm:text-xs font-sans font-normal opacity-40 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/5">
                         {cat.items.length} {cat.items.length === 1 ? 'item' : 'itens'}
                     </span>
                 </h2>
             </div>
 
-            {/* Sub-filters matching screenshot */}
-            <div className="flex gap-3 mb-8 overflow-x-auto pb-1 scrollbar-hide">
+            <div className="flex gap-2 sm:gap-3 mb-6 sm:mb-8 overflow-x-auto pb-1 scrollbar-hide">
                 <button
                     onClick={() => setActiveFilter('Todos')}
-                    className={`px-6 py-2.5 rounded-full text-xs font-black tracking-wider transition-all shadow-md ${
+                    className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-[11px] sm:text-xs font-black tracking-wider transition-all shadow-md ${
                         activeFilter === 'Todos'
                             ? 'bg-gradient-to-r from-[#D4AF37] via-[#E5C27B] to-[#C59B27] text-gray-950 shadow-[0_0_25px_rgba(229,194,123,0.5)] font-black'
                             : 'bg-[#1C1C1C] text-gray-400 border border-white/10 hover:bg-[#252525] hover:text-white font-medium'
@@ -185,7 +184,7 @@ const CategorySection = ({ cat, Layout, commonProps, onItemAdded, selectedLangua
                 </button>
                 <button
                     onClick={() => setActiveFilter('Recomendados')}
-                    className={`px-6 py-2.5 rounded-full text-xs font-black tracking-wider transition-all shadow-md ${
+                    className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-[11px] sm:text-xs font-black tracking-wider transition-all shadow-md ${
                         activeFilter === 'Recomendados'
                             ? 'bg-gradient-to-r from-[#D4AF37] via-[#E5C27B] to-[#C59B27] text-gray-950 shadow-[0_0_25px_rgba(229,194,123,0.5)] font-black'
                             : 'bg-[#1C1C1C] text-gray-400 border border-white/10 hover:bg-[#252525] hover:text-white font-medium'
@@ -306,19 +305,19 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
 
                 <div className="relative z-10 flex flex-col items-center max-w-xl w-full animate-fade-in">
                     {/* Adaptive Logo Crest (Handles Rectangular, Circular, or Typography logos seamlessly) */}
-                    <div className="max-w-[240px] sm:max-w-[280px] max-h-[130px] flex items-center justify-center mb-6 p-2 rounded-3xl bg-black/40 backdrop-blur-md border border-white/10 shadow-[0_15px_30px_rgba(0,0,0,0.6)]">
+                    <div className="max-w-[200px] sm:max-w-[280px] max-h-[100px] sm:max-h-[130px] flex items-center justify-center mb-4 sm:mb-6 p-2 rounded-3xl bg-black/40 backdrop-blur-md border border-white/10 shadow-[0_15px_30px_rgba(0,0,0,0.6)]">
                         {config.logoUrl ? (
-                            <img src={config.logoUrl} alt="Logo" className="max-w-full max-h-[110px] object-contain filter drop-shadow-[0_10px_20px_rgba(229,194,123,0.3)]" />
+                            <img src={config.logoUrl} alt="Logo" className="max-w-full max-h-[80px] sm:max-h-[110px] object-contain filter drop-shadow-[0_10px_20px_rgba(229,194,123,0.3)]" />
                         ) : (
-                            <div className="flex items-center gap-3 px-4 py-2">
-                                <span className="text-3xl filter drop-shadow-[0_0_15px_#E5C27B]">🍽️</span>
-                                <span className="font-serif font-bold text-xl text-[#E5C27B]">{config.restaurantName || 'Comidas'}</span>
+                            <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-2">
+                                <span className="text-2xl sm:text-3xl filter drop-shadow-[0_0_15px_#E5C27B]">🍽️</span>
+                                <span className="font-serif font-bold text-lg sm:text-xl text-[#E5C27B]">{config.restaurantName || 'Comidas'}</span>
                             </div>
                         )}
                     </div>
 
                     {/* Restaurant Title matching screenshot */}
-                    <h1 className="text-3xl sm:text-5xl font-serif font-bold text-[#E5C27B] tracking-wide drop-shadow-[0_10px_25px_rgba(0,0,0,0.9)] mb-2.5">
+                    <h1 className="text-2xl sm:text-5xl font-serif font-bold text-[#E5C27B] tracking-wide drop-shadow-[0_10px_25px_rgba(0,0,0,0.9)] mb-1.5 sm:mb-2.5 text-center">
                         {config.restaurantName || 'Comidas da Terra'}
                     </h1>
 

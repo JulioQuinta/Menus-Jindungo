@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { analyticsService } from '../services/analyticsService';
 
 const CartContext = createContext();
 
@@ -24,6 +25,9 @@ export const CartProvider = ({ children }) => {
     }, [cartItems]);
 
     const addToCart = (item, selectedVariant = null) => {
+        if (item?.restaurant_id) {
+            analyticsService.trackAddToCart(item.restaurant_id, item);
+        }
         setCartItems(prev => {
             const cartItemId = `${item.id}-${selectedVariant || ''}`;
 

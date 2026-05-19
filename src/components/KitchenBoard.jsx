@@ -3,11 +3,11 @@ import { orderService } from '../services/orderService';
 import { Clock, CheckCircle, ChefHat, Truck, XCircle, AlertCircle, Banknote, Printer, Ticket, Smartphone, Volume2, VolumeX, Award, RefreshCw, Bike, Settings2, CheckCheck, Archive, Trash2, ShoppingBag, UserCheck, Phone, User, Star, HelpCircle, Sparkles, MoreHorizontal, ChevronDown, Search, ArrowUpRight } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
-import TableBillTemplate from './TableBillTemplate';
+import ReceiptModal from './ReceiptModal';
 import { printerService } from '../utils/bluetoothPrinter';
 import { useRealtimeOrders } from '../hooks/useRealtimeOrders';
 
-const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, restaurantName }) => {
+const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint }) => {
     const [elapsed, setElapsed] = useState('');
     const [showTimeSelector, setShowTimeSelector] = useState(false);
     const [customMins, setCustomMins] = useState('30');
@@ -57,6 +57,7 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, res
                 await orderService.updateOrder(order.id, { total: parseFloat(newTotal) });
                 toast.success('Valor do pedido atualizado!');
             } catch (err) {
+                console.error(err);
                 toast.error('Erro ao atualizar valor.');
             }
         }
@@ -528,7 +529,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isAudioEnabled, setIsAudioEnabled] = useState(true);
-    const [printingOrder, setPrintingOrder] = useState(null);
+    const [selectedReceiptOrder, setSelectedReceiptOrder] = useState(null);
     const [isBluetoothReady, setIsBluetoothReady] = useState(false);
     const [autoPrint, setAutoPrint] = useState(false);
     
@@ -538,7 +539,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
 
     // Initial check for Bluetooth printer on component mount
     useEffect(() => {
-        setIsBluetoothReady(printerService.isConnected());
+        setTimeout(() => setIsBluetoothReady(printerService.isConnected()), 0);
     }, []);
 
     const toggleAudio = () => {
@@ -605,24 +606,17 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
     const handlePrintOrder = async (order) => {
         if (isBluetoothReady && printerService.isConnected()) {
             try {
-                toast.loading('A Imprimir...', { id: 'print' });
+                toast.loading('A Imprimir Bluetooth...', { id: 'print' });
                 await printerService.printOrder(order, restaurantName);
                 toast.success('Talão Impresso!', { id: 'print' });
             } catch {
-                toast.error('Erro na impressão Bluetooth. Modificando para fallback visual.', { id: 'print' });
-                // Fallback on fail
-                setPrintingOrder(order);
-                setTimeout(() => window.print(), 100);
+                toast.error('Erro na impressão Bluetooth. Abrindo Fatura Visual.', { id: 'print' });
+                setSelectedReceiptOrder(order);
             }
             return;
         }
 
-        // Fallback genérico visual (Window.print)
-        setPrintingOrder(order);
-        // Wait for state to update and React to render the printable area
-        setTimeout(() => {
-            window.print();
-        }, 100);
+        setSelectedReceiptOrder(order);
     };
 
     useRealtimeOrders(restaurantId, (newOrder) => {
@@ -1085,15 +1079,12 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
             </div>
         </div>
 
-        {/* Print Container: Only rendered when there is an order to print */}
-        {printingOrder && (
-            <div id="print-container" className="hidden print:block w-[80mm] mx-auto text-black bg-white mt-0 pt-0">
-                <TableBillTemplate
-                    order={printingOrder}
-                    restaurantName={restaurantName || printingOrder?.restaurant?.name || 'Jindungo'}
-                />
-            </div>
-        )}
+        <ReceiptModal
+            isOpen={!!selectedReceiptOrder}
+            onClose={() => setSelectedReceiptOrder(null)}
+            order={selectedReceiptOrder}
+            restaurantName={restaurantName || 'Jindungo'}
+        />
         </>
     );
 };

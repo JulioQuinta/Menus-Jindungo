@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useCart } from '../context/CartContext';
 import { generateWhatsAppLink } from '../utils/whatsappGenerator';
-// import { analyticsService } from '../services/analyticsService';
+import { analyticsService } from '../services/analyticsService';
 import { orderService } from '../services/orderService';
 import { supabase } from '../lib/supabaseClient';
 import OrderStatusView from './OrderStatusView';
@@ -19,6 +19,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
     const t = (key) => getTranslation(selectedLanguage, key);
 
     // Form State
+    const [step, setStep] = useState(1);
     const [orderType, setOrderType] = useState('dine-in'); // 'dine-in' | 'delivery'
     const [selectedZone, setSelectedZone] = useState(null);
     const [customerName, setCustomerName] = useState('');
@@ -31,6 +32,14 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
         if (savedPhone) setCustomerPhone(savedPhone);
         const savedName = localStorage.getItem('customer_name');
         if (savedName) setCustomerName(savedName);
+        const savedAddr = localStorage.getItem('customer_last_address');
+        if (savedAddr) setAddress(savedAddr);
+        const savedRef = localStorage.getItem('customer_last_ref');
+        if (savedRef) setAddressReference(savedRef);
+        const savedGps = localStorage.getItem('customer_last_gps');
+        if (savedGps) {
+            try { setGpsCoords(JSON.parse(savedGps)); } catch { /* ignore */ }
+        }
     }, []);
 
     // Dine-in fields
@@ -45,30 +54,6 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
     const [address, setAddress] = useState('');
     const [addressReference, setAddressReference] = useState('');
     const [gpsCoords, setGpsCoords] = useState(null);
-    const [isGettingLocation, setIsGettingLocation] = useState(false);
-
-    const handleGetLocation = () => {
-        if (!navigator.geolocation) {
-            toast.error('O seu dispositivo não suporta geolocalização.');
-            return;
-        }
-        setIsGettingLocation(true);
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                setGpsCoords(coords);
-                setAddress(`GPS: ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`);
-                setIsGettingLocation(false);
-                toast.success('Localização obtida com sucesso!');
-            },
-            (err) => {
-                console.error(err);
-                setIsGettingLocation(false);
-                toast.error('Não foi possível obter a localização. Escreva o endereço manualmente.');
-            },
-            { timeout: 10000 }
-        );
-    };
 
     // Payment fields
     const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' | 'multicaixa'
@@ -211,8 +196,6 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
         setCouponError('');
     };
 
-    const isSystemOrder = !!restaurantId; // If we have an ID, we use the system. If not (preview), we default to WhatsApp?
-
     const handleSendOrder = async () => {
         if (isSending) return; // [SECURITY] Prevent Double-Click Race Condition
         if (orderType === 'dine-in' && !tableNumber) return toast.error(selectedLanguage === 'PT' ? "Informe o número da mesa." : "Please enter the table number.");
@@ -264,7 +247,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
             order_type: orderType,
             delivery_address: orderType === 'delivery' ? address : null,
             delivery_neighborhood: orderType === 'delivery' && selectedZone ? selectedZone.name : null,
-            delivery_reference: orderType === 'delivery' ? addressReference : null,
+            delivery_reference: orderType === 'delivery' ? (addressReference ? addressReference + (gpsCoords ? ` | GPS: ${gpsCoords.lat},${gpsCoords.lng}` : '') : (gpsCoords ? `GPS: ${gpsCoords.lat},${gpsCoords.lng}` : null)) : null,
             delivery_fee: orderType === 'delivery' ? deliveryFee : 0,
             takeaway_time: orderType === 'takeaway' ? '30-40 min' : null
         };
@@ -305,6 +288,11 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                 // Save customer info for future visits
                 localStorage.setItem('customer_phone', customerPhone);
                 localStorage.setItem('customer_name', customerName);
+                if (orderType === 'delivery') {
+                    if (address) localStorage.setItem('customer_last_address', address);
+                    if (addressReference) localStorage.setItem('customer_last_ref', addressReference);
+                    if (gpsCoords) localStorage.setItem('customer_last_gps', JSON.stringify(gpsCoords));
+                }
                 
                 if (features?.canUseKDS) {
                     // Save active order for the sophisticated tracking flow
@@ -318,7 +306,9 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
             }
 
             // 2. Track Analytics
-            // analyticsService.incrementOrders(restaurantId, cartItems);
+            if (restaurantId) {
+                analyticsService.incrementOrders(restaurantId, cartItems);
+            }
 
             // 3. Fallback/Notification via WhatsApp
             // For Start plan (no KDS feature), we MUST auto-redirect to WhatsApp so the owner gets the order.
@@ -410,407 +400,556 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                     />
                 ) : (
                     <>
-                        {/* Premium Tabs Order Type */}
-                        <div className="flex flex-col sm:flex-row bg-gray-100/80 backdrop-blur-sm p-1.5 rounded-[20px] mb-8 border border-gray-200/50 shadow-inner gap-1.5">
-                            <button
-                                onClick={() => setOrderType('dine-in')}
-                                className={`flex-1 py-3 px-4 rounded-[14px] flex items-center justify-center gap-2 transition-all duration-500 font-bold text-sm ${orderType === 'dine-in' ? 'bg-white text-primary shadow-[0_4px_12px_rgba(0,0,0,0.1)] ring-1 ring-black/5 scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}
-                            >
-                                <UtensilsCrossed size={16} className={orderType === 'dine-in' ? 'animate-bounce-short' : ''} />
-                                <span>{t('dineIn')}</span>
-                            </button>
-                            <button
-                                onClick={() => setOrderType('takeaway')}
-                                className={`flex-1 py-3 px-4 rounded-[14px] flex items-center justify-center gap-2 transition-all duration-500 font-bold text-sm ${orderType === 'takeaway' ? 'bg-white text-primary shadow-[0_4px_12px_rgba(0,0,0,0.1)] ring-1 ring-black/5 scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}
-                            >
-                                <ShoppingBag size={16} className={orderType === 'takeaway' ? 'animate-bounce-short' : ''} />
-                                <span>Takeaway / Recolha</span>
-                            </button>
-                            <button
-                                onClick={() => setOrderType('delivery')}
-                                className={`flex-1 py-3 px-4 rounded-[14px] flex items-center justify-center gap-2 transition-all duration-500 font-bold text-sm ${orderType === 'delivery' ? 'bg-white text-primary shadow-[0_4px_12px_rgba(0,0,0,0.1)] ring-1 ring-black/5 scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}
-                            >
-                                <Bike size={16} className={orderType === 'delivery' ? 'animate-bounce-short' : ''} />
-                                <span>{t('delivery')}</span>
-                            </button>
+                        {/* Step Navigation Header */}
+                        <div className="flex items-center justify-between mb-6 border-b pb-4 border-gray-200/60">
+                            <div className="flex items-center gap-1.5 sm:gap-2">
+                                <button onClick={() => setStep(1)} className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all ${step === 1 ? 'bg-[#D4AF37] text-black shadow-md ring-2 ring-[#D4AF37]/30' : (step > 1 ? 'bg-green-600 text-white font-bold' : 'bg-gray-200 text-gray-500')}`}>1</button>
+                                <div className={`w-4 sm:w-8 h-1 rounded transition-all ${step >= 2 ? 'bg-[#D4AF37]' : 'bg-gray-200'}`}></div>
+                                <button onClick={() => step > 1 && setStep(2)} disabled={step < 2} className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all ${step === 2 ? 'bg-[#D4AF37] text-black shadow-md ring-2 ring-[#D4AF37]/30' : (step > 2 ? 'bg-green-600 text-white font-bold' : 'bg-gray-200 text-gray-500')}`}>2</button>
+                                <div className={`w-4 sm:w-8 h-1 rounded transition-all ${step >= 3 ? 'bg-[#D4AF37]' : 'bg-gray-200'}`}></div>
+                                <button onClick={() => step > 2 && setStep(3)} disabled={step < 3} className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all ${step === 3 ? 'bg-[#D4AF37] text-black shadow-md ring-2 ring-[#D4AF37]/30' : 'bg-gray-200 text-gray-500'}`}>3</button>
+                            </div>
+                            <span className="text-[11px] sm:text-xs font-black text-gray-500 uppercase tracking-wider">
+                                {step === 1 ? (selectedLanguage === 'PT' ? '1. Pedido' : '1. Order') : (step === 2 ? (selectedLanguage === 'PT' ? '2. Morada / Mesa' : '2. Details') : (selectedLanguage === 'PT' ? '3. Pagamento' : '3. Payment'))}
+                            </span>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', marginBottom: '1.5rem' }}>
-                            {cartItems.map(item => (
-                                <div key={item.cartItemId || item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#4a5568' }}>
-                                    <span>{item.quantity}x {item.name} {item.selectedVariant ? `(${item.selectedVariant})` : ''}</span>
-                                    <span style={{ fontWeight: 'bold', color: '#1a202c' }}>
-                                        {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(item.price).replace('AOA', 'Kz')}
-                                    </span>
+                        {step === 1 && (
+                            <div className="space-y-6 animate-in fade-in duration-300">
+                                {/* Premium Tabs Order Type */}
+                                <div className="flex flex-col sm:flex-row bg-gray-100/80 backdrop-blur-sm p-1.5 rounded-[20px] border border-gray-200/50 shadow-inner gap-1.5">
+                                    <button
+                                        onClick={() => setOrderType('dine-in')}
+                                        className={`flex-1 py-3 px-4 rounded-[14px] flex items-center justify-center gap-2 transition-all duration-500 font-bold text-sm ${orderType === 'dine-in' ? 'bg-white text-primary shadow-[0_4px_12px_rgba(0,0,0,0.1)] ring-1 ring-black/5 scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}
+                                    >
+                                        <UtensilsCrossed size={16} className={orderType === 'dine-in' ? 'animate-bounce-short' : ''} />
+                                        <span>{t('dineIn')}</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setOrderType('takeaway')}
+                                        className={`flex-1 py-3 px-4 rounded-[14px] flex items-center justify-center gap-2 transition-all duration-500 font-bold text-sm ${orderType === 'takeaway' ? 'bg-white text-primary shadow-[0_4px_12px_rgba(0,0,0,0.1)] ring-1 ring-black/5 scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}
+                                    >
+                                        <ShoppingBag size={16} className={orderType === 'takeaway' ? 'animate-bounce-short' : ''} />
+                                        <span>Takeaway / Recolha</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setOrderType('delivery')}
+                                        className={`flex-1 py-3 px-4 rounded-[14px] flex items-center justify-center gap-2 transition-all duration-500 font-bold text-sm ${orderType === 'delivery' ? 'bg-white text-primary shadow-[0_4px_12px_rgba(0,0,0,0.1)] ring-1 ring-black/5 scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}
+                                    >
+                                        <Bike size={16} className={orderType === 'delivery' ? 'animate-bounce-short' : ''} />
+                                        <span>{t('delivery')}</span>
+                                    </button>
                                 </div>
-                            ))}
-                            {(cartItems.length === 0) && <p className="text-gray-500"> {t('emptyCart')}</p>}
-                        </div>
 
-                        <div style={{ borderTop: '1px dashed #e2e8f0', margin: '1rem 0' }} />
-
-                        <div className="bg-gray-50/50 rounded-3xl p-5 mb-8 border border-gray-100 shadow-sm">
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-center text-sm font-medium text-gray-500">
-                                    <span>{t('subtotal')}</span>
-                                    <span className="text-gray-900">{new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(subtotal).replace('AOA', 'Kz')}</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                                    {cartItems.map(item => (
+                                        <div key={item.cartItemId || item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#4a5568' }}>
+                                            <span>{item.quantity}x {item.name} {item.selectedVariant ? `(${item.selectedVariant})` : ''}</span>
+                                            <span style={{ fontWeight: 'bold', color: '#1a202c' }}>
+                                                {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(item.price).replace('AOA', 'Kz')}
+                                            </span>
+                                        </div>
+                                    ))}
+                                    {(cartItems.length === 0) && <p className="text-gray-500">{t('emptyCart')}</p>}
                                 </div>
-                                {deliveryFee > 0 && (
-                                    <div className="flex justify-between items-center text-sm font-bold text-blue-600">
-                                        <div className="flex flex-col">
-                                            <div className="flex items-center gap-1.5">
-                                                <Bike size={14} />
-                                                <span>{t('deliveryFee')}</span>
+
+                                <div style={{ borderTop: '1px dashed #e2e8f0', margin: '1rem 0' }} />
+
+                                <div className="bg-gray-50/50 rounded-3xl p-5 border border-gray-100 shadow-sm">
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center text-sm font-medium text-gray-500">
+                                            <span>{t('subtotal')}</span>
+                                            <span className="text-gray-900">{new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(subtotal).replace('AOA', 'Kz')}</span>
+                                        </div>
+                                        {deliveryFee > 0 && (
+                                            <div className="flex justify-between items-center text-sm font-bold text-blue-600">
+                                                <div className="flex flex-col">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Bike size={14} />
+                                                        <span>{t('deliveryFee')}</span>
+                                                    </div>
+                                                    {distanceKm > 0 && (
+                                                        <span className="text-[10px] font-medium text-blue-400 ml-5 tracking-tight">
+                                                            Distância: {distanceKm.toFixed(1)} km
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span>+{new Intl.NumberFormat('pt-AO').format(deliveryFee)} Kz</span>
                                             </div>
-                                            {distanceKm > 0 && (
-                                                <span className="text-[10px] font-medium text-blue-400 ml-5 tracking-tight">
-                                                    Distância: {distanceKm.toFixed(1)} km
+                                        )}
+                                        {discount > 0 && (
+                                            <div className="flex justify-between items-center text-sm font-bold text-green-600">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Ticket size={14} />
+                                                    <span>{t('discount')} ({appliedCoupon?.code})</span>
+                                                </div>
+                                                <span>-{new Intl.NumberFormat('pt-AO').format(discount)} Kz</span>
+                                            </div>
+                                        )}
+                                        <div className="pt-3 border-t border-gray-200/50 flex justify-between items-end">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">{t('totalToPay')}</span>
+                                                <span className="text-3xl font-serif font-black text-gray-900 leading-none mt-1">
+                                                    {new Intl.NumberFormat('pt-AO').format(total)}
+                                                    <span className="text-xs ml-1 text-gray-400">Kz</span>
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 px-3 py-1 bg-green-100/50 rounded-full text-green-700 text-[10px] font-black uppercase tracking-wider h-fit mb-1 border border-green-200/50">
+                                                <CheckCircle2 size={10} />
+                                                Seguro
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => setStep(2)}
+                                    disabled={cartItems.length === 0}
+                                    className={`w-full p-4 sm:p-5 rounded-[24px] font-black text-base sm:text-lg transition-all flex items-center justify-center gap-2 ${cartItems.length === 0 ? 'opacity-50 cursor-not-allowed bg-gray-300 text-gray-500' : 'bg-[#D4AF37] text-black hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20'}`}
+                                >
+                                    <span>{selectedLanguage === 'PT' ? 'Avançar para Identificação' : 'Proceed to Details'}</span>
+                                    <ChevronRight size={20} />
+                                </button>
+                            </div>
+                        )}
+
+                        {step === 2 && (
+                            <div className="space-y-6 animate-in fade-in duration-300">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            <User size={12} className="text-gray-400" />
+                                            {t('name')}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={customerName}
+                                            onChange={e => setCustomerName(e.target.value)}
+                                            placeholder="Ex: Ana Silva"
+                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37] outline-none transition-all text-sm font-medium text-gray-900 placeholder-gray-400"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            <Smartphone size={12} className="text-gray-400" />
+                                            {t('phone')}
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            value={customerPhone}
+                                            onChange={e => setCustomerPhone(e.target.value)}
+                                            placeholder="9xx xxx xxx"
+                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37] outline-none transition-all text-sm font-medium text-gray-900 placeholder-gray-400"
+                                        />
+                                    </div>
+                                </div>
+
+                                {orderType === 'dine-in' && (
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('table')} (Número, Nome ou Letra)</label>
+                                            {initialTable && tableNumber === initialTable && (
+                                                <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full font-black border border-emerald-200">
+                                                    ✓ {selectedLanguage === 'PT' ? 'Mesa QR Code' : 'QR Code Table'}
                                                 </span>
                                             )}
                                         </div>
-                                        <span>+{new Intl.NumberFormat('pt-AO').format(deliveryFee)} Kz</span>
+                                        <input type="text" value={tableNumber} onChange={e => setTableNumber(e.target.value)} placeholder="Ex: Mesa 4, Esplanada A..." className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900 placeholder-gray-400 font-bold" />
                                     </div>
                                 )}
-                                {discount > 0 && (
-                                    <div className="flex justify-between items-center text-sm font-bold text-green-600">
-                                        <div className="flex items-center gap-1.5">
-                                            <Ticket size={14} />
-                                            <span>{t('discount')} ({appliedCoupon?.code})</span>
-                                        </div>
-                                        <span>-{new Intl.NumberFormat('pt-AO').format(discount)} Kz</span>
-                                    </div>
-                                )}
-                                <div className="pt-3 border-t border-gray-200/50 flex justify-between items-end">
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">{t('totalToPay')}</span>
-                                        <span className="text-3xl font-serif font-black text-gray-900 leading-none mt-1">
-                                            {new Intl.NumberFormat('pt-AO').format(total)}
-                                            <span className="text-xs ml-1 text-gray-400">Kz</span>
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-green-100/50 rounded-full text-green-700 text-[10px] font-black uppercase tracking-wider h-fit mb-1 border border-green-200/50">
-                                        <CheckCircle2 size={10} />
-                                        Seguro
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
-                        {/* Coupon Section */}
-                        <div style={{ marginBottom: '1.5rem', background: 'rgba(212,175,55,0.05)', padding: '1rem', borderRadius: '16px', border: '1px dashed rgba(212,175,55,0.2)' }}>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.8rem', fontWeight: '800', color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                {t('couponCode')}
-                            </label>
-
-                            {!appliedCoupon ? (
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                    <input
-                                        type="text"
-                                        placeholder={t('couponPlaceholder')}
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900 bg-white"
-                                        style={{ margin: 0, textTransform: 'uppercase' }}
-                                        value={couponCode}
-                                        onChange={e => setCouponCode(e.target.value)}
-                                        onKeyPress={e => e.key === 'Enter' && handleApplyCoupon()}
-                                    />
-                                    <button
-                                        onClick={handleApplyCoupon}
-                                        disabled={!couponCode || isValidating}
-                                        style={{ background: '#D4AF37', color: 'black', border: 'none', padding: '0 1rem', borderRadius: '12px', fontWeight: 'bold', fontSize: '0.9rem', cursor: 'pointer' }}
-                                    >
-                                        {isValidating ? '...' : t('apply')}
-                                    </button>
-                                </div>
-                            ) : (
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '0.5rem 1rem', borderRadius: '12px', border: '1px solid #c6f6d5' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#2f855a', fontWeight: 'bold', fontSize: '0.9rem' }}>
-                                        <CheckCircle2 size={16} /> {appliedCoupon.code}
-                                    </div>
-                                    <button onClick={removeCoupon} style={{ background: 'transparent', border: 'none', color: '#e53e3e', cursor: 'pointer' }}>
-                                        <X size={16} />
-                                    </button>
-                                </div>
-                            )}
-
-                            {couponError && (
-                                <p style={{ color: '#e53e3e', fontSize: '0.75rem', marginTop: '0.5rem', fontWeight: 'bold' }}>{couponError}</p>
-                            )}
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                            <div className="space-y-2">
-                                <label className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                    <User size={12} className="text-gray-400" />
-                                    {t('name')}
-                                </label>
-                                <input
-                                    type="text"
-                                    value={customerName}
-                                    onChange={e => setCustomerName(e.target.value)}
-                                    placeholder="Ex: Ana Silva"
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37] outline-none transition-all text-sm font-medium text-gray-900 placeholder-gray-400"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                    <Smartphone size={12} className="text-gray-400" />
-                                    {t('phone')}
-                                </label>
-                                <input
-                                    type="tel"
-                                    value={customerPhone}
-                                    onChange={e => setCustomerPhone(e.target.value)}
-                                    placeholder="9xx xxx xxx"
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37] outline-none transition-all text-sm font-medium text-gray-900 placeholder-gray-400"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Loyalty Card in Checkout */}
-                        {loyaltyConfig && loyaltyPoints !== null && (
-                            <div style={{
-                                marginBottom: '1.5rem',
-                                background: 'linear-gradient(135deg, rgba(212,175,55,0.1) 0%, rgba(212,175,55,0.05) 100%)',
-                                padding: '1.2rem',
-                                borderRadius: '20px',
-                                border: '1px solid rgba(212,175,55,0.2)',
-                                animation: 'fadeIn 0.4s'
-                            }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: '1rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <Award size={18} style={{ color: '#D4AF37' }} />
-                                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                            {t('loyaltyCard')} {loyaltyPoints}/{loyaltyConfig.goal}
-                                        </span>
-                                    </div>
-                                    {loyaltyPoints >= loyaltyConfig.goal && (
-                                        <span style={{ fontSize: '0.7rem', background: '#38a169', color: 'white', padding: '2px 8px', borderRadius: '8px', fontWeight: 'bold' }}>
-                                            {t('rewardReady')}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                                    {[...Array(loyaltyConfig.goal)].map((_, i) => (
-                                        <div key={i} style={{
-                                            width: '24px',
-                                            height: '24px',
-                                            borderRadius: '50%',
-                                            border: i < loyaltyPoints ? 'none' : '2px dashed rgba(0,0,0,0.1)',
-                                            background: i < loyaltyPoints ? '#D4AF37' : 'transparent',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            color: i < loyaltyPoints ? 'black' : 'rgba(0,0,0,0.1)'
-                                        }}>
-                                            <Star size={10} fill={i < loyaltyPoints ? "currentColor" : "none"} />
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <p style={{ fontSize: '0.75rem', color: '#666', marginTop: '1rem', textAlign: 'center', fontStyle: 'italic' }}>
-                                    {loyaltyPoints >= loyaltyConfig.goal
-                                        ? `${selectedLanguage === 'PT' ? 'Parabéns!' : 'Congratulations!'} ${t('rewardReady')}: ${loyaltyConfig.reward_text}`
-                                        : `${selectedLanguage === 'PT' ? 'Faltam' : 'Only'} ${loyaltyConfig.goal - loyaltyPoints} ${selectedLanguage === 'PT' ? 'pedidos para o seu prémio!' : 'orders left for your reward!'}`
-                                    }
-                                </p>
-
-                                {loyaltyPoints >= loyaltyConfig.goal && (
-                                    <div className="mt-4 p-4 bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-2xl flex items-center justify-between shadow-sm animate-bounce-short">
-                                        <div className="flex items-center gap-3">
-                                            <div className="bg-[#D4AF37] p-2 rounded-full text-black">
-                                                <Award size={18} />
+                                {orderType === 'takeaway' && (
+                                    <div className="p-5 bg-amber-500/10 border border-amber-500/30 rounded-3xl">
+                                        <div className="flex items-center gap-3.5 mb-3.5">
+                                            <div className="p-3 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-500/20">
+                                                <Clock size={22} />
                                             </div>
                                             <div>
-                                                <p className="text-xs font-bold text-gray-800">{t('useReward')}</p>
-                                                <p className="text-[10px] text-gray-500">{loyaltyConfig.reward_text}</p>
+                                                <h4 className="text-sm font-black text-amber-900">Tempo de Preparação Estimado</h4>
+                                                <p className="text-xs text-amber-700 font-bold">Pronto em 30-40 minutos</p>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={() => setIsRedeemingLoyalty(!isRedeemingLoyalty)}
-                                            className={`w-12 h-6 rounded-full transition-all relative ${isRedeemingLoyalty ? 'bg-[#38a169]' : 'bg-gray-300'}`}
-                                        >
-                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isRedeemingLoyalty ? 'left-7' : 'left-1'}`} />
-                                        </button>
+                                        <div className="text-xs text-amber-900 bg-amber-500/10 p-4 rounded-2xl border border-amber-500/20 leading-relaxed font-semibold">
+                                            📌 <strong>Instruções de Recolha:</strong> O seu pedido estará disponível ao balcão. Apresente o seu nome ou número do pedido à chegada no restaurante.
+                                        </div>
                                     </div>
                                 )}
+
+                                {orderType === 'delivery' && (
+                                    <div className="space-y-4">
+                                        {localStorage.getItem('customer_last_address') && (!address || address === localStorage.getItem('customer_last_address')) && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setAddress(localStorage.getItem('customer_last_address') || '');
+                                                    setAddressReference(localStorage.getItem('customer_last_ref') || '');
+                                                    const savedGps = localStorage.getItem('customer_last_gps');
+                                                    if (savedGps) try { setGpsCoords(JSON.parse(savedGps)); } catch { /* ignore */ }
+                                                    toast.success(selectedLanguage === 'PT' ? 'Morada anterior restaurada!' : 'Previous address restored!');
+                                                }}
+                                                className="w-full py-2.5 px-3 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl text-blue-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                                            >
+                                                <MapPin size={14} />
+                                                {selectedLanguage === 'PT' ? 'Usar morada da última encomenda' : 'Use last order address'}
+                                            </button>
+                                        )}
+
+                                        {deliveryConfig?.enabled && deliveryConfig?.type === 'zone' && deliveryConfig?.zones?.length > 0 && (
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t('address')}</label>
+                                                <select
+                                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900 font-medium"
+                                                    value={selectedZone ? JSON.stringify(selectedZone) : ''}
+                                                    onChange={(e) => setSelectedZone(e.target.value ? JSON.parse(e.target.value) : null)}
+                                                >
+                                                    <option value="" className="text-gray-500">{selectedLanguage === 'PT' ? 'Selecione o seu bairro...' : 'Select your neighborhood...'}</option>
+                                                    {deliveryConfig.zones.map((zone, idx) => (
+                                                        <option key={idx} value={JSON.stringify(zone)} className="text-gray-900">
+                                                            {zone.name} (+{zone.fee} Kz)
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                                                {selectedLanguage === 'PT' ? 'Toque no Mapa para assinalar a Morada' : 'Tap on the map to pin your address'}
+                                            </label>
+                                            <MapPicker 
+                                                onLocationSelected={(pos, addr) => {
+                                                    setGpsCoords(pos);
+                                                    if (addr && (!address || address.trim() === '')) {
+                                                        setAddress(addr);
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t('address')}</label>
+                                            <textarea
+                                                value={address}
+                                                onChange={e => setAddress(e.target.value)}
+                                                placeholder="Ex: Talatona, Bloco C, Rua 28..."
+                                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900 placeholder-gray-400 font-medium"
+                                                rows={2}
+                                                style={{ resize: 'none' }}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t('reference')}</label>
+                                            <input
+                                                type="text"
+                                                value={addressReference}
+                                                onChange={e => setAddressReference(e.target.value)}
+                                                placeholder="Ex: Perto do Shoprite, Em frente ao Banco BFA…"
+                                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900 placeholder-gray-400 font-medium"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setStep(1)}
+                                        className="w-1/3 p-4 rounded-[20px] font-bold text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all flex items-center justify-center"
+                                    >
+                                        {selectedLanguage === 'PT' ? 'Voltar' : 'Back'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (!customerName || !customerPhone) {
+                                                toast.error(selectedLanguage === 'PT' ? 'Por favor preencha o seu nome e telemóvel.' : 'Please enter your name and phone.');
+                                                return;
+                                            }
+                                            if (orderType === 'dine-in' && !tableNumber) {
+                                                toast.error(selectedLanguage === 'PT' ? 'Por favor informe o número da mesa.' : 'Please enter table number.');
+                                                return;
+                                            }
+                                            if (orderType === 'delivery' && !address) {
+                                                toast.error(selectedLanguage === 'PT' ? 'Por favor informe a morada de entrega.' : 'Please enter delivery address.');
+                                                return;
+                                            }
+                                            setStep(3);
+                                        }}
+                                        className="w-2/3 p-4 rounded-[20px] font-black text-sm sm:text-base bg-[#D4AF37] text-black hover:scale-[1.02] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#D4AF37]/20"
+                                    >
+                                        <span>{selectedLanguage === 'PT' ? 'Avançar para Pagamento' : 'Proceed to Payment'}</span>
+                                        <ChevronRight size={20} />
+                                    </button>
+                                </div>
                             </div>
                         )}
 
-                        {orderType === 'dine-in' && (
-                            <div style={{ marginBottom: '1.5rem', animation: 'fadeIn 0.3s' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                    <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>{t('table')} (Número, Nome ou Letra)</label>
-                                    {initialTable && tableNumber === initialTable && (
-                                        <span style={{ fontSize: '0.7rem', background: '#e6fffa', color: '#2c7a7b', padding: '2px 8px', borderRadius: '10px', fontWeight: 'bold', border: '1px solid #b2f5ea' }}>
-                                            ✓ {selectedLanguage === 'PT' ? 'Detectada via QR Code' : 'Detected via QR Code'}
-                                        </span>
+                        {step === 3 && (
+                            <div className="space-y-6 animate-in fade-in duration-300">
+                                {/* Coupon Section */}
+                                <div style={{ background: 'rgba(212,175,55,0.05)', padding: '1rem', borderRadius: '16px', border: '1px dashed rgba(212,175,55,0.2)' }}>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.8rem', fontWeight: '800', color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                        {t('couponCode')}
+                                    </label>
+
+                                    {!appliedCoupon ? (
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <input
+                                                type="text"
+                                                placeholder={t('couponPlaceholder')}
+                                                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900 bg-white font-bold"
+                                                style={{ margin: 0, textTransform: 'uppercase' }}
+                                                value={couponCode}
+                                                onChange={e => setCouponCode(e.target.value)}
+                                                onKeyPress={e => e.key === 'Enter' && handleApplyCoupon()}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={handleApplyCoupon}
+                                                disabled={!couponCode || isValidating}
+                                                style={{ background: '#D4AF37', color: 'black', border: 'none', padding: '0 1rem', borderRadius: '12px', fontWeight: 'bold', fontSize: '0.9rem', cursor: 'pointer' }}
+                                            >
+                                                {isValidating ? '...' : t('apply')}
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '0.5rem 1rem', borderRadius: '12px', border: '1px solid #c6f6d5' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#2f855a', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                                                <CheckCircle2 size={16} /> {appliedCoupon.code}
+                                            </div>
+                                            <button type="button" onClick={removeCoupon} style={{ background: 'transparent', border: 'none', color: '#e53e3e', cursor: 'pointer' }}>
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {couponError && (
+                                        <p style={{ color: '#e53e3e', fontSize: '0.75rem', marginTop: '0.5rem', fontWeight: 'bold' }}>{couponError}</p>
                                     )}
                                 </div>
-                                <input type="text" value={tableNumber} onChange={e => setTableNumber(e.target.value)} placeholder="Ex: Mesa 4, Esplanada A..." className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900 placeholder-gray-400" />
-                            </div>
-                        )}
 
-                        {orderType === 'takeaway' && (
-                            <div className="mb-6 p-5 bg-amber-500/10 border border-amber-500/30 rounded-3xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                <div className="flex items-center gap-3.5 mb-3.5">
-                                    <div className="p-3 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-500/20">
-                                        <Clock size={22} />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-sm font-black text-amber-900 dark:text-amber-400">Tempo de Preparação Estimado</h4>
-                                        <p className="text-xs text-amber-700 dark:text-amber-500 font-bold">Pronto em 30-40 minutos</p>
-                                    </div>
-                                </div>
-                                <div className="text-xs text-amber-900 dark:text-amber-300 bg-amber-500/10 p-4 rounded-2xl border border-amber-500/20 leading-relaxed font-semibold">
-                                    📌 <strong>Instruções de Recolha:</strong> O seu pedido estará disponível ao balcão. Dirija-se à zona de recolha/takeaway no restaurante e apresente o seu nome ou número do pedido.
-                                </div>
-                            </div>
-                        )}
+                                {/* Loyalty Card */}
+                                {loyaltyConfig && loyaltyPoints !== null && (
+                                    <div style={{
+                                        background: 'linear-gradient(135deg, rgba(212,175,55,0.1) 0%, rgba(212,175,55,0.05) 100%)',
+                                        padding: '1.2rem',
+                                        borderRadius: '20px',
+                                        border: '1px solid rgba(212,175,55,0.2)',
+                                        animation: 'fadeIn 0.4s'
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Award size={18} style={{ color: '#D4AF37' }} />
+                                                <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                    {t('loyaltyCard')} {loyaltyPoints}/{loyaltyConfig.goal}
+                                                </span>
+                                            </div>
+                                            {loyaltyPoints >= loyaltyConfig.goal && (
+                                                <span style={{ fontSize: '0.7rem', background: '#38a169', color: 'white', padding: '2px 8px', borderRadius: '8px', fontWeight: 'bold' }}>
+                                                    {t('rewardReady')}
+                                                </span>
+                                            )}
+                                        </div>
 
-                        {orderType === 'delivery' && (
-                            <div style={{ marginBottom: '1.5rem', animation: 'fadeIn 0.3s' }}>
-                                {deliveryConfig?.enabled && deliveryConfig?.type === 'zone' && deliveryConfig?.zones?.length > 0 && (
-                                    <div style={{ marginBottom: '1rem' }}>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>{t('address')}</label>
-                                        <select
-                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900"
-                                            value={selectedZone ? JSON.stringify(selectedZone) : ''}
-                                            onChange={(e) => setSelectedZone(e.target.value ? JSON.parse(e.target.value) : null)}
-                                            style={{ appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23000000%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right .7em top 50%', backgroundSize: '.65em auto' }}
-                                        >
-                                            <option value="" className="text-gray-500">{selectedLanguage === 'PT' ? 'Selecione o seu bairro...' : 'Select your neighborhood...'}</option>
-                                            {deliveryConfig.zones.map((zone, idx) => (
-                                                <option key={idx} value={JSON.stringify(zone)} className="text-gray-900">
-                                                    {zone.name} (+{zone.fee} Kz)
-                                                </option>
+                                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                                            {[...Array(loyaltyConfig.goal)].map((_, i) => (
+                                                <div key={i} style={{
+                                                    width: '24px',
+                                                    height: '24px',
+                                                    borderRadius: '50%',
+                                                    border: i < loyaltyPoints ? 'none' : '2px dashed rgba(0,0,0,0.1)',
+                                                    background: i < loyaltyPoints ? '#D4AF37' : 'transparent',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    color: i < loyaltyPoints ? 'black' : 'rgba(0,0,0,0.1)'
+                                                }}>
+                                                    <Star size={10} fill={i < loyaltyPoints ? "currentColor" : "none"} />
+                                                </div>
                                             ))}
-                                        </select>
+                                        </div>
+
+                                        <p style={{ fontSize: '0.75rem', color: '#666', marginTop: '1rem', textAlign: 'center', fontStyle: 'italic' }}>
+                                            {loyaltyPoints >= loyaltyConfig.goal
+                                                ? `${selectedLanguage === 'PT' ? 'Parabéns!' : 'Congratulations!'} ${t('rewardReady')}: ${loyaltyConfig.reward_text}`
+                                                : `${selectedLanguage === 'PT' ? 'Faltam' : 'Only'} ${loyaltyConfig.goal - loyaltyPoints} ${selectedLanguage === 'PT' ? 'pedidos para o seu prémio!' : 'orders left for your reward!'}`
+                                            }
+                                        </p>
+
+                                        {loyaltyPoints >= loyaltyConfig.goal && (
+                                            <div className="mt-4 p-4 bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-2xl flex items-center justify-between shadow-sm animate-bounce-short">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="bg-[#D4AF37] p-2 rounded-full text-black">
+                                                        <Award size={18} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-bold text-gray-800">{t('useReward')}</p>
+                                                        <p className="text-[10px] text-gray-500">{loyaltyConfig.reward_text}</p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsRedeemingLoyalty(!isRedeemingLoyalty)}
+                                                    className={`w-12 h-6 rounded-full transition-all relative ${isRedeemingLoyalty ? 'bg-[#38a169]' : 'bg-gray-300'}`}
+                                                >
+                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isRedeemingLoyalty ? 'left-7' : 'left-1'}`} />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
-                                {/* Interactive Map Picker */}
-                                <div style={{ marginBottom: '1rem' }}>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>
-                                        {selectedLanguage === 'PT' ? 'Toque no Mapa para assinalar a Morada' : 'Tap on the map to pin your address'}
-                                    </label>
-                                    <MapPicker 
-                                        onLocationSelected={(pos, addr) => {
-                                            setGpsCoords(pos);
-                                            // Only auto-fill if address is empty or user wants it
-                                            if (addr && (!address || address.trim() === '')) {
-                                                setAddress(addr);
-                                            }
-                                        }}
-                                    />
+
+                                {/* Payment Methods */}
+                                <div className="p-4 sm:p-5 bg-gray-50 rounded-2xl sm:rounded-[24px] border border-gray-100 shadow-sm">
+                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">{t('paymentMethod')}</label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => setPaymentMethod('cash')}
+                                            className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${paymentMethod === 'cash' ? 'bg-green-50 border-green-500 text-green-700 shadow-sm' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300'}`}
+                                        >
+                                            <Banknote size={18} />
+                                            <span>{t('cash')}</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setPaymentMethod('express')}
+                                            className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${paymentMethod === 'express' ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300'}`}
+                                        >
+                                            <Smartphone size={18} />
+                                            <span>Express</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setPaymentMethod('transferencia')}
+                                            className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${paymentMethod === 'transferencia' ? 'bg-purple-50 border-purple-500 text-purple-700 shadow-sm' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300'}`}
+                                        >
+                                            <CreditCard size={18} />
+                                            <span>Transferência</span>
+                                        </button>
+                                    </div>
+
+                                    {paymentMethod === 'cash' && (
+                                        <div className="mt-2 animate-in slide-in-from-right duration-300">
+                                            <input
+                                                type="text"
+                                                placeholder={selectedLanguage === 'PT' ? "Precisa de troco para quanto? (Ex: 5000 Kz)" : "Do you need change for how much?"}
+                                                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-100 focus:border-green-400 outline-none transition-all text-sm font-medium text-gray-900 placeholder-gray-400"
+                                                value={changeFor}
+                                                onChange={e => setChangeFor(e.target.value)}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {(paymentMethod === 'express' || paymentMethod === 'multicaixa') && (
+                                        <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-xl animate-in slide-in-from-right duration-300">
+                                            <h4 className="text-[10px] font-black text-blue-800 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                                <Smartphone size={14} /> {selectedLanguage === 'PT' ? 'Pagamento Automático' : 'Automatic Payment'}
+                                            </h4>
+                                            <div className="space-y-3">
+                                                <input
+                                                    type="tel"
+                                                    placeholder={selectedLanguage === 'PT' ? "Nº de Telemóvel Associado (Ex: 9xx xxx xxx)" : "Associated Phone Number (Ex: 9xx xxx xxx)"}
+                                                    className="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none transition-all text-sm font-bold text-gray-900 placeholder-gray-400"
+                                                    value={customerPhone}
+                                                    onChange={e => setCustomerPhone(e.target.value)}
+                                                />
+                                                <div className="text-xs text-blue-600/80 font-medium space-y-1 ml-1 border-l-2 border-blue-200 pl-3">
+                                                    <p>1. {selectedLanguage === 'PT' ? 'Ao enviar, receberá uma notificação no telemóvel.' : 'Upon sending, you will receive a notification on your phone.'}</p>
+                                                    <p>2. {selectedLanguage === 'PT' ? 'Abra a app MCX Express e confirma com o teu PIN.' : 'Open the MCX Express app and confirm with your PIN.'}</p>
+                                                    <p>3. {selectedLanguage === 'PT' ? 'O pedido irá direto para a cozinha após o sucesso.' : 'The order will go straight to the kitchen upon success.'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>
-                                    {t('address')}
-                                </label>
-                                <textarea
-                                    value={address}
-                                    onChange={e => setAddress(e.target.value)}
-                                    placeholder="Ex: Talatona, Bloco C, Rua 28..."
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900 placeholder-gray-400"
-                                    rows={2}
-                                    style={{ resize: 'none' }}
-                                />
-
-                                <label style={{ display: 'block', margin: '0.75rem 0 0.5rem', fontSize: '0.9rem', color: '#4a5568', fontWeight: 'bold' }}>
-                                    {t('reference')}
-                                </label>
-                                <input
-                                    type="text"
-                                    value={addressReference}
-                                    onChange={e => setAddressReference(e.target.value)}
-                                    placeholder="Ex: Perto do Shoprite, Em frente ao Banco BFA…"
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900 placeholder-gray-400"
-                                />
-                            </div>
-                        )}
-
-                        <div className="mb-6 sm:mb-8 p-4 sm:p-5 bg-gray-50 rounded-2xl sm:rounded-[24px] border border-gray-100 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">{t('paymentMethod')}</label>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                                <button
-                                    onClick={() => setPaymentMethod('cash')}
-                                    className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${paymentMethod === 'cash' ? 'bg-green-50 border-green-500 text-green-700 shadow-sm' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300'}`}
-                                >
-                                    <Banknote size={18} />
-                                    <span>{t('cash')}</span>
-                                </button>
-                                <button
-                                    onClick={() => setPaymentMethod('express')}
-                                    className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${paymentMethod === 'express' ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300'}`}
-                                >
-                                    <Smartphone size={18} />
-                                    <span>Express</span>
-                                </button>
-                                <button
-                                    onClick={() => setPaymentMethod('transferencia')}
-                                    className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all font-bold text-sm ${paymentMethod === 'transferencia' ? 'bg-purple-50 border-purple-500 text-purple-700 shadow-sm' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300'}`}
-                                >
-                                    <CreditCard size={18} />
-                                    <span>Transferência</span>
-                                </button>
-                            </div>
-                            {paymentMethod === 'cash' && (
-                                <div className="mt-2 animate-in slide-in-from-right duration-300">
-                                    <input
-                                        type="text"
-                                        placeholder={selectedLanguage === 'PT' ? "Precisa de troco para quanto? (Ex: 5000 Kz)" : "Do you need change for how much?"}
-                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-100 focus:border-green-400 outline-none transition-all text-sm font-medium text-gray-900 placeholder-gray-400"
-                                        value={changeFor}
-                                        onChange={e => setChangeFor(e.target.value)}
-                                    />
-                                </div>
-                            )}
-                            {(paymentMethod === 'express' || paymentMethod === 'multicaixa') && (
-                                <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-xl animate-in slide-in-from-right duration-300">
-                                    <h4 className="text-[10px] font-black text-blue-800 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                        <Smartphone size={14} /> {selectedLanguage === 'PT' ? 'Pagamento Automático' : 'Automatic Payment'}
-                                    </h4>
+                                {/* Final Total Box */}
+                                <div className="bg-gray-50/50 rounded-3xl p-5 border border-gray-100 shadow-sm">
                                     <div className="space-y-3">
-                                        <input
-                                            type="tel"
-                                            placeholder={selectedLanguage === 'PT' ? "Nº de Telemóvel Associado (Ex: 9xx xxx xxx)" : "Associated Phone Number (Ex: 9xx xxx xxx)"}
-                                            className="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none transition-all text-sm font-bold text-gray-900 placeholder-gray-400"
-                                            value={customerPhone} // Aproveitando o telefone do cliente
-                                            onChange={e => setCustomerPhone(e.target.value)}
-                                        />
-                                        <div className="text-xs text-blue-600/80 font-medium space-y-1 ml-1 border-l-2 border-blue-200 pl-3">
-                                            <p>1. {selectedLanguage === 'PT' ? 'Ao enviar, receberá uma notificação no telemóvel.' : 'Upon sending, you will receive a notification on your phone.'}</p>
-                                            <p>2. {selectedLanguage === 'PT' ? 'Abra a app MCX Express e confirma com o teu PIN.' : 'Open the MCX Express app and confirm with your PIN.'}</p>
-                                            <p>3. {selectedLanguage === 'PT' ? 'O pedido irá direto para a cozinha após o sucesso.' : 'The order will go straight to the kitchen upon success.'}</p>
+                                        <div className="flex justify-between items-center text-sm font-medium text-gray-500">
+                                            <span>{t('subtotal')}</span>
+                                            <span className="text-gray-900">{new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(subtotal).replace('AOA', 'Kz')}</span>
+                                        </div>
+                                        {deliveryFee > 0 && (
+                                            <div className="flex justify-between items-center text-sm font-bold text-blue-600">
+                                                <div className="flex flex-col">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Bike size={14} />
+                                                        <span>{t('deliveryFee')}</span>
+                                                    </div>
+                                                    {distanceKm > 0 && (
+                                                        <span className="text-[10px] font-medium text-blue-400 ml-5 tracking-tight">
+                                                            Distância: {distanceKm.toFixed(1)} km
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span>+{new Intl.NumberFormat('pt-AO').format(deliveryFee)} Kz</span>
+                                            </div>
+                                        )}
+                                        {discount > 0 && (
+                                            <div className="flex justify-between items-center text-sm font-bold text-green-600">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Ticket size={14} />
+                                                    <span>{t('discount')} ({appliedCoupon?.code})</span>
+                                                </div>
+                                                <span>-{new Intl.NumberFormat('pt-AO').format(discount)} Kz</span>
+                                            </div>
+                                        )}
+                                        <div className="pt-3 border-t border-gray-200/50 flex justify-between items-end">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">{t('totalToPay')}</span>
+                                                <span className="text-3xl font-serif font-black text-gray-900 leading-none mt-1">
+                                                    {new Intl.NumberFormat('pt-AO').format(total)}
+                                                    <span className="text-xs ml-1 text-gray-400">Kz</span>
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 px-3 py-1 bg-green-100/50 rounded-full text-green-700 text-[10px] font-black uppercase tracking-wider h-fit mb-1 border border-green-200/50">
+                                                <CheckCircle2 size={10} />
+                                                Seguro
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            )}
-                        </div>
 
-                        <button
-                            onClick={handleSendOrder}
-                            disabled={cartItems.length === 0 || isSending}
-                            className={`w-full group relative overflow-hidden p-5 rounded-[24px] font-black text-lg transition-all ${cartItems.length === 0 || isSending ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-[1.02] active:scale-[0.98]'}`}
-                            style={{
-                                background: 'linear-gradient(135deg, #1A1A1A 0%, #333 100%)',
-                                color: '#D4AF37',
-                                boxShadow: '0 12px 32px rgba(0,0,0,0.2)'
-                            }}
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                            
-                            <div className="flex items-center justify-center gap-3 relative z-10">
-                                {isSending ? (
-                                    <div className="w-6 h-6 border-4 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full animate-spin" />
-                                ) : (
-                                    <>
-                                        <span>{(features?.canUseKDS && restaurantId) ? t('sendOrder') : t('sendOrderWhatsapp')}</span>
-                                        <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                                    </>
-                                )}
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setStep(2)}
+                                        className="w-1/3 p-4 rounded-[20px] font-bold text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all flex items-center justify-center"
+                                    >
+                                        {selectedLanguage === 'PT' ? 'Voltar' : 'Back'}
+                                    </button>
+                                    <div className="w-2/3">
+                                        <button
+                                            type="button"
+                                            onClick={handleSendOrder}
+                                            disabled={cartItems.length === 0 || isSending}
+                                            className={`w-full group relative overflow-hidden p-4 sm:p-5 rounded-[20px] sm:rounded-[24px] font-black text-base sm:text-lg transition-all ${cartItems.length === 0 || isSending ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-[1.02] active:scale-[0.98]'}`}
+                                            style={{
+                                                background: 'linear-gradient(135deg, #1A1A1A 0%, #333 100%)',
+                                                color: '#D4AF37',
+                                                boxShadow: '0 12px 32px rgba(0,0,0,0.2)'
+                                            }}
+                                        >
+                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                                            
+                                            <div className="flex items-center justify-center gap-3 relative z-10">
+                                                {isSending ? (
+                                                    <div className="w-6 h-6 border-4 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full animate-spin" />
+                                                ) : (
+                                                    <>
+                                                        <span>{(features?.canUseKDS && restaurantId) ? t('sendOrder') : t('sendOrderWhatsapp')}</span>
+                                                        <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                                    </>
+                                                )}
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                        </button>
+                        )}
                     </>
                 )}
             </div>

@@ -1,10 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabaseClient';
-import { Clock, ChefHat, CheckCircle, Truck, X, Award, XCircle } from 'lucide-react';
+import { Clock, ChefHat, CheckCircle, Truck, X, Award, XCircle, Phone, FileText } from 'lucide-react';
+import { orderService } from '../services/orderService';
+import ReceiptModal from './ReceiptModal';
 
-const ActiveOrderTracker = ({ restaurantId, primaryColor = '#D4AF37' }) => {
+const ActiveOrderTracker = ({ restaurantId, restaurantName, primaryColor = '#D4AF37' }) => {
     const [activeOrder, setActiveOrder] = useState(null);
     const [isVisible, setIsVisible] = useState(true);
+    const [showReceiptModal, setShowReceiptModal] = useState(false);
 
     // Format the subtext to hide technical data
     let displaySubtext = activeOrder?.table_number || '';
@@ -50,9 +55,59 @@ const ActiveOrderTracker = ({ restaurantId, primaryColor = '#D4AF37' }) => {
         updateEta();
         const t = setInterval(updateEta, 30000);
         return () => clearInterval(t);
-    }, [activeOrder?.created_at, activeOrder?.status, isDelivery]);
+    }, [activeOrder?.created_at, activeOrder?.status, activeOrder?.rejection_reason, isDelivery]);
 
-    const checkActiveOrder = async () => {
+    // Notification Logic
+    const previousStatusRef = useRef(activeOrder?.status);
+
+    useEffect(() => {
+        if (!activeOrder?.status) return;
+
+        const currentStatus = activeOrder.status;
+        const prevStatus = previousStatusRef.current;
+
+        if (prevStatus && currentStatus !== prevStatus) {
+            const playSound = () => {
+                try {
+                    const audio = new Audio('/bell.mp3');
+                    audio.play().catch(e => console.log('Audio autoplay blocked', e));
+                } catch (e) { /* ignore */ }
+            };
+
+            if (currentStatus === 'arrived') {
+                toast("🛵 O Estafeta chegou! Por favor, vá ao encontro dele.", {
+                    icon: '📍',
+                    duration: 10000,
+                    style: { background: '#121212', color: '#fff', border: '1px solid #D4AF37', fontWeight: 'bold' }
+                });
+                playSound();
+            } else if (currentStatus === 'out_for_delivery') {
+                toast("🛵 A sua encomenda saiu para entrega!", {
+                    icon: '💨',
+                    duration: 6000,
+                    style: { background: '#121212', color: '#fff', border: '1px solid #06b6d4', fontWeight: 'bold' }
+                });
+                playSound();
+            } else if (currentStatus === 'ready') {
+                toast(isDelivery ? "✅ A sua encomenda está pronta a sair!" : "✅ A sua encomenda está pronta a levantar/servir!", {
+                    icon: '🛎️',
+                    duration: 6000,
+                    style: { background: '#121212', color: '#fff', border: '1px solid #22c55e', fontWeight: 'bold' }
+                });
+                playSound();
+            } else if (currentStatus === 'cancelled') {
+                 toast.error("A sua encomenda foi rejeitada/cancelada.", {
+                     duration: 6000,
+                     style: { background: '#121212', color: '#fff', border: '1px solid #ef4444' }
+                 });
+                 playSound();
+            }
+        }
+
+        previousStatusRef.current = currentStatus;
+    }, [activeOrder?.status, isDelivery]);
+
+    const checkActiveOrder = React.useCallback(async () => {
         if (!restaurantId) return;
         const saved = localStorage.getItem(`jindungo_active_order_${restaurantId}`);
         if (!saved) return;
@@ -68,9 +123,9 @@ const ActiveOrderTracker = ({ restaurantId, primaryColor = '#D4AF37' }) => {
                 return;
             }
 
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from('orders')
-                .select('id, status, table_number, total, rejection_reason, created_at')
+                .select('id, status, table_number, total, rejection_reason, created_at, courier_name, courier_phone')
                 .eq('id', id)
                 .single();
 
@@ -81,37 +136,34 @@ const ActiveOrderTracker = ({ restaurantId, primaryColor = '#D4AF37' }) => {
         } catch (e) {
             console.error("Erro ao procurar pedido ativo", e);
         }
-    };
+    }, [restaurantId]);
 
     useEffect(() => {
-        checkActiveOrder();
+        setTimeout(checkActiveOrder, 0);
         
         window.addEventListener('jindungo_new_order', checkActiveOrder);
         
         const interval = setInterval(checkActiveOrder, 15000); // Check every 15s
 
-        // Optional: Realtime subscription
         let channel;
         if (restaurantId) {
-            channel = supabase.channel(`public:orders:rest_${restaurantId}`)
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
-                    const saved = localStorage.getItem(`jindungo_active_order_${restaurantId}`);
-                    if (saved) {
-                        const { id } = JSON.parse(saved);
-                        if (payload.new.id === id) {
-                            setActiveOrder(payload.new);
-                        }
+            channel = orderService.subscribeToOrders(restaurantId, payload => {
+                const saved = localStorage.getItem(`jindungo_active_order_${restaurantId}`);
+                if (saved && payload.new) {
+                    const { id } = JSON.parse(saved);
+                    if (payload.new.id === id) {
+                        setActiveOrder(payload.new);
                     }
-                })
-                .subscribe();
+                }
+            });
         }
 
         return () => {
             clearInterval(interval);
             window.removeEventListener('jindungo_new_order', checkActiveOrder);
-            if (channel) supabase.removeChannel(channel);
+            if (channel) channel.unsubscribe();
         };
-    }, [restaurantId]);
+    }, [restaurantId, checkActiveOrder]);
 
     if (!activeOrder || !isVisible) return null;
 
@@ -178,6 +230,17 @@ const ActiveOrderTracker = ({ restaurantId, primaryColor = '#D4AF37' }) => {
                     </div>
                 </div>
 
+                {isDelivery && ['out_for_delivery', 'arrived'].includes(activeOrder.status) && (
+                    <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between text-xs bg-black/40 px-3 py-2.5 rounded-xl animate-fade-in">
+                        <span className="text-gray-300 flex items-center gap-1.5 font-medium">🛵 Estafeta: <strong className="text-[#D4AF37] font-bold">{activeOrder.courier_name || 'Alocado ao Pedido'}</strong></span>
+                        {activeOrder.courier_phone && (
+                            <a href={`tel:${activeOrder.courier_phone}`} className="bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1 rounded-lg flex items-center gap-1.5 font-bold hover:bg-green-500/30 transition-colors shadow-sm">
+                                <Phone size={12} /> Ligar
+                            </a>
+                        )}
+                    </div>
+                )}
+
                 {/* Progress Bar */}
                 {['pending', 'preparing', 'ready', 'out_for_delivery'].includes(activeOrder.status) && (
                     <div className="w-full h-1.5 bg-white/10 rounded-full mt-4 overflow-hidden shadow-inner">
@@ -191,7 +254,24 @@ const ActiveOrderTracker = ({ restaurantId, primaryColor = '#D4AF37' }) => {
                         />
                     </div>
                 )}
+
+                <button
+                    onClick={() => setShowReceiptModal(true)}
+                    className="mt-3.5 w-full bg-[#D4AF37]/15 hover:bg-[#D4AF37]/25 text-[#D4AF37] border border-[#D4AF37]/30 py-2.5 rounded-xl font-black text-xs flex justify-center items-center gap-2 transition-all uppercase tracking-wider cursor-pointer shadow-sm active:scale-95"
+                >
+                    <FileText size={15} /> Ver Talão / Fatura Premium
+                </button>
             </div>
+
+            {showReceiptModal && createPortal(
+                <ReceiptModal
+                    isOpen={showReceiptModal}
+                    onClose={() => setShowReceiptModal(false)}
+                    order={activeOrder}
+                    restaurantName={restaurantName || activeOrder?.restaurant?.name || 'Comidas da Terra'}
+                />,
+                document.body
+            )}
             
             <style jsx>{`
                 @keyframes slideUpFade {

@@ -138,8 +138,9 @@ const MOCK_PERIOD_DATA = {
     }
 };
 
-const DashboardStats = ({ restaurantId, features = {} }) => {
+const DashboardStats = ({ restaurantId }) => {
     const [selectedPeriod, setSelectedPeriod] = useState('hoje');
+    const [isDemoMode, setIsDemoMode] = useState(false);
     const [salesStats, setSalesStats] = useState({
         revenue: 12450,
         ordersCount: 48,
@@ -191,34 +192,102 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
         documentTitle: `Relatorio_VisaoGeral_${new Date().toISOString().split('T')[0]}`,
     });
 
-    const handlePeriodSelect = (periodKey) => {
-        setSelectedPeriod(periodKey);
-        const data = MOCK_PERIOD_DATA[periodKey];
-        if (data) {
-            setSalesStats(prev => ({
-                ...prev,
-                revenue: data.revenue,
-                ordersCount: data.orders,
-                avgTicket: data.avgTicket,
-                growth: data.growth,
-                chartTitle: data.title,
-                chartData: data.chart
-            }));
+    const getDateRange = React.useCallback((period) => {
+        const now = new Date();
+        const start = new Date(now);
+        const end = new Date(now);
+
+        if (period === 'hoje') {
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
+        } else if (period === 'ontem') {
+            start.setDate(now.getDate() - 1);
+            start.setHours(0, 0, 0, 0);
+            end.setDate(now.getDate() - 1);
+            end.setHours(23, 59, 59, 999);
+        } else if (period === 'semana') {
+            const day = now.getDay() || 7;
+            start.setDate(now.getDate() - day + 1);
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
+        } else if (period === 'semanaPassada') {
+            const day = now.getDay() || 7;
+            start.setDate(now.getDate() - day - 6);
+            start.setHours(0, 0, 0, 0);
+            end.setDate(now.getDate() - day);
+            end.setHours(23, 59, 59, 999);
+        } else if (period === 'mes') {
+            start.setDate(1);
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
+        } else if (period === 'mesPassado') {
+            start.setMonth(now.getMonth() - 1, 1);
+            start.setHours(0, 0, 0, 0);
+            end.setDate(0);
+            end.setHours(23, 59, 59, 999);
+        } else if (period === 'trimestre') {
+            start.setMonth(now.getMonth() - 3);
+            start.setHours(0, 0, 0, 0);
+        } else if (period === 'semestre') {
+            start.setMonth(now.getMonth() - 6);
+            start.setHours(0, 0, 0, 0);
+        } else if (period === 'ano') {
+            start.setMonth(0, 1);
+            start.setHours(0, 0, 0, 0);
         }
-    };
+        return { start, end };
+    }, []);
+
+    const loadRealData = React.useCallback(async (periodKey) => {
+        if (!restaurantId) return;
+        try {
+            const { data: resData } = await supabase.from('restaurants').select('name').eq('id', restaurantId).single();
+            if (resData) setRestaurantInfo(resData);
+
+            const { start, end } = getDateRange(periodKey);
+            const { data: analytics } = await orderService.getAdvancedAnalytics(restaurantId, start, end);
+
+            const mockData = MOCK_PERIOD_DATA[periodKey] || MOCK_PERIOD_DATA.hoje;
+
+            if (analytics && analytics.totalOrders > 0) {
+                setIsDemoMode(false);
+                const mix = Object.entries(analytics.revenueByCategory || {}).map(([name, value]) => ({ name, value }));
+                const topProd = (analytics.topProducts || []).map(p => ({ name: p.name, value: p.quantity * p.price }));
+
+                setSalesStats(prev => ({
+                    ...prev,
+                    revenue: analytics.totalRevenue,
+                    ordersCount: analytics.totalOrders,
+                    avgTicket: analytics.avgTicket,
+                    growth: `${analytics.cancellationRate || 0}% Canc.`,
+                    chartTitle: mockData.title,
+                    categoriesMix: mix.length > 0 ? mix : prev.categoriesMix,
+                    topDishes: topProd.length > 0 ? topProd : prev.topDishes
+                }));
+            } else {
+                setIsDemoMode(true);
+                setSalesStats(prev => ({
+                    ...prev,
+                    revenue: mockData.revenue,
+                    ordersCount: mockData.orders,
+                    avgTicket: mockData.avgTicket,
+                    growth: mockData.growth,
+                    chartTitle: mockData.title,
+                    chartData: mockData.chart
+                }));
+            }
+        } catch (err) {
+            console.error("Erro ao carregar restaurante", err);
+        }
+    }, [restaurantId, getDateRange]);
 
     useEffect(() => {
-        const loadRealData = async () => {
-            if (!restaurantId) return;
-            try {
-                const { data: resData } = await supabase.from('restaurants').select('name').eq('id', restaurantId).single();
-                if (resData) setRestaurantInfo(resData);
-            } catch (err) {
-                console.error("Erro ao carregar restaurante", err);
-            }
-        };
-        loadRealData();
-    }, [restaurantId]);
+        setTimeout(() => loadRealData(selectedPeriod), 0);
+    }, [selectedPeriod, loadRealData]);
+
+    const handlePeriodSelect = (periodKey) => {
+        setSelectedPeriod(periodKey);
+    };
 
     const formatCurrency = (val) => {
         return new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' })
@@ -245,6 +314,11 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
             <div className="flex flex-wrap items-center justify-between gap-4 p-3.5 bg-[#161616]/90 backdrop-blur-xl border border-[#2A2A2A] rounded-2xl shadow-2xl">
                 <div className="flex items-center gap-2.5 px-3 text-xs font-black text-[#F5C542] uppercase tracking-widest drop-shadow-[0_0_10px_rgba(245,197,66,0.4)]">
                     <Calendar size={18} /> Período de Análise
+                    {isDemoMode && (
+                        <span className="bg-amber-500/20 text-amber-300 font-bold px-2.5 py-0.5 rounded-full text-[10px] border border-amber-500/30 animate-pulse ml-2">
+                            Demonstração
+                        </span>
+                    )}
                 </div>
                 <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
                     {periods.map(p => (
@@ -260,6 +334,9 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
                             {p.label}
                         </button>
                     ))}
+                    <button onClick={handlePrint} className="bg-[#262626] hover:bg-[#333] text-gray-200 border border-white/10 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg transition-all ml-2">
+                        <Printer size={14} className="text-[#F5C542]" /> Imprimir
+                    </button>
                 </div>
             </div>
 
@@ -273,7 +350,7 @@ const DashboardStats = ({ restaurantId, features = {} }) => {
 
                     <div className="relative z-10 space-y-4">
                         <h1 className="text-3xl sm:text-4xl font-serif font-bold text-[#F5C542] tracking-wide leading-tight drop-shadow-[0_0_25px_rgba(245,197,66,0.3)]">
-                            Boas-vindas,<br/>ao seu Jindungo.
+                            Boas-vindas,<br/>ao {restaurantInfo.name || 'seu Jindungo'}.
                         </h1>
                         <p className="text-xs text-[#A0A0A5] leading-relaxed font-light max-w-sm">
                             O seu menu digital está online e a processar encomendas e métricas de desempenho em tempo real.

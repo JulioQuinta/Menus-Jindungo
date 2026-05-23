@@ -1211,7 +1211,7 @@ const SuperAdminDashboard = () => {
                                 <span className="p-3 rounded-2xl bg-[#E2B755]/10 text-[#E2B755] border border-[#E2B755]/20 text-xl shadow-inner">🎨</span>
                                 <div>
                                     <h3 className="text-xl font-bold text-white font-serif">Definições da Marca & Logótipo Global</h3>
-                                    <p className="text-xs text-zinc-400">Proporções blindadas e identidade visual premium</p>
+                                                    <p className="text-xs text-zinc-400">Proporções blindadas e identidade visual premium</p>
                                 </div>
                             </div>
 
@@ -1220,8 +1220,8 @@ const SuperAdminDashboard = () => {
                             </p>
 
                             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8 relative z-10 bg-zinc-900/60 p-6 rounded-2xl border border-zinc-800">
-                                <div className="w-44 h-44 bg-black border border-zinc-700 rounded-3xl flex items-center justify-center p-6 shadow-2xl relative group overflow-hidden shrink-0">
-                                    <img src={globalLogoUrl} alt="Logo Atual" className="w-full h-full object-contain" />
+                                <div className="w-64 h-64 bg-black border border-zinc-700 hover:border-[#E2B755]/50 rounded-[2.5rem] flex items-center justify-center p-0 shadow-2xl relative group overflow-hidden shrink-0 transition-all duration-300">
+                                    <img src={globalLogoUrl} alt="Logo Atual" className="w-full h-full object-contain scale-[1.18] group-hover:scale-[1.23] transition-all duration-300" />
                                 </div>
                                 <div className="flex flex-col gap-4 w-full sm:w-auto">
                                     <label className="bg-gradient-to-r from-[#E2B755] to-[#D4A63B] text-black px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-wider cursor-pointer hover:brightness-110 active:scale-95 transition-all shadow-[0_10px_25px_rgba(226,183,85,0.25)] text-center font-mono">

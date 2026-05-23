@@ -468,7 +468,7 @@ const PublicMenuInner = ({
 
     return (
         <div className="min-h-screen bg-gray-100 flex justify-center sm:py-8 overflow-x-hidden w-full max-w-[100vw]">
-            <div className="w-full sm:max-w-[480px] bg-white sm:rounded-[30px] sm:shadow-2xl overflow-hidden min-h-screen sm:min-h-0 sm:h-[850px] relative ring-1 ring-gray-900/5 flex flex-col max-w-[100vw]">
+            <div className="w-full sm:max-w-[380px] bg-white sm:rounded-[30px] sm:shadow-2xl overflow-hidden min-h-screen sm:min-h-0 sm:h-[812px] relative ring-1 ring-gray-900/5 flex flex-col max-w-[100vw]">
 
                 {(isCurrentlyClosed || config.isOpen === false) && (
                     <div className="absolute top-0 left-0 right-0 z-[1000] bg-red-600 text-white px-4 py-3 text-center font-bold shadow-lg animate-pulse">
@@ -479,7 +479,7 @@ const PublicMenuInner = ({
                     </div>
                 )}
 
-                <div className="flex-1 overflow-y-auto scrollbar-hide">
+                <div className={`flex-1 overflow-y-auto scrollbar-hide ${(isCurrentlyClosed || config.isOpen === false) ? 'pt-[56px]' : ''}`}>
 
                     <LivePreview 
                         config={config} 

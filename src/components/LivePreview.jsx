@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { GridLayout, ListLayout, MinimalLayout, GridLayoutSkeleton, ListLayoutSkeleton } from './MenuLayouts';
 import { getContrastColor, darkenColor } from '../utils/colorUtils';
 import { Search, X, Utensils } from 'lucide-react';
-import { getTranslation, UI_TRANSLATIONS } from '../utils/i18n';
+import { getTranslation, UI_TRANSLATIONS, translateFoodText } from '../utils/i18n';
 
 const FlagSelector = ({ selected, onSelect }) => {
     const [isOpen, ReactSetIsOpen] = React.useState(false);
@@ -17,13 +17,16 @@ const FlagSelector = ({ selected, onSelect }) => {
     const current = languages.find(l => l.code === selected) || languages[0];
 
     return (
-        <div className="absolute top-6 right-6 z-50 font-sans">
+        <div className="absolute top-4 right-4 z-[90] font-sans">
             <div className="relative">
                 <button
                     onClick={() => ReactSetIsOpen(!isOpen)}
-                    className="flex items-center gap-2 bg-black/75 backdrop-blur-2xl px-4 py-2.5 rounded-full border border-white/25 shadow-[0_10px_30px_rgba(0,0,0,0.95)] text-white hover:bg-black/90 transition-all group text-xs font-bold tracking-widest uppercase"
+                    className="flex items-center gap-2 bg-black/75 backdrop-blur-2xl px-4.5 py-2.5 rounded-full border border-white/25 shadow-[0_10px_30px_rgba(0,0,0,0.95)] text-white hover:bg-black/90 transition-all group text-xs font-bold tracking-widest uppercase cursor-pointer"
                 >
-                    <span>{current.label}</span>
+                    <span className="flex items-center gap-1.5">
+                        <span className="text-sm leading-none shrink-0">{current.flag}</span>
+                        <span className="leading-none">{current.label}</span>
+                    </span>
                     <svg
                         className={`w-3.5 h-3.5 text-[#E5C27B] transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
                         fill="none"
@@ -35,7 +38,7 @@ const FlagSelector = ({ selected, onSelect }) => {
                 </button>
 
                 {isOpen && (
-                    <div className="absolute right-0 top-full mt-2 bg-[#141414]/95 backdrop-blur-3xl border border-gray-800 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.95)] overflow-hidden min-w-[160px] animate-in fade-in zoom-in-95 duration-200">
+                    <div className="absolute right-0 top-full mt-2 bg-[#141414]/95 backdrop-blur-3xl border border-gray-800 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.95)] overflow-hidden min-w-[180px] animate-in fade-in zoom-in-95 duration-200 z-[100]">
                         {languages.map(lang => (
                             <button
                                 key={lang.code}
@@ -43,12 +46,15 @@ const FlagSelector = ({ selected, onSelect }) => {
                                     onSelect(lang.code);
                                     ReactSetIsOpen(false);
                                 }}
-                                className={`w-full flex items-center justify-between px-4 py-3 text-left transition-colors border-b border-gray-800/80 last:border-0 ${
+                                className={`w-full flex items-center justify-between px-4 py-3.5 text-left transition-colors border-b border-gray-800/80 last:border-0 cursor-pointer ${
                                     selected === lang.code ? 'bg-[#E5C27B]/15 text-[#E5C27B] font-bold' : 'text-gray-300 hover:bg-white/5 hover:text-white'
                                 }`}
                             >
-                                <span className="text-xs font-bold">{lang.name}</span>
-                                <span className="text-xs font-black">{lang.label}</span>
+                                <span className="text-xs font-bold flex items-center gap-2">
+                                    <span className="text-sm leading-none shrink-0">{lang.flag}</span>
+                                    <span className="leading-none">{lang.name}</span>
+                                </span>
+                                <span className="text-[10px] font-black opacity-60 tracking-wider uppercase">{lang.label}</span>
                             </button>
                         ))}
                     </div>
@@ -102,8 +108,7 @@ const CategoryCarousel = ({ categories, activeCategory, onSelect, selectedLangua
 
     const translateCat = (cat) => {
         const label = cat.label || cat.name;
-        const dict = UI_TRANSLATIONS[selectedLanguage]?.standardCategories || {};
-        return dict[label] || label;
+        return translateFoodText(label, selectedLanguage);
     };
 
     return (
@@ -146,8 +151,7 @@ const CategorySection = ({ cat, Layout, commonProps, onItemAdded, selectedLangua
     const [activeFilter, setActiveFilter] = useState('Todos');
 
     const translateCat = (label) => {
-        const dict = UI_TRANSLATIONS[selectedLanguage]?.standardCategories || {};
-        return dict[label] || label;
+        return translateFoodText(label, selectedLanguage);
     };
 
     const isRecommended = (item) => item.isHighlight || item.isRecommended || item.ordersCount > 15;
@@ -158,6 +162,13 @@ const CategorySection = ({ cat, Layout, commonProps, onItemAdded, selectedLangua
 
     if (filteredItems.length === 0 && activeFilter !== 'Todos') return null;
 
+    const getPluralItems = () => {
+        if (selectedLanguage === 'PT') return cat.items.length === 1 ? 'item' : 'itens';
+        if (selectedLanguage === 'FR') return cat.items.length === 1 ? 'article' : 'articles';
+        if (selectedLanguage === 'ES') return cat.items.length === 1 ? 'artículo' : 'artículos';
+        return cat.items.length === 1 ? 'item' : 'items';
+    };
+
     return (
         <div id={`category-${cat.id}`} data-category-id={cat.id} className="mb-16 scroll-mt-48 animate-in fade-in slide-in-from-bottom-4 duration-500 px-4 sm:px-6">
             {/* Title matching screenshot with intense gold glow shadow */}
@@ -166,7 +177,7 @@ const CategorySection = ({ cat, Layout, commonProps, onItemAdded, selectedLangua
                 <h2 className="text-lg sm:text-2xl font-serif font-black text-[#E5C27B] lowercase capitalize-first tracking-wide drop-shadow-md flex items-center gap-2">
                     {translateCat(cat.label || cat.name)}
                     <span className="text-[10px] sm:text-xs font-sans font-normal opacity-40 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/5">
-                        {cat.items.length} {cat.items.length === 1 ? 'item' : 'itens'}
+                        {cat.items.length} {getPluralItems()}
                     </span>
                 </h2>
             </div>
@@ -180,7 +191,7 @@ const CategorySection = ({ cat, Layout, commonProps, onItemAdded, selectedLangua
                             : 'bg-[#1C1C1C] text-gray-400 border border-white/10 hover:bg-[#252525] hover:text-white font-medium'
                     }`}
                 >
-                    Todos
+                    {getTranslation(selectedLanguage, 'all')}
                 </button>
                 <button
                     onClick={() => setActiveFilter('Recomendados')}
@@ -190,7 +201,7 @@ const CategorySection = ({ cat, Layout, commonProps, onItemAdded, selectedLangua
                             : 'bg-[#1C1C1C] text-gray-400 border border-white/10 hover:bg-[#252525] hover:text-white font-medium'
                     }`}
                 >
-                    Recomendados
+                    {getTranslation(selectedLanguage, 'recommended')}
                 </button>
             </div>
 
@@ -305,9 +316,9 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
 
                 <div className="relative z-10 flex flex-col items-center max-w-xl w-full animate-fade-in">
                     {/* Adaptive Logo Crest (Handles Rectangular, Circular, or Typography logos seamlessly) */}
-                    <div className="max-w-[200px] sm:max-w-[280px] max-h-[100px] sm:max-h-[130px] flex items-center justify-center mb-4 sm:mb-6 p-2 rounded-3xl bg-black/40 backdrop-blur-md border border-white/10 shadow-[0_15px_30px_rgba(0,0,0,0.6)]">
+                    <div className="max-w-[150px] sm:max-w-[180px] max-h-[70px] sm:max-h-[80px] flex items-center justify-center mb-4 sm:mb-6 p-0 rounded-2xl bg-black/40 backdrop-blur-md border border-white/10 shadow-[0_15px_30px_rgba(0,0,0,0.6)] overflow-hidden">
                         {config.logoUrl ? (
-                            <img src={config.logoUrl} alt="Logo" className="max-w-full max-h-[80px] sm:max-h-[110px] object-contain filter drop-shadow-[0_10px_20px_rgba(229,194,123,0.3)]" />
+                            <img src={config.logoUrl} alt="Logo" className="w-full h-full object-contain p-0 scale-[1.18] filter drop-shadow-[0_10px_20px_rgba(229,194,123,0.3)] transition-transform duration-300 hover:scale-[1.23]" />
                         ) : (
                             <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-2">
                                 <span className="text-2xl sm:text-3xl filter drop-shadow-[0_0_15px_#E5C27B]">🍽️</span>
@@ -323,14 +334,14 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
 
                     {/* Subtitle matching screenshot */}
                     <p className="text-[11px] sm:text-xs font-black tracking-[0.28em] uppercase text-gray-300 mb-8 drop-shadow-md">
-                        Bem-vindo ao {config.restaurantName || 'Comidas da Terra'}
+                        {t('welcome')} {config.restaurantName || 'Comidas da Terra'}
                     </p>
 
                     {/* Glowing Capsule Search Bar matching screenshot */}
                     <div className="w-full max-w-sm relative shadow-[0_15px_50px_rgba(0,0,0,0.95)] animate-in zoom-in-95 duration-500">
                         <input
                             type="text"
-                            placeholder="Pesquisar iguarias, bebidas..."
+                            placeholder={t('searchIguariasPlaceholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full bg-black/80 border border-[#E5C27B]/40 rounded-full py-4 pl-7 pr-14 text-white text-sm font-medium placeholder-gray-400 outline-none focus:border-[#E5C27B] focus:ring-1 focus:ring-[#E5C27B] transition-all backdrop-blur-2xl shadow-inner"

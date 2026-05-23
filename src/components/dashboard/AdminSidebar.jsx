@@ -10,6 +10,7 @@ const AdminSidebar = memo(({
     menuItems, 
     location, 
     globalLogoUrl, 
+    restaurantLogoUrl,
     signOut,
     restaurantName,
     restaurantSlug
@@ -29,8 +30,8 @@ const AdminSidebar = memo(({
                 <div className={`flex items-center gap-4 transition-all duration-500 ${isSidebarOpen || isMobileMenuOpen ? 'opacity-100' : 'lg:opacity-0 lg:scale-50 pointer-events-none'}`}>
                     <div className="relative">
                         <div className="absolute inset-0 bg-[#D4AF37] blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                        <div className="relative w-12 h-12 rounded-2xl overflow-hidden bg-gradient-to-br from-white/10 to-transparent flex items-center justify-center border border-white/10 shadow-2xl">
-                            <img src={globalLogoUrl || "/jindungo_logo_v3.png"} className="w-full h-full object-contain p-1" alt="Jindungo" />
+                        <div className="relative w-16 h-16 rounded-full overflow-hidden bg-black/40 flex items-center justify-center border border-[#D4AF37]/30 shadow-2xl transition-all duration-300">
+                            <img src={restaurantLogoUrl || globalLogoUrl || "/jindungo_logo_v3.png"} className="w-full h-full object-contain p-0 scale-[1.18] filter drop-shadow-[0_0_8px_rgba(212,175,55,0.4)] transition-transform duration-300 group-hover:scale-[1.23]" alt="Jindungo" />
                         </div>
                     </div>
                     <div className="flex flex-col">

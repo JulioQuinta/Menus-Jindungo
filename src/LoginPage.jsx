@@ -104,9 +104,9 @@ const LoginPage = () => {
 
                         {/* Top Chili & Golden Leaves Emblem matching screenshot */}
                         <div className="text-center mb-8 relative z-10 select-none">
-                            <div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center relative group-hover:scale-105 transition-transform">
+                            <div className="w-28 h-28 mx-auto mb-4 flex items-center justify-center relative group-hover:scale-105 transition-transform">
                                 <div className="absolute inset-0 bg-[#D4AF37]/10 rounded-full blur-md animate-pulse"></div>
-                                <img src="/jindungo_logo_v3.png" alt="Piri-piri" className="w-16 h-16 object-contain filter drop-shadow-[0_0_12px_rgba(212,175,55,0.8)] relative z-10" />
+                                <img src={logoUrl || "/jindungo_logo_v3.png"} alt="Piri-piri" className="w-full h-full object-contain p-0 scale-[1.18] filter drop-shadow-[0_0_12px_rgba(212,175,55,0.8)] relative z-10" />
                             </div>
 
                             <h1 className="text-3xl sm:text-4xl font-serif font-black tracking-tight text-white uppercase tracking-wider bg-gradient-to-r from-white via-[#F3E5AB] to-[#D4AF37] bg-clip-text text-transparent mb-2">

@@ -198,8 +198,8 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
 
     const handleSendOrder = async () => {
         if (isSending) return; // [SECURITY] Prevent Double-Click Race Condition
-        if (orderType === 'dine-in' && !tableNumber) return toast.error(selectedLanguage === 'PT' ? "Informe o número da mesa." : "Please enter the table number.");
-        if (orderType === 'delivery' && !address) return toast.error(selectedLanguage === 'PT' ? "Informe o endereço." : "Please enter the address.");
+        if (orderType === 'dine-in' && !tableNumber) return toast.error(t('fillTableError'));
+        if (orderType === 'delivery' && !address) return toast.error(t('fillAddressError'));
 
         setIsSending(true);
 
@@ -262,7 +262,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
 
                 // Fluxo de Pagamento MCX Real
                 if (paymentMethod === 'multicaixa') {
-                    toast.loading(selectedLanguage === 'PT' ? "A iniciar pagamento seguro no Multicaixa Express..." : "Starting secure payment on Multicaixa Express...", { id: 'mcx-toast' });
+                    toast.loading(t('mcxStartingPayment'), { id: 'mcx-toast' });
                     const { data: mcxData, error: mcxError } = await supabase.functions.invoke('process-payment', {
                         body: { 
                             amount: total, 
@@ -273,13 +273,13 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                     });
 
                     if (mcxError || mcxData?.error) {
-                        toast.error(mcxData?.error || (selectedLanguage === 'PT' ? "Falha na comunicação com o provedor de pagamentos." : "Payment provider communication failure."), { id: 'mcx-toast' });
+                        toast.error(mcxData?.error || t('mcxPaymentFailure'), { id: 'mcx-toast' });
                         await orderService.updateOrderStatus(newOrder.id, 'cancelled', 'Falha no gateway MCX');
                         setIsSending(false);
                         return; // Stop flow
                     }
 
-                    toast.success(selectedLanguage === 'PT' ? "Abra a sua App Multicaixa Express ou consulte o SMS para confirmar o PIN!" : "Open your Multicaixa Express App or check SMS to confirm PIN!", { id: 'mcx-toast', duration: 10000 });
+                    toast.success(t('mcxPinConfirm'), { id: 'mcx-toast', duration: 10000 });
                 }
 
                 setCreatedOrder(newOrder);
@@ -314,12 +314,12 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
             // For Start plan (no KDS feature), we MUST auto-redirect to WhatsApp so the owner gets the order.
             if (!features?.canUseKDS || !restaurantId) {
                 if (!restaurantId) {
-                    toast.success("Modo Preview: Pedido simulado via WhatsApp.");
+                    toast.success(t('previewModeMsg'));
                 }
                 const effectiveWhatsapp = whatsappNumber || '244923000000';
                 const link = generateWhatsAppLink(cartItems, total, orderType, { ...orderData, paymentMethod, changeFor }, effectiveWhatsapp);
                 if (!link) {
-                    toast.error(selectedLanguage === 'PT' ? "Número de WhatsApp do restaurante não configurado ou inválido." : "Restaurant WhatsApp number is not configured or invalid.");
+                    toast.error(t('whatsappError'));
                     setIsSending(false);
                     return;
                 }
@@ -333,7 +333,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                 }
             } else {
                 // Since we use the sophisticated tracker now, just close the modal
-                toast.success(selectedLanguage === 'PT' ? "Pedido Enviado com Sucesso! Acompanhe o status no ecrã principal." : "Order Sent Successfully! Track status on the main screen.", {
+                toast.success(t('orderSuccessMsg'), {
                     icon: '🚀',
                     duration: 5000
                 });
@@ -377,7 +377,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                 <div className="flex justify-between items-center mb-8">
                     <div>
                         <h2 className="text-2xl font-serif font-black text-gray-900 leading-tight">
-                            {features?.hasUpsell && showUpsell ? (selectedLanguage === 'PT' ? 'Sugestões para Si' : 'Suggestions for You') : t('checkout')}
+                            {features?.hasUpsell && showUpsell ? t('upsellSuggestions') : t('checkout')}
                         </h2>
                         <p className="text-[10px] uppercase tracking-[0.2em] font-black text-gray-400 mt-1">
                             {cartItems.length} {t('itemsSelected')}
@@ -410,7 +410,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                 <button onClick={() => step > 2 && setStep(3)} disabled={step < 3} className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all ${step === 3 ? 'bg-[#D4AF37] text-black shadow-md ring-2 ring-[#D4AF37]/30' : 'bg-gray-200 text-gray-500'}`}>3</button>
                             </div>
                             <span className="text-[11px] sm:text-xs font-black text-gray-500 uppercase tracking-wider">
-                                {step === 1 ? (selectedLanguage === 'PT' ? '1. Pedido' : '1. Order') : (step === 2 ? (selectedLanguage === 'PT' ? '2. Morada / Mesa' : '2. Details') : (selectedLanguage === 'PT' ? '3. Pagamento' : '3. Payment'))}
+                                {step === 1 ? t('stepOrder') : (step === 2 ? t('stepDetails') : t('stepPayment'))}
                             </span>
                         </div>
 
@@ -430,7 +430,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                         className={`flex-1 py-3 px-4 rounded-[14px] flex items-center justify-center gap-2 transition-all duration-500 font-bold text-sm ${orderType === 'takeaway' ? 'bg-white text-primary shadow-[0_4px_12px_rgba(0,0,0,0.1)] ring-1 ring-black/5 scale-[1.02]' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}
                                     >
                                         <ShoppingBag size={16} className={orderType === 'takeaway' ? 'animate-bounce-short' : ''} />
-                                        <span>Takeaway / Recolha</span>
+                                        <span>{t('takeaway')}</span>
                                     </button>
                                     <button
                                         onClick={() => setOrderType('delivery')}
@@ -507,7 +507,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                     disabled={cartItems.length === 0}
                                     className={`w-full p-4 sm:p-5 rounded-[24px] font-black text-base sm:text-lg transition-all flex items-center justify-center gap-2 ${cartItems.length === 0 ? 'opacity-50 cursor-not-allowed bg-gray-300 text-gray-500' : 'bg-[#D4AF37] text-black hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20'}`}
                                 >
-                                    <span>{selectedLanguage === 'PT' ? 'Avançar para Identificação' : 'Proceed to Details'}</span>
+                                    <span>{t('proceedToDetails')}</span>
                                     <ChevronRight size={20} />
                                 </button>
                             </div>
@@ -550,7 +550,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('table')} (Número, Nome ou Letra)</label>
                                             {initialTable && tableNumber === initialTable && (
                                                 <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full font-black border border-emerald-200">
-                                                    ✓ {selectedLanguage === 'PT' ? 'Mesa QR Code' : 'QR Code Table'}
+                                                    ✓ {t('tableQR')}
                                                 </span>
                                             )}
                                         </div>
@@ -565,13 +565,14 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                                 <Clock size={22} />
                                             </div>
                                             <div>
-                                                <h4 className="text-sm font-black text-amber-900">Tempo de Preparação Estimado</h4>
-                                                <p className="text-xs text-amber-700 font-bold">Pronto em 30-40 minutos</p>
+                                                <h4 className="text-sm font-black text-amber-900">{t('estimatedPrepTime')}</h4>
+                                                <p className="text-xs text-amber-700 font-bold">{t('readyInMinutes')}</p>
                                             </div>
                                         </div>
-                                        <div className="text-xs text-amber-900 bg-amber-500/10 p-4 rounded-2xl border border-amber-500/20 leading-relaxed font-semibold">
-                                            📌 <strong>Instruções de Recolha:</strong> O seu pedido estará disponível ao balcão. Apresente o seu nome ou número do pedido à chegada no restaurante.
-                                        </div>
+                                        <div 
+                                            className="text-xs text-amber-900 bg-amber-500/10 p-4 rounded-2xl border border-amber-500/20 leading-relaxed font-semibold"
+                                            dangerouslySetInnerHTML={{ __html: t('pickupInstructions') }}
+                                        />
                                     </div>
                                 )}
 
@@ -585,12 +586,12 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                                     setAddressReference(localStorage.getItem('customer_last_ref') || '');
                                                     const savedGps = localStorage.getItem('customer_last_gps');
                                                     if (savedGps) try { setGpsCoords(JSON.parse(savedGps)); } catch { /* ignore */ }
-                                                    toast.success(selectedLanguage === 'PT' ? 'Morada anterior restaurada!' : 'Previous address restored!');
+                                                    toast.success(t('restoreAddress'));
                                                 }}
                                                 className="w-full py-2.5 px-3 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl text-blue-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm"
                                             >
                                                 <MapPin size={14} />
-                                                {selectedLanguage === 'PT' ? 'Usar morada da última encomenda' : 'Use last order address'}
+                                                {t('useLastAddress')}
                                             </button>
                                         )}
 
@@ -602,7 +603,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                                     value={selectedZone ? JSON.stringify(selectedZone) : ''}
                                                     onChange={(e) => setSelectedZone(e.target.value ? JSON.parse(e.target.value) : null)}
                                                 >
-                                                    <option value="" className="text-gray-500">{selectedLanguage === 'PT' ? 'Selecione o seu bairro...' : 'Select your neighborhood...'}</option>
+                                                    <option value="" className="text-gray-500">{t('selectNeighborhood')}</option>
                                                     {deliveryConfig.zones.map((zone, idx) => (
                                                         <option key={idx} value={JSON.stringify(zone)} className="text-gray-900">
                                                             {zone.name} (+{zone.fee} Kz)
@@ -614,7 +615,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
 
                                         <div>
                                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                                                {selectedLanguage === 'PT' ? 'Toque no Mapa para assinalar a Morada' : 'Tap on the map to pin your address'}
+                                                {t('tapMap')}
                                             </label>
                                             <MapPicker 
                                                 onLocationSelected={(pos, addr) => {
@@ -657,28 +658,28 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                         onClick={() => setStep(1)}
                                         className="w-1/3 p-4 rounded-[20px] font-bold text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all flex items-center justify-center"
                                     >
-                                        {selectedLanguage === 'PT' ? 'Voltar' : 'Back'}
+                                        {t('back')}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => {
                                             if (!customerName || !customerPhone) {
-                                                toast.error(selectedLanguage === 'PT' ? 'Por favor preencha o seu nome e telemóvel.' : 'Please enter your name and phone.');
+                                                toast.error(t('fillRequiredError'));
                                                 return;
                                             }
                                             if (orderType === 'dine-in' && !tableNumber) {
-                                                toast.error(selectedLanguage === 'PT' ? 'Por favor informe o número da mesa.' : 'Please enter table number.');
+                                                toast.error(t('fillTableError'));
                                                 return;
                                             }
                                             if (orderType === 'delivery' && !address) {
-                                                toast.error(selectedLanguage === 'PT' ? 'Por favor informe a morada de entrega.' : 'Please enter delivery address.');
+                                                toast.error(t('fillAddressError'));
                                                 return;
                                             }
                                             setStep(3);
                                         }}
                                         className="w-2/3 p-4 rounded-[20px] font-black text-sm sm:text-base bg-[#D4AF37] text-black hover:scale-[1.02] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#D4AF37]/20"
                                     >
-                                        <span>{selectedLanguage === 'PT' ? 'Avançar para Pagamento' : 'Proceed to Payment'}</span>
+                                        <span>{t('proceedToPayment')}</span>
                                         <ChevronRight size={20} />
                                     </button>
                                 </div>
@@ -772,8 +773,8 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
 
                                         <p style={{ fontSize: '0.75rem', color: '#666', marginTop: '1rem', textAlign: 'center', fontStyle: 'italic' }}>
                                             {loyaltyPoints >= loyaltyConfig.goal
-                                                ? `${selectedLanguage === 'PT' ? 'Parabéns!' : 'Congratulations!'} ${t('rewardReady')}: ${loyaltyConfig.reward_text}`
-                                                : `${selectedLanguage === 'PT' ? 'Faltam' : 'Only'} ${loyaltyConfig.goal - loyaltyPoints} ${selectedLanguage === 'PT' ? 'pedidos para o seu prémio!' : 'orders left for your reward!'}`
+                                                ? `${t('congrats')} ${t('rewardReady')}: ${loyaltyConfig.reward_text}`
+                                                : `${t('rewardProgress')} ${loyaltyConfig.goal - loyaltyPoints} ${t('rewardRemaining')}`
                                             }
                                         </p>
 
@@ -834,7 +835,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                         <div className="mt-2 animate-in slide-in-from-right duration-300">
                                             <input
                                                 type="text"
-                                                placeholder={selectedLanguage === 'PT' ? "Precisa de troco para quanto? (Ex: 5000 Kz)" : "Do you need change for how much?"}
+                                                placeholder={t('changeForPlaceholder')}
                                                 className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-100 focus:border-green-400 outline-none transition-all text-sm font-medium text-gray-900 placeholder-gray-400"
                                                 value={changeFor}
                                                 onChange={e => setChangeFor(e.target.value)}
@@ -845,20 +846,20 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                     {(paymentMethod === 'express' || paymentMethod === 'multicaixa') && (
                                         <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-xl animate-in slide-in-from-right duration-300">
                                             <h4 className="text-[10px] font-black text-blue-800 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                                <Smartphone size={14} /> {selectedLanguage === 'PT' ? 'Pagamento Automático' : 'Automatic Payment'}
+                                                <Smartphone size={14} /> {t('autoPayment')}
                                             </h4>
                                             <div className="space-y-3">
                                                 <input
                                                     type="tel"
-                                                    placeholder={selectedLanguage === 'PT' ? "Nº de Telemóvel Associado (Ex: 9xx xxx xxx)" : "Associated Phone Number (Ex: 9xx xxx xxx)"}
+                                                    placeholder={t('mcxPhonePlaceholder')}
                                                     className="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none transition-all text-sm font-bold text-gray-900 placeholder-gray-400"
                                                     value={customerPhone}
                                                     onChange={e => setCustomerPhone(e.target.value)}
                                                 />
                                                 <div className="text-xs text-blue-600/80 font-medium space-y-1 ml-1 border-l-2 border-blue-200 pl-3">
-                                                    <p>1. {selectedLanguage === 'PT' ? 'Ao enviar, receberá uma notificação no telemóvel.' : 'Upon sending, you will receive a notification on your phone.'}</p>
-                                                    <p>2. {selectedLanguage === 'PT' ? 'Abra a app MCX Express e confirma com o teu PIN.' : 'Open the MCX Express app and confirm with your PIN.'}</p>
-                                                    <p>3. {selectedLanguage === 'PT' ? 'O pedido irá direto para a cozinha após o sucesso.' : 'The order will go straight to the kitchen upon success.'}</p>
+                                                    <p>1. {t('mcxStep1')}</p>
+                                                    <p>2. {t('mcxStep2')}</p>
+                                                    <p>3. {t('mcxStep3')}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -919,7 +920,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                         onClick={() => setStep(2)}
                                         className="w-1/3 p-4 rounded-[20px] font-bold text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all flex items-center justify-center"
                                     >
-                                        {selectedLanguage === 'PT' ? 'Voltar' : 'Back'}
+                                        {t('back')}
                                     </button>
                                     <div className="w-2/3">
                                         <button

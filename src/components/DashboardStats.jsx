@@ -245,22 +245,23 @@ const DashboardStats = ({ restaurantId }) => {
             if (resData) setRestaurantInfo(resData);
 
             const { start, end } = getDateRange(periodKey);
-            const { data: analytics } = await orderService.getAdvancedAnalytics(restaurantId, start, end);
+            const { data: analytics } = await orderService.getAdvancedAnalytics(restaurantId, start, end, periodKey);
 
             const mockData = MOCK_PERIOD_DATA[periodKey] || MOCK_PERIOD_DATA.hoje;
 
             if (analytics && analytics.totalOrders > 0) {
                 setIsDemoMode(false);
                 const mix = Object.entries(analytics.revenueByCategory || {}).map(([name, value]) => ({ name, value }));
-                const topProd = (analytics.topProducts || []).map(p => ({ name: p.name, value: p.quantity * p.price }));
+                const topProd = (analytics.topProducts || []).map(p => ({ name: p.name, value: p.value }));
 
                 setSalesStats(prev => ({
                     ...prev,
                     revenue: analytics.totalRevenue,
                     ordersCount: analytics.totalOrders,
                     avgTicket: analytics.avgTicket,
-                    growth: `${analytics.cancellationRate || 0}% Canc.`,
+                    growth: analytics.growth || "+0%",
                     chartTitle: mockData.title,
+                    chartData: analytics.chartData && analytics.chartData.length > 0 ? analytics.chartData : prev.chartData,
                     categoriesMix: mix.length > 0 ? mix : prev.categoriesMix,
                     topDishes: topProd.length > 0 ? topProd : prev.topDishes
                 }));

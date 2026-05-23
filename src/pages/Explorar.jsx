@@ -125,8 +125,8 @@ const Explorar = () => {
             }`}>
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
                     <div onClick={() => navigate('/')} className="flex items-center gap-3 cursor-pointer group select-none">
-                        <div className="w-9 h-9 bg-black/50 rounded-full flex items-center justify-center border border-[#D4AF37]/40 group-hover:border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.2)] transition-all overflow-hidden shrink-0">
-                            <img src={logoUrl || "/jindungo_logo_v3.png"} alt="Logo" className="w-full h-full object-contain p-1" />
+                        <div className="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center border border-[#D4AF37]/40 group-hover:border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.2)] shadow-2xl transition-all overflow-hidden shrink-0 transition-all duration-300">
+                            <img src={logoUrl || "/jindungo_logo_v3.png"} alt="Logo" className="w-full h-full object-contain p-0 scale-[1.18] filter drop-shadow-[0_0_8px_rgba(212,175,55,0.4)] transition-transform duration-300 group-hover:scale-[1.23]" />
                         </div>
                         <span className="font-serif font-black text-xl tracking-tight text-white group-hover:text-[#D4AF37] transition-colors uppercase">
                             Menus<span className="text-[#D4AF37]">Jindungo</span>
@@ -344,8 +344,8 @@ const Explorar = () => {
                     {/* Left: Logo & Copyright */}
                     <div className="md:col-span-5 space-y-4">
                         <div className="flex items-center gap-3 select-none">
-                            <div className="w-9 h-9 bg-black/50 rounded-full flex items-center justify-center border border-[#D4AF37]/40 shadow-inner">
-                                <img src="/jindungo_logo_v3.png" alt="Logo" className="w-full h-full object-contain p-1" />
+                            <div className="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center border border-[#D4AF37]/40 shadow-2xl overflow-hidden shrink-0">
+                                <img src={logoUrl || "/jindungo_logo_v3.png"} alt="Logo" className="w-full h-full object-contain p-0 scale-[1.18] filter drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
                             </div>
                             <span className="font-serif font-black text-xl uppercase tracking-tight text-white">
                                 Menus<span className="text-[#D4AF37]">Jindungo</span>

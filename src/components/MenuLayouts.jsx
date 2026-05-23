@@ -3,8 +3,10 @@ import SmartImage from './SmartImage';
 import Skeleton from './Skeleton';
 import { Plus, Minus, ChevronDown, ChevronUp, X, Check } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { getTranslation } from '../utils/i18n';
+import { getTranslation, translateFoodText } from '../utils/i18n';
 import toast from 'react-hot-toast';
+
+const kzAOFormatter = new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' });
 
 // Helper for dark mode conditional styles
 const getCardStyle = (darkMode, customBg) => {
@@ -27,8 +29,14 @@ const getSubTextStyle = (darkMode, customBg) => {
 };
 
 const getTrans = (item, lang, field) => {
-    if (!item?.translations || !item.translations[lang.toLowerCase()]) return item?.[field];
-    return item.translations[lang.toLowerCase()][field] || item?.[field];
+    if (item?.translations && item.translations[lang.toLowerCase()] && item.translations[lang.toLowerCase()][field]) {
+        return item.translations[lang.toLowerCase()][field];
+    }
+    const originalText = item?.[field];
+    if (field === 'name' || field === 'desc' || field === 'composition') {
+        return translateFoodText(originalText, lang);
+    }
+    return originalText;
 };
 
 const getCompositionStyle = (darkMode, customBg) => {
@@ -58,7 +66,7 @@ const CustomizationBottomSheet = ({ item, isOpen, onClose, primaryColor, darkMod
             if (hasVariants) {
                 generated.push({
                     id: 'var',
-                    title: 'Escolha a sua opção',
+                    title: getTranslation(selectedLanguage, 'chooseOption'),
                     required: true,
                     min: 1,
                     max: 1,
@@ -67,8 +75,8 @@ const CustomizationBottomSheet = ({ item, isOpen, onClose, primaryColor, darkMod
             }
             generated.push({
                 id: 'extras',
-                title: 'Adicionais & Extras',
-                subtitle: 'Personalize o seu pedido (Opcional)',
+                title: getTranslation(selectedLanguage, 'extras'),
+                subtitle: getTranslation(selectedLanguage, 'customizeOrder'),
                 required: false,
                 min: 0,
                 max: 3,
@@ -82,7 +90,7 @@ const CustomizationBottomSheet = ({ item, isOpen, onClose, primaryColor, darkMod
             });
         }
         return generated;
-    }, [item, existingGroups, hasVariants]);
+    }, [item, existingGroups, hasVariants, selectedLanguage]);
 
     useEffect(() => {
         if (isOpen && item?.id) {
@@ -110,7 +118,9 @@ const CustomizationBottomSheet = ({ item, isOpen, onClose, primaryColor, darkMod
                 return { ...prev, [groupId]: current.filter(n => n !== option.name) };
             }
             if (current.length >= max) {
-                toast.error(`Pode selecionar no máximo ${max} opções.`);
+                const maxErr = getTranslation(selectedLanguage, 'maxOptionsError');
+                const optWord = selectedLanguage === 'PT' ? 'opções' : (selectedLanguage === 'FR' ? 'options' : (selectedLanguage === 'ES' ? 'opciones' : 'options'));
+                toast.error(`${maxErr} ${max} ${optWord}.`);
                 return prev;
             }
             return { ...prev, [groupId]: [...current, option.name] };
@@ -139,7 +149,8 @@ const CustomizationBottomSheet = ({ item, isOpen, onClose, primaryColor, darkMod
         for (const g of groups) {
             const sel = selectedOptions[g.id] || [];
             if (g.required && sel.length < (g.min || 1)) {
-                toast.error(`Por favor, selecione uma opção em: ${g.title}`);
+                const reqErr = getTranslation(selectedLanguage, 'selectRequiredError');
+                toast.error(`${reqErr}: ${g.title}`);
                 return;
             }
         }
@@ -151,7 +162,7 @@ const CustomizationBottomSheet = ({ item, isOpen, onClose, primaryColor, darkMod
             names.forEach(name => {
                 const opt = grp.options?.find(o => o.name === name);
                 if (opt && Number(opt.price) > 0) {
-                    parts.push(`${name} (+${new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(opt.price).replace('AOA', 'Kz')})`);
+                    parts.push(`${name} (+${kzAOFormatter.format(opt.price).replace('AOA', 'Kz')})`);
                 } else {
                     parts.push(name);
                 }
@@ -216,18 +227,21 @@ const CustomizationBottomSheet = ({ item, isOpen, onClose, primaryColor, darkMod
                 <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6 custom-scrollbar text-left relative z-10">
                     {groups.map((group, gIdx) => {
                         const selected = selectedOptions[group.id] || [];
+                        const t = (key) => getTranslation(selectedLanguage, key);
                         return (
                             <div key={group.id || gIdx} className="space-y-3">
                                 <div className="flex justify-between items-baseline border-b pb-2 dark:border-gray-800/80">
                                     <div>
                                         <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                             {group.title}
-                                            {group.required && <span className="text-xs bg-amber-500/20 text-amber-500 font-bold px-2 py-0.5 rounded-md border border-amber-500/20">Obrigatório</span>}
+                                            {group.required && <span className="text-xs bg-amber-500/20 text-amber-500 font-bold px-2 py-0.5 rounded-md border border-amber-500/20">{t('obligatory')}</span>}
                                         </h3>
                                         {group.subtitle && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{group.subtitle}</p>}
                                     </div>
                                     <span className="text-xs font-semibold text-gray-400">
-                                        {group.max === 1 ? 'Escolha 1' : `Até ${group.max}`}
+                                        {group.max === 1 
+                                            ? (selectedLanguage === 'PT' ? 'Escolha 1' : (selectedLanguage === 'FR' ? 'Choisissez 1' : (selectedLanguage === 'ES' ? 'Elija 1' : 'Choose 1'))) 
+                                            : (selectedLanguage === 'PT' ? 'Até ' : (selectedLanguage === 'FR' ? 'Jusqu\'à ' : (selectedLanguage === 'ES' ? 'Hasta ' : 'Up to '))) + group.max}
                                     </span>
                                 </div>
 
@@ -259,7 +273,7 @@ const CustomizationBottomSheet = ({ item, isOpen, onClose, primaryColor, darkMod
                                                 </div>
                                                 {Number(opt.price) > 0 && (
                                                     <span className="text-xs sm:text-sm font-bold text-gray-600 dark:text-gray-400 bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-lg">
-                                                        +{new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(opt.price).replace('AOA', 'Kz')}
+                                                        +{kzAOFormatter.format(opt.price).replace('AOA', 'Kz')}
                                                     </span>
                                                 )}
                                             </button>
@@ -271,11 +285,11 @@ const CustomizationBottomSheet = ({ item, isOpen, onClose, primaryColor, darkMod
                     })}
 
                     <div className="space-y-2 pt-2">
-                        <h3 className="text-base font-bold text-gray-900 dark:text-white">Alguma observação especial?</h3>
+                        <h3 className="text-base font-bold text-gray-900 dark:text-white">{getTranslation(selectedLanguage, 'specialNotes')}</h3>
                         <textarea
                             value={notes}
                             onChange={e => setNotes(e.target.value)}
-                            placeholder="Ex: Ponto da carne, sem cebola, molho à parte..."
+                            placeholder={getTranslation(selectedLanguage, 'specialNotesPlaceholder')}
                             rows={2}
                             className="w-full rounded-2xl p-4 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 placeholder:text-gray-400 resize-none transition-all"
                         />
@@ -308,9 +322,9 @@ const CustomizationBottomSheet = ({ item, isOpen, onClose, primaryColor, darkMod
                         className="flex-1 py-4 px-6 rounded-2xl font-black text-black bg-[#D4AF37] shadow-[0_8px_25px_rgba(212,175,55,0.4)] hover:brightness-110 active:scale-95 transition-all flex items-center justify-between group overflow-hidden relative cursor-pointer"
                     >
                         <span className="absolute inset-0 bg-white/20 opacity-0 group-active:opacity-100 transition-opacity" />
-                        <span className="text-base sm:text-lg font-bold">Adicionar</span>
+                        <span className="text-base sm:text-lg font-bold">{getTranslation(selectedLanguage, 'addToCart')}</span>
                         <span className="bg-black/10 px-3 py-1 rounded-xl text-sm sm:text-base font-black">
-                            {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(totalOrderValue).replace('AOA', 'Kz')}
+                            {kzAOFormatter.format(totalOrderValue).replace('AOA', 'Kz')}
                         </span>
                     </button>
                 </div>
@@ -323,6 +337,7 @@ const MenuItemList = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
     const { getItemQuantity } = useCart();
     const quantityInCart = getItemQuantity(item.id);
     const composition = getTrans(item, selectedLanguage, 'composition');
+    const t = (key) => getTranslation(selectedLanguage, key);
 
     return (
         <div
@@ -339,7 +354,7 @@ const MenuItemList = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
                 />
                 {item.isHighlight && (
                     <span className="absolute top-2 left-2 bg-[#D4AF37] text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg z-10 tracking-widest uppercase border border-white/20">
-                        ★ Destaque
+                        ★ {t('highlight')}
                     </span>
                 )}
                 {quantityInCart > 0 && (
@@ -366,22 +381,22 @@ const MenuItemList = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
 
                 <div className="flex justify-between items-end mt-3 pt-2 border-t border-gray-100 dark:border-gray-800/60">
                     <span className="font-black text-base sm:text-lg tracking-tight" style={{ color: primaryColor }}>
-                        {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(parseInt(String(item.price).replace(/[^0-9]/g, ''), 10) || 0)}
+                        {kzAOFormatter.format(parseInt(String(item.price).replace(/[^0-9]/g, ''), 10) || 0)}
                     </span>
 
                     {item.available === false ? (
                         <div className="px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50">
-                            Esgotado
+                            {t('soldOut')}
                         </div>
                     ) : restaurantClosed ? (
                         <div className="px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-500">
-                            Suspenso
+                            {t('suspended')}
                         </div>
                     ) : !isEditing ? (
                         <button
                             onClick={(e) => { e.stopPropagation(); onOpenModal(); }}
                             className="w-10 h-10 rounded-2xl bg-[#D4AF37] text-black shadow-[0_4px_15px_rgba(212,175,55,0.4)] hover:scale-110 active:scale-95 transition-all flex items-center justify-center group/btn relative overflow-hidden"
-                            title="Adicionar ao pedido"
+                            title={t('addToCart')}
                         >
                             <span className="absolute inset-0 bg-white/25 opacity-0 group-active/btn:opacity-100 transition-opacity" />
                             <Plus size={20} strokeWidth={3} />
@@ -397,53 +412,64 @@ const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
     const { getItemQuantity } = useCart();
     const quantityInCart = getItemQuantity(item.id);
     const composition = getTrans(item, selectedLanguage, 'composition');
+    const t = (key) => getTranslation(selectedLanguage, key);
 
-    const formattedPrice = new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' })
+    const formattedPrice = kzAOFormatter
         .format(parseInt(String(item.price).replace(/[^0-9]/g, ''), 10) || 0)
-        .replace('AOA', '')
+        .replace('AOA', 'Kz')
         .trim();
 
     return (
         <div
             onClick={() => { if (!isEditing && !restaurantClosed && item.available !== false) onOpenModal(); }}
-            className={`rounded-2xl sm:rounded-[28px] shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-300 overflow-hidden border flex flex-col h-full group relative cursor-pointer active:scale-[0.99] bg-[#141414] border-[#262626] hover:border-[#E5C27B]/60 hover:shadow-[0_15px_35px_rgba(0,0,0,0.8)] ${
-                item.available === false ? 'opacity-50 grayscale cursor-not-allowed' : ''
+            className={`rounded-2xl sm:rounded-[28px] shadow-[0_8px_25px_rgba(0,0,0,0.5)] transition-all duration-300 overflow-hidden border flex flex-col h-full group relative cursor-pointer active:scale-[0.99] bg-[#141414] border-[#262626] hover:border-[#E5C27B]/60 hover:shadow-[0_12px_30px_rgba(0,0,0,0.7)] ${
+                item.available === false ? 'opacity-65 grayscale cursor-not-allowed' : ''
             }`}
         >
             {/* Top Image Container matching screenshot */}
-            <div className="relative h-32 sm:h-52 w-full overflow-hidden rounded-t-2xl sm:rounded-t-[28px] bg-[#1C1C1C] shadow-inner">
+            <div className="relative h-28 sm:h-44 w-full overflow-hidden rounded-t-2xl sm:rounded-t-[28px] bg-[#1C1C1C] shadow-inner">
                 <SmartImage
                     src={item.img_url || item.img}
                     alt={item.name}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-transparent opacity-90"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-transparent opacity-80"></div>
                 
                 {item.isHighlight && (
-                    <span className="absolute top-3 left-3 bg-[#E5C27B] text-gray-950 text-[9px] font-black px-3 py-1 rounded-full shadow-lg z-10 tracking-widest uppercase border border-amber-300">
-                        ★ Destaque
+                    <span className="absolute top-2.5 left-2.5 bg-[#E5C27B] text-gray-950 text-[8px] sm:text-[9px] font-black px-2.5 py-0.5 rounded-full shadow-lg z-10 tracking-widest uppercase border border-amber-300/40">
+                        ★ {t('highlight')}
                     </span>
                 )}
                 
                 {quantityInCart > 0 && (
-                    <div className="absolute top-3 right-3 bg-gradient-to-r from-[#D4AF37] via-[#E5C27B] to-[#C59B27] text-gray-950 border border-white/20 text-xs font-black w-8 h-8 rounded-full flex items-center justify-center shadow-2xl z-20 animate-bounce">
+                    <div className="absolute top-2.5 right-2.5 bg-gradient-to-r from-[#D4AF37] via-[#E5C27B] to-[#C59B27] text-gray-950 border border-white/20 text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center shadow-2xl z-20 animate-bounce">
                         {quantityInCart}
                     </div>
                 )}
 
-                {/* Floating Price & Cart Pill matching screenshot */}
-                <div className="absolute bottom-3 right-3 z-20 bg-[#181818]/90 backdrop-blur-xl border border-[#E5C27B]/40 rounded-full py-1.5 px-4 flex items-center gap-3 shadow-[0_4px_20px_rgba(0,0,0,0.95)] group-hover:border-[#E5C27B] transition-all">
-                    <span className="text-xs sm:text-sm font-black text-[#E5C27B] flex items-center gap-1.5">
-                        <span className="w-4 h-4 rounded-full bg-gradient-to-r from-[#E5C27B] to-amber-600 inline-block shadow-[0_0_8px_rgba(229,194,123,0.8)] border border-amber-300/50 flex items-center justify-center text-[9px] text-gray-950 font-black">💰</span>
-                        {formattedPrice || '20'}
-                    </span>
-                    <div className="w-1 h-1 rounded-full bg-[#E5C27B]/40"></div>
-                    <span className="w-6 h-6 rounded-full bg-white/10 hover:bg-[#E5C27B] hover:text-black transition-colors flex items-center justify-center text-xs">🛒</span>
-                </div>
+                {/* International Standard: Floating Add Button (UberEats & Glovo style) */}
+                {item.available !== false && !restaurantClosed && !isEditing && (
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); onOpenModal(); }}
+                        className="absolute bottom-2.5 right-2.5 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#E5C27B] to-[#C59B27] text-gray-950 flex items-center justify-center font-bold shadow-[0_4px_12px_rgba(229,194,123,0.5)] hover:scale-110 active:scale-95 transition-all"
+                        title={t('addToCart')}
+                    >
+                        <Plus size={14} strokeWidth={3.5} />
+                    </button>
+                )}
+
+                {/* Sold Out Overlay */}
+                {item.available === false && (
+                    <div className="absolute inset-0 bg-black/70 flex items-center justify-center backdrop-blur-[1px]">
+                        <span className="bg-red-500/90 text-white text-[8px] sm:text-[9px] font-black tracking-widest uppercase px-2.5 py-0.5 rounded-full shadow-lg border border-red-400/20">
+                            {t('soldOut')}
+                        </span>
+                    </div>
+                )}
             </div>
 
             {/* Bottom Text Area matching screenshot */}
-            <div className="p-3 sm:p-4.5 flex-1 flex flex-col justify-between relative bg-[#141414]">
+            <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between bg-[#141414]">
                 <div>
                     <h3 className="font-serif font-bold text-[13px] sm:text-base leading-snug text-[#EAEAEC] mb-1 group-hover:text-[#E5C27B] transition-colors">
                         {getTrans(item, selectedLanguage, 'name')}
@@ -452,19 +478,23 @@ const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
                         {getTrans(item, selectedLanguage, 'desc')}
                     </p>
                     {composition && (
-                        <div className="text-[11px] italic text-[#E5C27B]/80 mt-2 font-medium">
+                        <div className="text-[10px] sm:text-[11px] italic text-[#E5C27B]/80 mt-1.5 font-medium">
                             ✨ {composition}
                         </div>
                     )}
                 </div>
 
-                {item.available === false && (
-                    <div className="mt-3 pt-2 border-t border-gray-800/80 flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-wider bg-red-950/50 text-red-400 px-3 py-1 rounded-full border border-red-800">
-                            Esgotado
+                {/* Clean Bottom Price Bar (UberEats / Glovo style) */}
+                <div className="mt-3 pt-2.5 border-t border-gray-800/60 flex items-center justify-between">
+                    <span className="text-xs sm:text-sm font-black text-[#E5C27B] tracking-wide">
+                        {formattedPrice}
+                    </span>
+                    {restaurantClosed && (
+                        <span className="text-[8px] font-black uppercase tracking-wider bg-gray-800 text-gray-400 px-2 py-0.5 rounded-md">
+                            {t('suspended')}
                         </span>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -517,6 +547,7 @@ export const ListLayout = ({ items = [], ...props }) => {
 export const MinimalLayout = ({ items = [], primaryColor, fontFamily, isEditing, darkMode, selectedLanguage = 'PT', customBgInfo, restaurantClosed, onItemAdded }) => {
     const [selectedModalItem, setSelectedModalItem] = useState(null);
     const { getItemQuantity } = useCart();
+    const t = (key) => getTranslation(selectedLanguage, key);
 
     return (
         <>
@@ -557,13 +588,14 @@ export const MinimalLayout = ({ items = [], primaryColor, fontFamily, isEditing,
 
                             <div>
                                 {item.available === false ? (
-                                    <span className="text-[10px] font-bold text-red-500 uppercase bg-red-500/10 px-2.5 py-1 rounded-lg">Esgotado</span>
+                                    <span className="text-[10px] font-bold text-red-500 uppercase bg-red-500/10 px-2.5 py-1 rounded-lg">{t('soldOut')}</span>
                                 ) : restaurantClosed ? (
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase bg-gray-500/10 px-2.5 py-1 rounded-lg">Suspenso</span>
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase bg-gray-500/10 px-2.5 py-1 rounded-lg">{t('suspended')}</span>
                                 ) : !isEditing ? (
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setSelectedModalItem(item); }}
                                         className="w-10 h-10 rounded-2xl bg-[#D4AF37] text-black flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all"
+                                        title={t('addToCart')}
                                     >
                                         <Plus size={18} strokeWidth={3} />
                                     </button>

@@ -361,6 +361,7 @@ const AdminDashboard = () => {
                 menuItems={menuItems}
                 location={location}
                 globalLogoUrl={globalLogoUrl}
+                restaurantLogoUrl={config?.logoUrl}
                 signOut={handleLogout}
                 restaurantName={restaurant?.name}
                 restaurantSlug={restaurant?.slug}

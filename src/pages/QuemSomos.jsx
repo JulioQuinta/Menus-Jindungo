@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSettings } from '../context/SettingsContext';
 import { Sparkles, Globe, Shield, Heart, Award, Compass, ChefHat, MapPin, ArrowRight, CheckCircle2, Users, Flame, Rocket } from 'lucide-react';
 
 const QuemSomos = () => {
+    const { logoUrl } = useSettings();
     const [isScrolled, setIsScrolled] = useState(false);
     const navigate = useNavigate();
 
@@ -26,8 +28,8 @@ const QuemSomos = () => {
             }`}>
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
                     <div onClick={() => navigate('/')} className="flex items-center gap-3 cursor-pointer group select-none">
-                        <div className="w-10 h-10 bg-black/80 rounded-full flex items-center justify-center border border-[#D4AF37]/40 group-hover:border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all overflow-hidden shrink-0">
-                            <img src="/jindungo_logo_v3.png" alt="Logo" className="w-7 h-7 object-contain filter drop-shadow-[0_0_8px_rgba(212,175,55,0.8)]" />
+                        <div className="w-12 h-12 bg-black/80 rounded-full flex items-center justify-center border border-[#D4AF37]/40 group-hover:border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.3)] shadow-2xl transition-all overflow-hidden shrink-0 transition-all duration-300">
+                            <img src={logoUrl || "/jindungo_logo_v3.png"} alt="Logo" className="w-full h-full object-contain p-0 scale-[1.18] filter drop-shadow-[0_0_8px_rgba(212,175,55,0.4)] transition-transform duration-300 group-hover:scale-[1.23]" />
                         </div>
                         <span className="font-serif font-black text-xl tracking-tight text-white group-hover:text-[#D4AF37] transition-colors uppercase">
                             Menus<span className="text-[#D4AF37]">Jindungo</span>
@@ -83,9 +85,9 @@ const QuemSomos = () => {
                             <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/10 rounded-full blur-3xl pointer-events-none"></div>
                             
                             {/* Giant Center Chili Crest */}
-                            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-[#2A2415] via-[#121214] to-[#1A160C] border-4 border-[#D4AF37] p-2 flex items-center justify-center shadow-[0_0_50px_rgba(212,175,55,0.6)] mb-8 relative group-hover:rotate-12 transition-transform duration-700">
+                            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-[#2A2415] via-[#121214] to-[#1A160C] border-4 border-[#D4AF37] p-0 flex items-center justify-center shadow-[0_0_50px_rgba(212,175,55,0.6)] mb-8 relative group-hover:rotate-12 transition-transform duration-700 overflow-hidden">
                                 <div className="absolute inset-0 rounded-full bg-[#D4AF37]/10 animate-pulse"></div>
-                                <img src="/jindungo_logo_v3.png" alt="Piri-piri" className="w-20 h-20 object-contain filter drop-shadow-[0_0_15px_rgba(212,175,55,0.9)] relative z-10" />
+                                <img src={logoUrl || "/jindungo_logo_v3.png"} alt="Piri-piri" className="w-full h-full object-contain p-0 scale-[1.18] filter drop-shadow-[0_0_15px_rgba(212,175,55,0.9)] relative z-10 transition-transform duration-500 group-hover:scale-[1.23]" />
                             </div>
 
                             <h3 className="text-2xl font-serif font-black text-white mb-2">A Essência Jindungo</h3>
@@ -272,8 +274,8 @@ const QuemSomos = () => {
                 <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
                     <div className="md:col-span-5 space-y-4">
                         <div className="flex items-center gap-3 select-none">
-                            <div className="w-9 h-9 bg-black rounded-full flex items-center justify-center border border-[#D4AF37]/40 shadow-inner">
-                                <img src="/jindungo_logo_v3.png" alt="Logo" className="w-6 h-6 object-contain" />
+                            <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center border border-[#D4AF37]/40 shadow-2xl overflow-hidden shrink-0">
+                                <img src={logoUrl || "/jindungo_logo_v3.png"} alt="Logo" className="w-full h-full object-contain p-0 scale-[1.18] filter drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
                             </div>
                             <span className="font-serif font-black text-xl uppercase tracking-tight text-white">
                                 Menus<span className="text-[#D4AF37]">Jindungo</span>

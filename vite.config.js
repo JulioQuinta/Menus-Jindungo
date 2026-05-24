@@ -32,6 +32,7 @@ export default defineConfig({
         ]
       },
       workbox: {
+        globPatterns: ['**/*.{js,css,html}', '**/jindungo_logo_v3.png'], // Apenas código e o logotipo principal essencial
         maximumFileSizeToCacheInBytes: 5000000, // [NEW] Allow files up to 5MB to be cached (important for large bundles)
         runtimeCaching: [
           {
@@ -97,6 +98,7 @@ export default defineConfig({
   build: {
     target: 'esnext',
     cssCodeSplit: true,
+    emptyOutDir: true, // Garante que o Vite limpa a pasta dist antes de buildar
     rollupOptions: {
       output: {
         manualChunks: {

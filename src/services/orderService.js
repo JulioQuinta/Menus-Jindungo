@@ -82,7 +82,7 @@ export const orderService = {
         try {
             const { data, error } = await supabase
                 .from('orders')
-                .select('*, restaurant:restaurants(name)')
+                .select('*, restaurant:restaurants(name, business_info)')
                 .eq('id', orderId)
                 .single();
 
@@ -223,7 +223,20 @@ export const orderService = {
                 cancellationRate,
                 avgTicket,
                 growth,
-                chartData: getChartData(activeOrders, prevActiveOrders, periodKey, startDate, endDate)
+                chartData: getChartData(activeOrders, prevActiveOrders, periodKey, startDate, endDate),
+                recentOrders: (allOrdersCombined || [])
+                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                    .slice(0, 5)
+                    .map(o => ({
+                        id: String(o.id).slice(0, 4).toUpperCase(),
+                        customer: o.customer_name || 'Consumidor Final',
+                        status: o.status === 'pending' ? 'Novo' : 
+                                (o.status === 'preparing' ? 'Na Cozinha' : 
+                                (o.status === 'ready' ? 'Pronto' : 
+                                (o.status === 'cancelled' ? 'Cancelado' : 'Concluído'))),
+                        table: new Date(o.created_at).toLocaleDateString('pt-PT'),
+                        avatar: o.customer_name ? (['👴🏽', '👨🏽', '👩🏽', '👨🏼‍🦱'][o.customer_name.charCodeAt(0) % 4]) : '👤'
+                    }))
             };
 
             const customerStats = {};

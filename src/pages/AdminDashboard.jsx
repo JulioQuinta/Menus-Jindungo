@@ -511,7 +511,7 @@ const AdminDashboard = () => {
                         } />
 
                         <Route path="/reservations" element={
-                            <ReservationManager restaurantId={restaurant?.id} />
+                            <ReservationManager restaurantId={restaurant?.id} restaurantName={restaurant?.name} />
                         } />
 
                         <Route path="/info" element={

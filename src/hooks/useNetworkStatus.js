@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { syncOfflineOrders } from '../utils/offlineSync';
 
 export const useNetworkStatus = () => {
     const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -16,6 +17,9 @@ export const useNetworkStatus = () => {
                 toastId = null;
             }
             toast.success("Ligação restaurada!", { id: 'network-status' });
+            
+            // Sync any offline orders immediately when internet returns
+            setTimeout(syncOfflineOrders, 1000);
         };
 
         const handleOffline = () => {
@@ -28,6 +32,18 @@ export const useNetworkStatus = () => {
 
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
+
+        // Periodically attempt offline sync every 15 seconds if online
+        const syncInterval = setInterval(() => {
+            if (navigator.onLine) {
+                syncOfflineOrders();
+            }
+        }, 15000);
+
+        // Run sync on mount once in case we started online with pending items
+        if (navigator.onLine) {
+            syncOfflineOrders();
+        }
 
         // Opcional: Monitorizar a qualidade da ligação (Connection API) se suportada
         const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
@@ -53,12 +69,14 @@ export const useNetworkStatus = () => {
                 window.removeEventListener('online', handleOnline);
                 window.removeEventListener('offline', handleOffline);
                 connection.removeEventListener('change', updateConnectionStatus);
+                clearInterval(syncInterval);
             };
         }
 
         return () => {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
+            clearInterval(syncInterval);
         };
     }, []);
 

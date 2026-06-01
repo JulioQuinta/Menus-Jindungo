@@ -64,9 +64,9 @@ class ErrorBoundary extends React.Component {
 
                         <div className="mt-10 pt-8 border-t border-white/5 w-full text-left">
                             <p className="text-[10px] uppercase tracking-widest font-bold text-gray-500 mb-3">Detalhes Técnicos (Debug)</p>
-                            <div className="bg-black/40 rounded-xl p-4 border border-white/5 max-h-[120px] overflow-auto">
+                            <div className="bg-black/40 rounded-xl p-4 border border-white/5 max-h-[160px] overflow-auto">
                                 <pre className="text-[10px] font-mono text-red-400/80 break-all whitespace-pre-wrap">
-                                    {this.state.error && this.state.error.toString()}
+                                    {this.state.error && (this.state.error.stack || this.state.error.toString())}
                                 </pre>
                             </div>
                         </div>

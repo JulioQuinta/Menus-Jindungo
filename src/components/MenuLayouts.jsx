@@ -8,6 +8,10 @@ import toast from 'react-hot-toast';
 
 const kzAOFormatter = new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' });
 
+const isItemSoldOut = (item) => {
+    return item?.available === false || (item?.track_stock && (item?.stock_quantity === null || item?.stock_quantity <= 0));
+};
+
 // Helper for dark mode conditional styles
 const getCardStyle = (darkMode, customBg) => {
     if (customBg?.isCustom) {
@@ -339,11 +343,13 @@ const MenuItemList = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
     const composition = getTrans(item, selectedLanguage, 'composition');
     const t = (key) => getTranslation(selectedLanguage, key);
 
+    const isSoldOut = isItemSoldOut(item);
+
     return (
         <div
-            onClick={() => { if (!isEditing && !restaurantClosed && item.available !== false) onOpenModal(); }}
+            onClick={() => { if (!isEditing && !restaurantClosed) onOpenModal(); }}
             className={`rounded-2xl sm:rounded-3xl shadow-sm border p-2.5 sm:p-4.5 flex gap-3 sm:gap-4 transition-all duration-300 animate-fade-in-up group relative overflow-hidden cursor-pointer active:scale-[0.99] ${getCardStyle(darkMode, customBgInfo)}
-                ${item.available === false ? 'opacity-60 grayscale-[0.8] cursor-not-allowed' : 'hover:shadow-xl hover:border-[#D4AF37]/50'}
+                ${isSoldOut ? 'opacity-85 hover:border-[#D4AF37]/30' : 'hover:shadow-xl hover:border-[#D4AF37]/50'}
             `}
         >
             <div className="w-20 h-20 sm:w-32 sm:h-32 flex-shrink-0 rounded-[14px] sm:rounded-2xl overflow-hidden relative group-hover:scale-105 transition-transform duration-500 shadow-md">
@@ -384,7 +390,7 @@ const MenuItemList = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
                         {kzAOFormatter.format(parseInt(String(item.price).replace(/[^0-9]/g, ''), 10) || 0)}
                     </span>
 
-                    {item.available === false ? (
+                    {isSoldOut ? (
                         <div className="px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50">
                             {t('soldOut')}
                         </div>
@@ -414,6 +420,8 @@ const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
     const composition = getTrans(item, selectedLanguage, 'composition');
     const t = (key) => getTranslation(selectedLanguage, key);
 
+    const isSoldOut = isItemSoldOut(item);
+
     const formattedPrice = kzAOFormatter
         .format(parseInt(String(item.price).replace(/[^0-9]/g, ''), 10) || 0)
         .replace('AOA', 'Kz')
@@ -421,9 +429,9 @@ const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
 
     return (
         <div
-            onClick={() => { if (!isEditing && !restaurantClosed && item.available !== false) onOpenModal(); }}
+            onClick={() => { if (!isEditing && !restaurantClosed) onOpenModal(); }}
             className={`rounded-2xl sm:rounded-[28px] shadow-[0_8px_25px_rgba(0,0,0,0.5)] transition-all duration-300 overflow-hidden border flex flex-col h-full group relative cursor-pointer active:scale-[0.99] bg-[#141414] border-[#262626] hover:border-[#E5C27B]/60 hover:shadow-[0_12px_30px_rgba(0,0,0,0.7)] ${
-                item.available === false ? 'opacity-65 grayscale cursor-not-allowed' : ''
+                isSoldOut ? 'opacity-85' : ''
             }`}
         >
             {/* Top Image Container matching screenshot */}
@@ -448,7 +456,7 @@ const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
                 )}
 
                 {/* International Standard: Floating Add Button (UberEats & Glovo style) */}
-                {item.available !== false && !restaurantClosed && !isEditing && (
+                {!restaurantClosed && !isEditing && (
                     <button 
                         onClick={(e) => { e.stopPropagation(); onOpenModal(); }}
                         className="absolute bottom-2.5 right-2.5 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#E5C27B] to-[#C59B27] text-gray-950 flex items-center justify-center font-bold shadow-[0_4px_12px_rgba(229,194,123,0.5)] hover:scale-110 active:scale-95 transition-all"
@@ -459,9 +467,9 @@ const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
                 )}
 
                 {/* Sold Out Overlay */}
-                {item.available === false && (
-                    <div className="absolute inset-0 bg-black/70 flex items-center justify-center backdrop-blur-[1px]">
-                        <span className="bg-red-500/90 text-white text-[8px] sm:text-[9px] font-black tracking-widest uppercase px-2.5 py-0.5 rounded-full shadow-lg border border-red-400/20">
+                {isSoldOut && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-[1px] pointer-events-none">
+                        <span className="bg-red-500/95 text-white text-[8px] sm:text-[9px] font-black tracking-widest uppercase px-2.5 py-0.5 rounded-full shadow-lg border border-red-400/20">
                             {t('soldOut')}
                         </span>
                     </div>
@@ -554,12 +562,13 @@ export const MinimalLayout = ({ items = [], primaryColor, fontFamily, isEditing,
             <div className={`flex flex-col divide-y divide-dashed ${darkMode ? 'divide-gray-800' : 'divide-gray-200'}`}>
                 {items.map(item => {
                     const quantityInCart = getItemQuantity(item.id);
+                    const isSoldOut = isItemSoldOut(item);
                     return (
                         <div 
                             key={item.id} 
-                            onClick={() => { if (!isEditing && !restaurantClosed && item.available !== false) setSelectedModalItem(item); }}
+                            onClick={() => { if (!isEditing && !restaurantClosed) setSelectedModalItem(item); }}
                             className={`py-4 flex justify-between items-center gap-4 rounded-2xl px-4 transition-all duration-300 group animate-fade-in-up cursor-pointer active:scale-[0.99]
-                                ${item.available === false ? 'opacity-50 grayscale' : 'hover:bg-white/5'}
+                                ${isSoldOut ? 'opacity-85' : 'hover:bg-white/5'}
                             `}
                         >
                             <div className="flex-1 pr-3">
@@ -587,7 +596,7 @@ export const MinimalLayout = ({ items = [], primaryColor, fontFamily, isEditing,
                             </div>
 
                             <div>
-                                {item.available === false ? (
+                                {isSoldOut ? (
                                     <span className="text-[10px] font-bold text-red-500 uppercase bg-red-500/10 px-2.5 py-1 rounded-lg">{t('soldOut')}</span>
                                 ) : restaurantClosed ? (
                                     <span className="text-[10px] font-bold text-gray-400 uppercase bg-gray-500/10 px-2.5 py-1 rounded-lg">{t('suspended')}</span>

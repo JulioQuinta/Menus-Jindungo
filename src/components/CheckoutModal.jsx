@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useCart } from '../context/CartContext';
 import { generateWhatsAppLink } from '../utils/whatsappGenerator';
 import { analyticsService } from '../services/analyticsService';
 import { orderService } from '../services/orderService';
 import { supabase } from '../lib/supabaseClient';
+import { queueOfflineOrder } from '../utils/offlineSync';
 import OrderStatusView from './OrderStatusView';
 import CheckoutUpsell from './CheckoutUpsell';
 import { couponService } from '../services/couponService';
@@ -15,6 +17,7 @@ import { getTranslation } from '../utils/i18n';
 import { calculateDistance } from '../utils/geoUtils';
 
 const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features = {}, initialTable = '', deliveryConfig = {}, activeStaff = null, selectedLanguage = 'PT' }) => {
+    const navigate = useNavigate();
     const { cartItems, getCartTotal, clearCart } = useCart();
     const t = (key) => getTranslation(selectedLanguage, key);
 
@@ -68,6 +71,38 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
     const [appliedCoupon, setAppliedCoupon] = useState(null);
     const [couponError, setCouponError] = useState('');
     const [isValidating, setIsValidating] = useState(false);
+
+    // [REAL-TIME] Pre-Applied Coupon Loader
+    useEffect(() => {
+        if (isOpen && restaurantId) {
+            const preApplied = localStorage.getItem(`jindungo_pre_applied_coupon_${restaurantId}`);
+            if (preApplied) {
+                setCouponCode(preApplied);
+                setIsValidating(true);
+                couponService.validateCoupon(restaurantId, preApplied).then(result => {
+                    if (result.valid) {
+                        const subtotal = getCartTotal();
+                        if (result.coupon.min_purchase > 0 && subtotal < result.coupon.min_purchase) {
+                            setCouponError(`${t('invalidCoupon')}: ${result.coupon.min_purchase} Kz`);
+                            setAppliedCoupon(null);
+                        } else {
+                            setAppliedCoupon(result.coupon);
+                            setCouponError('');
+                            toast.success(`🎟️ Cupão "${preApplied}" aplicado com sucesso!`, { icon: '✨' });
+                        }
+                    } else {
+                        setCouponError(result.message);
+                        setAppliedCoupon(null);
+                    }
+                    setIsValidating(false);
+                    localStorage.removeItem(`jindungo_pre_applied_coupon_${restaurantId}`);
+                }).catch(err => {
+                    console.error("Error pre-applying coupon:", err);
+                    setIsValidating(false);
+                });
+            }
+        }
+    }, [isOpen, restaurantId]);
 
     // Loyalty State
     const [loyaltyConfig, setLoyaltyConfig] = useState(null);
@@ -247,7 +282,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
             order_type: orderType,
             delivery_address: orderType === 'delivery' ? address : null,
             delivery_neighborhood: orderType === 'delivery' && selectedZone ? selectedZone.name : null,
-            delivery_reference: orderType === 'delivery' ? (addressReference ? addressReference + (gpsCoords ? ` | GPS: ${gpsCoords.lat},${gpsCoords.lng}` : '') : (gpsCoords ? `GPS: ${gpsCoords.lat},${gpsCoords.lng}` : null)) : null,
+delivery_reference: orderType === 'delivery' ? (addressReference ? addressReference + (gpsCoords ? ` | GPS: ${gpsCoords.lat},${gpsCoords.lng}` : '') : (gpsCoords ? `GPS: ${gpsCoords.lat},${gpsCoords.lng}` : null)) : null,
             delivery_fee: orderType === 'delivery' ? deliveryFee : 0,
             takeaway_time: orderType === 'takeaway' ? '30-40 min' : null
         };
@@ -255,13 +290,52 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
         try {
             // 1. Create System Order (if restaurantId exists)
             let newOrder = null;
+            let isOfflineOrder = false;
+
             if (restaurantId) {
-                const { data, error } = await orderService.createOrder(orderData);
-                if (error) throw error;
-                newOrder = data;
+                if (!navigator.onLine) {
+                    isOfflineOrder = true;
+                } else {
+                    const { data, error } = await orderService.createOrder(orderData);
+                    if (error) {
+                        // Keep permanent database constraint violations (e.g. stock or security) throwing so user sees them
+                        if (error.message && (error.message.includes('stock') || error.message.includes('Security') || error.message.includes('Estoque'))) {
+                            throw error;
+                        }
+                        // Treat generic network exceptions as offline
+                        isOfflineOrder = true;
+                    } else {
+                        newOrder = data;
+                    }
+                }
+
+                if (isOfflineOrder) {
+                    const tempId = queueOfflineOrder(orderData);
+                    newOrder = {
+                        id: tempId,
+                        ...orderData,
+                        status: 'pending'
+                    };
+
+                    toast.success("🛎️ Encomenda registada com sucesso no telemóvel! A sua ligação à internet está instável, por isso guardámos o pedido localmente e iremos sincronizá-lo assim que a sua rede estabilizar.", {
+                        icon: '🔌',
+                        duration: 8000,
+                        style: {
+                            background: '#161616',
+                            color: '#fff',
+                            borderRadius: '20px',
+                            border: '1px solid #D4AF37',
+                            fontFamily: 'serif',
+                            padding: '16px 20px',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.85)',
+                            fontSize: '13px',
+                            fontWeight: '600'
+                        }
+                    });
+                }
 
                 // Fluxo de Pagamento MCX Real
-                if (paymentMethod === 'multicaixa') {
+                if (paymentMethod === 'multicaixa' && !isOfflineOrder) {
                     toast.loading(t('mcxStartingPayment'), { id: 'mcx-toast' });
                     const { data: mcxData, error: mcxError } = await supabase.functions.invoke('process-payment', {
                         body: { 
@@ -294,7 +368,15 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                     if (gpsCoords) localStorage.setItem('customer_last_gps', JSON.stringify(gpsCoords));
                 }
                 
-                if (features?.canUseKDS) {
+                if (isOfflineOrder) {
+                    // Store active order as offline pending tracking
+                    localStorage.setItem(`jindungo_active_order_${restaurantId}`, JSON.stringify({
+                        id: newOrder.id,
+                        timestamp: Date.now(),
+                        isOffline: true
+                    }));
+                    window.dispatchEvent(new Event('jindungo_new_order'));
+                } else if (features?.canUseKDS) {
                     // Save active order for the sophisticated tracking flow
                     localStorage.setItem(`jindungo_active_order_${restaurantId}`, JSON.stringify({
                         id: newOrder.id,
@@ -332,17 +414,62 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                     return; // Stop here so it doesn't show the OrderStatusView which implies an internal tracking
                 }
             } else {
-                // Since we use the sophisticated tracker now, just close the modal
                 toast.success(t('orderSuccessMsg'), {
                     icon: '🚀',
                     duration: 5000
                 });
                 closeAndReset();
+                if (newOrder) {
+                    navigate(`/track/${newOrder.id}`);
+                }
             }
 
         } catch (err) {
-            toast.error("Erro: " + err.message);
-            console.error(err);
+            const errMsg = err.message || '';
+            console.error('Checkout error:', err);
+
+            // Handle out-of-stock database trigger exceptions with a highly friendly and premium notification
+            if (errMsg.includes('Não há stock suficiente')) {
+                const match = errMsg.match(/o prato "(.*?)"/);
+                const dishName = match ? match[1] : 'item selecionado';
+
+                toast.error(
+                    `Pedimos desculpa! O item "${dishName}" esgotou-se no estoque enquanto finalizava a sua compra. Por favor, ajuste ou remova-o do seu carrinho para concluir.`,
+                    {
+                        icon: '🛎️',
+                        duration: 6000,
+                        style: {
+                            background: '#161616',
+                            color: '#fff',
+                            borderRadius: '20px',
+                            border: '1px solid rgba(212, 175, 55, 0.4)',
+                            fontFamily: 'serif',
+                            padding: '16px 22px',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.85)',
+                            fontSize: '13px',
+                            lineHeight: '1.5',
+                            fontWeight: '600'
+                        }
+                    }
+                );
+            } else {
+                toast.error(`Aviso: ${errMsg}`, {
+                    icon: '⚠️',
+                    duration: 5000,
+                    style: {
+                        background: '#161616',
+                        color: '#fff',
+                        borderRadius: '20px',
+                        border: '1px solid rgba(239, 68, 68, 0.4)',
+                        fontFamily: 'serif',
+                        padding: '16px 22px',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.85)',
+                        fontSize: '13px',
+                        lineHeight: '1.5',
+                        fontWeight: '600'
+                    }
+                });
+            }
         } finally {
             setIsSending(false);
         }
@@ -360,21 +487,18 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
     if (createdOrder) return null;
 
     return (
-        <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.6)', zIndex: 9999,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '12px', backdropFilter: 'blur(8px)' // More blur for premium feel
-        }} onClick={onClose}>
-            <div className="w-full max-w-md rounded-[32px] p-6 sm:p-8 shadow-2xl relative text-gray-900 border border-white/20 animate-in slide-in-from-bottom-10 duration-500" style={{
-                background: 'rgba(255, 255, 255, 0.95)',
-                maxHeight: '90vh',
-                overflowY: 'auto'
-            }} onClick={e => e.stopPropagation()}>
+        <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-300"
+            onClick={onClose}
+        >
+            <div 
+                className="w-full max-w-md bg-white/95 backdrop-blur-xl text-gray-900 rounded-t-[32px] sm:rounded-[32px] p-6 sm:p-8 shadow-2xl relative border-t border-x sm:border border-white/20 animate-in slide-in-from-bottom-10 duration-500 flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden" 
+                onClick={e => e.stopPropagation()}
+            >
 
-                <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6 sm:hidden" />
+                <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden shrink-0" />
 
-                <div className="flex justify-between items-center mb-8">
+                <div className="flex justify-between items-center mb-6 shrink-0">
                     <div>
                         <h2 className="text-2xl font-serif font-black text-gray-900 leading-tight">
                             {features?.hasUpsell && showUpsell ? t('upsellSuggestions') : t('checkout')}
@@ -385,21 +509,22 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                     </div>
                     <button 
                         onClick={onClose} 
-                        className="w-10 h-10 flex items-center justify-center rounded-2xl bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90"
+                        className="w-10 h-10 flex items-center justify-center rounded-2xl bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90 animate-in spin-in-12"
                     >
                         <X size={20} />
                     </button>
                 </div>
 
-                {features?.hasUpsell && showUpsell ? (
-                    <CheckoutUpsell
-                        restaurantId={restaurantId}
-                        cartItems={cartItems}
-                        onContinue={() => setShowUpsell(false)}
-                        onCancel={onClose}
-                    />
-                ) : (
-                    <>
+                <div className="flex-1 overflow-y-auto pr-0.5 custom-scrollbar scrollbar-hide space-y-6">
+                    {features?.hasUpsell && showUpsell ? (
+                        <CheckoutUpsell
+                            restaurantId={restaurantId}
+                            cartItems={cartItems}
+                            onContinue={() => setShowUpsell(false)}
+                            onCancel={onClose}
+                        />
+                    ) : (
+                        <>
                         {/* Step Navigation Header */}
                         <div className="flex items-center justify-between mb-6 border-b pb-4 border-gray-200/60">
                             <div className="flex items-center gap-1.5 sm:gap-2">
@@ -951,8 +1076,9 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
                                 </div>
                             </div>
                         )}
-                    </>
-                )}
+                        </>
+                    )}
+                </div>
             </div>
             <style>{`
                 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

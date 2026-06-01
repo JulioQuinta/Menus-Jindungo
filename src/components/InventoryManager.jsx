@@ -69,18 +69,23 @@ const InventoryManager = ({ restaurantId }) => {
         setSaving(true);
         try {
             for (const [id, change] of updates) {
-                const { error } = await supabase
+                const { data, error } = await supabase
                     .from('menu_items')
                     .update(change)
-                    .eq('id', id);
+                    .eq('id', id)
+                    .select();
+                
                 if (error) throw error;
+                if (!data || data.length === 0) {
+                    throw new Error("Permissão negada pela política RLS (não é o dono/administrador deste restaurante) ou item inexistente.");
+                }
             }
             toast.success('Inventário atualizado com sucesso!');
             setPendingChanges({});
             fetchInventory();
         } catch (error) {
             console.error('Error saving inventory:', error);
-            toast.error('Erro ao salvar alterações');
+            toast.error(error.message || 'Erro ao salvar alterações');
         } finally {
             setSaving(false);
         }
@@ -380,15 +385,34 @@ const InventoryManager = ({ restaurantId }) => {
                 )}
             </div>
 
-            {/* Floating Save Button on Mobile if changes exist */}
+            {/* Floating Save Bar if changes exist (Desktop & Mobile) */}
             {hasChanges && (
-                <div className="fixed bottom-8 right-8 z-[100] md:hidden">
-                    <button 
-                        onClick={saveChanges}
-                        className="w-16 h-16 bg-gradient-to-r from-[#F5C542] to-[#D4AF37] text-black rounded-full shadow-[0_10px_40px_rgba(212,175,55,0.6)] flex items-center justify-center animate-bounce cursor-pointer"
-                    >
-                        {saving ? <Loader2 className="animate-spin text-black" size={24} /> : <Save size={24} />}
-                    </button>
+                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] bg-[#161616]/95 backdrop-blur-2xl border border-[#D4AF37]/40 px-5 py-4 rounded-[2rem] shadow-[0_15px_50px_rgba(0,0,0,0.85)] flex flex-col sm:flex-row items-center gap-4 sm:gap-6 animate-in slide-in-from-bottom-10 duration-500 w-[90vw] sm:w-auto">
+                    <div className="flex flex-col text-center sm:text-left">
+                        <span className="text-[10px] font-black text-[#D4AF37] uppercase tracking-widest flex items-center gap-1 justify-center sm:justify-start">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-ping"></span>
+                            Alterações Pendentes
+                        </span>
+                        <span className="text-[11px] text-gray-400 font-medium mt-0.5">{Object.keys(pendingChanges).length} item(s) modificado(s) neste ecrã</span>
+                    </div>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <button 
+                            type="button"
+                            onClick={() => setPendingChanges({})}
+                            className="flex-1 sm:flex-none bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer border border-white/5 active:scale-95"
+                        >
+                            Descartar
+                        </button>
+                        <button 
+                            type="button"
+                            onClick={saveChanges}
+                            disabled={saving}
+                            className="flex-1 sm:flex-none bg-gradient-to-r from-[#F5C542] to-[#D4AF37] text-black px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-[0_0_20px_rgba(245,197,66,0.3)] hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                            {saving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
+                            <span>Salvar</span>
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

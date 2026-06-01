@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
     Award, Save, RefreshCw, CheckCircle2, Info, Star, 
-    Sparkles, Sliders, ChevronRight, TrendingUp, Users, AlertCircle 
+    Sparkles, Sliders, ChevronRight, TrendingUp, Users, AlertCircle,
+    MessageSquare, Copy, X, Check, Send
 } from 'lucide-react';
 import { 
     ResponsiveContainer, AreaChart, Area, PieChart, Pie, 
     Cell, XAxis, YAxis, Tooltip, Legend 
 } from 'recharts';
 import { loyaltyService } from '../services/loyaltyService';
+import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
 
 const LoyaltyManager = ({ restaurantId }) => {
@@ -21,9 +23,24 @@ const LoyaltyManager = ({ restaurantId }) => {
     const [timeframe, setTimeframe] = useState('Semana'); // 'Dia' | 'Semana' | 'Mês'
     const [activeAiTip, setActiveAiTip] = useState(0);
 
+    // Dynamic states for real-time customer data
+    const [restaurantName, setRestaurantName] = useState('Menús Jindungos');
+    const [inactiveCustomers, setInactiveCustomers] = useState([]);
+    const [nearRewardCustomers, setNearRewardCustomers] = useState([]);
+    const [vipStats, setVipStats] = useState({ totalVips: 0, gold: 0, silver: 0, bronze: 0 });
+    const [activeTab, setActiveTab] = useState('inactive'); // 'inactive' | 'nearReward'
+    const [campaignModal, setCampaignModal] = useState({
+        isOpen: false,
+        customer: null,
+        text: '',
+        campaignType: ''
+    });
+    const [copied, setCopied] = useState(false);
+
     const fetchConfig = useCallback(async () => {
         setLoading(true);
         if (restaurantId) {
+            // 1. Fetch loyalty config
             const { data, error } = await loyaltyService.getConfig(restaurantId);
             if (data) {
                 setConfig({
@@ -31,6 +48,28 @@ const LoyaltyManager = ({ restaurantId }) => {
                     reward_text: data.reward_text || 'Ganha uma sobremesa grátis!',
                     is_active: data.is_active || false
                 });
+            }
+
+            // 2. Fetch restaurant details for campaigns
+            try {
+                const { data: restData } = await supabase
+                    .from('restaurants')
+                    .select('name')
+                    .eq('id', restaurantId)
+                    .single();
+                if (restData) {
+                    setRestaurantName(restData.name);
+                }
+            } catch (err) {
+                console.error('Error fetching restaurant name:', err);
+            }
+
+            // 3. Fetch real customer stats
+            const stats = await loyaltyService.getCustomerLoyaltyStats(restaurantId);
+            if (stats) {
+                setInactiveCustomers(stats.inactiveCustomers || []);
+                setNearRewardCustomers(stats.nearRewardCustomers || []);
+                setVipStats(stats.vipStats || { totalVips: 0, gold: 0, silver: 0, bronze: 0 });
             }
         }
         setLoading(false);
@@ -49,8 +88,43 @@ const LoyaltyManager = ({ restaurantId }) => {
             toast.error('Erro ao salvar configuração de fidelidade.');
         } else {
             toast.success('Hub de Fidelidade atualizado com sucesso!');
+            // Refresh to ensure everything aligns
+            fetchConfig();
         }
         setSaving(false);
+    };
+
+    const handleOpenCampaignModal = (customer, type) => {
+        let msg = '';
+        if (type === 'inactive') {
+            msg = `Olá, *${customer.name}*! 🌟\n\nSentimos a sua falta no *${restaurantName}*! Notámos que já não nos faz uma visita há *${customer.daysInactive} dias*... ⏳\n\nPara adoçar o seu regresso, temos um mimo especial à sua espera no seu próximo pedido! 🍳✨\n\nAbra o nosso menu digital e faça o seu pedido: ${window.location.origin}/explorar\n\nAté breve! 🛎️🌶️`;
+        } else {
+            const missing = config.goal - customer.points;
+            msg = `Olá, *${customer.name}*! 🌟\n\nSabia que está a apenas *${missing} ${missing === 1 ? 'pedido' : 'pedidos'}* de ganhar a sua recompensa no *${restaurantName}*? 🪙\n\nPeça já e garanta a sua *${config.reward_text}*! 🛎️🌶️\n\nFaça o seu pedido aqui: ${window.location.origin}/explorar\n\nEstamos à sua espera! 🍳✨`;
+        }
+        setCampaignModal({
+            isOpen: true,
+            customer,
+            text: msg,
+            campaignType: type
+        });
+    };
+
+    const handleCopyCampaignText = () => {
+        navigator.clipboard.writeText(campaignModal.text);
+        setCopied(true);
+        toast.success('Texto copiado com sucesso!');
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleTriggerCampaignWhatsApp = () => {
+        if (!campaignModal.customer) return;
+        const phone = campaignModal.customer.phone.replace(/\D/g, ''); // Keep only numbers
+        const encodedText = encodeURIComponent(campaignModal.text);
+        const url = `https://wa.me/${phone}?text=${encodedText}`;
+        window.open(url, '_blank');
+        toast.success('WhatsApp aberto com sucesso!');
+        setCampaignModal({ isOpen: false, customer: null, text: '', campaignType: '' });
     };
 
     // Recharts Data matching the screenshot's stunning curves
@@ -84,14 +158,22 @@ const LoyaltyManager = ({ restaurantId }) => {
         ];
     }, [timeframe]);
 
-    // Donut Chart Data matching screenshot VIP Distribution
-    const vipDistribution = [
-        { name: 'Bronze', value: 22.0, color: '#CD7F32' },
-        { name: 'Prata', value: 29.3, color: '#C0C0C0' },
-        { name: 'Ouro', value: 13.2, color: '#D4AF37' },
-        { name: 'VIP Elite', value: 15.3, color: '#F5C542' },
-        { name: 'Diamante', value: 20.2, color: '#FFD700' },
-    ];
+    // Donut Chart Data dynamic based on real-time VIP Distribution
+    const vipDistribution = useMemo(() => {
+        const total = vipStats.totalVips || 0;
+        if (total === 0) {
+            return [
+                { name: 'Bronze', value: 0, color: '#CD7F32', count: 0 },
+                { name: 'Prata', value: 0, color: '#C0C0C0', count: 0 },
+                { name: 'Ouro', value: 0, color: '#D4AF37', count: 0 }
+            ];
+        }
+        return [
+            { name: 'Bronze', value: parseFloat(((vipStats.bronze / total) * 100).toFixed(1)), color: '#CD7F32', count: vipStats.bronze },
+            { name: 'Prata', value: parseFloat(((vipStats.silver / total) * 100).toFixed(1)), color: '#C0C0C0', count: vipStats.silver },
+            { name: 'Ouro', value: parseFloat(((vipStats.gold / total) * 100).toFixed(1)), color: '#D4AF37', count: vipStats.gold }
+        ];
+    }, [vipStats]);
 
     // AI Tips Data matching screenshot
     const aiTips = [
@@ -422,9 +504,9 @@ const LoyaltyManager = ({ restaurantId }) => {
                         <div className="h-[280px] w-full relative flex items-center justify-center">
                             {/* Center Donut Label */}
                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Nível VIP</span>
-                                <span className="text-xl font-serif font-black text-[#D4AF37]">Bronze 22%</span>
-                                <span className="text-xs text-gray-500 font-mono">Prata 29.3%</span>
+                                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Clientes</span>
+                                <span className="text-xl font-serif font-black text-[#D4AF37]">{vipStats.totalVips} VIPs</span>
+                                <span className="text-[10px] text-gray-500 font-mono">Ouro: {vipStats.gold} | Prata: {vipStats.silver}</span>
                             </div>
 
                             <ResponsiveContainer width="100%" height="100%">
@@ -458,7 +540,7 @@ const LoyaltyManager = ({ restaurantId }) => {
                                 <div key={item.name} className="flex items-center gap-2 bg-white/5 p-2 rounded-xl border border-white/5">
                                     <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                                     <div>
-                                        <span className="block text-[10px] text-gray-400 font-bold truncate">{item.name}</span>
+                                        <span className="block text-[10px] text-gray-400 font-bold truncate">{item.name} ({item.count || 0})</span>
                                         <span className="text-xs font-black text-white">{item.value}%</span>
                                     </div>
                                 </div>
@@ -512,9 +594,284 @@ const LoyaltyManager = ({ restaurantId }) => {
                                 </div>
                             ))}
                         </div>
-                    </div>
                 </div>
             </div>
+        </div>
+
+            {/* NOVO: Painel de Automação & Campanhas WhatsApp */}
+            <div className="bg-gradient-to-br from-[#1A1A1A]/95 via-[#161616]/95 to-[#121212]/95 backdrop-blur-xl border border-[#D4AF37]/30 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden mt-8">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/5 blur-[70px] rounded-full pointer-events-none" />
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10 mb-8 relative z-10">
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#D4AF37]/20 to-black border border-[#D4AF37]/40 flex items-center justify-center">
+                            <Sparkles className="text-[#D4AF37]" size={24} />
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-serif font-black text-white tracking-wide">
+                                Campanhas de Re-Engajamento VIP
+                            </h3>
+                            <p className="text-xs text-gray-400 mt-0.5">Dispare lembretes altamente personalizados via WhatsApp em um clique</p>
+                        </div>
+                    </div>
+
+                    {/* Selector de Abas Dourado */}
+                    <div className="flex items-center gap-2 bg-black/60 p-1.5 rounded-2xl border border-white/10 w-fit">
+                        <button
+                            onClick={() => setActiveTab('inactive')}
+                            className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 ${
+                                activeTab === 'inactive'
+                                    ? 'bg-gradient-to-r from-[#F5C542] to-[#D4AF37] text-black shadow-lg font-black'
+                                    : 'text-gray-400 hover:text-white'
+                            }`}
+                        >
+                            <span>Clientes Inativos</span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                activeTab === 'inactive' ? 'bg-black text-[#D4AF37]' : 'bg-white/10 text-white'
+                            }`}>
+                                {inactiveCustomers.length}
+                            </span>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('nearReward')}
+                            className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 ${
+                                activeTab === 'nearReward'
+                                    ? 'bg-gradient-to-r from-[#F5C542] to-[#D4AF37] text-black shadow-lg font-black'
+                                    : 'text-gray-400 hover:text-white'
+                            }`}
+                        >
+                            <span>Próximos da Recompensa</span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                activeTab === 'nearReward' ? 'bg-black text-[#D4AF37]' : 'bg-white/10 text-white'
+                            }`}>
+                                {nearRewardCustomers.length}
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Listagem Baseada no Status da Aba */}
+                <div className="relative z-10">
+                    {activeTab === 'inactive' ? (
+                        inactiveCustomers.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-16 text-center">
+                                <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/20 mb-4">
+                                    <CheckCircle2 className="text-emerald-400" size={32} />
+                                </div>
+                                <h4 className="text-lg font-serif font-bold text-white mb-1">Todos Ativos e Felizes!</h4>
+                                <p className="text-sm text-gray-500 max-w-sm">Nenhum cliente está inativo por mais de 15 dias na sua base atual.</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="border-b border-white/5 text-[10px] text-gray-400 uppercase tracking-widest font-black">
+                                            <th className="py-4">Nome do Cliente</th>
+                                            <th className="py-4">Contacto</th>
+                                            <th className="py-4">Nível VIP</th>
+                                            <th className="py-4">Pontos Atuais</th>
+                                            <th className="py-4">Dias Inativo</th>
+                                            <th className="py-4 text-right">Ação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5">
+                                        {inactiveCustomers.map((cust) => (
+                                            <tr key={cust.phone} className="group hover:bg-white/[0.02] transition-all">
+                                                <td className="py-4 flex items-center gap-3">
+                                                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-red-500/20 to-black border border-red-500/30 flex items-center justify-center font-bold text-red-400 text-sm">
+                                                        {cust.name.substring(0, 2).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <span className="font-serif font-bold text-sm text-white group-hover:text-[#D4AF37] transition-colors">{cust.name}</span>
+                                                        <span className="block text-[10px] text-gray-500">Última compra: {cust.lastPurchaseDate}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="py-4 font-mono text-xs text-gray-400">{cust.phone}</td>
+                                                <td className="py-4">
+                                                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                                                        cust.tier === 'Ouro' 
+                                                            ? 'bg-[#D4AF37]/15 text-[#D4AF37] border-[#D4AF37]/35 shadow-[0_0_10px_rgba(212,175,55,0.15)]'
+                                                            : cust.tier === 'Prata'
+                                                            ? 'bg-gray-300/10 text-gray-300 border-gray-400/20'
+                                                            : 'bg-[#CD7F32]/10 text-[#CD7F32] border-[#CD7F32]/20'
+                                                    }`}>
+                                                        {cust.tier}
+                                                    </span>
+                                                </td>
+                                                <td className="py-4">
+                                                    <span className="bg-black/60 border border-white/10 px-3 py-1 rounded-full text-xs font-black text-[#D4AF37] shadow-inner font-mono">
+                                                        {cust.points} 🪙
+                                                    </span>
+                                                </td>
+                                                <td className="py-4">
+                                                    <span className="text-red-400 font-bold text-xs">{cust.daysInactive} dias inativo ⏳</span>
+                                                </td>
+                                                <td className="py-4 text-right">
+                                                    <button
+                                                        onClick={() => handleOpenCampaignModal(cust, 'inactive')}
+                                                        className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:brightness-110 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] flex items-center gap-1.5 ml-auto cursor-pointer"
+                                                    >
+                                                        <MessageSquare size={14} className="stroke-[3]" />
+                                                        <span>Enviar Campanha</span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )
+                    ) : (
+                        nearRewardCustomers.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-16 text-center">
+                                <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/20 mb-4">
+                                    <Info className="text-blue-400" size={32} />
+                                </div>
+                                <h4 className="text-lg font-serif font-bold text-white mb-1">Nenhum Cliente Próximo</h4>
+                                <p className="text-sm text-gray-500 max-w-sm">Nenhum cliente está atualmente a 1 ou 2 pedidos de obter o prémio.</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="border-b border-white/5 text-[10px] text-gray-400 uppercase tracking-widest font-black">
+                                            <th className="py-4">Nome do Cliente</th>
+                                            <th className="py-4">Contacto</th>
+                                            <th className="py-4">Nível VIP</th>
+                                            <th className="py-4">Pontos Atuais</th>
+                                            <th className="py-4">Faltam</th>
+                                            <th className="py-4 text-right">Ação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5">
+                                        {nearRewardCustomers.map((cust) => {
+                                            const missing = config.goal - cust.points;
+                                            return (
+                                                <tr key={cust.phone} className="group hover:bg-white/[0.02] transition-all">
+                                                    <td className="py-4 flex items-center gap-3">
+                                                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#D4AF37]/20 to-black border border-[#D4AF37]/30 flex items-center justify-center font-bold text-[#D4AF37] text-sm">
+                                                            {cust.name.substring(0, 2).toUpperCase()}
+                                                        </div>
+                                                        <div>
+                                                            <span className="font-serif font-bold text-sm text-white group-hover:text-[#D4AF37] transition-colors">{cust.name}</span>
+                                                            <span className="block text-[10px] text-gray-500">Última compra: {cust.lastPurchaseDate}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-4 font-mono text-xs text-gray-400">{cust.phone}</td>
+                                                    <td className="py-4">
+                                                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                                                            cust.tier === 'Ouro' 
+                                                                ? 'bg-[#D4AF37]/15 text-[#D4AF37] border-[#D4AF37]/35 shadow-[0_0_10px_rgba(212,175,55,0.15)]'
+                                                                : cust.tier === 'Prata'
+                                                                ? 'bg-gray-300/10 text-gray-300 border-gray-400/20'
+                                                                : 'bg-[#CD7F32]/10 text-[#CD7F32] border-[#CD7F32]/20'
+                                                        }`}>
+                                                            {cust.tier}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-4">
+                                                        <span className="bg-black/60 border border-white/10 px-3 py-1 rounded-full text-xs font-black text-[#D4AF37] shadow-inner font-mono">
+                                                            {cust.points} / {config.goal} 🪙
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-4">
+                                                        <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-lg font-bold text-xs">
+                                                            Apenas {missing} {missing === 1 ? 'pedido' : 'pedidos'}! ⭐
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-4 text-right">
+                                                        <button
+                                                            onClick={() => handleOpenCampaignModal(cust, 'nearReward')}
+                                                            className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:brightness-110 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] flex items-center gap-1.5 ml-auto cursor-pointer"
+                                                        >
+                                                            <MessageSquare size={14} className="stroke-[3]" />
+                                                            <span>Enviar Campanha</span>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )
+                    )}
+                </div>
+            </div>
+
+            {/* Modal de Disparo WhatsApp de Alta Fidelidade */}
+            {campaignModal.isOpen && campaignModal.customer && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[999] animate-in fade-in duration-300">
+                    <div className="bg-[#121212] border border-[#D4AF37]/50 rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-[0_0_50px_rgba(212,175,55,0.3)] flex flex-col relative animate-in zoom-in-95 duration-300">
+                        {/* Modal Header */}
+                        <div className="p-6 bg-gradient-to-b from-[#1C1C1C] to-black border-b border-white/5 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/30 text-emerald-400">
+                                    <MessageSquare size={20} className="stroke-[2]" />
+                                </div>
+                                <div>
+                                    <h3 className="font-serif font-black text-white text-lg tracking-wide">
+                                        Campanha via WhatsApp
+                                    </h3>
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-widest font-mono">Disparo Exclusivo VIP</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setCampaignModal({ isOpen: false, customer: null, text: '', campaignType: '' })}
+                                className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6 space-y-6 flex-1">
+                            <div className="bg-black/50 p-4 rounded-2xl border border-white/5 space-y-2">
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-gray-400">Cliente Destino:</span>
+                                    <span className="font-serif font-bold text-white">{campaignModal.customer.name}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-gray-400">Telemóvel:</span>
+                                    <span className="font-mono text-gray-300">{campaignModal.customer.phone}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-gray-400">Pontos / Nível:</span>
+                                    <span className="font-bold text-[#D4AF37]">{campaignModal.customer.points} 🪙 | {campaignModal.customer.tier}</span>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Mensagem da Campanha</label>
+                                <textarea
+                                    value={campaignModal.text}
+                                    onChange={(e) => setCampaignModal(prev => ({ ...prev, text: e.target.value }))}
+                                    rows={6}
+                                    className="w-full bg-black/80 border border-white/15 rounded-2xl p-4 text-white text-sm focus:border-[#D4AF37] outline-none transition-all font-sans leading-relaxed resize-none shadow-inner"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="p-6 bg-black/40 border-t border-white/5 flex gap-3">
+                            <button
+                                onClick={handleCopyCampaignText}
+                                className="flex-1 py-3.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-black text-xs text-white uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+                            >
+                                {copied ? <Check className="text-emerald-400" size={16} /> : <Copy size={16} />}
+                                <span>{copied ? 'Copiado!' : 'Copiar Texto'}</span>
+                            </button>
+                            <button
+                                onClick={handleTriggerCampaignWhatsApp}
+                                className="flex-1 py-3.5 bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 hover:brightness-110 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2 cursor-pointer"
+                            >
+                                <Send size={16} className="stroke-[3]" />
+                                <span>Disparar WhatsApp</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

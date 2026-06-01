@@ -7,12 +7,26 @@ import ReceiptModal from './ReceiptModal';
 import { printerService } from '../utils/bluetoothPrinter';
 import { useRealtimeOrders } from '../hooks/useRealtimeOrders';
 
-const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint }) => {
+const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, staffMembers = [] }) => {
     const [elapsed, setElapsed] = useState('');
     const [showTimeSelector, setShowTimeSelector] = useState(false);
     const [customMins, setCustomMins] = useState('30');
     const [courierName, setCourierName] = useState('');
     const [courierPhone, setCourierPhone] = useState('');
+    const [showChefDropdown, setShowChefDropdown] = useState(false);
+
+    const handleAssignChef = async (staffId, staffName) => {
+        try {
+            await orderService.updateOrder(order.id, {
+                staff_member_id: staffId,
+                staff_member_name: staffName
+            });
+            toast.success(staffName ? `Chef ${staffName} atribuído!` : 'Chef desatribuído.');
+        } catch (err) {
+            console.error(err);
+            toast.error('Erro ao atribuir chef.');
+        }
+    };
 
     useEffect(() => {
         const updateTimer = () => {
@@ -293,10 +307,79 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint }) =
                         {/* Avatares dos Chefs Atribuídos */}
                         <div className="flex items-center justify-between pt-2 border-t border-white/5 text-[11px] text-gray-400">
                             <span className="flex items-center gap-1.5"><UserCheck size={13} className="text-orange-400" /> Chef Atribuído:</span>
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-6 h-6 rounded-full bg-orange-500/20 border border-orange-500/40 text-orange-400 flex items-center justify-center font-bold text-[10px]">C1</div>
-                                <div className="w-6 h-6 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 flex items-center justify-center font-bold text-[10px]">C2</div>
-                                <span className="bg-white/10 hover:bg-white/20 text-white px-2 py-0.5 rounded-lg text-[10px] font-bold cursor-pointer transition-all">Alterar ▾</span>
+                            <div className="flex items-center gap-2 relative">
+                                {order.staff_member_name ? (
+                                    <div className="flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-lg text-[10px] text-orange-400 font-bold">
+                                        <div className="w-4 h-4 rounded-full bg-orange-500 text-black flex items-center justify-center font-black text-[8px] uppercase">
+                                            {order.staff_member_name.slice(0, 2)}
+                                        </div>
+                                        <span className="truncate max-w-[80px]">{order.staff_member_name}</span>
+                                    </div>
+                                ) : (
+                                    <span className="text-gray-500 text-[10px] italic">Sem chef atribuído</span>
+                                )}
+                                <div className="relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowChefDropdown(!showChefDropdown)}
+                                        className="bg-white/10 hover:bg-white/20 text-white px-2 py-0.5 rounded-lg text-[10px] font-bold cursor-pointer transition-all flex items-center gap-0.5 active:scale-95"
+                                    >
+                                        Alterar <ChevronDown size={10} />
+                                    </button>
+
+                                    {showChefDropdown && (
+                                        <div className="absolute right-0 bottom-7 bg-[#1C1C1C] border border-white/10 rounded-xl shadow-2xl p-2 z-[999] min-w-[155px] animate-in slide-in-from-bottom-2 duration-200">
+                                            <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest px-2 py-1 mb-1 border-b border-white/5 text-center">Selecionar Chef</p>
+                                            <div className="max-h-[140px] overflow-y-auto custom-scrollbar scrollbar-hide space-y-0.5">
+                                                {staffMembers.length > 0 ? (
+                                                    staffMembers.map(staff => (
+                                                        <button
+                                                            key={staff.id}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                handleAssignChef(staff.id, staff.name);
+                                                                setShowChefDropdown(false);
+                                                            }}
+                                                            className={`w-full text-left px-2 py-1 rounded-lg text-[11px] hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] transition-all flex items-center gap-1.5 font-medium ${order.staff_member_id === staff.id ? 'text-[#D4AF37] bg-[#D4AF37]/5 font-bold' : 'text-gray-300'}`}
+                                                        >
+                                                            <div className="w-3.5 h-3.5 rounded-full bg-white/5 flex items-center justify-center text-[7px] font-bold uppercase">{staff.name.slice(0, 2)}</div>
+                                                            <span className="truncate flex-1">{staff.name}</span>
+                                                        </button>
+                                                    ))
+                                                ) : (
+                                                    <div className="text-[9px] text-gray-500 italic p-2 text-center">Sem funcionários</div>
+                                                )}
+                                            </div>
+                                            <div className="border-t border-white/5 mt-1 pt-1 space-y-0.5">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const name = window.prompt("Digite o nome do Chef para atribuir:");
+                                                        if (name && name.trim() !== '') {
+                                                            handleAssignChef(null, name.trim());
+                                                        }
+                                                        setShowChefDropdown(false);
+                                                    }}
+                                                    className="w-full text-center py-1 rounded-lg text-[10px] text-[#D4AF37] hover:bg-[#D4AF37]/10 font-bold block transition-all"
+                                                >
+                                                    + Digitar Nome
+                                                </button>
+                                                {order.staff_member_name && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            handleAssignChef(null, null);
+                                                            setShowChefDropdown(false);
+                                                        }}
+                                                        className="w-full text-center py-1 rounded-lg text-[10px] text-red-400 hover:bg-red-500/10 font-bold block transition-all"
+                                                    >
+                                                        Remover
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -532,6 +615,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
     const [selectedReceiptOrder, setSelectedReceiptOrder] = useState(null);
     const [isBluetoothReady, setIsBluetoothReady] = useState(false);
     const [autoPrint, setAutoPrint] = useState(false);
+    const [staffMembers, setStaffMembers] = useState([]);
     
     // Novos estados para a reestruturação estética
     const [searchQuery, setSearchQuery] = useState('');
@@ -640,6 +724,20 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
             setLoading(false);
         };
         loadOrders();
+
+        const loadStaff = async () => {
+            try {
+                const { data } = await supabase
+                    .from('staff_members')
+                    .select('*')
+                    .eq('restaurant_id', restaurantId)
+                    .eq('active', true);
+                if (data) setStaffMembers(data);
+            } catch (err) {
+                console.error("Error loading staff:", err);
+            }
+        };
+        loadStaff();
 
         const channel = orderService.subscribeToOrders(restaurantId, (payload) => {
             console.log('Realtime State Update:', payload.eventType, payload.new?.id);
@@ -920,7 +1018,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                             </div>
                             <div className="flex-1 overflow-y-auto pr-2 space-y-4 pt-1 custom-scrollbar z-10">
                                 {pendingOrders.map(order => (
-                                    <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} restaurantName={restaurantName} />
+                                    <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} restaurantName={restaurantName} staffMembers={staffMembers} />
                                 ))}
                             </div>
                         </div>
@@ -940,7 +1038,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                             </div>
                             <div className="flex-1 overflow-y-auto pr-2 space-y-4 pt-1 custom-scrollbar z-10">
                                 {preparingOrders.map(order => (
-                                    <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} restaurantName={restaurantName} />
+                                    <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} restaurantName={restaurantName} staffMembers={staffMembers} />
                                 ))}
                             </div>
                         </div>
@@ -960,7 +1058,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                             </div>
                             <div className="flex-1 overflow-y-auto pr-2 space-y-4 pt-1 custom-scrollbar z-10">
                                 {readyOrders.map(order => (
-                                    <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} restaurantName={restaurantName} />
+                                    <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} restaurantName={restaurantName} staffMembers={staffMembers} />
                                 ))}
                             </div>
                         </div>
@@ -988,7 +1086,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                             </div>
                             <div className="flex-1 overflow-y-auto pr-2 space-y-4 pt-1 custom-scrollbar z-10 opacity-75 hover:opacity-100 transition-opacity">
                                 {deliveredOrders.map(order => (
-                                    <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} restaurantName={restaurantName} />
+                                    <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} restaurantName={restaurantName} staffMembers={staffMembers} />
                                 ))}
                             </div>
                         </div>

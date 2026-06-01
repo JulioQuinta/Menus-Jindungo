@@ -21,7 +21,7 @@ const MOCK_MIX_DATA = [
     { name: 'Aniversários / Festas', value: 13.1, color: '#D4AF37' },
 ];
 
-const ReservationManager = ({ restaurantId }) => {
+const ReservationManager = ({ restaurantId, restaurantName }) => {
     const [reservations, setReservations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all'); // all, pending, confirmed, cancelled
@@ -33,6 +33,7 @@ const ReservationManager = ({ restaurantId }) => {
     const [selectedTables, setSelectedTables] = useState([]);
     const [occupiedTables, setOccupiedTables] = useState([]);
     const [periodTab, setPeriodTab] = useState('Dia'); // Dia, Semana, Mês
+    const [showWhatsAppModal, setShowWhatsAppModal] = useState(null);
 
     useEffect(() => {
         if (restaurantId) {
@@ -46,7 +47,16 @@ const ReservationManager = ({ restaurantId }) => {
                     schema: 'public',
                     table: 'reservations',
                     filter: `restaurant_id=eq.${restaurantId}`
-                }, () => {
+                }, (payload) => {
+                    if (payload.eventType === 'INSERT') {
+                        // Play alert sound for new reservation
+                        try {
+                            const audio = new Audio('/bell.mp3');
+                            audio.volume = 0.5;
+                            audio.play().catch(e => console.log('Autoplay audio blocked by browser settings', e));
+                            toast.success("🛎️ Nova solicitação de reserva recebida!");
+                        } catch (e) {}
+                    }
                     fetchReservations();
                 })
                 .subscribe();
@@ -108,6 +118,32 @@ const ReservationManager = ({ restaurantId }) => {
         }
     };
 
+    // Helper to generate WhatsApp pre-filled message url and text
+    const generateWhatsAppMessage = (res, newStatus, reason = null, tables = []) => {
+        const formattedDate = new Date(res.reservation_date).toLocaleDateString('pt-PT');
+        const formattedTime = res.reservation_time.slice(0, 5);
+        const peopleText = res.num_people === 1 ? '1 pessoa' : `${res.num_people} pessoas`;
+        const restName = restaurantName || 'Jindungo';
+
+        let msg = "";
+        if (newStatus === 'confirmed') {
+            const tablesText = tables.length > 0 ? tables.join(', ') : 'A definir na chegada';
+            msg = `Olá *${res.customer_name}*! 🌟\n\nConfirmamos com sucesso a sua reserva no *${restName}*! 🍳✨\n\n📅 *Data:* ${formattedDate}\n⏰ *Hora:* ${formattedTime}\n👥 *Lugar:* ${peopleText}\n📍 *Mesa(s) Atribuída(s):* ${tablesText}\n\nEstamos ansiosos por recebê-lo(a) para uma experiência única! 🌶️🇦🇴`;
+        } else {
+            const reasonText = reason || 'Pedimos desculpa, mas o restaurante encontra-se sem disponibilidade.';
+            msg = `Olá *${res.customer_name}*.\n\nLamentamos informar, mas a sua solicitação de reserva no *${restName}* para o dia *${formattedDate}* às *${formattedTime}* não pôde ser confirmada.\n\n❌ *Motivo:* ${reasonText}\n\nSe desejar, pode sugerir um novo horário ou entrar em contacto connosco. Agradecemos a compreensão. 🙏`;
+        }
+
+        const cleanPhone = String(res.customer_phone).replace(/\D/g, '');
+        const encodedMsg = encodeURIComponent(msg);
+        const url = `https://wa.me/${cleanPhone}?text=${encodedMsg}`;
+
+        return {
+            messageText: msg,
+            whatsappUrl: url
+        };
+    };
+
     const updateStatus = async (id, newStatus, reason = null, tables = []) => {
         try {
             const updateData = { status: newStatus };
@@ -123,6 +159,20 @@ const ReservationManager = ({ restaurantId }) => {
 
             const message = newStatus === 'confirmed' ? 'Reserva confirmada!' : 'Reserva rejeitada.';
             toast.success(message);
+
+            // Fetch reservation details from our state to pop up the WhatsApp Modal
+            const res = reservations.find(r => r.id === id);
+            if (res) {
+                const { messageText, whatsappUrl } = generateWhatsAppMessage(res, newStatus, reason, tables);
+                setShowWhatsAppModal({
+                    customerName: res.customer_name,
+                    customerPhone: res.customer_phone,
+                    status: newStatus,
+                    messageText,
+                    whatsappUrl
+                });
+            }
+
             setShowAssignModal(null);
             setSelectedTables([]);
             fetchReservations();
@@ -566,6 +616,67 @@ const ReservationManager = ({ restaurantId }) => {
                                 >
                                     Confirmar Recusa
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* WhatsApp Notification Modal */}
+            {showWhatsAppModal && (
+                <div className="fixed inset-0 z-[110] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
+                    <div className="bg-[#121212] w-full max-w-md rounded-[2.5rem] border border-[#D4AF37]/30 overflow-hidden shadow-2xl relative">
+                        <div className="absolute top-0 right-0 w-48 h-48 bg-[#25D366]/10 rounded-full blur-[60px] -mr-24 -mt-24"></div>
+                        <div className="p-8 relative z-10">
+                            {/* WhatsApp Glowing Logo */}
+                            <div className="w-16 h-16 bg-[#25D366]/20 rounded-2xl flex items-center justify-center mb-6 border border-[#25D366]/30 shadow-[0_0_20px_rgba(37,211,102,0.3)]">
+                                <svg viewBox="0 0 24 24" width="32" height="32" stroke="#25D366" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" className="animate-pulse">
+                                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                                </svg>
+                            </div>
+                            
+                            <h3 className="text-2.5xl font-serif font-black text-white mb-2">Notificar Cliente</h3>
+                            <p className="text-xs text-gray-400 mb-6 font-medium">
+                                A reserva de <span className="text-[#D4AF37] font-bold">{showWhatsAppModal.customerName}</span> foi guardada. Envie a notificação oficial por WhatsApp:
+                            </p>
+
+                            {/* Message Preview Container */}
+                            <div className="bg-black/50 border border-white/5 rounded-2xl p-5 mb-6 text-xs text-gray-300 font-light leading-relaxed max-h-[220px] overflow-y-auto custom-scrollbar relative shadow-inner select-all">
+                                <div className="absolute top-2 right-2 text-[9px] font-bold text-gray-600 bg-white/5 px-2 py-0.5 rounded border border-white/5 uppercase">Visualização</div>
+                                <p className="whitespace-pre-line pr-12">{showWhatsAppModal.messageText}</p>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="space-y-3">
+                                <a
+                                    href={showWhatsAppModal.whatsappUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={() => setShowWhatsAppModal(null)}
+                                    className="w-full py-4.5 rounded-full bg-gradient-to-r from-[#25C366] to-[#25D366] text-black font-black hover:brightness-110 shadow-[0_0_25px_rgba(37,211,102,0.4)] hover:scale-[1.02] active:scale-95 transition-all text-xs tracking-wider uppercase flex items-center justify-center gap-2.5 cursor-pointer text-center"
+                                >
+                                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" className="mr-1.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                                    Enviar Notificação WhatsApp
+                                </a>
+                                
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(showWhatsAppModal.messageText);
+                                            toast.success("Mensagem copiada para a área de transferência!");
+                                        }}
+                                        className="flex-1 px-5 py-4 rounded-full bg-white/5 border border-white/10 text-gray-400 font-bold hover:bg-white/10 hover:text-white transition-all text-xs tracking-wider uppercase cursor-pointer"
+                                    >
+                                        Copiar Texto
+                                    </button>
+                                    
+                                    <button
+                                        onClick={() => setShowWhatsAppModal(null)}
+                                        className="flex-1 px-5 py-4 rounded-full bg-white/5 text-gray-500 font-bold hover:bg-white/10 hover:text-gray-300 transition-all text-xs tracking-wider uppercase cursor-pointer"
+                                    >
+                                        Fechar
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

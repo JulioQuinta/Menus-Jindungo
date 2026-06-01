@@ -210,7 +210,7 @@ const CategorySection = ({ cat, Layout, commonProps, onItemAdded, selectedLangua
     );
 };
 
-const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, restaurantId, features = {}, onItemAdded, selectedLanguage = 'PT', onLanguageChange }) => {
+const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, restaurantId, features = {}, onItemAdded, selectedLanguage = 'PT', onLanguageChange, coupons = [] }) => {
     const [activeCategory, setActiveCategory] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 

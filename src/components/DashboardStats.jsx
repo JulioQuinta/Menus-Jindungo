@@ -419,7 +419,13 @@ const DashboardStats = ({ restaurantId }) => {
                     chartTitle: mockData.title,
                     chartData: analytics.chartData && analytics.chartData.length > 0 ? analytics.chartData : prev.chartData,
                     categoriesMix: mix.length > 0 ? mix : prev.categoriesMix,
-                    topDishes: topProd.length > 0 ? topProd : prev.topDishes
+                    topDishes: topProd.length > 0 ? topProd : prev.topDishes,
+                    // Real metrics integration from Supabase
+                    cancellationRate: analytics.cancellationRate,
+                    cancelledCount: analytics.cancelledCount,
+                    customerLoyalty: analytics.customerLoyalty,
+                    topCustomers: analytics.topCustomers || [],
+                    recentOrders: analytics.recentOrders && analytics.recentOrders.length > 0 ? analytics.recentOrders : prev.recentOrders
                 }));
             } else {
                 setIsDemoMode(true);

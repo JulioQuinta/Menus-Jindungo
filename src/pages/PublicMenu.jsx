@@ -40,6 +40,7 @@ const PublicMenu = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+    const [coupons, setCoupons] = useState([]);
     const [initialTable, setInitialTable] = useState(null);
     const [businessInfo, setBusinessInfo] = useState(null);
     const [isCurrentlyClosed, setIsCurrentlyClosed] = useState(false);
@@ -105,6 +106,18 @@ const PublicMenu = () => {
                 setRestaurant(restaurantData);
                 setFeatures(getPlanFeatures(restaurantData.plan));
                 analyticsService.trackView(restaurantData.id);
+
+                // Fetch public active coupons
+                try {
+                    const { data: couponsData } = await supabase
+                        .from('coupons')
+                        .select('*')
+                        .eq('restaurant_id', restaurantData.id)
+                        .eq('is_active', true);
+                    setCoupons(couponsData || []);
+                } catch (cErr) {
+                    console.error("Error fetching coupons:", cErr);
+                }
 
                 // 2. Process Theme/Config (Now derived from Step 1)
                 const themeData = restaurantData.theme_config || DEFAULT_CONFIG;
@@ -425,6 +438,7 @@ const PublicMenu = () => {
                 handleShare={handleShare}
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
+                coupons={coupons}
             />
         </CartProvider>
     );
@@ -435,7 +449,8 @@ const PublicMenuInner = ({
     isCurrentlyClosed, showInfo, setShowInfo, showBookingModal, 
     setShowBookingModal, showStaffModal, setShowStaffModal, 
     activeStaff, setActiveStaff, handleShare,
-    selectedLanguage, setSelectedLanguage 
+    selectedLanguage, setSelectedLanguage,
+    coupons
 }) => {
     const { addToCart, cartItems, clearCart } = useCart();
     const t = (key) => getTranslation(selectedLanguage, key);
@@ -493,6 +508,7 @@ const PublicMenuInner = ({
                         }}
                         selectedLanguage={selectedLanguage}
                         onLanguageChange={setSelectedLanguage}
+                        coupons={coupons}
                     />
                 </div>
 

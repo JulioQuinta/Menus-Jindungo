@@ -14,6 +14,7 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const Explorar = lazy(() => import('./pages/Explorar'));
 const MotoboyDashboard = lazy(() => import('./pages/MotoboyDashboard'));
 const QuemSomos = lazy(() => import('./pages/QuemSomos'));
+const OrderTrackerPage = lazy(() => import('./pages/OrderTrackerPage'));
 
 // Enhanced Loading Fallback (Better UX for slow networks)
 const PageLoader = () => (
@@ -65,6 +66,7 @@ const Router = () => {
                 <Route path="/r/:slug" element={<PublicMenu />} />
                 <Route path="/:slug" element={<PublicMenu />} />
                 <Route path="/delivery/:orderId" element={<MotoboyDashboard />} />
+                <Route path="/track/:orderId" element={<OrderTrackerPage />} />
 
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to="/" replace />} />

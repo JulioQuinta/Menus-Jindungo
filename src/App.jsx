@@ -27,7 +27,15 @@ function App() {
         <InstallPWA />
         <SettingsProvider>
           <AuthProvider>
-            <Toaster position="top-right" />
+            <Toaster 
+              position="top-right" 
+              containerStyle={{ zIndex: 999999 }}
+              toastOptions={{
+                style: {
+                  zIndex: 999999
+                }
+              }}
+            />
             <Router />
           </AuthProvider>
         </SettingsProvider>

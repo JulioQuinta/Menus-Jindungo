@@ -182,22 +182,26 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
 
             if (isNew) payload.position = 999;
 
-            let error;
             if (isNew) {
-                const { error: insertError } = await supabase.from('menu_items').insert([payload]);
-                error = insertError;
+                const { data, error: insertError } = await supabase.from('menu_items').insert([payload]).select();
+                if (insertError) throw insertError;
+                if (!data || data.length === 0) {
+                    throw new Error("Permissão negada pela política RLS para criar pratos.");
+                }
             } else {
-                const { error: updateError } = await supabase.from('menu_items').update(payload).eq('id', item.id);
-                error = updateError;
+                const { data, error: updateError } = await supabase.from('menu_items').update(payload).eq('id', item.id).select();
+                if (updateError) throw updateError;
+                if (!data || data.length === 0) {
+                    throw new Error("Permissão negada pela política RLS para editar este prato.");
+                }
             }
 
-            if (error) throw error;
             setEditingItem(null);
             if (onUpdate) onUpdate();
             toast.success(isNew ? "Prato criado com sucesso!" : "Prato atualizado com sucesso!");
         } catch (err) {
             console.error("Error saving item:", err);
-            toast.error("Erro ao salvar item.");
+            toast.error(err.message || "Erro ao salvar item.");
         } finally {
             setIsSaving(false);
         }

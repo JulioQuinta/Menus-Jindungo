@@ -67,11 +67,11 @@ const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName, whatsappN
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 backdrop-blur-md bg-black/60 animate-in fade-in duration-300">
-            <div className="bg-[#121212] w-full max-w-lg rounded-t-[2.5rem] sm:rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-500">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-md bg-black/60 animate-in fade-in duration-300">
+            <div className="bg-[#121212] w-full max-w-lg rounded-t-[2.5rem] sm:rounded-[2.5rem] border-t border-x sm:border border-white/10 shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-500 flex flex-col max-h-[92vh] sm:max-h-[90vh]">
 
                 {/* Header */}
-                <div className="p-6 border-b border-white/5 flex justify-between items-center relative">
+                <div className="p-6 border-b border-white/5 flex justify-between items-center relative shrink-0">
                     <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37]/5 to-transparent pointer-events-none" />
                     <div>
                         <h3 className="text-xl font-bold text-white flex items-center gap-2">
@@ -89,7 +89,7 @@ const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName, whatsappN
                 </div>
 
                 {/* Body */}
-                <div className="p-8">
+                <div className="p-6 sm:p-8 flex-1 overflow-y-auto custom-scrollbar scrollbar-hide">
                     {step === 1 && (
                         <div className="space-y-6 animate-in slide-in-from-right duration-300">
                             <div className="grid grid-cols-2 gap-4">

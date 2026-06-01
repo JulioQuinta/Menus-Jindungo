@@ -25,6 +25,51 @@ export const CartProvider = ({ children }) => {
     }, [cartItems]);
 
     const addToCart = (item, selectedVariant = null) => {
+        // [STOCK CONTROL CHECK] Prevent adding more items than available in database stock
+        if (item?.track_stock) {
+            const currentQty = cartItems.filter(i => String(i.id) === String(item.id)).reduce((sum, i) => sum + i.quantity, 0);
+            const stockLimit = parseInt(item.stock_quantity) || 0;
+            
+            if (currentQty + 1 > stockLimit) {
+                if (stockLimit <= 0) {
+                    toast.error(`Pedimos desculpa, mas o item "${item.name}" está temporariamente esgotado!`, {
+                        icon: '🛎️',
+                        duration: 5000,
+                        style: {
+                            background: '#161616',
+                            color: '#fff',
+                            borderRadius: '20px',
+                            border: '1px solid rgba(212, 175, 55, 0.4)',
+                            fontFamily: 'serif',
+                            padding: '16px 22px',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.85)',
+                            fontSize: '13px',
+                            lineHeight: '1.5',
+                            fontWeight: '600'
+                        }
+                    });
+                } else {
+                    toast.error(`Pedimos desculpa, mas apenas temos ${stockLimit} unidades de "${item.name}" disponíveis em stock!`, {
+                        icon: '📦',
+                        duration: 5000,
+                        style: {
+                            background: '#161616',
+                            color: '#fff',
+                            borderRadius: '20px',
+                            border: '1px solid rgba(212, 175, 55, 0.4)',
+                            fontFamily: 'serif',
+                            padding: '16px 22px',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.85)',
+                            fontSize: '13px',
+                            lineHeight: '1.5',
+                            fontWeight: '600'
+                        }
+                    });
+                }
+                return; // Prevent addition
+            }
+        }
+
         if (item?.restaurant_id) {
             analyticsService.trackAddToCart(item.restaurant_id, item);
         }

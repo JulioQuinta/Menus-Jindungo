@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { orderService } from '../services/orderService';
+import { supabase } from '../lib/supabaseClient';
 import { Bike, Navigation, MapPin, PackageCheck, Phone, AlertTriangle, CheckCircle, Banknote, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -24,6 +25,66 @@ export default function MotoboyDashboard() {
         const timer = setInterval(loadOrder, 30000);
         return () => clearInterval(timer);
     }, [loadOrder]);
+
+    // References to keep watch position and prevent leaks
+    const watchIdRef = useRef(null);
+
+    // [REAL-TIME] GPS Courier Tracking background watch
+    useEffect(() => {
+        if (order && order.status === 'out_for_delivery') {
+            if ("geolocation" in navigator) {
+                console.log("Iniciando monitorização de geolocalização do Estafeta...");
+                
+                if (watchIdRef.current) {
+                    navigator.geolocation.clearWatch(watchIdRef.current);
+                }
+
+                watchIdRef.current = navigator.geolocation.watchPosition(
+                    async (position) => {
+                        const { latitude, longitude } = position.coords;
+                        console.log(`Nova localização do Estafeta: ${latitude}, ${longitude}`);
+                        
+                        try {
+                            const { error } = await supabase
+                                .from('orders')
+                                .update({
+                                    courier_latitude: latitude,
+                                    courier_longitude: longitude
+                                })
+                                .eq('id', orderId);
+                            
+                            if (error) throw error;
+                        } catch (err) {
+                            console.error("Erro ao atualizar GPS do estafeta no banco:", err);
+                        }
+                    },
+                    (err) => {
+                        console.error("Erro ao obter geolocalização do estafeta:", err);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                toast.error("Geolocalização não suportada pelo navegador.");
+            }
+        } else {
+            if (watchIdRef.current) {
+                console.log("Parando monitorização de geolocalização...");
+                navigator.geolocation.clearWatch(watchIdRef.current);
+                watchIdRef.current = null;
+            }
+        }
+
+        return () => {
+            if (watchIdRef.current) {
+                navigator.geolocation.clearWatch(watchIdRef.current);
+                watchIdRef.current = null;
+            }
+        };
+    }, [order?.status, orderId]);
 
     const updateStatus = async (status, msg) => {
         const loadingId = toast.loading('A atualizar...');

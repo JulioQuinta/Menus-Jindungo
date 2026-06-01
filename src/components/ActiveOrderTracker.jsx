@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabaseClient';
 import { Clock, ChefHat, CheckCircle, Truck, X, Award, XCircle, Phone, FileText } from 'lucide-react';
@@ -7,6 +8,7 @@ import { orderService } from '../services/orderService';
 import ReceiptModal from './ReceiptModal';
 
 const ActiveOrderTracker = ({ restaurantId, restaurantName, primaryColor = '#D4AF37' }) => {
+    const navigate = useNavigate();
     const [activeOrder, setActiveOrder] = useState(null);
     const [isVisible, setIsVisible] = useState(true);
     const [showReceiptModal, setShowReceiptModal] = useState(false);
@@ -255,12 +257,21 @@ const ActiveOrderTracker = ({ restaurantId, restaurantName, primaryColor = '#D4A
                     </div>
                 )}
 
-                <button
-                    onClick={() => setShowReceiptModal(true)}
-                    className="mt-3.5 w-full bg-[#D4AF37]/15 hover:bg-[#D4AF37]/25 text-[#D4AF37] border border-[#D4AF37]/30 py-2.5 rounded-xl font-black text-xs flex justify-center items-center gap-2 transition-all uppercase tracking-wider cursor-pointer shadow-sm active:scale-95"
-                >
-                    <FileText size={15} /> Ver Talão / Fatura Premium
-                </button>
+                <div className="flex gap-2 mt-3.5">
+                    <button
+                        onClick={() => navigate(`/track/${activeOrder.id}`)}
+                        className="flex-1 bg-gradient-to-r from-[#F5C542] to-[#D4AF37] text-[#0A0A0A] font-black py-2.5 rounded-xl text-xs flex justify-center items-center gap-1.5 transition-all uppercase tracking-wider cursor-pointer shadow-lg active:scale-95 border border-[#F5C542]/20 hover:brightness-110"
+                    >
+                        <span>Acompanhar 🚀</span>
+                    </button>
+                    <button
+                        onClick={() => setShowReceiptModal(true)}
+                        className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-3.5 py-2.5 rounded-xl font-bold text-xs flex justify-center items-center transition-all active:scale-95 shadow-sm"
+                        title="Ver Talão Digital"
+                    >
+                        <FileText size={15} />
+                    </button>
+                </div>
             </div>
 
             {showReceiptModal && createPortal(

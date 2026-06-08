@@ -4,7 +4,7 @@ import {
     Smartphone, Zap, TrendingUp, Shield, Globe, Utensils, 
     ArrowRight, Menu, X, Phone, Mail, MapPin, Facebook, Instagram, Music, Check, Star,
     DollarSign, Clock, Users, Award, CheckCircle, XCircle, AlertTriangle, Flame,
-    Truck, Compass, Calendar, ShoppingBag
+    Truck, Compass, Calendar, ShoppingBag, ArrowUp
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 
@@ -34,8 +34,13 @@ const LandingPage = () => {
         return { total: basePrice.toLocaleString('pt-AO'), monthly: basePrice.toLocaleString('pt-AO'), tag: null, mult: '1 mês' };
     };
 
+    const [showScrollTop, setShowScrollTop] = useState(false);
+
     useEffect(() => {
-        const handleScroll = () => setScrolled(window.scrollY > 50);
+        const handleScroll = () => {
+            setScrolled(window.scrollY > 50);
+            setShowScrollTop(window.scrollY > 300);
+        };
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
@@ -685,6 +690,17 @@ const LandingPage = () => {
             <footer className="py-8 px-6 border-t border-white/5 text-center text-xs text-gray-500 relative z-10 font-light tracking-wider">
                 <p>© 2026 MENUS JINDUNGO APP • SUMBA AQUI COMÉRCIO E SERVIÇOS (SU), LDA. TODOS OS DIREITOS RESERVADOS.</p>
             </footer>
+
+            {/* Floating Back to Top Button */}
+            {showScrollTop && (
+                <button
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    className="fixed bottom-8 right-8 z-50 p-4 rounded-full bg-[#D4AF37] text-black hover:bg-[#E5C27B] hover:scale-110 active:scale-95 transition-all shadow-[0_4px_20px_rgba(212,175,55,0.4)] flex items-center justify-center animate-in fade-in slide-in-from-bottom-5 duration-300"
+                    title="Voltar ao Topo"
+                >
+                    <ArrowUp size={20} strokeWidth={3} />
+                </button>
+            )}
         </div>
     );
 };

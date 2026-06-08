@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Shield, ChefHat, Utensils, CheckCircle, Smartphone, Mail, Award, Lock } from 'lucide-react';
+import { Eye, EyeOff, Shield, ChefHat, Utensils, CheckCircle, Smartphone, Mail, Award, Lock, ArrowLeft } from 'lucide-react';
 
 const Register = () => {
     const [email, setEmail] = useState('');
@@ -90,7 +90,18 @@ const Register = () => {
     }
 
     return (
-        <div className="min-h-screen flex bg-[#0A0A0A] font-sans selection:bg-[#D4AF37] selection:text-black">
+        <div className="min-h-screen flex bg-[#0A0A0A] font-sans selection:bg-[#D4AF37] selection:text-black relative">
+            
+            {/* Back to Home Button */}
+            <div className="absolute top-6 left-6 z-20">
+                <button
+                    onClick={() => navigate('/')}
+                    className="p-3.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/15 hover:border-[#D4AF37]/50 text-white hover:text-[#D4AF37] transition-all flex items-center justify-center shadow-lg"
+                    title="Voltar ao Início"
+                >
+                    <ArrowLeft size={18} />
+                </button>
+            </div>
             
             {/* Left Side: Visual & Value Prop (Hidden on Mobile) */}
             <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden border-r border-white/5">

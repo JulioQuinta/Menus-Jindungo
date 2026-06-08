@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { toast } from 'react-hot-toast';
-import { Lock, User, ChefHat, Briefcase, Eye, EyeOff, Sparkles, Shield, ArrowRight } from 'lucide-react';
+import { Lock, User, ChefHat, Briefcase, Eye, EyeOff, Sparkles, Shield, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useSettings } from './context/SettingsContext';
 import { supabase } from './lib/supabaseClient';
 
@@ -80,6 +80,17 @@ const LoginPage = () => {
 
     return (
         <div className="min-h-screen relative flex items-center justify-center overflow-hidden bg-[#0B0B0C] font-sans selection:bg-[#D4AF37] selection:text-black p-4 sm:p-6 md:p-8">
+            
+            {/* Back to Home Button */}
+            <div className="absolute top-6 left-6 z-20">
+                <button
+                    onClick={() => navigate('/')}
+                    className="p-3.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/15 hover:border-[#D4AF37]/50 text-white hover:text-[#D4AF37] transition-all flex items-center justify-center shadow-lg"
+                    title="Voltar ao Início"
+                >
+                    <ArrowLeft size={18} />
+                </button>
+            </div>
             
             {/* Pristine Deep Matte Background with Soft Golden Aura matching screenshot */}
             <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center overflow-hidden">

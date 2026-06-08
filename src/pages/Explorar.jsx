@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import { Search, MapPin, Clock, Star, Share2, Bike, LayoutGrid, ArrowRight, Filter } from 'lucide-react';
+import { Search, MapPin, Clock, Star, Share2, Bike, LayoutGrid, ArrowRight, Filter, ArrowLeft } from 'lucide-react';
 import EmptyState from '../components/EmptyState';
 import BookingModal from '../components/BookingModal';
 import { useSettings } from '../context/SettingsContext';
@@ -124,13 +124,23 @@ const Explorar = () => {
                 isScrolled ? 'bg-[#121214]/90 backdrop-blur-xl border-b border-white/10 shadow-2xl' : 'bg-[#121214] border-b border-white/5'
             }`}>
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
-                    <div onClick={() => navigate('/')} className="flex items-center gap-3 cursor-pointer group select-none">
-                        <div className="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center border border-[#D4AF37]/40 group-hover:border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.2)] shadow-2xl transition-all overflow-hidden shrink-0 transition-all duration-300">
-                            <img src={logoUrl || "/jindungo_logo_v3.png"} alt="Logo" className="w-full h-full object-contain p-0 scale-[1.18] filter drop-shadow-[0_0_8px_rgba(212,175,55,0.4)] transition-transform duration-300 group-hover:scale-[1.23]" />
+                    <div className="flex items-center gap-4">
+                        <button 
+                            onClick={() => navigate('/')} 
+                            className="p-2.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/15 hover:border-[#D4AF37]/50 hover:text-[#D4AF37] text-white transition-all flex items-center justify-center shadow-lg"
+                            title="Voltar ao Início"
+                        >
+                            <ArrowLeft size={16} />
+                        </button>
+                        
+                        <div onClick={() => navigate('/')} className="flex items-center gap-3 cursor-pointer group select-none">
+                            <div className="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center border border-[#D4AF37]/40 group-hover:border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.2)] shadow-2xl transition-all overflow-hidden shrink-0 transition-all duration-300">
+                                <img src={logoUrl || "/jindungo_logo_v3.png"} alt="Logo" className="w-full h-full object-contain p-0 scale-[1.18] filter drop-shadow-[0_0_8px_rgba(212,175,55,0.4)] transition-transform duration-300 group-hover:scale-[1.23]" />
+                            </div>
+                            <span className="font-serif font-black text-xl tracking-tight text-white group-hover:text-[#D4AF37] transition-colors uppercase">
+                                Menus<span className="text-[#D4AF37]">Jindungo</span>
+                            </span>
                         </div>
-                        <span className="font-serif font-black text-xl tracking-tight text-white group-hover:text-[#D4AF37] transition-colors uppercase">
-                            Menus<span className="text-[#D4AF37]">Jindungo</span>
-                        </span>
                     </div>
                     <button 
                         onClick={() => navigate('/login')} 

@@ -46,6 +46,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                     if (draft.address !== undefined) setAddress(draft.address);
                     if (draft.addressReference !== undefined) setAddressReference(draft.addressReference);
                     if (draft.gpsCoords !== undefined) setGpsCoords(draft.gpsCoords);
+                    if (draft.geolocationMode !== undefined) setGeolocationMode(draft.geolocationMode);
                     if (draft.paymentMethod !== undefined) setPaymentMethod(draft.paymentMethod);
                     if (draft.changeFor !== undefined) setChangeFor(draft.changeFor);
                     if (draft.selectedZone !== undefined) setSelectedZone(draft.selectedZone);
@@ -68,6 +69,8 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                 if (savedGps) {
                     try { setGpsCoords(JSON.parse(savedGps)); } catch { /* ignore */ }
                 }
+                const savedGpsMode = localStorage.getItem('customer_last_gps_mode');
+                if (savedGpsMode) setGeolocationMode(savedGpsMode);
             }
         } catch (e) {
             console.error("Failed to load checkout draft", e);
@@ -88,6 +91,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
     const [address, setAddress] = useState('');
     const [addressReference, setAddressReference] = useState('');
     const [gpsCoords, setGpsCoords] = useState(null);
+    const [geolocationMode, setGeolocationMode] = useState('app_gps'); // 'app_gps' | 'whatsapp'
 
     // Payment fields
     const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' | 'multicaixa'
@@ -205,6 +209,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
             address,
             addressReference,
             gpsCoords,
+            geolocationMode,
             paymentMethod,
             changeFor,
             selectedZone,
@@ -225,6 +230,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
         address,
         addressReference,
         gpsCoords,
+        geolocationMode,
         paymentMethod,
         changeFor,
         selectedZone,
@@ -263,15 +269,16 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                 setComputedDeliveryFee(parseFloat(selectedZone.fee) || 0);
                 setDistanceKm(0);
             } else {
-                // If no zone selected or no GPS yet, default to 0 or min_fee if distance mode
-                setComputedDeliveryFee(0);
+                // Fallback to base delivery fee if configured and no coordinates yet
+                const base = parseFloat(config.base_fee) || 0;
+                setComputedDeliveryFee(base);
                 setDistanceKm(0);
             }
         } else {
             setComputedDeliveryFee(0);
             setDistanceKm(0);
         }
-    }, [orderType, selectedZone, gpsCoords, deliveryConfig]);
+    }, [orderType, selectedZone, gpsCoords, geolocationMode, deliveryConfig]);
 
     if (!isOpen) return null;
 
@@ -326,13 +333,19 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
         }
         if (isSending) return; // [SECURITY] Prevent Double-Click Race Condition
         if (orderType === 'dine-in' && !tableNumber) return toast.error(t('fillTableError'));
-        if (orderType === 'delivery' && !address) return toast.error(t('fillAddressError'));
+        if (orderType === 'delivery' && (!address || address.trim() === '')) {
+            if (geolocationMode === 'whatsapp') {
+                setAddress('Partilhar no WhatsApp 📍');
+            } else {
+                return toast.error(t('fillAddressError'));
+            }
+        }
 
         setIsSending(true);
 
         const distInfo = distanceKm > 0 ? ` | Distância: ${distanceKm.toFixed(1)}km` : '';
         const zoneInfo = (orderType === 'delivery' && selectedZone) ? `(${selectedZone.name} +${selectedZone.fee}Kz)` : '';
-        const mapsLink = gpsCoords ? ` | Maps: https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : '';
+        const mapsLink = (geolocationMode === 'app_gps' && gpsCoords) ? ` | Maps: https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : '';
         const refNote = addressReference ? ` | Ref: ${addressReference}` : '';
         
         let baseTableOrAddress = '';
@@ -341,7 +354,8 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
         } else if (orderType === 'takeaway') {
             baseTableOrAddress = `Takeaway / Recolha (Pronto em 30-40 min)`;
         } else {
-            baseTableOrAddress = `Entrega: ${address}${refNote}${mapsLink}${distInfo} ${zoneInfo}`;
+            const gpsInfo = geolocationMode === 'whatsapp' ? ' [GPS via WhatsApp]' : '';
+            baseTableOrAddress = `Entrega: ${address || 'Partilhar no WhatsApp 📍'}${refNote}${mapsLink}${distInfo} ${zoneInfo}${gpsInfo}`;
         }
         
         let paymentInfo = '';
@@ -372,9 +386,9 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
             staff_member_name: activeStaff ? activeStaff.name : null,
             // [NEW] Logistics fields
             order_type: orderType,
-            delivery_address: orderType === 'delivery' ? address : null,
+            delivery_address: orderType === 'delivery' ? (address || 'Partilhar no WhatsApp 📍') : null,
             delivery_neighborhood: orderType === 'delivery' && selectedZone ? selectedZone.name : null,
-delivery_reference: orderType === 'delivery' ? (addressReference ? addressReference + (gpsCoords ? ` | GPS: ${gpsCoords.lat},${gpsCoords.lng}` : '') : (gpsCoords ? `GPS: ${gpsCoords.lat},${gpsCoords.lng}` : null)) : null,
+            delivery_reference: orderType === 'delivery' ? (addressReference ? addressReference + ((geolocationMode === 'app_gps' && gpsCoords) ? ` | GPS: ${gpsCoords.lat},${gpsCoords.lng}` : (geolocationMode === 'whatsapp' ? ' | GPS: Via WhatsApp' : '')) : ((geolocationMode === 'app_gps' && gpsCoords) ? `GPS: ${gpsCoords.lat},${gpsCoords.lng}` : (geolocationMode === 'whatsapp' ? 'GPS: Via WhatsApp' : null))) : null,
             delivery_fee: orderType === 'delivery' ? deliveryFee : 0,
             takeaway_time: orderType === 'takeaway' ? '30-40 min' : null
         };
@@ -458,6 +472,7 @@ delivery_reference: orderType === 'delivery' ? (addressReference ? addressRefere
                     if (address) localStorage.setItem('customer_last_address', address);
                     if (addressReference) localStorage.setItem('customer_last_ref', addressReference);
                     if (gpsCoords) localStorage.setItem('customer_last_gps', JSON.stringify(gpsCoords));
+                    localStorage.setItem('customer_last_gps_mode', geolocationMode);
                 }
 
                 // Save to client's recent orders list for restoration
@@ -524,7 +539,8 @@ delivery_reference: orderType === 'delivery' ? (addressReference ? addressRefere
                         changeFor,
                         tableNumber,
                         restaurantSlug: restaurantSlug,
-                        locationLink: gpsCoords ? `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : null
+                        geolocationMode: geolocationMode,
+                        locationLink: (geolocationMode === 'app_gps' && gpsCoords) ? `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : null
                     });
                     
                     import('../services/whatsappService.js').then(async ({ whatsappService }) => {
@@ -561,7 +577,8 @@ delivery_reference: orderType === 'delivery' ? (addressReference ? addressRefere
                     changeFor, 
                     tableNumber, 
                     restaurantSlug: restaurantSlug, 
-                    locationLink: gpsCoords ? `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : null 
+                    geolocationMode: geolocationMode,
+                    locationLink: (geolocationMode === 'app_gps' && gpsCoords) ? `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : null 
                 }, effectiveWhatsapp);
                 if (!link) {
                     toast.error(t('whatsappError'));
@@ -586,7 +603,8 @@ delivery_reference: orderType === 'delivery' ? (addressReference ? addressRefere
                         changeFor,
                         tableNumber,
                         restaurantSlug: restaurantSlug,
-                        locationLink: gpsCoords ? `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : null
+                        geolocationMode: geolocationMode,
+                        locationLink: (geolocationMode === 'app_gps' && gpsCoords) ? `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : null
                     });
                     import('../services/whatsappService.js').then(({ whatsappService }) => {
                         whatsappService.sendWhatsAppMessage(gatewayConfig, effectiveWhatsapp, messageText).catch(e => {
@@ -935,31 +953,104 @@ delivery_reference: orderType === 'delivery' ? (addressReference ? addressRefere
                                             </div>
                                         )}
 
-                                        <div>
-                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                                                {t('tapMap')}
+                                        {/* Geolocation Mode Selector */}
+                                        <div className="bg-gray-100/40 p-4 rounded-3xl border border-gray-150/50 space-y-3">
+                                            <label className="block text-xs font-black text-gray-500 uppercase tracking-wider">
+                                                {selectedLanguage === 'PT' ? 'Localização da Entrega' : 'Delivery Geolocation'}
                                             </label>
-                                            <MapPicker 
-                                                onLocationSelected={(pos, addr) => {
-                                                    setGpsCoords(pos);
-                                                    if (addr && (!address || address.trim() === '')) {
-                                                        setAddress(addr);
-                                                    }
-                                                }}
-                                            />
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setGeolocationMode('app_gps');
+                                                        if (address === 'Partilhar no WhatsApp 📍') setAddress('');
+                                                    }}
+                                                    className={`py-3 px-3.5 rounded-2xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                                                        geolocationMode === 'app_gps'
+                                                            ? 'bg-amber-50 border-[#D4AF37] text-amber-900 font-extrabold shadow-sm'
+                                                            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                                                    }`}
+                                                >
+                                                    <MapPin size={14} className={geolocationMode === 'app_gps' ? 'text-[#D4AF37]' : 'text-gray-400'} />
+                                                    <span>{selectedLanguage === 'PT' ? 'Mapa do App (GPS)' : 'App Map (GPS)'}</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setGeolocationMode('whatsapp');
+                                                        setAddress('Partilhar no WhatsApp 📍');
+                                                    }}
+                                                    className={`py-3 px-3.5 rounded-2xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                                                        geolocationMode === 'whatsapp'
+                                                            ? 'bg-emerald-50 border-emerald-500 text-emerald-900 font-extrabold shadow-sm'
+                                                            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                                                    }`}
+                                                >
+                                                    <svg className={`w-3.5 h-3.5 ${geolocationMode === 'whatsapp' ? 'text-emerald-500' : 'text-gray-400'}`} viewBox="0 0 24 24" fill="currentColor">
+                                                        <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.964 9.964 0 001.333 4.982L2 22l5.233-1.371a9.994 9.994 0 004.779 1.21h.005c5.505 0 9.99-4.478 9.99-9.986 0-2.67-1.037-5.178-2.923-7.062A9.923 9.923 0 0012.012 2zM12 20.31a8.31 8.31 0 01-4.24-1.157l-.304-.18-3.15.825.84-3.072-.198-.314A8.324 8.324 0 013.684 12c0-4.593 3.733-8.327 8.325-8.327 2.225 0 4.316.866 5.89 2.44a8.27 8.27 0 012.433 5.893c0 4.593-3.733 8.327-8.328 8.327h-.004z" />
+                                                    </svg>
+                                                    <span>{selectedLanguage === 'PT' ? 'Partilhar no WhatsApp' : 'Share on WhatsApp'}</span>
+                                                </button>
+                                            </div>
                                         </div>
 
-                                        <div>
-                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t('address')}</label>
-                                            <textarea
-                                                value={address}
-                                                onChange={e => setAddress(e.target.value)}
-                                                placeholder="Ex: Talatona, Bloco C, Rua 28..."
-                                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900 placeholder-gray-400 font-medium"
-                                                rows={2}
-                                                style={{ resize: 'none' }}
-                                            />
-                                        </div>
+                                        {geolocationMode === 'app_gps' ? (
+                                            <div className="space-y-4 animate-in fade-in duration-300">
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                                                        {t('tapMap')}
+                                                    </label>
+                                                    <MapPicker 
+                                                        onLocationSelected={(pos, addr) => {
+                                                            setGpsCoords(pos);
+                                                            if (addr && (!address || address.trim() === '' || address === 'Partilhar no WhatsApp 📍')) {
+                                                                setAddress(addr);
+                                                            }
+                                                        }}
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t('address')}</label>
+                                                    <textarea
+                                                        value={address === 'Partilhar no WhatsApp 📍' ? '' : address}
+                                                        onChange={e => setAddress(e.target.value)}
+                                                        placeholder="Ex: Talatona, Bloco C, Rua 28..."
+                                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900 placeholder-gray-400 font-medium"
+                                                        rows={2}
+                                                        style={{ resize: 'none' }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-4 animate-in fade-in duration-300">
+                                                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex gap-3 text-xs text-emerald-950 font-medium leading-relaxed">
+                                                    <span className="text-lg">📍</span>
+                                                    <div>
+                                                        <strong className="block font-bold text-emerald-900 mb-0.5">
+                                                            {selectedLanguage === 'PT' ? 'Partilha pelo WhatsApp Ativa' : 'WhatsApp Location Share Active'}
+                                                        </strong>
+                                                        {selectedLanguage === 'PT' 
+                                                            ? 'Após finalizar o pedido, partilhe a sua localização (atual ou em tempo real) diretamente no chat do WhatsApp com o restaurante.'
+                                                            : 'After finalizing the order, share your location (current or live) directly in the WhatsApp chat with the restaurant.'}
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                                                        {selectedLanguage === 'PT' ? 'Morada / Detalhes de Entrega (Opcional - ex: Apartamento/Bloco)' : 'Address / Delivery Details (Optional - e.g. Apartment/Block)'}
+                                                    </label>
+                                                    <textarea
+                                                        value={address === 'Partilhar no WhatsApp 📍' ? '' : address}
+                                                        onChange={e => setAddress(e.target.value)}
+                                                        placeholder={selectedLanguage === 'PT' ? 'Ex: Apartamento 4B, Bloco C, Condomínio Girassol...' : 'Ex: Apartment 4B, Block C...'}
+                                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-gray-900 placeholder-gray-400 font-medium"
+                                                        rows={2}
+                                                        style={{ resize: 'none' }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
 
                                         <div>
                                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t('reference')}</label>
@@ -993,9 +1084,13 @@ delivery_reference: orderType === 'delivery' ? (addressReference ? addressRefere
                                                 toast.error(t('fillTableError'));
                                                 return;
                                             }
-                                            if (orderType === 'delivery' && !address) {
-                                                toast.error(t('fillAddressError'));
-                                                return;
+                                            if (orderType === 'delivery' && (!address || address.trim() === '')) {
+                                                if (geolocationMode === 'whatsapp') {
+                                                    setAddress('Partilhar no WhatsApp 📍');
+                                                } else {
+                                                    toast.error(t('fillAddressError'));
+                                                    return;
+                                                }
                                             }
                                             setStep(3);
                                         }}

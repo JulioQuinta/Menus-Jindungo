@@ -539,6 +539,7 @@ const PublicMenuInner = ({
                     tableNumber: recovered.details.tableNumber || '',
                     address: recovered.details.address || '',
                     addressReference: recovered.details.addressReference || '',
+                    geolocationMode: recovered.details.geolocationMode || 'app_gps',
                     paymentMethod: 'cash'
                 };
                 localStorage.setItem(`jindungo_checkout_draft_${restaurant.id}`, JSON.stringify(draft));

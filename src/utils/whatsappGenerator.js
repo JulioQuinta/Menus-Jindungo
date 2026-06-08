@@ -7,7 +7,11 @@ export const generateWhatsAppMessageText = (cartItems, total, orderType, details
         message += `*Novo Pedido - Entrega* 🛵\n`;
         message += `*Morada:* ${details.address || 'Não informada'}\n`;
         if (details.customerName) message += `*Cliente:* ${details.customerName} 👤\n`;
-        if (details.locationLink) message += `*Local:* ${details.locationLink} 📍\n`;
+        if (details.locationLink) {
+            message += `*Local:* ${details.locationLink} 📍\n`;
+        } else if (details.geolocationMode === 'whatsapp') {
+            message += `*Localização:* _Partilharei a minha localização (Atual/Tempo Real) diretamente neste chat do WhatsApp_ 📍\n`;
+        }
     } else {
         message += `*Novo Pedido - Mesa ${details.tableNumber || '?'}* 🍽️\n`;
         if (details.customerName) message += `*Cliente:* ${details.customerName} 👤\n`;
@@ -98,7 +102,8 @@ export const serializeCart = (cartItems, details, orderType) => {
                 p: details.customerPhone || '',
                 a: details.address || '',
                 r: details.addressReference || '',
-                t: details.tableNumber || ''
+                t: details.tableNumber || '',
+                g: details.geolocationMode || 'app_gps'
             },
             t: orderType
         };
@@ -138,7 +143,8 @@ export const deserializeCart = (base64Str) => {
                 customerPhone: payload.d.p,
                 address: payload.d.a,
                 addressReference: payload.d.r,
-                tableNumber: payload.d.t
+                tableNumber: payload.d.t,
+                geolocationMode: payload.d.g || 'app_gps'
             },
             orderType: payload.t
         };

@@ -210,7 +210,7 @@ const CategorySection = ({ cat, Layout, commonProps, onItemAdded, selectedLangua
     );
 };
 
-const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, restaurantId, features = {}, onItemAdded, selectedLanguage = 'PT', onLanguageChange, coupons = [] }) => {
+const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, restaurantId, features = {}, onItemAdded, selectedLanguage = 'PT', onLanguageChange, coupons = [], restaurantClosed = false }) => {
     const [activeCategory, setActiveCategory] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -268,7 +268,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
             );
         }
 
-        const commonProps = { primaryColor: effectivePrimaryColor, isEditing, darkMode: true, selectedLanguage, restaurantClosed: config.isOpen === false };
+        const commonProps = { primaryColor: effectivePrimaryColor, isEditing, darkMode: true, selectedLanguage, restaurantClosed };
         const Layout = config.layoutMode === 'list' ? ListLayout : (config.layoutMode === 'minimal' ? MinimalLayout : GridLayout);
 
         if (searchTerm) {

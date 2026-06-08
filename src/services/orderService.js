@@ -82,7 +82,7 @@ export const orderService = {
         try {
             const { data, error } = await supabase
                 .from('orders')
-                .select('*, restaurant:restaurants(name, business_info)')
+                .select('*, restaurant:restaurants(name, business_info, slug)')
                 .eq('id', orderId)
                 .single();
 

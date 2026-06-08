@@ -14,6 +14,57 @@ const CustomerManager = ({ restaurantId }) => {
     // Campaign State
     const [showCampaignModal, setShowCampaignModal] = useState(false);
     const [campaignData, setCampaignData] = useState({ couponCode: '', daysInactive: 30, discountText: '20%' });
+    
+    // Gateway Settings State
+    const [showGatewayModal, setShowGatewayModal] = useState(false);
+    const [gatewayConfig, setGatewayConfig] = useState({ apiUrl: '', token: '', instanceName: '', gatewayType: 'evolution' });
+    const [isSavingGateway, setIsSavingGateway] = useState(false);
+    const [campaignProgress, setCampaignProgress] = useState(null);
+
+    useEffect(() => {
+        if (restaurantId) {
+            supabase.from('restaurants')
+                .select('business_info')
+                .eq('id', restaurantId)
+                .single()
+                .then(({ data, error }) => {
+                    if (data?.business_info?.whatsapp_gateway) {
+                        setGatewayConfig(data.business_info.whatsapp_gateway);
+                    }
+                });
+        }
+    }, [restaurantId]);
+
+    const handleSaveGateway = async () => {
+        if (!gatewayConfig.apiUrl || !gatewayConfig.token || !gatewayConfig.instanceName) {
+            return toast.error("Por favor, preencha todos os campos do gateway.");
+        }
+        setIsSavingGateway(true);
+        try {
+            const { data } = await supabase.from('restaurants')
+                .select('business_info')
+                .eq('id', restaurantId)
+                .single();
+
+            const updatedInfo = {
+                ...(data?.business_info || {}),
+                whatsapp_gateway: gatewayConfig
+            };
+
+            const { error } = await supabase.from('restaurants')
+                .update({ business_info: updatedInfo })
+                .eq('id', restaurantId);
+
+            if (error) throw error;
+            toast.success("Configuração de Gateway guardada com sucesso!");
+            setShowGatewayModal(false);
+        } catch (e) {
+            console.error("Failed to save gateway config:", e);
+            toast.error("Erro ao guardar configuração do gateway.");
+        } finally {
+            setIsSavingGateway(false);
+        }
+    };
 
     // Mock initial customers for instant premium visual render even if database is empty or loading
     const defaultMockCustomers = [
@@ -217,7 +268,7 @@ const CustomerManager = ({ restaurantId }) => {
         window.open(`https://wa.me/${finalPhone}${msg}`, '_blank');
     };
 
-    const handleRunCampaign = () => {
+    const handleRunCampaign = async (useGateway = false) => {
         if (!campaignData.couponCode) return toast.error("Insira o código do Cupão Jindungo.");
         
         const cutoffDate = new Date();
@@ -229,16 +280,39 @@ const CustomerManager = ({ restaurantId }) => {
             return toast.error(`Nenhum cliente inativo há mais de ${campaignData.daysInactive} dias com telefone registado.`);
         }
 
-        const textToCopy = `Temos Saudades Suas! 🌶️\nUtilize o nosso cupão ${campaignData.couponCode} para um desconto de ${campaignData.discountText} no seu próximo pedido connosco!\n\nAceda ao menu: ${window.location.origin}/r/default`;
-        const numbers = targets.map(t => {
-            const clean = t.phone.replace(/\D/g, '');
-            return clean.startsWith('244') ? clean : '244' + clean;
-        }).join(', ');
+        const textToCopy = `Olá {nome}! Temos Saudades Suas! 🌶️\nUtilize o nosso cupão ${campaignData.couponCode} para um desconto de ${campaignData.discountText} no seu próximo pedido connosco!\n\nAceda ao nosso menu: ${window.location.origin}/r/${restaurantId ? '' : 'default'}`;
 
-        navigator.clipboard.writeText(`Lista de Números:\n${numbers}\n\nMensagem Base:\n${textToCopy}`);
-        
-        toast.success(`${targets.length} contactos e mensagem copiados para o Clipboard! Cole na sua Lista de Transmissão do WhatsApp.`, { duration: 8000 });
-        setShowCampaignModal(false);
+        if (useGateway) {
+            setCampaignProgress({ current: 0, total: targets.length, successCount: 0, failedCount: 0, pct: 0 });
+            
+            import('../services/whatsappService.js').then(async ({ whatsappService }) => {
+                try {
+                    const results = await whatsappService.sendBulkCampaign(
+                        gatewayConfig,
+                        targets,
+                        textToCopy,
+                        (progress) => setCampaignProgress(progress)
+                    );
+                    
+                    toast.success(`Campanha executada! Sucesso: ${results.success}, Falhas: ${results.failed}`, { duration: 6000 });
+                    setShowCampaignModal(false);
+                } catch (err) {
+                    toast.error(`Falha no disparo da campanha: ${err.message}`);
+                } finally {
+                    setCampaignProgress(null);
+                }
+            });
+        } else {
+            const numbers = targets.map(t => {
+                const clean = t.phone.replace(/\D/g, '');
+                return clean.startsWith('244') ? clean : '244' + clean;
+            }).join(', ');
+
+            navigator.clipboard.writeText(`Lista de Números:\n${numbers}\n\nMensagem Base:\n${textToCopy.replace(/\{nome\}/gi, 'Cliente')}`);
+            
+            toast.success(`${targets.length} contactos e mensagem copiados para o Clipboard! Cole na sua Lista de Transmissão do WhatsApp.`, { duration: 8000 });
+            setShowCampaignModal(false);
+        }
     };
 
     // Recharts Data for "Ciclo de vida de clientes"
@@ -292,6 +366,14 @@ const CustomerManager = ({ restaurantId }) => {
                     >
                         <Target size={16} /> Nova Campanha
                     </button>
+                    {restaurantId && (
+                        <button
+                            onClick={() => setShowGatewayModal(true)}
+                            className="bg-[#1C1C1C] hover:bg-white/10 border border-[#D4AF37]/40 text-[#D4AF37] px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 flex-1 sm:flex-none justify-center shadow-md active:scale-95 cursor-pointer"
+                        >
+                            <Phone size={16} /> Gateway API
+                        </button>
+                    )}
                     <button
                         onClick={() => setShowAIPanel(!showAIPanel)}
                         className={`border px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 flex-1 sm:flex-none justify-center shadow-md active:scale-95 cursor-pointer ${showAIPanel ? 'bg-[#D4AF37] text-black border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.5)]' : 'bg-[#1C1C1C] text-[#D4AF37] border-[#D4AF37]/40 hover:bg-[#D4AF37]/10'}`}
@@ -733,21 +815,150 @@ const CustomerManager = ({ restaurantId }) => {
                             </div>
                         </div>
 
-                        <div className="bg-orange-500/10 border border-orange-500/30 p-4 rounded-2xl mb-6 shadow-inner">
-                            <p className="text-[10px] text-orange-400 font-bold uppercase tracking-widest flex items-center gap-1.5 mb-1">
-                                <Send size={12} /> Disparo por Transmissão
-                            </p>
-                            <p className="text-xs text-orange-200/80 leading-relaxed font-medium">
-                                Ao clicar abaixo, copiamos os contactos e a mensagem promocional para a sua área de transferência para que possa colar na sua Lista de Transmissão do WhatsApp.
-                            </p>
+                        {gatewayConfig.apiUrl && gatewayConfig.token ? (
+                            <div className="bg-green-500/10 border border-green-500/30 p-4 rounded-2xl mb-6 shadow-inner">
+                                <p className="text-[10px] text-green-400 font-bold uppercase tracking-widest flex items-center gap-1.5 mb-1">
+                                    <Phone size={12} /> Gateway Ativo: {gatewayConfig.gatewayType.toUpperCase()}
+                                </p>
+                                <p className="text-xs text-green-200/80 leading-relaxed font-medium">
+                                    Foi detetada uma ligação ao gateway de WhatsApp. Pode enviar de forma 100% automática em segundo plano com pausas seguras.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="bg-orange-500/10 border border-orange-500/30 p-4 rounded-2xl mb-6 shadow-inner">
+                                <p className="text-[10px] text-orange-400 font-bold uppercase tracking-widest flex items-center gap-1.5 mb-1">
+                                    <Send size={12} /> Disparo por Transmissão (Manual)
+                                </p>
+                                <p className="text-xs text-orange-200/80 leading-relaxed font-medium">
+                                    Ao clicar abaixo, os contactos e o modelo de texto serão copiados para colar na sua Lista de Transmissão manual.
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="flex flex-col gap-2.5">
+                            {gatewayConfig.apiUrl && gatewayConfig.token && (
+                                <button
+                                    onClick={() => handleRunCampaign(true)}
+                                    className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] cursor-pointer text-xs uppercase tracking-wider"
+                                >
+                                    <Sparkles size={16} /> Disparar em 2º Plano (Automático)
+                                </button>
+                            )}
+                            <button
+                                onClick={() => handleRunCampaign(false)}
+                                className="w-full bg-[#1C1C1C] hover:bg-white/5 border border-white/10 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer text-xs uppercase tracking-wider"
+                            >
+                                <Send size={14} /> {gatewayConfig.apiUrl ? 'Copiar Lista e Texto (Manual)' : 'Compilar & Copiar Campanha'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* WhatsApp Gateway Settings Modal */}
+            {showGatewayModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in zoom-in-95 duration-200">
+                    <div className="bg-[#161616] border border-[#D4AF37]/30 p-8 rounded-[2.5rem] max-w-md w-full relative shadow-2xl">
+                        <button onClick={() => setShowGatewayModal(false)} className="absolute top-6 right-6 text-gray-500 hover:text-white cursor-pointer font-bold">
+                            <X size={20} />
+                        </button>
+                        <h3 className="text-2xl font-serif font-black mb-1 text-white flex items-center gap-2.5">
+                            <Phone className="text-[#D4AF37]" size={28} /> Configurar Gateway
+                        </h3>
+                        <p className="text-xs text-gray-400 mb-6 border-b border-white/10 pb-4 leading-relaxed font-medium">Conecte o seu número de WhatsApp ao sistema para enviar disparos de CRM e notificações em segundo plano.</p>
+
+                        <div className="space-y-4 mb-6">
+                            <div>
+                                <label className="text-xs font-bold text-[#D4AF37] uppercase tracking-widest mb-1.5 block">Tipo de API / Gateway</label>
+                                <select 
+                                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-2xl px-4 py-3.5 text-white outline-none focus:border-[#D4AF37] text-sm font-bold"
+                                    value={gatewayConfig.gatewayType}
+                                    onChange={(e) => setGatewayConfig({...gatewayConfig, gatewayType: e.target.value})}
+                                >
+                                    <option value="evolution" className="bg-[#121212]">Evolution API (Recomendado)</option>
+                                    <option value="zapi" className="bg-[#121212]">Z-API</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-[#D4AF37] uppercase tracking-widest mb-1.5 block">URL Base da API</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="Ex: https://api.exemplo.com"
+                                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-2xl px-4 py-3.5 text-white outline-none focus:border-[#D4AF37] text-sm font-medium"
+                                    value={gatewayConfig.apiUrl}
+                                    onChange={(e) => setGatewayConfig({...gatewayConfig, apiUrl: e.target.value})}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-bold text-[#D4AF37] uppercase tracking-widest mb-1.5 block">Nome da Instância</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Ex: jindungo-rest"
+                                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-2xl px-4 py-3.5 text-white outline-none focus:border-[#D4AF37] text-sm font-medium"
+                                        value={gatewayConfig.instanceName}
+                                        onChange={(e) => setGatewayConfig({...gatewayConfig, instanceName: e.target.value})}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-[#D4AF37] uppercase tracking-widest mb-1.5 block">Token / API Key</label>
+                                    <input 
+                                        type="password" 
+                                        placeholder="••••••••"
+                                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-2xl px-4 py-3.5 text-white outline-none focus:border-[#D4AF37] text-sm font-medium"
+                                        value={gatewayConfig.token}
+                                        onChange={(e) => setGatewayConfig({...gatewayConfig, token: e.target.value})}
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         <button
-                            onClick={handleRunCampaign}
-                            className="w-full bg-gradient-to-r from-[#D4AF37] to-amber-600 text-black font-black py-4 rounded-2xl flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-[0_0_25px_rgba(212,175,55,0.4)] cursor-pointer text-xs uppercase tracking-wider"
+                            onClick={handleSaveGateway}
+                            disabled={isSavingGateway}
+                            className="w-full bg-gradient-to-r from-[#D4AF37] to-amber-600 text-black font-black py-4 rounded-2xl flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-[0_0_25px_rgba(212,175,55,0.4)] cursor-pointer text-xs uppercase tracking-wider disabled:opacity-50"
                         >
-                            <Send size={16} /> Compilar & Disparar Campanha
+                            {isSavingGateway ? 'A Guardar...' : 'Guardar Configuração'}
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Campaign Progress Overlay */}
+            {campaignProgress && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+                    <div className="bg-[#121212] border border-green-500/30 p-8 rounded-[2.5rem] max-w-sm w-full text-center relative shadow-[0_0_50px_rgba(16,185,129,0.2)]">
+                        <div className="w-16 h-16 bg-green-500/10 border border-green-500/30 text-green-400 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+                            <Send size={28} />
+                        </div>
+                        <h3 className="text-2xl font-serif font-black text-white mb-2">Disparando Campanha</h3>
+                        <p className="text-xs text-gray-400 mb-6 font-medium">A enviar mensagens via WhatsApp em segundo plano com pausas seguras...</p>
+
+                        <div className="space-y-4">
+                            {/* Loading Bar */}
+                            <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5">
+                                <div 
+                                    className="bg-green-500 h-full rounded-full transition-all duration-300"
+                                    style={{ width: `${campaignProgress.pct}%` }}
+                                />
+                            </div>
+                            
+                            <div className="flex justify-between text-xs font-mono font-bold px-1">
+                                <span className="text-gray-400">Progresso:</span>
+                                <span className="text-white">{campaignProgress.current} / {campaignProgress.total} ({campaignProgress.pct}%)</span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 text-center text-xs font-bold pt-2">
+                                <div className="bg-green-500/10 border border-green-500/20 py-2.5 rounded-xl text-green-400">
+                                    <span className="block text-[10px] text-gray-500 uppercase tracking-widest mb-0.5">Sucesso</span>
+                                    {campaignProgress.successCount}
+                                </div>
+                                <div className="bg-red-500/10 border border-red-500/20 py-2.5 rounded-xl text-red-400">
+                                    <span className="block text-[10px] text-gray-500 uppercase tracking-widest mb-0.5">Falhas</span>
+                                    {campaignProgress.failedCount}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

@@ -1,7 +1,7 @@
 // Deployment Test V1.1 - 2026-03-15
 import React, { useState, useEffect } from 'react';
 import { getTranslation } from '../utils/i18n';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 
 
@@ -19,7 +19,7 @@ import ActiveOrderTracker from '../components/ActiveOrderTracker';
 import UpsellModal from '../components/UpsellModal';
 import { useCart } from '../context/CartContext';
 import { getPlanFeatures } from '../utils/planLimits';
-import { Info, Share2, MapPin, Clock, Instagram, Facebook, Phone, X, Calendar, BellRing, Lock } from 'lucide-react';
+import { Info, Share2, MapPin, Clock, Instagram, Facebook, Phone, X, Calendar, BellRing, Lock, ClipboardList } from 'lucide-react';
 
 const DEFAULT_CONFIG = {
     primaryColor: '#ff6b6b',
@@ -39,7 +39,12 @@ const PublicMenu = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+    const [isCheckoutOpen, setIsCheckoutOpen] = useState(() => {
+        if (slug) {
+            return localStorage.getItem(`jindungo_checkout_open_${slug}`) === 'true';
+        }
+        return false;
+    });
     const [coupons, setCoupons] = useState([]);
     const [initialTable, setInitialTable] = useState(null);
     const [businessInfo, setBusinessInfo] = useState(null);
@@ -62,6 +67,13 @@ const PublicMenu = () => {
             }
         }
     }, [restaurant?.id]);
+
+    // Persist whether checkout modal is open
+    useEffect(() => {
+        if (slug) {
+            localStorage.setItem(`jindungo_checkout_open_${slug}`, isCheckoutOpen);
+        }
+    }, [slug, isCheckoutOpen]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -106,6 +118,12 @@ const PublicMenu = () => {
                 setRestaurant(restaurantData);
                 setFeatures(getPlanFeatures(restaurantData.plan));
                 analyticsService.trackView(restaurantData.id);
+
+                // Persist restaurant slug mapping in localStorage
+                if (restaurantData.slug) {
+                    localStorage.setItem('jindungo_last_slug', restaurantData.slug);
+                    localStorage.setItem(`jindungo_slug_${restaurantData.id}`, restaurantData.slug);
+                }
 
                 // Fetch public active coupons
                 try {
@@ -452,9 +470,92 @@ const PublicMenuInner = ({
     selectedLanguage, setSelectedLanguage,
     coupons
 }) => {
+    const navigate = useNavigate();
     const { addToCart, cartItems, clearCart } = useCart();
     const t = (key) => getTranslation(selectedLanguage, key);
     const [upsellState, setUpsellState] = useState({ isOpen: false, mainItem: null, upsellItems: [] });
+    const [recentOrders, setRecentOrders] = useState([]);
+    const [showRecentOrders, setShowRecentOrders] = useState(false);
+
+    useEffect(() => {
+        if (!restaurant?.id) return;
+        const loadRecentOrders = () => {
+            try {
+                const orders = JSON.parse(localStorage.getItem(`jindungo_client_orders_${restaurant.id}`) || '[]');
+                setRecentOrders(orders);
+            } catch (e) {
+                console.error("Error loading recent orders", e);
+            }
+        };
+        loadRecentOrders();
+        window.addEventListener('jindungo_orders_updated', loadRecentOrders);
+        window.addEventListener('jindungo_new_order', loadRecentOrders);
+        return () => {
+            window.removeEventListener('jindungo_orders_updated', loadRecentOrders);
+            window.removeEventListener('jindungo_new_order', loadRecentOrders);
+        };
+    }, [restaurant?.id]);
+
+    // [NEW] Cart Recovery via URL Param
+    useEffect(() => {
+        if (!restaurant?.id || categories.length === 0) return;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const recoverParam = urlParams.get('recover');
+        if (!recoverParam) return;
+
+        // Prevent infinite loops by removing the parameter from the URL bar immediately
+        const newUrl = window.location.pathname + (initialTable ? `?mesa=${initialTable}` : '');
+        window.history.replaceState({}, document.title, newUrl);
+
+        import('../utils/whatsappGenerator.js').then(({ deserializeCart }) => {
+            const recovered = deserializeCart(recoverParam);
+            if (!recovered) return;
+
+            // Clear current cart first
+            clearCart();
+
+            // Find matching items in loaded categories to populate full details
+            const allItems = categories.flatMap(cat => cat.items);
+            let addedCount = 0;
+
+            recovered.cartItems.forEach(recItem => {
+                const dbItem = allItems.find(i => String(i.id) === String(recItem.id));
+                if (dbItem) {
+                    for (let q = 0; q < recItem.quantity; q++) {
+                        addToCart(dbItem, recItem.selectedVariant);
+                        addedCount++;
+                    }
+                }
+            });
+
+            if (addedCount > 0) {
+                // Populate checkout form draft in localStorage
+                const draft = {
+                    step: 3, // Go directly to step 3 (Payment)
+                    orderType: recovered.orderType || 'delivery',
+                    customerName: recovered.details.customerName || '',
+                    customerPhone: recovered.details.customerPhone || '',
+                    tableNumber: recovered.details.tableNumber || '',
+                    address: recovered.details.address || '',
+                    addressReference: recovered.details.addressReference || '',
+                    paymentMethod: 'cash'
+                };
+                localStorage.setItem(`jindungo_checkout_draft_${restaurant.id}`, JSON.stringify(draft));
+                
+                // Open checkout modal
+                setIsCheckoutOpen(true);
+                toast.success(
+                    selectedLanguage === 'PT'
+                        ? 'Carrinho e dados do pedido restaurados com sucesso!'
+                        : 'Cart and order details restored successfully!',
+                    { icon: '🛒', duration: 4000 }
+                );
+            }
+        }).catch(err => {
+            console.error("Failed to recover cart:", err);
+        });
+    }, [restaurant?.id, categories, selectedLanguage, initialTable, addToCart, clearCart, setIsCheckoutOpen]);
 
     // [SECURITY] Validação rigorosa de Sessão / Mesa contra mistura de restaurantes no carrinho
     useEffect(() => {
@@ -509,12 +610,13 @@ const PublicMenuInner = ({
                         selectedLanguage={selectedLanguage}
                         onLanguageChange={setSelectedLanguage}
                         coupons={coupons}
+                        restaurantClosed={isCurrentlyClosed || config.isOpen === false}
                     />
                 </div>
 
                     {!isCheckoutOpen && (
                         <>
-                            {config.isOpen !== false && (
+                            {config.isOpen !== false && !isCurrentlyClosed && (
                                 <CartFloatingButton
                                     onClick={() => {
                                         setIsCheckoutOpen(true);
@@ -525,7 +627,7 @@ const PublicMenuInner = ({
                                 />
                             )}
 
-                            {features.canCallWaiter && config.isOpen !== false && (
+                            {features.canCallWaiter && config.isOpen !== false && !isCurrentlyClosed && (
                                 <div className="fixed bottom-24 right-6 z-50 flex flex-col gap-2">
                                     <button
                                         onClick={async () => {
@@ -605,6 +707,15 @@ const PublicMenuInner = ({
                                 >
                                     <Share2 size={22} strokeWidth={2.5} />
                                 </button>
+                                {recentOrders.length > 0 && (
+                                    <button
+                                        onClick={() => setShowRecentOrders(true)}
+                                        className="w-12 h-12 flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37]/10 transition-all active:scale-95 border-t border-white/10"
+                                        title="Meus Pedidos"
+                                    >
+                                        <ClipboardList size={22} strokeWidth={2.5} />
+                                    </button>
+                                )}
                             </div>
                         </>
                     )}
@@ -623,12 +734,14 @@ const PublicMenuInner = ({
                         isOpen={isCheckoutOpen}
                         onClose={() => setIsCheckoutOpen(false)}
                         restaurantId={restaurant?.id}
+                        restaurantSlug={restaurant?.slug}
                         whatsappNumber={config?.whatsappNumber}
                         features={features}
                         initialTable={initialTable}
                         deliveryConfig={restaurant?.delivery_config}
                         activeStaff={activeStaff}
                         selectedLanguage={selectedLanguage}
+                        restaurantClosed={isCurrentlyClosed || config.isOpen === false}
                     />
 
                     <BookingModal
@@ -646,6 +759,77 @@ const PublicMenuInner = ({
                     restaurantId={restaurant?.id}
                     onLogin={(staff) => setActiveStaff(staff)}
                 />
+
+                {showRecentOrders && (
+                    <div className="absolute inset-0 z-[2000] bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-300">
+                        <div className="w-full max-w-sm bg-[#121212] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl animate-in slide-in-from-bottom-10 duration-500">
+                            <div className="p-6">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-xl font-serif font-bold text-white">Os Meus Pedidos 🌶️</h3>
+                                    <button onClick={() => setShowRecentOrders(false)} className="text-gray-400 hover:text-white transition-colors">
+                                        <X size={24} />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                                    {recentOrders.length === 0 ? (
+                                        <p className="text-gray-500 text-sm text-center py-6">Nenhum pedido recente encontrado.</p>
+                                    ) : (
+                                        recentOrders.map((ord) => (
+                                            <div key={ord.id} className="p-4 bg-white/5 rounded-2xl border border-white/10 flex flex-col gap-3 animate-fade-in">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex-1">
+                                                        <span className="text-[10px] font-mono text-[#D4AF37] font-bold">
+                                                            #{String(ord.id).slice(0, 8).toUpperCase()}
+                                                        </span>
+                                                        <p className="text-[10px] text-gray-400 mt-0.5">
+                                                            {new Date(ord.timestamp).toLocaleDateString('pt-PT')} às {new Date(ord.timestamp).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                                                        </p>
+                                                        <p className="text-xs text-white font-bold mt-1">
+                                                            Total: {new Intl.NumberFormat('pt-AO').format(ord.total)} Kz
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2 w-full">
+                                                    <button
+                                                        onClick={() => {
+                                                            localStorage.setItem(`jindungo_active_order_${restaurant.id}`, JSON.stringify({
+                                                                id: ord.id,
+                                                                timestamp: ord.timestamp
+                                                            }));
+                                                            window.dispatchEvent(new Event('jindungo_new_order'));
+                                                            setShowRecentOrders(false);
+                                                            toast.success("Resumo reativado no rodapé!", { icon: '🛎️' });
+                                                        }}
+                                                        className="flex-1 bg-white/10 hover:bg-white/20 text-white py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all active:scale-95 border border-white/5 text-center"
+                                                    >
+                                                        Resumo no rodapé 🛎️
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setShowRecentOrders(false);
+                                                            navigate(`/track/${ord.id}`);
+                                                        }}
+                                                        className="flex-1 bg-[#D4AF37] hover:bg-[#D4AF37]/90 text-gray-950 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all active:scale-95 text-center"
+                                                    >
+                                                        Ver Detalhes 🛵
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                <button
+                                    onClick={() => setShowRecentOrders(false)}
+                                    className="w-full mt-6 bg-white/10 text-white py-4 rounded-2xl font-bold text-sm hover:bg-white/20 transition-all border border-white/5"
+                                >
+                                    Voltar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <UpsellModal 
                     isOpen={upsellState.isOpen}

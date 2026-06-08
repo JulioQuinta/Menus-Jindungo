@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useCart } from '../context/CartContext';
-import { generateWhatsAppLink } from '../utils/whatsappGenerator';
+import { generateWhatsAppLink, generateWhatsAppMessageText } from '../utils/whatsappGenerator';
 import { analyticsService } from '../services/analyticsService';
 import { orderService } from '../services/orderService';
 import { supabase } from '../lib/supabaseClient';
@@ -16,7 +16,7 @@ import MapPicker from './MapPicker';
 import { getTranslation } from '../utils/i18n';
 import { calculateDistance } from '../utils/geoUtils';
 
-const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features = {}, initialTable = '', deliveryConfig = {}, activeStaff = null, selectedLanguage = 'PT' }) => {
+const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', whatsappNumber, features = {}, initialTable = '', deliveryConfig = {}, activeStaff = null, selectedLanguage = 'PT', restaurantClosed = false }) => {
     const navigate = useNavigate();
     const { cartItems, getCartTotal, clearCart } = useCart();
     const t = (key) => getTranslation(selectedLanguage, key);
@@ -28,22 +28,53 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
     const [showUpsell, setShowUpsell] = useState(true);
+    const [isDraftLoaded, setIsDraftLoaded] = useState(false);
 
-    // Initial load from localStorage
+    // Load draft when restaurantId changes
     useEffect(() => {
-        const savedPhone = localStorage.getItem('customer_phone');
-        if (savedPhone) setCustomerPhone(savedPhone);
-        const savedName = localStorage.getItem('customer_name');
-        if (savedName) setCustomerName(savedName);
-        const savedAddr = localStorage.getItem('customer_last_address');
-        if (savedAddr) setAddress(savedAddr);
-        const savedRef = localStorage.getItem('customer_last_ref');
-        if (savedRef) setAddressReference(savedRef);
-        const savedGps = localStorage.getItem('customer_last_gps');
-        if (savedGps) {
-            try { setGpsCoords(JSON.parse(savedGps)); } catch { /* ignore */ }
+        if (!restaurantId) return;
+        try {
+            const draftStr = localStorage.getItem(`jindungo_checkout_draft_${restaurantId}`);
+            if (draftStr) {
+                const draft = JSON.parse(draftStr);
+                if (draft) {
+                    if (draft.step !== undefined) setStep(draft.step);
+                    if (draft.orderType !== undefined) setOrderType(draft.orderType);
+                    if (draft.customerName !== undefined) setCustomerName(draft.customerName);
+                    if (draft.customerPhone !== undefined) setCustomerPhone(draft.customerPhone);
+                    if (draft.tableNumber !== undefined) setTableNumber(draft.tableNumber);
+                    if (draft.address !== undefined) setAddress(draft.address);
+                    if (draft.addressReference !== undefined) setAddressReference(draft.addressReference);
+                    if (draft.gpsCoords !== undefined) setGpsCoords(draft.gpsCoords);
+                    if (draft.paymentMethod !== undefined) setPaymentMethod(draft.paymentMethod);
+                    if (draft.changeFor !== undefined) setChangeFor(draft.changeFor);
+                    if (draft.selectedZone !== undefined) setSelectedZone(draft.selectedZone);
+                    if (draft.showUpsell !== undefined) setShowUpsell(draft.showUpsell);
+                    if (draft.isRedeemingLoyalty !== undefined) setIsRedeemingLoyalty(draft.isRedeemingLoyalty);
+                    if (draft.couponCode !== undefined) setCouponCode(draft.couponCode);
+                    if (draft.appliedCoupon !== undefined) setAppliedCoupon(draft.appliedCoupon);
+                }
+            } else {
+                // Fallback to general saved client details
+                const savedPhone = localStorage.getItem('customer_phone');
+                if (savedPhone) setCustomerPhone(savedPhone);
+                const savedName = localStorage.getItem('customer_name');
+                if (savedName) setCustomerName(savedName);
+                const savedAddr = localStorage.getItem('customer_last_address');
+                if (savedAddr) setAddress(savedAddr);
+                const savedRef = localStorage.getItem('customer_last_ref');
+                if (savedRef) setAddressReference(savedRef);
+                const savedGps = localStorage.getItem('customer_last_gps');
+                if (savedGps) {
+                    try { setGpsCoords(JSON.parse(savedGps)); } catch { /* ignore */ }
+                }
+            }
+        } catch (e) {
+            console.error("Failed to load checkout draft", e);
+        } finally {
+            setIsDraftLoaded(true);
         }
-    }, []);
+    }, [restaurantId]);
 
     // Dine-in fields
     const [tableNumber, setTableNumber] = useState(initialTable);
@@ -131,6 +162,22 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
         }
     }, [isOpen, restaurantId, features.canCollectClientData]);
 
+    const [gatewayConfig, setGatewayConfig] = useState(null);
+
+    useEffect(() => {
+        if (isOpen && restaurantId) {
+            supabase.from('restaurants')
+                .select('business_info')
+                .eq('id', restaurantId)
+                .single()
+                .then(({ data }) => {
+                    if (data?.business_info?.whatsapp_gateway) {
+                        setGatewayConfig(data.business_info.whatsapp_gateway);
+                    }
+                });
+        }
+    }, [isOpen, restaurantId]);
+
     // Check Loyalty Points when phone changes
     useEffect(() => {
         if (customerPhone.length >= 7 && loyaltyConfig) {
@@ -145,6 +192,47 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
             setIsRedeemingLoyalty(false);
         }
     }, [customerPhone, loyaltyConfig, restaurantId]);
+
+    // Save draft when form state changes
+    useEffect(() => {
+        if (!restaurantId || !isDraftLoaded) return;
+        const draft = {
+            step,
+            orderType,
+            customerName,
+            customerPhone,
+            tableNumber,
+            address,
+            addressReference,
+            gpsCoords,
+            paymentMethod,
+            changeFor,
+            selectedZone,
+            showUpsell,
+            isRedeemingLoyalty,
+            couponCode,
+            appliedCoupon
+        };
+        localStorage.setItem(`jindungo_checkout_draft_${restaurantId}`, JSON.stringify(draft));
+    }, [
+        restaurantId,
+        isDraftLoaded,
+        step,
+        orderType,
+        customerName,
+        customerPhone,
+        tableNumber,
+        address,
+        addressReference,
+        gpsCoords,
+        paymentMethod,
+        changeFor,
+        selectedZone,
+        showUpsell,
+        isRedeemingLoyalty,
+        couponCode,
+        appliedCoupon
+    ]);
 
     const [computedDeliveryFee, setComputedDeliveryFee] = useState(0);
     const [distanceKm, setDistanceKm] = useState(0);
@@ -232,6 +320,10 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, whatsappNumber, features
     };
 
     const handleSendOrder = async () => {
+        if (restaurantClosed) {
+            toast.error(`${t('restaurantClosed')}: ${t('closedMsg')}`);
+            return;
+        }
         if (isSending) return; // [SECURITY] Prevent Double-Click Race Condition
         if (orderType === 'dine-in' && !tableNumber) return toast.error(t('fillTableError'));
         if (orderType === 'delivery' && !address) return toast.error(t('fillAddressError'));
@@ -367,6 +459,31 @@ delivery_reference: orderType === 'delivery' ? (addressReference ? addressRefere
                     if (addressReference) localStorage.setItem('customer_last_ref', addressReference);
                     if (gpsCoords) localStorage.setItem('customer_last_gps', JSON.stringify(gpsCoords));
                 }
+
+                // Save to client's recent orders list for restoration
+                try {
+                    const recentKey = `jindungo_client_orders_${restaurantId}`;
+                    const existingRecent = JSON.parse(localStorage.getItem(recentKey) || '[]');
+                    const orderItem = {
+                        id: newOrder.id,
+                        timestamp: Date.now(),
+                        total: total,
+                        status: newOrder.status,
+                        itemsCount: cartItems.reduce((acc, i) => acc + i.quantity, 0)
+                    };
+                    const filtered = existingRecent.filter(o => o.id !== newOrder.id);
+                    filtered.unshift(orderItem);
+                    localStorage.setItem(recentKey, JSON.stringify(filtered.slice(0, 5)));
+                    window.dispatchEvent(new Event('jindungo_orders_updated'));
+                } catch (e) {
+                    console.error("Failed to save recent order", e);
+                }
+
+                // Clear the checkout draft and open state
+                localStorage.removeItem(`jindungo_checkout_draft_${restaurantId}`);
+                if (restaurantSlug) {
+                    localStorage.removeItem(`jindungo_checkout_open_${restaurantSlug}`);
+                }
                 
                 if (isOfflineOrder) {
                     // Store active order as offline pending tracking
@@ -393,13 +510,59 @@ delivery_reference: orderType === 'delivery' ? (addressReference ? addressRefere
             }
 
             // 3. Fallback/Notification via WhatsApp
-            // For Start plan (no KDS feature), we MUST auto-redirect to WhatsApp so the owner gets the order.
             if (!features?.canUseKDS || !restaurantId) {
                 if (!restaurantId) {
                     toast.success(t('previewModeMsg'));
                 }
                 const effectiveWhatsapp = whatsappNumber || '244923000000';
-                const link = generateWhatsAppLink(cartItems, total, orderType, { ...orderData, paymentMethod, changeFor }, effectiveWhatsapp);
+
+                // Check if background gateway is configured
+                if (gatewayConfig && gatewayConfig.apiUrl && gatewayConfig.token) {
+                    const messageText = generateWhatsAppMessageText(cartItems, total, orderType, {
+                        ...orderData,
+                        paymentMethod,
+                        changeFor,
+                        tableNumber,
+                        restaurantSlug: restaurantSlug,
+                        locationLink: gpsCoords ? `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : null
+                    });
+                    
+                    import('../services/whatsappService.js').then(async ({ whatsappService }) => {
+                        try {
+                            await whatsappService.sendWhatsAppMessage(gatewayConfig, effectiveWhatsapp, messageText);
+                            toast.success(
+                                selectedLanguage === 'PT'
+                                    ? 'Pedido enviado ao WhatsApp do restaurante em segundo plano!'
+                                    : 'Order sent to restaurant WhatsApp in the background!',
+                                { icon: '📲' }
+                            );
+                        } catch (err) {
+                            console.error("Failed to send WhatsApp message via background gateway:", err);
+                            toast.error("Erro no envio do WhatsApp. O pedido foi registado, mas a notificação falhou.");
+                        }
+                    });
+
+                    // Proceed inside the app with internal tracking
+                    toast.success(t('orderSuccessMsg'), {
+                        icon: '🚀',
+                        duration: 5000
+                    });
+                    closeAndReset();
+                    if (newOrder) {
+                        navigate(`/track/${newOrder.id}`);
+                    }
+                    return;
+                }
+
+                // Fallback to manual wa.me link
+                const link = generateWhatsAppLink(cartItems, total, orderType, { 
+                    ...orderData, 
+                    paymentMethod, 
+                    changeFor, 
+                    tableNumber, 
+                    restaurantSlug: restaurantSlug, 
+                    locationLink: gpsCoords ? `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : null 
+                }, effectiveWhatsapp);
                 if (!link) {
                     toast.error(t('whatsappError'));
                     setIsSending(false);
@@ -414,6 +577,24 @@ delivery_reference: orderType === 'delivery' ? (addressReference ? addressRefere
                     return; // Stop here so it doesn't show the OrderStatusView which implies an internal tracking
                 }
             } else {
+                // If it is a plan WITH KDS but has a gateway configured, also dispatch a background WhatsApp notification as receipt/alert!
+                if (gatewayConfig && gatewayConfig.apiUrl && gatewayConfig.token) {
+                    const effectiveWhatsapp = whatsappNumber || '244923000000';
+                    const messageText = generateWhatsAppMessageText(cartItems, total, orderType, {
+                        ...orderData,
+                        paymentMethod,
+                        changeFor,
+                        tableNumber,
+                        restaurantSlug: restaurantSlug,
+                        locationLink: gpsCoords ? `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : null
+                    });
+                    import('../services/whatsappService.js').then(({ whatsappService }) => {
+                        whatsappService.sendWhatsAppMessage(gatewayConfig, effectiveWhatsapp, messageText).catch(e => {
+                            console.error("Failed to send background notification for KDS order", e);
+                        });
+                    });
+                }
+
                 toast.success(t('orderSuccessMsg'), {
                     icon: '🚀',
                     duration: 5000
@@ -480,6 +661,12 @@ delivery_reference: orderType === 'delivery' ? (addressReference ? addressRefere
         setIsRedeemingLoyalty(false);
         onClose();
         // Cart is cleared on success, so user starts fresh
+
+        // Clear checkout states after order placed or cancelled/finished
+        localStorage.removeItem(`jindungo_checkout_draft_${restaurantId}`);
+        if (restaurantSlug) {
+            localStorage.removeItem(`jindungo_checkout_open_${restaurantSlug}`);
+        }
     };
 
     // If order created, we DO NOT show the modal here anymore, the Tracker takes over.
@@ -538,6 +725,16 @@ delivery_reference: orderType === 'delivery' ? (addressReference ? addressRefere
                                 {step === 1 ? t('stepOrder') : (step === 2 ? t('stepDetails') : t('stepPayment'))}
                             </span>
                         </div>
+
+                        {restaurantClosed && (
+                            <div className="mb-6 bg-red-50 border border-red-200 rounded-2xl p-4 flex gap-3 text-red-700 animate-pulse">
+                                <span className="text-xl">⚠️</span>
+                                <div>
+                                    <h4 className="font-bold text-sm">{t('restaurantClosed')}</h4>
+                                    <p className="text-xs opacity-90 mt-0.5">{t('closedMsg')}</p>
+                                </div>
+                            </div>
+                        )}
 
                         {step === 1 && (
                             <div className="space-y-6 animate-in fade-in duration-300">
@@ -1051,8 +1248,8 @@ delivery_reference: orderType === 'delivery' ? (addressReference ? addressRefere
                                         <button
                                             type="button"
                                             onClick={handleSendOrder}
-                                            disabled={cartItems.length === 0 || isSending}
-                                            className={`w-full group relative overflow-hidden p-4 sm:p-5 rounded-[20px] sm:rounded-[24px] font-black text-base sm:text-lg transition-all ${cartItems.length === 0 || isSending ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-[1.02] active:scale-[0.98]'}`}
+                                            disabled={cartItems.length === 0 || isSending || restaurantClosed}
+                                            className={`w-full group relative overflow-hidden p-4 sm:p-5 rounded-[20px] sm:rounded-[24px] font-black text-base sm:text-lg transition-all ${cartItems.length === 0 || isSending || restaurantClosed ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-[1.02] active:scale-[0.98]'}`}
                                             style={{
                                                 background: 'linear-gradient(135deg, #1A1A1A 0%, #333 100%)',
                                                 color: '#D4AF37',
@@ -1066,8 +1263,8 @@ delivery_reference: orderType === 'delivery' ? (addressReference ? addressRefere
                                                     <div className="w-6 h-6 border-4 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full animate-spin" />
                                                 ) : (
                                                     <>
-                                                        <span>{(features?.canUseKDS && restaurantId) ? t('sendOrder') : t('sendOrderWhatsapp')}</span>
-                                                        <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                                        <span>{restaurantClosed ? t('restaurantClosed') : ((features?.canUseKDS && restaurantId) ? t('sendOrder') : t('sendOrderWhatsapp'))}</span>
+                                                        {!restaurantClosed && <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />}
                                                     </>
                                                 )}
                                             </div>

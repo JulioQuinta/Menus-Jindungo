@@ -91,6 +91,26 @@ const OrderTrackerPage = () => {
     const [isSubmitted, setIsSubmitted] = useState(false);
     const previousStatusRef = useRef(null);
 
+    const handleBackToMenu = () => {
+        if (order?.restaurant?.slug) {
+            navigate(`/${order.restaurant.slug}`);
+            return;
+        }
+        if (order?.restaurant_id) {
+            const savedSlug = localStorage.getItem(`jindungo_slug_${order.restaurant_id}`);
+            if (savedSlug) {
+                navigate(`/${savedSlug}`);
+                return;
+            }
+        }
+        const lastSlug = localStorage.getItem('jindungo_last_slug');
+        if (lastSlug) {
+            navigate(`/${lastSlug}`);
+            return;
+        }
+        navigate('/');
+    };
+
     // Initial Fetch
     useEffect(() => {
         const fetchOrder = async () => {
@@ -125,7 +145,8 @@ const OrderTrackerPage = () => {
                     }
                 }
                 toast.error("Pedido offline não localizado.");
-                navigate('/');
+                const lastSlug = localStorage.getItem('jindungo_last_slug');
+                navigate(lastSlug ? `/${lastSlug}` : '/');
                 setLoading(false);
                 return;
             }
@@ -134,7 +155,8 @@ const OrderTrackerPage = () => {
                 const { data, error } = await orderService.getOrderById(orderId);
                 if (error || !data) {
                     toast.error("Pedido não encontrado ou ID inválido.");
-                    navigate('/');
+                    const lastSlug = localStorage.getItem('jindungo_last_slug');
+                    navigate(lastSlug ? `/${lastSlug}` : '/');
                 } else {
                     setOrder(data);
                     previousStatusRef.current = data.status;
@@ -392,7 +414,7 @@ const OrderTrackerPage = () => {
                 {/* Header Section */}
                 <div className="flex items-center justify-between">
                     <button 
-                        onClick={() => navigate(-1)}
+                        onClick={handleBackToMenu}
                         className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all text-gray-400 hover:text-white"
                         title="Voltar ao cardápio"
                     >
@@ -767,7 +789,7 @@ const OrderTrackerPage = () => {
                 {/* Footer Controls */}
                 <div className="flex flex-col sm:flex-row gap-3">
                     <button 
-                        onClick={() => navigate('/')}
+                        onClick={handleBackToMenu}
                         className="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold py-3.5 rounded-2xl text-xs uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-2"
                     >
                         <UtensilsCrossed size={14} /> Voltar ao Cardápio

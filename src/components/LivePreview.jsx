@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { GridLayout, ListLayout, MinimalLayout, GridLayoutSkeleton, ListLayoutSkeleton } from './MenuLayouts';
 import { getContrastColor, darkenColor } from '../utils/colorUtils';
-import { Search, X, Utensils } from 'lucide-react';
+import { Search, X, Utensils, ArrowLeft } from 'lucide-react';
 import { getTranslation, UI_TRANSLATIONS, translateFoodText } from '../utils/i18n';
 
 const FlagSelector = ({ selected, onSelect }) => {
@@ -211,6 +212,10 @@ const CategorySection = ({ cat, Layout, commonProps, onItemAdded, selectedLangua
 };
 
 const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, restaurantId, features = {}, onItemAdded, selectedLanguage = 'PT', onLanguageChange, coupons = [], restaurantClosed = false }) => {
+    const { slug } = useParams();
+    const navigate = useNavigate();
+    const isDemo = (slug === 'demo-restaurant' || window.location.pathname.includes('demo-restaurant')) && !window.location.pathname.includes('/admin/');
+
     const [activeCategory, setActiveCategory] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -312,6 +317,17 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
                     backgroundRepeat: 'no-repeat'
                 }}
             >
+                {isDemo && (
+                    <button
+                        onClick={() => navigate('/')}
+                        className="absolute top-4 left-4 z-[90] flex items-center gap-2 bg-black/75 backdrop-blur-2xl px-4.5 py-2.5 rounded-full border border-white/25 shadow-[0_10px_30px_rgba(0,0,0,0.95)] text-white hover:bg-black/90 hover:border-[#E5C27B]/50 hover:text-[#E5C27B] transition-all group text-xs font-bold tracking-widest uppercase cursor-pointer active:scale-95"
+                        title="Voltar ao Menu Principal"
+                    >
+                        <ArrowLeft size={14} className="text-[#E5C27B] group-hover:-translate-x-0.5 transition-transform" strokeWidth={2.5} />
+                        <span className="leading-none">Voltar</span>
+                    </button>
+                )}
+
                 <FlagSelector selected={selectedLanguage} onSelect={onLanguageChange} />
 
                 <div className="relative z-10 flex flex-col items-center max-w-xl w-full animate-fade-in">

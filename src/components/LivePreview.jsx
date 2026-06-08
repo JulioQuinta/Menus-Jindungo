@@ -219,6 +219,23 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
     const [activeCategory, setActiveCategory] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 
+    // Otimização de Performance: useMemo para filtragem de ementa (OWASP / Performance)
+    const filteredCategories = React.useMemo(() => {
+        if (!categories) return [];
+        const searchLower = searchTerm.toLowerCase().trim();
+        if (!searchLower) return categories;
+
+        return categories.map(cat => {
+            const filteredItems = cat.items.filter(item => {
+                return (
+                    item.name.toLowerCase().includes(searchLower) ||
+                    (item.desc && item.desc.toLowerCase().includes(searchLower))
+                );
+            });
+            return { ...cat, items: filteredItems };
+        }).filter(cat => cat.items.length > 0);
+    }, [categories, searchTerm]);
+
     useEffect(() => {
         if (!activeCategory && categories?.length > 0) {
             setActiveCategory(categories[0].id);
@@ -251,16 +268,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
             );
         }
 
-        const filteredCategories = categories.map(cat => {
-            const filteredItems = cat.items.filter(item => {
-                const searchLower = searchTerm.toLowerCase();
-                return (
-                    item.name.toLowerCase().includes(searchLower) ||
-                    (item.desc && item.desc.toLowerCase().includes(searchLower))
-                );
-            });
-            return { ...cat, items: filteredItems };
-        }).filter(cat => cat.items.length > 0);
+        // Utiliza a variável optimizada do useMemo em vez de recalcular a cada renderização
 
         if (searchTerm && filteredCategories.length === 0) {
             return (

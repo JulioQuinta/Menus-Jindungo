@@ -23,13 +23,18 @@ const CustomerManager = ({ restaurantId }) => {
 
     useEffect(() => {
         if (restaurantId) {
-            supabase.from('restaurants')
-                .select('business_info')
-                .eq('id', restaurantId)
+            supabase.from('private_gateway_configs')
+                .select('*')
+                .eq('restaurant_id', restaurantId)
                 .single()
                 .then(({ data, error }) => {
-                    if (data?.business_info?.whatsapp_gateway) {
-                        setGatewayConfig(data.business_info.whatsapp_gateway);
+                    if (data) {
+                        setGatewayConfig({
+                            apiUrl: data.api_url || '',
+                            token: data.token || '',
+                            instanceName: data.instance_name || '',
+                            gatewayType: data.gateway_type || 'evolution'
+                        });
                     }
                 });
         }
@@ -41,21 +46,38 @@ const CustomerManager = ({ restaurantId }) => {
         }
         setIsSavingGateway(true);
         try {
-            const { data } = await supabase.from('restaurants')
+            // 1. Gravar na tabela privada usando upsert
+            const { error: privateError } = await supabase.from('private_gateway_configs')
+                .upsert({
+                    restaurant_id: restaurantId,
+                    api_url: gatewayConfig.apiUrl,
+                    token: gatewayConfig.token,
+                    instance_name: gatewayConfig.instanceName,
+                    gateway_type: gatewayConfig.gatewayType,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'restaurant_id' });
+
+            if (privateError) throw privateError;
+
+            // 2. Definir a flag pública has_whatsapp_gateway na tabela restaurants
+            const { data: restData } = await supabase.from('restaurants')
                 .select('business_info')
                 .eq('id', restaurantId)
                 .single();
 
             const updatedInfo = {
-                ...(data?.business_info || {}),
-                whatsapp_gateway: gatewayConfig
+                ...(restData?.business_info || {}),
+                has_whatsapp_gateway: true
             };
+            // Remover legados se existirem para maior segurança
+            delete updatedInfo.whatsapp_gateway;
 
-            const { error } = await supabase.from('restaurants')
+            const { error: restError } = await supabase.from('restaurants')
                 .update({ business_info: updatedInfo })
                 .eq('id', restaurantId);
 
-            if (error) throw error;
+            if (restError) throw restError;
+
             toast.success("Configuração de Gateway guardada com sucesso!");
             setShowGatewayModal(false);
         } catch (e) {

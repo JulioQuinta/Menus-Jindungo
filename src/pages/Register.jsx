@@ -4,6 +4,21 @@ import { useSettings } from '../context/SettingsContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Shield, ChefHat, Utensils, CheckCircle, Smartphone, Mail, Award, Lock, ArrowLeft } from 'lucide-react';
 
+const getPasswordStrength = (pass) => {
+    if (!pass) return { score: 0, text: '', color: 'bg-transparent w-0' };
+    if (pass.length < 6) return { score: 1, text: 'Muito Fraca', color: 'bg-red-500 w-1/4' };
+    if (pass.length < 8) return { score: 1, text: 'Fraca', color: 'bg-red-400 w-2/4' };
+    
+    let strength = 0;
+    if (/[a-z]/.test(pass)) strength++;
+    if (/[A-Z]/.test(pass)) strength++;
+    if (/\d/.test(pass)) strength++;
+    if (/[^a-zA-Z\d]/.test(pass)) strength++;
+    
+    if (strength <= 2) return { score: 2, text: 'Média', color: 'bg-yellow-500 w-3/4' };
+    return { score: 3, text: 'Forte', color: 'bg-green-500 w-full' };
+};
+
 const Register = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -32,8 +47,9 @@ const Register = () => {
             return setError('As senhas não coincidem');
         }
 
-        if (password.length < 6) {
-            return setError('A senha deve ter pelo menos 6 caracteres');
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+        if (!passwordRegex.test(password)) {
+            return setError('A palavra-passe deve ter pelo menos 8 caracteres e conter pelo menos uma letra e um número para garantir a segurança da sua conta (OWASP A07:2021).');
         }
 
         if (!fullName || !phone || !restaurantName) {
@@ -255,6 +271,23 @@ const Register = () => {
                                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                         </button>
                                     </div>
+
+                                    {password && (
+                                        <div className="space-y-1.5 px-1 select-none animate-in fade-in slide-in-from-top-1 duration-200">
+                                            <div className="flex justify-between items-center text-[10px] font-black tracking-wider uppercase">
+                                                <span className="text-gray-500">Força da Senha</span>
+                                                <span className={
+                                                    getPasswordStrength(password).score === 1 ? 'text-red-400' :
+                                                    getPasswordStrength(password).score === 2 ? 'text-yellow-400' : 'text-green-400'
+                                                }>
+                                                    {getPasswordStrength(password).text}
+                                                </span>
+                                            </div>
+                                            <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                                                <div className={`h-full transition-all duration-300 ${getPasswordStrength(password).color}`}></div>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <div className="relative group/field">
                                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within/field:text-[#D4AF37] transition-colors">

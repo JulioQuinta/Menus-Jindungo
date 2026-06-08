@@ -166,7 +166,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
         }
     }, [isOpen, restaurantId, features.canCollectClientData]);
 
-    const [gatewayConfig, setGatewayConfig] = useState(null);
+    const [hasGateway, setHasGateway] = useState(false);
 
     useEffect(() => {
         if (isOpen && restaurantId) {
@@ -175,8 +175,8 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                 .eq('id', restaurantId)
                 .single()
                 .then(({ data }) => {
-                    if (data?.business_info?.whatsapp_gateway) {
-                        setGatewayConfig(data.business_info.whatsapp_gateway);
+                    if (data?.business_info?.has_whatsapp_gateway) {
+                        setHasGateway(true);
                     }
                 });
         }
@@ -532,7 +532,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                 const effectiveWhatsapp = whatsappNumber || '244923000000';
 
                 // Check if background gateway is configured
-                if (gatewayConfig && gatewayConfig.apiUrl && gatewayConfig.token) {
+                if (hasGateway) {
                     const messageText = generateWhatsAppMessageText(cartItems, total, orderType, {
                         ...orderData,
                         paymentMethod,
@@ -543,20 +543,26 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                         locationLink: (geolocationMode === 'app_gps' && gpsCoords) ? `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : null
                     });
                     
-                    import('../services/whatsappService.js').then(async ({ whatsappService }) => {
-                        try {
-                            await whatsappService.sendWhatsAppMessage(gatewayConfig, effectiveWhatsapp, messageText);
-                            toast.success(
-                                selectedLanguage === 'PT'
-                                    ? 'Pedido enviado ao WhatsApp do restaurante em segundo plano!'
-                                    : 'Order sent to restaurant WhatsApp in the background!',
-                                { icon: '📲' }
-                            );
-                        } catch (err) {
-                            console.error("Failed to send WhatsApp message via background gateway:", err);
-                            toast.error("Erro no envio do WhatsApp. O pedido foi registado, mas a notificação falhou.");
-                        }
-                    });
+                    // Envia mensagem em segundo plano adicionando à fila Outbox (OWASP A01:2021)
+                    supabase.from('whatsapp_outbox_messages')
+                        .insert([{
+                            restaurant_id: restaurantId,
+                            phone: effectiveWhatsapp,
+                            message: messageText,
+                            status: 'pending'
+                        }])
+                        .then(({ error: outboxError }) => {
+                            if (outboxError) {
+                                console.error("Erro ao inserir mensagem na fila Outbox:", outboxError);
+                            } else {
+                                toast.success(
+                                    selectedLanguage === 'PT'
+                                        ? 'Pedido na fila de envio de WhatsApp!'
+                                        : 'Order queued for WhatsApp delivery!',
+                                    { icon: '📲' }
+                                );
+                            }
+                        });
 
                     // Proceed inside the app with internal tracking
                     toast.success(t('orderSuccessMsg'), {
@@ -595,7 +601,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                 }
             } else {
                 // If it is a plan WITH KDS but has a gateway configured, also dispatch a background WhatsApp notification as receipt/alert!
-                if (gatewayConfig && gatewayConfig.apiUrl && gatewayConfig.token) {
+                if (hasGateway) {
                     const effectiveWhatsapp = whatsappNumber || '244923000000';
                     const messageText = generateWhatsAppMessageText(cartItems, total, orderType, {
                         ...orderData,
@@ -606,11 +612,18 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                         geolocationMode: geolocationMode,
                         locationLink: (geolocationMode === 'app_gps' && gpsCoords) ? `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : null
                     });
-                    import('../services/whatsappService.js').then(({ whatsappService }) => {
-                        whatsappService.sendWhatsAppMessage(gatewayConfig, effectiveWhatsapp, messageText).catch(e => {
-                            console.error("Failed to send background notification for KDS order", e);
+                    
+                    // Envia notificação em segundo plano via fila Outbox (KDS)
+                    supabase.from('whatsapp_outbox_messages')
+                        .insert([{
+                            restaurant_id: restaurantId,
+                            phone: effectiveWhatsapp,
+                            message: messageText,
+                            status: 'pending'
+                        }])
+                        .catch(e => {
+                            console.error("Failed to queue background notification for KDS order", e);
                         });
-                    });
                 }
 
                 toast.success(t('orderSuccessMsg'), {

@@ -104,6 +104,8 @@ export default defineConfig({
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-utils': ['lucide-react', 'react-hot-toast', '@supabase/supabase-js'],
+          'vendor-charts': ['recharts'],
+          'vendor-maps': ['leaflet', 'react-leaflet']
         }
       }
     }

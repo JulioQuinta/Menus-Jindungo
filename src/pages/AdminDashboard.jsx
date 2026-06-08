@@ -166,6 +166,92 @@ const AdminDashboard = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
+    // [SECURE OUTBOX DISPATCHER] OWASP A01:2021
+    useEffect(() => {
+        if (!restaurant?.id) return;
+
+        let activeConfig = null;
+        let activeChannel = null;
+
+        const setupOutboxDispatcher = async () => {
+            const { data: configData } = await supabase
+                .from('private_gateway_configs')
+                .select('*')
+                .eq('restaurant_id', restaurant.id)
+                .maybeSingle();
+
+            if (!configData || !configData.api_url || !configData.token) return;
+            activeConfig = configData;
+
+            await processPendingMessages(activeConfig);
+
+            activeChannel = supabase.channel(`outbox-dispatch-${restaurant.id}`)
+                .on('postgres_changes', {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'whatsapp_outbox_messages',
+                    filter: `restaurant_id=eq.${restaurant.id}`
+                }, async (payload) => {
+                    if (payload.new && payload.new.status === 'pending') {
+                        await processPendingMessages(activeConfig);
+                    }
+                })
+                .subscribe();
+        };
+
+        const processPendingMessages = async (configData) => {
+            const { data: pendingMsgs } = await supabase
+                .from('whatsapp_outbox_messages')
+                .select('*')
+                .eq('restaurant_id', restaurant.id)
+                .eq('status', 'pending')
+                .order('created_at', { ascending: true });
+            
+            if (!pendingMsgs || pendingMsgs.length === 0) return;
+            
+            const { whatsappService } = await import('../services/whatsappService');
+            
+            for (const msg of pendingMsgs) {
+                try {
+                    // Bloqueio otimista para evitar disparos duplicados se houver abas múltiplas abertas
+                    const { data: checkData, error: lockErr } = await supabase.from('whatsapp_outbox_messages')
+                        .update({ status: 'sent', updated_at: new Date().toISOString() })
+                        .eq('id', msg.id)
+                        .eq('status', 'pending')
+                        .select();
+                    
+                    if (lockErr || !checkData || checkData.length === 0) {
+                        continue; // Já processado ou falha de lock, salta para o próximo
+                    }
+
+                    await whatsappService.sendWhatsAppMessage({
+                        apiUrl: configData.api_url,
+                        token: configData.token,
+                        instanceName: configData.instance_name,
+                        gatewayType: configData.gateway_type
+                    }, msg.phone, msg.message);
+                } catch (err) {
+                    console.error("Failed to dispatch outbox message:", err);
+                    await supabase.from('whatsapp_outbox_messages')
+                        .update({ 
+                            status: 'failed', 
+                            error_message: err.message || 'Erro desconhecido',
+                            updated_at: new Date().toISOString() 
+                        })
+                        .eq('id', msg.id);
+                }
+            }
+        };
+
+        setupOutboxDispatcher();
+
+        return () => {
+            if (activeChannel) {
+                supabase.removeChannel(activeChannel);
+            }
+        };
+    }, [restaurant?.id]);
+
     // Explicit logout
     const handleLogout = async () => {
         await signOut();

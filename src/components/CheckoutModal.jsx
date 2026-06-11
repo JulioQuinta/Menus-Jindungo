@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useCart } from '../context/CartContext';
@@ -23,6 +23,13 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
 
     // Form State
     const [step, setStep] = useState(1);
+    const scrollContainerRef = useRef(null);
+
+    useEffect(() => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = 0;
+        }
+    }, [step]);
     const [orderType, setOrderType] = useState('dine-in'); // 'dine-in' | 'delivery'
     const [selectedZone, setSelectedZone] = useState(null);
     const [customerName, setCustomerName] = useState('');
@@ -92,6 +99,31 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
     const [addressReference, setAddressReference] = useState('');
     const [gpsCoords, setGpsCoords] = useState(null);
     const [geolocationMode, setGeolocationMode] = useState('app_gps'); // 'app_gps' | 'whatsapp'
+
+    // Background Geolocation for Delivery orders to always capture GPS coords
+    useEffect(() => {
+        if (isOpen && orderType === 'delivery' && !gpsCoords && "geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const userLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                setGpsCoords(userLoc);
+                // If address field is empty, auto-geocode it in background
+                if (!address || address.trim() === '') {
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${userLoc.lat}&lon=${userLoc.lng}`, {
+                         headers: { 'Accept-Language': 'pt' }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.display_name) {
+                            const parts = data.display_name.split(', ');
+                            const cleanAddress = parts.slice(0, 3).join(', ');
+                            setAddress(cleanAddress);
+                        }
+                    })
+                    .catch(e => console.error("Erro background geocoding:", e));
+                }
+            }, () => {}, { enableHighAccuracy: true, timeout: 5000 });
+        }
+    }, [isOpen, orderType, gpsCoords]);
 
     // Payment fields
     const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' | 'multicaixa'
@@ -345,7 +377,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
 
         const distInfo = distanceKm > 0 ? ` | Distância: ${distanceKm.toFixed(1)}km` : '';
         const zoneInfo = (orderType === 'delivery' && selectedZone) ? `(${selectedZone.name} +${selectedZone.fee}Kz)` : '';
-        const mapsLink = (geolocationMode === 'app_gps' && gpsCoords) ? ` | Maps: https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : '';
+        const mapsLink = gpsCoords ? ` | Maps: https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : '';
         const refNote = addressReference ? ` | Ref: ${addressReference}` : '';
         
         let baseTableOrAddress = '';
@@ -540,7 +572,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                         tableNumber,
                         restaurantSlug: restaurantSlug,
                         geolocationMode: geolocationMode,
-                        locationLink: (geolocationMode === 'app_gps' && gpsCoords) ? `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : null
+                        locationLink: gpsCoords ? `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : null
                     });
                     
                     // Envia mensagem em segundo plano adicionando à fila Outbox (OWASP A01:2021)
@@ -584,7 +616,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                     tableNumber, 
                     restaurantSlug: restaurantSlug, 
                     geolocationMode: geolocationMode,
-                    locationLink: (geolocationMode === 'app_gps' && gpsCoords) ? `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : null 
+                    locationLink: gpsCoords ? `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : null 
                 }, effectiveWhatsapp);
                 if (!link) {
                     toast.error(t('whatsappError'));
@@ -610,7 +642,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                         tableNumber,
                         restaurantSlug: restaurantSlug,
                         geolocationMode: geolocationMode,
-                        locationLink: (geolocationMode === 'app_gps' && gpsCoords) ? `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : null
+                        locationLink: gpsCoords ? `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : null
                     });
                     
                     // Envia notificação em segundo plano via fila Outbox (KDS)
@@ -733,7 +765,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto pr-0.5 custom-scrollbar scrollbar-hide space-y-6">
+                <div ref={scrollContainerRef} className="flex-1 overflow-y-auto pr-0.5 custom-scrollbar scrollbar-hide space-y-6">
                     {features?.hasUpsell && showUpsell ? (
                         <CheckoutUpsell
                             restaurantId={restaurantId}
@@ -1009,14 +1041,17 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
 
                                         {geolocationMode === 'app_gps' ? (
                                             <div className="space-y-4 animate-in fade-in duration-300">
-                                                <div>
+                                                                                <div>
                                                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
                                                         {t('tapMap')}
                                                     </label>
                                                     <MapPicker 
+                                                        defaultLat={gpsCoords?.lat}
+                                                        defaultLng={gpsCoords?.lng}
                                                         onLocationSelected={(pos, addr) => {
+                                                            const isDifferent = !gpsCoords || (Math.abs(pos.lat - gpsCoords.lat) > 0.0001 || Math.abs(pos.lng - gpsCoords.lng) > 0.0001);
                                                             setGpsCoords(pos);
-                                                            if (addr && (!address || address.trim() === '' || address === 'Partilhar no WhatsApp 📍')) {
+                                                            if (addr && (isDifferent || !address || address.trim() === '' || address === 'Partilhar no WhatsApp 📍')) {
                                                                 setAddress(addr);
                                                             }
                                                         }}
@@ -1033,6 +1068,13 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                                                         rows={2}
                                                         style={{ resize: 'none' }}
                                                     />
+                                                    {gpsCoords && (
+                                                        <span className="text-[10px] text-gray-400 font-bold mt-1.5 block">
+                                                            ℹ️ {selectedLanguage === 'PT' 
+                                                                ? 'Mudar a morada escrita não move o pin no mapa. Ajuste o mapa acima se mudou de local.' 
+                                                                : 'Changing the written address does not move the map pin. Adjust the map above if you changed location.'}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
                                         ) : (

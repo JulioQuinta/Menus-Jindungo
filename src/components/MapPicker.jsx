@@ -58,8 +58,13 @@ const LocationMarker = ({ position, setPosition, setAddress }) => {
     );
 };
 
-const MapPicker = ({ defaultLat = -8.8390, defaultLng = 13.2894, onLocationSelected }) => {
-    const [position, setPosition] = useState(null);
+const MapPicker = ({ defaultLat, defaultLng, onLocationSelected }) => {
+    const fallbackLat = -8.8390;
+    const fallbackLng = 13.2894;
+    const initialLat = defaultLat || fallbackLat;
+    const initialLng = defaultLng || fallbackLng;
+
+    const [position, setPosition] = useState(defaultLat && defaultLng ? { lat: defaultLat, lng: defaultLng } : null);
     const [addressText, setAddressText] = useState("");
     const [isLocating, setIsLocating] = useState(false);
 
@@ -98,13 +103,13 @@ const MapPicker = ({ defaultLat = -8.8390, defaultLng = 13.2894, onLocationSelec
         );
     };
     
-    // Auto-attempt GPS on mount
+    // Auto-attempt GPS on mount ONLY if no saved location is provided
     useEffect(() => {
-        if ("geolocation" in navigator) {
+        if (!position && "geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition((pos) => {
                 const userLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                 setPosition(userLoc);
-                // We won't auto-fetch the address name without user picking it to save Nominatim requests
+                fetchAddress(userLoc.lat, userLoc.lng); // Pre-fill address for new users
             }, () => {
                 // If fail, defaults are used gracefully by map centering
             });
@@ -120,7 +125,7 @@ const MapPicker = ({ defaultLat = -8.8390, defaultLng = 13.2894, onLocationSelec
     return (
         <div className="w-full flex inset-0 flex-col gap-2 relative">
             <div className="w-full h-[200px] rounded-xl overflow-hidden border-2 border-gray-200/50 shadow-inner relative z-0">
-                <MapContainer center={[defaultLat, defaultLng]} zoom={13} style={{ height: '100%', width: '100%' }}>
+                <MapContainer center={[initialLat, initialLng]} zoom={13} style={{ height: '100%', width: '100%' }}>
                     <ChangeView center={position} />
                     <TileLayer
                         attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'

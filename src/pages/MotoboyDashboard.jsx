@@ -158,10 +158,16 @@ export default function MotoboyDashboard() {
          displayAddress = "Pedido #" + order.table_number;
     }
 
+    const isGpsValid = (str) => {
+        if (!str) return false;
+        return /^-?[0-9.]+,\s*-?[0-9.]+$/.test(str.trim());
+    };
+    const hasValidGps = extractedGps && isGpsValid(extractedGps);
+
     if (!mapsLink) {
-        if (extractedGps) {
+        if (hasValidGps) {
             mapsLink = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(extractedGps)}`;
-        } else if (order.delivery_address) {
+        } else if (order.delivery_address && order.delivery_address !== 'Partilhar no WhatsApp 📍') {
             mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.delivery_address + ' ' + (order.delivery_neighborhood || ''))}`;
         }
     }
@@ -220,7 +226,7 @@ export default function MotoboyDashboard() {
 
                 {mapsLink && (
                     <a href={mapsLink} target="_blank" rel="noopener noreferrer" className="mt-6 w-full animate-pulse bg-gradient-to-r from-blue-600 to-cyan-600 hover:opacity-90 text-white font-bold uppercase tracking-widest text-xs py-4 rounded-xl flex items-center justify-center gap-3 shadow-lg shadow-blue-900/30 transition-all border border-blue-400/30">
-                        <MapPin size={18} /> {extractedGps ? 'Navegar no Mapa (App Google Maps)' : 'Procurar no Google Maps'}
+                        <MapPin size={18} /> {hasValidGps ? 'Navegar no Mapa (App Google Maps)' : 'Procurar no Google Maps'}
                     </a>
                 )}
             </div>

@@ -9,7 +9,7 @@ const StatCard = ({ label, value, icon: Icon, trend, color = 'primary', delay = 
         let start = 0;
         const end = parseFloat(value) || 0;
         if (end === 0) {
-            setDisplayValue(0);
+            setDisplayValue(prev => prev === 0 ? prev : 0);
             return;
         }
         

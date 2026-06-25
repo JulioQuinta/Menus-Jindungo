@@ -109,9 +109,15 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                 // If address field is empty, auto-geocode it in background
                 if (!address || address.trim() === '') {
                     fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${userLoc.lat}&lon=${userLoc.lng}`, {
-                         headers: { 'Accept-Language': 'pt' }
+                         headers: { 
+                             'Accept-Language': 'pt',
+                             'User-Agent': 'MenusJindungos/1.1 (suporte@menusjindungos.com)'
+                         }
                     })
-                    .then(res => res.json())
+                    .then(res => {
+                        if (!res.ok) throw new Error(`Nominatim HTTP error: ${res.status}`);
+                        return res.json();
+                    })
                     .then(data => {
                         if (data && data.display_name) {
                             const parts = data.display_name.split(', ');

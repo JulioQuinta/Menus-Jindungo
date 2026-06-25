@@ -32,9 +32,10 @@ export const useRealtimeOrders = (restaurantId, onNewOrderCallback) => {
                 const newOrder = payload.new;
                 const isDelivery = newOrder.table_number?.includes('Entrega:');
                 
-                // Dispara som e toast especial se for pedido "Na Mesa"
+                // Dispara som para todos os novos pedidos
+                playOrderSound();
+
                 if (!isDelivery) {
-                    playOrderSound();
                     toast(`🛎️ NOVO PEDIDO NA MESA!\nCliente: ${newOrder.customer_name || 'Desconhecido'}\nMesa: ${newOrder.table_number?.split('|')[0] || '?'}`, {
                         duration: 8000,
                         position: 'top-center',
@@ -49,11 +50,20 @@ export const useRealtimeOrders = (restaurantId, onNewOrderCallback) => {
                         });
                     }
                 } else {
-                    // Para delivery também alerta, mas menos intrusivo
-                    toast.success(`Novo Pedido Delivery: ${newOrder.customer_name || 'Cliente'}`, {
-                        duration: 5000,
-                        position: 'top-right'
+                    // Para delivery dispara toast e notificação de SO
+                    toast.success(`🛎️ NOVO PEDIDO DELIVERY!\nCliente: ${newOrder.customer_name || 'Cliente'}`, {
+                        duration: 8000,
+                        position: 'top-right',
+                        style: { background: '#10B981', color: '#fff', fontWeight: 'bold' }
                     });
+
+                    // Notificação de SO se suportada
+                    if (isNotificationSupported() && Notification?.permission === 'granted') {
+                        sendNotification("🛎️ Novo Pedido Delivery!", {
+                            body: `Cliente: ${newOrder.customer_name || 'Desconhecido'}`,
+                            icon: '/jindungo_logo_v3.png'
+                        });
+                    }
                 }
 
                 // Callback para atualizar a UI (e.g. adicionar ao topo da lista no KitchenBoard)

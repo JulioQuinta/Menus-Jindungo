@@ -2,16 +2,44 @@ import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { syncOfflineOrders } from '../utils/offlineSync';
 
+const checkIsLowEnd = (connection, isSlowNetwork) => {
+    if (isSlowNetwork) return true;
+    if (connection && (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g')) {
+        return true;
+    }
+    
+    // Check device specs (memory, cores) to classify low-end device
+    if (typeof navigator !== 'undefined') {
+        if (navigator.deviceMemory && navigator.deviceMemory <= 4) {
+            return true;
+        }
+        if (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) {
+            return true;
+        }
+    }
+    return false;
+};
+
 export const useNetworkStatus = () => {
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [isSlow, setIsSlow] = useState(false);
+    const [isLowEnd, setIsLowEnd] = useState(() => {
+        const connection = typeof navigator !== 'undefined' ? (navigator.connection || navigator.mozConnection || navigator.webkitConnection) : null;
+        return checkIsLowEnd(connection, false);
+    });
 
     useEffect(() => {
         let toastId = null;
+        const connection = typeof navigator !== 'undefined' ? (navigator.connection || navigator.mozConnection || navigator.webkitConnection) : null;
+
+        const updateLowEndStatus = (slowStatus) => {
+            setIsLowEnd(checkIsLowEnd(connection, slowStatus));
+        };
 
         const handleOnline = () => {
             setIsOnline(true);
             setIsSlow(false);
+            updateLowEndStatus(false);
             if (toastId) {
                 toast.dismiss(toastId);
                 toastId = null;
@@ -24,6 +52,7 @@ export const useNetworkStatus = () => {
 
         const handleOffline = () => {
             setIsOnline(false);
+            updateLowEndStatus(true);
             toastId = toast.error("Sem ligação à internet. Modo offline ativo.", { 
                 id: 'network-status',
                 duration: Infinity 
@@ -45,12 +74,12 @@ export const useNetworkStatus = () => {
             syncOfflineOrders();
         }
 
-        // Opcional: Monitorizar a qualidade da ligação (Connection API) se suportada
-        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        // Monitor connection API if supported
         if (connection) {
             const updateConnectionStatus = () => {
                 if (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g') {
                     setIsSlow(true);
+                    updateLowEndStatus(true);
                     toast('Aviso: Ligação lenta. Algumas ações podem demorar mais do que o normal.', {
                         icon: '⚠️',
                         id: 'network-slow',
@@ -58,11 +87,12 @@ export const useNetworkStatus = () => {
                     });
                 } else {
                     setIsSlow(false);
+                    updateLowEndStatus(false);
                 }
             };
             
             connection.addEventListener('change', updateConnectionStatus);
-            // Verifica no arranque
+            // Check initially
             updateConnectionStatus();
 
             return () => {
@@ -80,5 +110,6 @@ export const useNetworkStatus = () => {
         };
     }, []);
 
-    return { isOnline, isSlow };
+    return { isOnline, isSlow, isLowEnd };
 };
+

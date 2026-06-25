@@ -86,32 +86,65 @@ const PublicMenu = () => {
                 const normalizedSlug = slug ? slug.trim().replace(/\s+/g, '-') : '';
                 console.log("Step 1: Fetching optimized menu data for slug:", normalizedSlug);
 
-                const { data: restaurants, error: rError } = await supabase
-                    .from('restaurants')
-                    .select(`
-                        id, 
-                        name, 
-                        slug, 
-                        status, 
-                        plan, 
-                        delivery_config, 
-                        theme_config,
-                        business_info,
-                        categories (
+                let restaurantData;
+
+                try {
+                    const { data: restaurants, error: rError } = await supabase
+                        .from('restaurants')
+                        .select(`
                             id, 
-                            label, 
-                            sort_order,
-                            menu_items (*)
-                        )
-                    `)
-                    .eq('slug', normalizedSlug);
+                            name, 
+                            slug, 
+                            status, 
+                            plan, 
+                            delivery_config, 
+                            theme_config,
+                            business_info,
+                            categories (
+                                id, 
+                                label, 
+                                sort_order,
+                                menu_items (*)
+                            )
+                        `)
+                        .eq('slug', normalizedSlug);
 
-                if (rError) throw new Error(`Erro de conexão: ${rError.message}`);
+                    if (rError) throw rError;
 
-                const restaurantData = restaurants?.[0];
-                if (!restaurantData) {
-                    console.error("No restaurant found for slug:", normalizedSlug);
-                    throw new Error('Restaurante não encontrado (404)');
+                    restaurantData = restaurants?.[0];
+                    if (!restaurantData) {
+                        throw new Error('Restaurante não encontrado (404)');
+                    }
+
+                    // Background sync cache to Dexie
+                    import('../utils/syncManager').then(({ syncManager }) => {
+                        syncManager.syncDownstream(normalizedSlug).catch(err => console.error("Offline sync error:", err));
+                    });
+
+                } catch (networkError) {
+                    console.warn("Supabase fetch failed, attempting local DB fallback...", networkError);
+                    const { localDbService } = await import('../lib/localDb');
+                    const localRes = await localDbService.getRestaurantBySlug(normalizedSlug);
+
+                    if (localRes) {
+                        const localCats = await localDbService.getCategories(localRes.id);
+                        const categoriesWithItems = [];
+                        for (const cat of localCats) {
+                            const items = await localDbService.getMenuItemsByCategory(cat.id);
+                            categoriesWithItems.push({
+                                ...cat,
+                                menu_items: items
+                            });
+                        }
+                        restaurantData = {
+                            ...localRes,
+                            categories: categoriesWithItems
+                        };
+                        console.log("⚡ [Offline Mode] Successfully loaded restaurant data from Dexie DB.");
+                    } else {
+                        // Re-throw if no local database copy exists
+                        throw new Error("Sem ligação à internet e sem dados locais guardados para este restaurante.");
+                    }
                 }
 
                 // Set Restaurant & Features

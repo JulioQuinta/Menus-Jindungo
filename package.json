@@ -2,12 +2,15 @@
   "name": "menus-jindungos",
   "private": true,
   "version": "0.0.0",
+  "main": "electron-main.js",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
     "build": "node -e \"require('fs').rmSync('dist', {recursive: true, force: true})\" && vite build",
     "lint": "eslint .",
-    "preview": "vite preview --host --port 5178"
+    "preview": "vite preview --host --port 5178",
+    "electron:dev": "concurrently \"npm run dev\" \"electron .\"",
+    "electron:build": "npm run build && electron-builder"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -19,6 +22,7 @@
     "autoprefixer": "^10.4.23",
     "browser-image-compression": "^2.0.2",
     "clsx": "^2.1.1",
+    "dexie": "^4.4.4",
     "dotenv": "^17.2.4",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.563.0",
@@ -43,6 +47,8 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
     "autoprefixer": "^10.4.23",
+    "concurrently": "^10.0.3",
+    "electron": "^42.5.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",

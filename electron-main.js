@@ -10,8 +10,8 @@ let mainWindow;
 function createWindow() {
     const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
     const iconPath = isDev 
-        ? path.join(__dirname, 'public/jindungo_logo_v3.png')
-        : path.join(__dirname, 'dist/jindungo_logo_v3.png');
+        ? path.join(__dirname, 'public/jindungo_logo.png')
+        : path.join(__dirname, 'dist/jindungo_logo.png');
 
     mainWindow = new BrowserWindow({
         width: 1280,
@@ -39,7 +39,6 @@ function createWindow() {
             });
         };
         loadDevServer();
-        mainWindow.webContents.openDevTools();
     } else {
         mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
     }

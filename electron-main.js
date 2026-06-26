@@ -29,7 +29,7 @@ function createWindow() {
 
     if (isDev) {
         const loadDevServer = () => {
-            mainWindow.loadURL('http://localhost:5173').catch(() => {
+            mainWindow.loadURL('http://localhost:5174').catch(() => {
                 setTimeout(loadDevServer, 1000);
             });
         };

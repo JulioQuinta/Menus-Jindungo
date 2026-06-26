@@ -28,7 +28,6 @@ function createWindow() {
     });
 
     // Remove window menu for a cleaner kiosk-like POS experience in production
-    const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
     if (!isDev) {
         mainWindow.setMenuBarVisibility(false);
     }

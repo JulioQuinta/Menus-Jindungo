@@ -8,12 +8,18 @@ const __dirname = path.dirname(__filename);
 let mainWindow;
 
 function createWindow() {
+    const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+    const iconPath = isDev 
+        ? path.join(__dirname, 'public/jindungo_logo_v3.png')
+        : path.join(__dirname, 'dist/jindungo_logo_v3.png');
+
     mainWindow = new BrowserWindow({
         width: 1280,
         height: 800,
         minWidth: 1024,
         minHeight: 768,
         title: "Menús Jindungo Desktop",
+        icon: iconPath,
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,

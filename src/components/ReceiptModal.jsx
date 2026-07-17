@@ -1,24 +1,79 @@
-import React, { useState, useRef } from 'react';
-import { Printer, Smartphone, FileText, X, ShieldCheck, Sparkles, Building2, User, Clock, Banknote, MapPin, Hash, CheckCircle2, ChevronRight } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Printer, Smartphone, FileText, X, ShieldCheck, Sparkles, Building2, User, Clock, Banknote, MapPin, Hash, CheckCircle2, ChevronRight, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 import { QRCodeSVG } from 'qrcode.react';
+import { billingService } from '../services/billingService';
+import { supabase } from '../lib/supabaseClient';
 
 const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Lounge & Grill' }) => {
     const [viewMode, setViewMode] = useState('receipt'); // 'receipt' (80mm) vs 'invoice' (A4)
+    const [localOrder, setLocalOrder] = useState(order);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const receiptRef = useRef(null);
     const invoiceRef = useRef(null);
 
+    useEffect(() => {
+        setLocalOrder(order);
+    }, [order]);
+
+    useEffect(() => {
+        if (!localOrder?.id || localOrder?.invoice_status !== 'pending_agt') return;
+
+        console.log("Setting up polling for order invoice status:", localOrder.id);
+        const interval = setInterval(async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('orders')
+                    .select('*, restaurant:restaurants(name, business_info, slug)')
+                    .eq('id', localOrder.id)
+                    .single();
+                
+                if (error) throw error;
+                
+                if (data && data.invoice_status !== 'pending_agt') {
+                    console.log("Order invoice status updated to:", data.invoice_status);
+                    setLocalOrder(data);
+                    clearInterval(interval);
+                }
+            } catch (err) {
+                console.error("Error polling order invoice status:", err);
+            }
+        }, 2000);
+
+        return () => clearInterval(interval);
+    }, [localOrder?.id, localOrder?.invoice_status]);
+
+    const handleEmitirFatura = async () => {
+        if (!localOrder?.id) return;
+        setIsSubmitting(true);
+        try {
+            const res = await billingService.emitirFaturaEletronica(localOrder.id, localOrder.restaurant_id, localOrder);
+            if (res.success) {
+                setLocalOrder(prev => ({
+                    ...prev,
+                    invoice_status: 'pending_agt',
+                    invoice_number: res.invoiceNumber,
+                    request_id: res.requestId
+                }));
+            }
+        } catch (err) {
+            console.error("Error emitting invoice:", err);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const handlePrintReceipt = useReactToPrint({
         contentRef: receiptRef,
-        documentTitle: `Talao_Mesa_${order?.id || '1042'}`,
+        documentTitle: `Talao_Mesa_${localOrder?.id || '1042'}`,
     });
 
     const handlePrintInvoice = useReactToPrint({
         contentRef: invoiceRef,
-        documentTitle: `Fatura_${order?.id || '1042'}`,
+        documentTitle: `Fatura_${localOrder?.id || '1042'}`,
     });
 
-    if (!isOpen || !order) return null;
+    if (!isOpen || !localOrder) return null;
 
     // Helper para formatar moeda em Kwanzas (Kz)
     const formatCurr = (val) => {
@@ -32,32 +87,32 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
         return `${new Intl.NumberFormat('pt-AO').format(num)} Kwanzas (Moeda Nacional)`;
     };
 
-    const isDelivery = order?.table_number?.includes('Entrega:') || order?.order_type === 'delivery';
-    const displayTable = (order?.table_number || 'Mesa Principal').replace('Entrega: ', '');
-    const orderDate = new Date(order?.created_at || new Date().toISOString());
+    const isDelivery = localOrder?.table_number?.includes('Entrega:') || localOrder?.order_type === 'delivery';
+    const displayTable = (localOrder?.table_number || 'Mesa Principal').replace('Entrega: ', '');
+    const orderDate = new Date(localOrder?.created_at || new Date().toISOString());
     const formattedDate = orderDate.toLocaleDateString('pt-AO', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const formattedTime = orderDate.toLocaleTimeString('pt-AO', { hour: '2-digit', minute: '2-digit' });
 
     // Informações da Empresa / Restaurante
     const companyInfo = {
         name: restaurantName,
-        nif: order?.restaurant?.nif || '5417289301',
-        address: order?.restaurant?.address || 'Av. Talatona, Edifício Jindungo, Luanda',
-        phone: order?.restaurant?.phone || '+244 923 456 789',
+        nif: localOrder?.restaurant?.nif || '5417289301',
+        address: localOrder?.restaurant?.address || 'Av. Talatona, Edifício Jindungo, Luanda',
+        phone: localOrder?.restaurant?.phone || '+244 923 456 789',
         email: 'contato@jindungo.ao'
     };
 
     // Informações do Cliente
     const customerInfo = {
-        name: order?.customer_name || 'Consumidor Final',
-        phone: order?.customer_phone || 'Não informado',
-        nif: order?.customer_nif || '999999999 (Consumidor Final)',
-        address: isDelivery ? (order?.delivery_address || displayTable) : displayTable
+        name: localOrder?.customer_name || 'Consumidor Final',
+        phone: localOrder?.customer_phone || 'Não informado',
+        nif: localOrder?.customer_nif || '999999999 (Consumidor Final)',
+        address: isDelivery ? (localOrder?.delivery_address || displayTable) : displayTable
     };
 
     // Cálculo Financeiro Discriminado (IVA / Impostos / Descontos)
-    const rawTotal = order?.total || 12450;
-    const discount = order?.coupon_discount || 0;
+    const rawTotal = localOrder?.total || 12450;
+    const discount = localOrder?.coupon_discount || 0;
     const subtotal = rawTotal + discount;
     const taxRate = 0.14; // IVA Angola 14%
     const taxAmount = Math.round(subtotal * taxRate);
@@ -65,12 +120,12 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
 
     const handleWhatsAppShare = () => {
         let msg = `🧾 *${companyInfo.name}* - Resumo da Conta\n\n`;
-        msg += `Pedido N.º: #${order?.id ? order.id.slice(0, 6) : '1042'}\n`;
+        msg += `Pedido N.º: #${localOrder?.id ? localOrder.id.slice(0, 6) : '1042'}\n`;
         msg += `Data: ${formattedDate} às ${formattedTime}\n`;
         msg += `Cliente: ${customerInfo.name}\n`;
         msg += `Local: ${displayTable}\n\n`;
         msg += `*ITENS CONSUMIDOS:*\n`;
-        order?.items?.forEach(item => {
+        localOrder?.items?.forEach(item => {
             msg += `• ${item.quantity}x ${item.name} - ${formatCurr(item.price * item.quantity)}\n`;
         });
         if (discount > 0) {
@@ -148,8 +203,39 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
                 </div>
 
                 {/* CORPO CENTRAL DO MODAL COM PREVIEW */}
-                <div className="flex-1 overflow-y-auto p-6 flex justify-center bg-[#0C0C0C]">
+                <div className="flex-1 overflow-y-auto p-6 flex flex-col items-center bg-[#0C0C0C]">
                     
+                    {/* Banners de Status de Faturação Eletrónica */}
+                    {localOrder?.invoice_status === 'pending_agt' && (
+                        <div className="w-full max-w-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 p-4 rounded-2xl mb-6 flex items-center gap-3 animate-pulse">
+                            <RefreshCw className="animate-spin shrink-0" size={18} />
+                            <div className="text-xs">
+                                <strong>Fatura em processamento na AGT...</strong>
+                                <p className="opacity-80 mt-0.5">O lote foi assinado via JWS e enviado com o Ticket ID {localOrder.request_id}. O status será validado em instantes.</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {localOrder?.invoice_status === 'rejected' && (
+                        <div className="w-full max-w-2xl bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl mb-6 flex items-center gap-3">
+                            <AlertTriangle className="shrink-0" size={18} />
+                            <div className="text-xs">
+                                <strong>Fatura rejeitada pela AGT</strong>
+                                <p className="opacity-80 mt-0.5">Ocorreu um erro de validação fiscal no Web Service da AGT. Verifique os dados de NIF e tente re-emitir.</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {localOrder?.invoice_status === 'validated' && (
+                        <div className="w-full max-w-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-2xl mb-6 flex items-center gap-3">
+                            <CheckCircle2 className="shrink-0 text-emerald-500" size={18} />
+                            <div className="text-xs">
+                                <strong>Documento Fiscal Homologado</strong>
+                                <p className="opacity-80 mt-0.5">A fatura {localOrder.invoice_number} foi validada com sucesso e a assinatura digital JWS foi arquivada.</p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* MODO 1: TALÃO DE MESA TÉRMICO (80mm) */}
                     <div className={viewMode === 'receipt' ? 'block w-full max-w-[340px]' : 'hidden'}>
                         <div 
@@ -310,12 +396,12 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
                                     </div>
                                 </div>
 
-                                <div className="sm:text-right bg-gray-50 border border-gray-200 p-4 rounded-2xl w-full sm:w-auto min-w-[240px]">
-                                    <span className="bg-[#D4AF37] text-black font-black text-[11px] px-3 py-1 rounded-full uppercase tracking-widest inline-block mb-2 shadow-sm">
-                                        Fatura Recibo
+                                <div className="text-right">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">
+                                        {localOrder.invoice_number?.includes('FR') ? 'Fatura-Recibo' : (localOrder.invoice_number?.includes('FS') ? 'Fatura Simplificada' : 'Consulta de Mesa')}
                                     </span>
                                     <h2 className="text-xl font-mono font-black text-gray-900">
-                                        FT 2026/{order?.id ? order.id.slice(0, 6) : '1042'}
+                                        {localOrder.invoice_number || 'Sem Série (Rascunho)'}
                                     </h2>
                                     <div className="text-xs text-gray-600 space-y-0.5 mt-2 font-medium">
                                         <p>Data Emissão: <strong className="text-gray-900">{formattedDate}</strong></p>
@@ -410,18 +496,33 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
                                             "{numberToWords(rawTotal)}"
                                         </p>
                                     </div>
+
                                     <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
                                         <div className="p-2 bg-white rounded-lg shadow-sm">
-                                            <QRCodeSVG value={`https://jindungo.ao/fatura/FT2026-${order?.id || '1042'}`} size={56} />
+                                            <QRCodeSVG 
+                                                value={localOrder.invoice_status === 'validated' 
+                                                    ? `https://agt.minfin.gov.ao/valida/fatura?nif=${companyInfo.nif}&num=${localOrder.invoice_number}`
+                                                    : `https://jindungo.ao/fatura/rascunho/${localOrder.id}`
+                                                } 
+                                                size={56} 
+                                            />
                                         </div>
                                         <div className="text-[11px] text-gray-600">
-                                            <strong className="text-gray-900 block mb-0.5 font-bold">Autenticação Digital AGT</strong>
-                                            <span>Código Hash de Controlo: 4B9E-7A12-C83D-9F01</span>
+                                            <strong className="text-gray-900 block mb-0.5 font-bold">
+                                                {localOrder.invoice_status === 'validated' ? 'Autenticação Digital AGT' : 'Rascunho Sem Efeito Fiscal'}
+                                            </strong>
+                                            <span className="block font-mono text-[10px] break-all leading-tight mt-1 text-gray-500">
+                                                {localOrder.invoice_status === 'validated' 
+                                                    ? `Código Hash: ${localOrder.validation_code}` 
+                                                    : (localOrder.invoice_status === 'pending_agt' 
+                                                        ? 'A processar validação...' 
+                                                        : 'Fatura não comunicada à AGT')}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
-
-                                <div className="sm:col-span-5 space-y-2 text-xs">
+                                
+                                <div className="sm:col-span-5 flex flex-col justify-end">
                                     <div className="flex justify-between text-gray-600 p-1">
                                         <span>Subtotal de Bens:</span>
                                         <strong className="font-mono text-gray-900">{formatCurr(netSubtotal)}</strong>
@@ -487,19 +588,38 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
                                 <Printer size={15} /> Imprimir Talão Térmico
                             </button>
                         ) : (
-                            <button
-                                onClick={handlePrintInvoice}
-                                className="bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:brightness-110 text-black px-5 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-lg shadow-[#D4AF37]/20 active:scale-95 cursor-pointer uppercase tracking-wider"
-                            >
-                                <Printer size={15} /> Imprimir Fatura A4
-                            </button>
+                            <>
+                                {(localOrder.invoice_status === 'draft' || localOrder.invoice_status === 'rejected' || !localOrder.invoice_status) ? (
+                                    <button
+                                        onClick={handleEmitirFatura}
+                                        disabled={isSubmitting}
+                                        className="bg-[#D4AF37] hover:bg-[#C5A059] text-black px-5 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-lg shadow-[#D4AF37]/20 active:scale-95 cursor-pointer uppercase tracking-wider"
+                                    >
+                                        <Sparkles size={15} /> {isSubmitting ? 'A comunicar...' : 'Emitir Fatura Eletrónica'}
+                                    </button>
+                                ) : localOrder.invoice_status === 'pending_agt' ? (
+                                    <button
+                                        disabled
+                                        className="bg-gray-700 text-gray-400 px-5 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 cursor-not-allowed uppercase tracking-wider"
+                                    >
+                                        <RefreshCw size={15} className="animate-spin" /> A validar na AGT...
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={handlePrintInvoice}
+                                        className="bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:brightness-110 text-black px-5 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-lg shadow-[#D4AF37]/20 active:scale-95 cursor-pointer uppercase tracking-wider"
+                                    >
+                                        <Printer size={15} /> Imprimir Fatura A4
+                                    </button>
+                                )}
+                            </>
                         )}
-                    </div>
-                </div>
 
+                </div>
             </div>
         </div>
-    );
+    </div>
+);
 };
 
 export default ReceiptModal;

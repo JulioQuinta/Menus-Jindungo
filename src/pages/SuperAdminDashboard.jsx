@@ -9,7 +9,8 @@ import {
   LayoutDashboard, Users, ShieldAlert, CreditCard, 
   Megaphone, Sliders, Plus, LogOut, Search, 
   CheckCircle, XCircle, Trash2, ShieldCheck, Zap,
-  ChevronLeft, ChevronRight, RefreshCw, Key, Globe, Eye
+  ChevronLeft, ChevronRight, RefreshCw, Key, Globe, Eye,
+  FileText, Settings2
 } from 'lucide-react';
 
 const SuperAdminDashboard = () => {
@@ -39,6 +40,7 @@ const SuperAdminDashboard = () => {
     });
 
     const [editingUser, setEditingUser] = useState(null); // For Role Modal
+    const [invoiceConfigModal, setInvoiceConfigModal] = useState({ isOpen: false, restaurant: null });
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [newRest, setNewRest] = useState({ name: '', slug: '', owner_id: '' });
@@ -171,6 +173,56 @@ const SuperAdminDashboard = () => {
             }
         } finally {
             setIsCreating(false);
+        }
+    };
+
+    // --- SaaS: Invoice and Layout Configuration ---
+    const [localInvoiceConfig, setLocalInvoiceConfig] = useState({
+        nif: '',
+        address: '',
+        certification_number: '000/JINDUNGO',
+        software_version: 'v3.1',
+        layout_color: '#D4AF37',
+        show_logo: true,
+        invoice_footer_note: '',
+        vat_rate: 14,
+        exemption_code: '',
+        exemption_reason: ''
+    });
+
+    useEffect(() => {
+        if (invoiceConfigModal.restaurant) {
+            const config = invoiceConfigModal.restaurant.invoice_config || {};
+            setLocalInvoiceConfig({
+                nif: config.nif || '',
+                address: config.address || '',
+                certification_number: config.certification_number || '000/JINDUNGO',
+                software_version: config.software_version || 'v3.1',
+                layout_color: config.layout_color || '#D4AF37',
+                show_logo: config.show_logo !== false,
+                invoice_footer_note: config.invoice_footer_note || '',
+                vat_rate: typeof config.vat_rate === 'number' ? config.vat_rate : 14,
+                exemption_code: config.exemption_code || '',
+                exemption_reason: config.exemption_reason || ''
+            });
+        }
+    }, [invoiceConfigModal.restaurant]);
+
+    const handleSaveInvoiceConfig = async () => {
+        if (!invoiceConfigModal.restaurant?.id) return;
+        try {
+            const { error } = await supabase
+                .from('restaurants')
+                .update({ invoice_config: localInvoiceConfig })
+                .eq('id', invoiceConfigModal.restaurant.id);
+
+            if (error) throw error;
+            toast.success("Configuração de Fatura guardada!");
+            setInvoiceConfigModal({ isOpen: false, restaurant: null });
+            fetchData();
+        } catch (err) {
+            console.error("Error saving invoice config:", err);
+            toast.error("Erro ao guardar dados fiscais.");
         }
     };
 
@@ -690,7 +742,7 @@ const SuperAdminDashboard = () => {
                             </div>
 
                             {/* TABLE */}
-                            <div className="overflow-x-auto flex-1">
+                            <div className="overflow-auto flex-1">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="border-b border-zinc-800 text-zinc-400 text-xs font-semibold tracking-wider bg-[#161414]/50">
@@ -764,6 +816,13 @@ const SuperAdminDashboard = () => {
                                                                 className="p-2.5 rounded-xl bg-zinc-800 hover:bg-[#E2B755] text-zinc-300 hover:text-black transition-all cursor-pointer shadow-sm hover:scale-110"
                                                             >
                                                                 <CreditCard size={16} />
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => setInvoiceConfigModal({ isOpen: true, restaurant: client })}
+                                                                title="Configurar Layout da Fatura (AGT)" 
+                                                                className="p-2.5 rounded-xl bg-zinc-800 hover:bg-[#E2B755] text-zinc-300 hover:text-black transition-all cursor-pointer shadow-sm hover:scale-110"
+                                                            >
+                                                                <FileText size={16} />
                                                             </button>
                                                             <button 
                                                                 onClick={() => handlePopulateDemo(client.id, client.name)}
@@ -850,7 +909,7 @@ const SuperAdminDashboard = () => {
                                 </div>
                             </div>
 
-                            <div className="overflow-x-auto flex-1">
+                            <div className="overflow-auto flex-1">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="border-b border-zinc-800 text-zinc-400 text-xs font-semibold tracking-wider bg-[#161414]/50">
@@ -1539,6 +1598,207 @@ const SuperAdminDashboard = () => {
                                 className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-black font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-600/30 active:scale-95 transition-all cursor-pointer"
                             >
                                 Confirmar Faturação
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* SAAS: INVOICE CONFIG MODAL */}
+            {invoiceConfigModal.isOpen && (
+                <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200 overflow-y-auto text-white">
+                    <div className="bg-[#141212] border border-zinc-800 rounded-[2.5rem] p-6 sm:p-8 max-w-2xl w-full my-8 shadow-[0_20px_60px_rgba(0,0,0,0.8)] relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-72 h-72 bg-[#E2B755]/5 blur-[90px] rounded-full pointer-events-none -mr-24 -mt-24" />
+
+                        <div className="flex justify-between items-center pb-4 border-b border-zinc-800 mb-6">
+                            <div>
+                                <h3 className="text-xl font-serif font-black text-white flex items-center gap-2">
+                                    <FileText className="text-[#E2B755]" size={20} />
+                                    Configuração Fiscal da Fatura
+                                </h3>
+                                <p className="text-zinc-500 text-xs mt-1">
+                                    Configurar o layout de impressão e dados de integração AGT para <span className="text-[#E2B755] font-bold">"{invoiceConfigModal.restaurant?.name}"</span>
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setInvoiceConfigModal({ isOpen: false, restaurant: null })}
+                                className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                            >
+                                <XCircle size={16} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-6 font-sans max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                            
+                            {/* Seção 1: Identidade Fiscal */}
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-bold text-[#E2B755] uppercase tracking-wider border-b border-zinc-800/80 pb-1.5 flex items-center gap-1.5">
+                                    <Settings2 size={13} /> Identidade Fiscal (Emitente)
+                                </h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 font-mono">NIF do Restaurante</label>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-black/60 border border-zinc-850 rounded-xl px-4 py-2.5 text-xs text-white placeholder-zinc-650 focus:outline-none focus:border-[#E2B755] font-bold"
+                                            placeholder="Ex: 5417289301"
+                                            value={localInvoiceConfig.nif}
+                                            onChange={(e) => setLocalInvoiceConfig({ ...localInvoiceConfig, nif: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 font-mono">Morada Comercial</label>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-black/60 border border-zinc-850 rounded-xl px-4 py-2.5 text-xs text-white placeholder-zinc-650 focus:outline-none focus:border-[#E2B755] font-bold"
+                                            placeholder="Ex: Av. Talatona, Edifício Jindungo, Luanda"
+                                            value={localInvoiceConfig.address}
+                                            onChange={(e) => setLocalInvoiceConfig({ ...localInvoiceConfig, address: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Seção 2: Parametrização AGT */}
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-bold text-[#E2B755] uppercase tracking-wider border-b border-zinc-800/80 pb-1.5 flex items-center gap-1.5">
+                                    <ShieldCheck size={13} /> Parâmetros de Certificação (AGT)
+                                </h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 font-mono">N.º Certificação Software</label>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-black/60 border border-zinc-850 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#E2B755] font-bold"
+                                            value={localInvoiceConfig.certification_number}
+                                            onChange={(e) => setLocalInvoiceConfig({ ...localInvoiceConfig, certification_number: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 font-mono">Versão do Software</label>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-black/60 border border-zinc-850 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#E2B755] font-bold"
+                                            value={localInvoiceConfig.software_version}
+                                            onChange={(e) => setLocalInvoiceConfig({ ...localInvoiceConfig, software_version: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 font-mono">Nota de Rodapé da Fatura</label>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-black/60 border border-zinc-850 rounded-xl px-4 py-2.5 text-xs text-white placeholder-zinc-650 focus:outline-none focus:border-[#E2B755] font-bold"
+                                            placeholder="Ex: Regime Geral de Faturação"
+                                            value={localInvoiceConfig.invoice_footer_note}
+                                            onChange={(e) => setLocalInvoiceConfig({ ...localInvoiceConfig, invoice_footer_note: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Seção 3: Regime de IVA */}
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-bold text-[#E2B755] uppercase tracking-wider border-b border-zinc-800/80 pb-1.5 flex items-center gap-1.5">
+                                    <CreditCard size={13} /> Configuração de Imposto (IVA)
+                                </h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 font-mono">Taxa de IVA (%)</label>
+                                        <select
+                                            className="w-full bg-black/60 border border-zinc-850 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#E2B755] font-bold"
+                                            value={localInvoiceConfig.vat_rate}
+                                            onChange={(e) => setLocalInvoiceConfig({ ...localInvoiceConfig, vat_rate: Number(e.target.value) })}
+                                        >
+                                            <option value={14}>Geral (14%)</option>
+                                            <option value={7}>Simplificado (7%)</option>
+                                            <option value={0}>Isento (0%)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    {localInvoiceConfig.vat_rate === 0 && (
+                                        <>
+                                            <div>
+                                                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 font-mono">Código de Isenção (AGT)</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full bg-black/60 border border-zinc-850 rounded-xl px-4 py-2.5 text-xs text-white placeholder-zinc-650 focus:outline-none focus:border-[#E2B755] font-bold"
+                                                    placeholder="Ex: M10"
+                                                    value={localInvoiceConfig.exemption_code}
+                                                    onChange={(e) => setLocalInvoiceConfig({ ...localInvoiceConfig, exemption_code: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 font-mono">Motivo de Isenção</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full bg-black/60 border border-zinc-850 rounded-xl px-4 py-2.5 text-xs text-white placeholder-zinc-650 focus:outline-none focus:border-[#E2B755] font-bold"
+                                                    placeholder="Ex: Isento nos termos do CIVA"
+                                                    value={localInvoiceConfig.exemption_reason}
+                                                    onChange={(e) => setLocalInvoiceConfig({ ...localInvoiceConfig, exemption_reason: e.target.value })}
+                                                />
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Seção 4: Configuração Visual do Layout */}
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-bold text-[#E2B755] uppercase tracking-wider border-b border-zinc-800/80 pb-1.5 flex items-center gap-1.5">
+                                    <Sliders size={13} /> Estética e Layout da Fatura
+                                </h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center bg-black/30 p-4 rounded-2xl border border-zinc-850/50">
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2 font-mono">Cor de Destaque do Layout</label>
+                                        <div className="flex gap-3">
+                                            {[
+                                                { name: 'Ouro', hex: '#D4AF37' },
+                                                { name: 'Azul', hex: '#3B82F6' },
+                                                { name: 'Esmeralda', hex: '#10B981' },
+                                                { name: 'Carmim', hex: '#EF4444' }
+                                            ].map((color) => (
+                                                <button
+                                                    key={color.hex}
+                                                    type="button"
+                                                    onClick={() => setLocalInvoiceConfig({ ...localInvoiceConfig, layout_color: color.hex })}
+                                                    className={`w-8 h-8 rounded-full border-2 transition-all cursor-pointer hover:scale-115 flex items-center justify-center ${localInvoiceConfig.layout_color === color.hex ? 'border-white' : 'border-transparent'}`}
+                                                    style={{ backgroundColor: color.hex }}
+                                                    title={color.name}
+                                                >
+                                                    {localInvoiceConfig.layout_color === color.hex && <span className="text-[10px] text-white">✓</span>}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="checkbox"
+                                            id="show_logo_check"
+                                            className="w-4 h-4 rounded border-zinc-800 bg-black text-[#E2B755] focus:ring-[#E2B755] transition-all cursor-pointer"
+                                            checked={localInvoiceConfig.show_logo}
+                                            onChange={(e) => setLocalInvoiceConfig({ ...localInvoiceConfig, show_logo: e.target.checked })}
+                                        />
+                                        <label htmlFor="show_logo_check" className="text-xs font-bold text-zinc-300 select-none cursor-pointer">
+                                            Exibir Logótipo do Restaurante no Topo da Fatura
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div className="pt-6 border-t border-zinc-800 flex gap-3 mt-6 relative z-10 font-mono">
+                            <button
+                                onClick={() => setInvoiceConfigModal({ isOpen: false, restaurant: null })}
+                                className="flex-1 py-3.5 bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white rounded-2xl font-bold text-xs uppercase transition-colors cursor-pointer"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleSaveInvoiceConfig}
+                                className="flex-1 py-3.5 bg-[#E2B755] hover:bg-yellow-500 text-black font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-[#E2B755]/20 active:scale-95 transition-all cursor-pointer"
+                            >
+                                Gravar Definições
                             </button>
                         </div>
                     </div>

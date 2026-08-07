@@ -60,6 +60,11 @@ export const billingService = {
         try {
             console.log(`Iniciando emissão de fatura eletrónica para o pedido #${orderId}...`);
             
+            // Obter configurações fiscais do restaurante
+            const invoiceConfig = orderData.restaurant?.invoice_config || {};
+            const vatRate = typeof invoiceConfig.vat_rate === 'number' ? invoiceConfig.vat_rate : 14;
+            const isExempt = vatRate === 0;
+
             // Determinar o tipo de documento
             const isDelivery = orderData.table_number?.includes('Entrega:') || orderData.order_type === 'delivery';
             const docType = (orderData.customer_nif && orderData.customer_nif !== '999999999') ? 'FR' : 'FS'; // FR (Fatura-Recibo) se tiver NIF real, FS (Fatura Simplificada) caso contrário
@@ -69,21 +74,50 @@ export const billingService = {
             const sequence = Math.floor(1000 + Math.random() * 9000);
             const invoiceNumber = `${docType} ${currentYear}/${sequence}`;
 
-            // 1. Preparar Payload Fiscal
+            // 1. Preparar Payload Fiscal em estrita conformidade com a especificação AGT DS-120
+            const netTotal = (orderData.total || 0) / (1 + (vatRate / 100));
+            const taxPayable = (orderData.total || 0) - netTotal;
+
+            const lines = (orderData.items || []).map((item, index) => {
+                const itemNet = (item.price * item.quantity) / (1 + (vatRate / 100));
+                const itemTax = (item.price * item.quantity) - itemNet;
+                return {
+                    lineNumber: String(index + 1),
+                    productCode: item.id || `P00${index + 1}`,
+                    productDescription: item.name,
+                    quantity: String(item.quantity),
+                    unitOfMeasure: "UN",
+                    unitPrice: item.price.toFixed(2),
+                    unitPriceBase: item.price.toFixed(2),
+                    creditAmount: itemNet.toFixed(2),
+                    taxes: [
+                        {
+                            taxType: isExempt ? "NS" : "IVA",
+                            taxCountryRegion: "AO",
+                            taxCode: isExempt ? (invoiceConfig.exemption_code || "M10") : "NOR",
+                            taxPercentage: String(vatRate),
+                            taxContribution: itemTax.toFixed(2)
+                        }
+                    ],
+                    settlementAmount: (item.price * item.quantity).toFixed(2)
+                };
+            });
+
+            const documentTotals = {
+                taxPayable: taxPayable.toFixed(2),
+                netTotal: netTotal.toFixed(2),
+                grossTotal: (orderData.total || 0).toFixed(2)
+            };
+
             const fiscalPayload = {
-                invoice_number: invoiceNumber,
-                document_type: docType,
-                date_emitted: new Date().toISOString(),
-                restaurant_id: restaurantId,
-                customer_name: orderData.customer_name || "Consumidor Final",
-                customer_nif: orderData.customer_nif || "999999999",
-                items: (orderData.items || []).map(item => ({
-                    name: item.name,
-                    qty: item.quantity,
-                    price: item.price,
-                    tax_rate: 14 // IVA Angola 14%
-                })),
-                subtotal: orderData.total || 0
+                documentNo: invoiceNumber,
+                taxRegistrationNumber: invoiceConfig.nif || orderData.restaurant?.nif || "5002569450",
+                documentType: docType,
+                documentDate: new Date().toISOString().split('T')[0],
+                customerTaxID: orderData.customer_nif || "999999999",
+                customerCountry: "AO",
+                companyName: orderData.restaurant?.name || "SUMBA AQUI - COMÉRCIO E SERVIÇOS,(SU) Lda",
+                documentTotals: documentTotals
             };
 
             // 2. Gerar assinatura digital JWS

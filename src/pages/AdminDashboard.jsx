@@ -6,7 +6,7 @@ import { useAdminData } from '../hooks/useAdminData';
 import { useAdminAlerts } from '../hooks/useAdminAlerts';
 import { useDashboardStats } from '../hooks/useDashboardStats';
 import toast, { Toaster } from 'react-hot-toast';
-import { QrCode, ClipboardList, TrendingUp, Settings, LogOut, ChevronRight, Menu, Bell, LinkIcon, MapPin, Search, Star, Utensils, MonitorSmartphone, Mail, Smartphone, Eye, Calendar, Tag, Info, UserX, MessageSquare, Volume2, Shield, LayoutDashboard, UtensilsCrossed, User, Award, Ticket, Users, ExternalLink, X, Package } from 'lucide-react';
+import { QrCode, ClipboardList, TrendingUp, Settings, LogOut, ChevronRight, Menu, Bell, LinkIcon, MapPin, Search, Star, Utensils, MonitorSmartphone, Mail, Smartphone, Eye, Calendar, Tag, Info, UserX, MessageSquare, Volume2, Shield, LayoutDashboard, UtensilsCrossed, User, Award, Ticket, Users, ExternalLink, X, Package, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 import { getPlanFeatures } from '../utils/planLimits';
@@ -42,6 +42,7 @@ const CouponManager = lazyWithRetry(() => import('../components/CouponManager'))
 const UpgradePrompt = lazyWithRetry(() => import('../components/UpgradePrompt'));
 const InventoryManager = lazyWithRetry(() => import('../components/InventoryManager'));
 const SettingsManager = lazyWithRetry(() => import('../components/SettingsManager'));
+const InvoicesManager = lazyWithRetry(() => import('../components/InvoicesManager'));
 
 // Refactored Sub-components
 import AdminSidebar from '../components/dashboard/AdminSidebar';
@@ -321,6 +322,7 @@ const AdminDashboard = () => {
         { icon: MessageSquare, label: 'Assistente IA', path: '/admin/chat' },
         { icon: UtensilsCrossed, label: 'Menu Digital', path: '/admin/menu' },
         { icon: ClipboardList, label: 'Pedidos (Cozinha)', path: '/admin/orders' },
+        { icon: FileText, label: 'Faturação & Vendas', path: '/admin/invoices' },
         { icon: Package, label: 'Gestão de Stock', path: '/admin/inventory' },
         { icon: Calendar, label: 'Reservas', path: '/admin/reservations' },
         { icon: User, label: 'CRM Clientes', path: '/admin/crm', feature: 'canCollectClientData' },
@@ -527,6 +529,7 @@ const AdminDashboard = () => {
                                 <OrderHistory restaurantId={restaurant?.id} />
                             )
                         } />
+                        <Route path="/invoices" element={<InvoicesManager restaurantId={restaurant?.id} restaurantName={restaurant?.name} />} />
                         <Route path="/inventory" element={<InventoryManager restaurantId={restaurant?.id} />} />
 
                         <Route path="/staff" element={

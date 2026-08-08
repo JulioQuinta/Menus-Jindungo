@@ -1,4 +1,5 @@
 import Dexie from 'dexie';
+import seedData from '../utils/seedData.json';
 
 export const db = new Dexie('MenusJindungoLocalDB');
 
@@ -11,6 +12,75 @@ db.version(1).stores({
     orders: 'id, restaurant_id, status, created_at, is_synced',
     sync_meta: 'key'
 });
+
+// Seed helper function to populate local database if empty (useful for 100% offline clients)
+export const seedLocalDbIfEmpty = async () => {
+    try {
+        const count = await db.restaurants.count();
+        if (count === 0 && seedData) {
+            console.log("[LocalDB Seed] Database is empty. Seeding local database from bundled seed data...");
+            
+            // 1. Save Restaurant meta
+            const restaurantMeta = {
+                id: seedData.id,
+                name: seedData.name,
+                slug: seedData.slug,
+                status: seedData.status,
+                plan: seedData.plan,
+                delivery_config: seedData.delivery_config,
+                theme_config: seedData.theme_config,
+                business_info: seedData.business_info,
+                invoice_config: seedData.invoice_config
+            };
+            await db.restaurants.put(restaurantMeta);
+            
+            // 2. Save Categories and Menu Items
+            const categories = seedData.categories || [];
+            const categoriesToPut = [];
+            const itemsToPut = [];
+            
+            categories.forEach(cat => {
+                categoriesToPut.push({
+                    id: cat.id,
+                    restaurant_id: seedData.id,
+                    label: cat.label,
+                    sort_order: cat.sort_order || cat.position || 0
+                });
+                
+                const items = cat.menu_items || [];
+                items.forEach(item => {
+                    itemsToPut.push({
+                        id: item.id,
+                        restaurant_id: seedData.id,
+                        category_id: cat.id,
+                        name: item.name,
+                        price: parseFloat(item.price || 0),
+                        img_url: item.img_url,
+                        desc_text: item.desc_text,
+                        available: item.available !== false,
+                        track_stock: item.track_stock === true,
+                        stock_quantity: item.stock_quantity || 0,
+                        position: item.position || 0
+                    });
+                });
+            });
+            
+            if (categoriesToPut.length > 0) {
+                await db.categories.bulkPut(categoriesToPut);
+            }
+            if (itemsToPut.length > 0) {
+                await db.menu_items.bulkPut(itemsToPut);
+            }
+            
+            console.log(`[LocalDB Seed] Seeding complete! ${categoriesToPut.length} categories and ${itemsToPut.length} items populated.`);
+        }
+    } catch (e) {
+        console.error("[LocalDB Seed] Failed to seed database:", e);
+    }
+};
+
+// Automatically seed database on load
+seedLocalDbIfEmpty();
 
 export const localDbService = {
     // Save or update restaurant details

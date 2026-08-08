@@ -2,6 +2,8 @@ import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, LogOut, ExternalLink, ShieldCheck } from 'lucide-react';
 
+import { getAssetPath } from '../../utils/assetResolver';
+
 const AdminSidebar = memo(({ 
     isSidebarOpen, 
     isMobileMenuOpen, 
@@ -31,7 +33,15 @@ const AdminSidebar = memo(({
                     <div className="relative">
                         <div className="absolute inset-0 bg-[#D4AF37] blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
                         <div className="relative w-16 h-16 rounded-full overflow-hidden bg-black/40 flex items-center justify-center border border-[#D4AF37]/30 shadow-2xl transition-all duration-300">
-                            <img src={restaurantLogoUrl || globalLogoUrl || "/jindungo_logo_v3.png"} className="w-full h-full object-contain p-0 scale-[1.18] filter drop-shadow-[0_0_8px_rgba(212,175,55,0.4)] transition-transform duration-300 group-hover:scale-[1.23]" alt="Jindungo" />
+                            <img 
+                                src={getAssetPath(restaurantLogoUrl || globalLogoUrl || "/jindungo_logo_v3.png")} 
+                                onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = getAssetPath("/jindungo_logo_v3.png");
+                                }}
+                                className="w-full h-full object-contain p-0 scale-[1.18] filter drop-shadow-[0_0_8px_rgba(212,175,55,0.4)] transition-transform duration-300 group-hover:scale-[1.23]" 
+                                alt="Jindungo" 
+                            />
                         </div>
                     </div>
                     <div className="flex flex-col">

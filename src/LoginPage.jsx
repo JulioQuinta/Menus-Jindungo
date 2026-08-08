@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { Lock, User, ChefHat, Briefcase, Eye, EyeOff, Sparkles, Shield, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useSettings } from './context/SettingsContext';
 import { supabase } from './lib/supabaseClient';
+import { getAssetPath } from './utils/assetResolver';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
@@ -39,40 +40,68 @@ const LoginPage = () => {
             const { data: authData, error } = await signIn(email, password);
             if (error) throw error;
 
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('role, status')
-                .eq('id', authData.user.id)
-                .single();
-            
-            const fetchedRole = profile?.role || 'client';
-            const fetchedStatus = profile?.status || 'active';
+            let fetchedRole = 'client';
+            let fetchedStatus = 'active';
 
-            if (fetchedStatus === 'pending') {
-                await supabase.auth.signOut();
-                toast.error("A sua conta está em análise. Aguarde o nosso contacto.", { duration: 6000 });
-                setErrorShake(true);
-                return;
-            }
+            if (navigator.onLine) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('role, status')
+                    .eq('id', authData.user.id)
+                    .single();
+                
+                fetchedRole = profile?.role || 'client';
+                fetchedStatus = profile?.status || 'active';
 
-            if (loginType === 'restaurant' && fetchedRole === 'super_admin') {
-                await supabase.auth.signOut();
-                toast.error("Utilize a aba de Gestão para entrar como Super Admin.");
-                setErrorShake(true);
-                return;
-            }
-            if (loginType === 'internal' && fetchedRole !== 'super_admin') {
-                await supabase.auth.signOut();
-                toast.error("Acesso restrito à Administração da Plataforma.");
-                setErrorShake(true);
-                return;
+                if (fetchedStatus === 'pending') {
+                    await supabase.auth.signOut();
+                    toast.error("A sua conta está em análise. Aguarde o nosso contacto.", { duration: 6000 });
+                    setErrorShake(true);
+                    return;
+                }
+
+                if (loginType === 'restaurant' && fetchedRole === 'super_admin') {
+                    await supabase.auth.signOut();
+                    toast.error("Utilize a aba de Gestão para entrar como Super Admin.");
+                    setErrorShake(true);
+                    return;
+                }
+                if (loginType === 'internal' && fetchedRole !== 'super_admin') {
+                    await supabase.auth.signOut();
+                    toast.error("Acesso restrito à Administração da Plataforma.");
+                    setErrorShake(true);
+                    return;
+                }
+
+                // Cache credentials for offline login support
+                localStorage.setItem('jindungo_offline_credentials', JSON.stringify({
+                    email: email.trim().toLowerCase(),
+                    password: password,
+                    profile: { id: authData.user.id, role: fetchedRole }
+                }));
+            } else {
+                // Offline mode: load role from cached credentials
+                const offlineCredsRaw = localStorage.getItem('jindungo_offline_credentials');
+                if (offlineCredsRaw) {
+                    try {
+                        const offlineCreds = JSON.parse(offlineCredsRaw);
+                        fetchedRole = offlineCreds.profile.role;
+                    } catch (e) {
+                        console.error("Error loading offline role", e);
+                    }
+                }
             }
 
             toast.success("Bem-vindo de volta aos Menús Jindungo!");
         } catch (error) {
+            console.error("LoginPage handleSubmit Error:", error);
             setErrorShake(true);
             setTimeout(() => setErrorShake(false), 500);
-            toast.error("Dados de acesso incorretos. Verifique o seu e-mail e palavra-passe.");
+            if (!navigator.onLine) {
+                toast.error("Sem ligação à internet. Para fazer o primeiro acesso neste computador, precisa de estar ligado à rede.");
+            } else {
+                toast.error("Dados de acesso incorretos. Verifique o seu e-mail e palavra-passe.");
+            }
         } finally {
             setLoading(false);
         }
@@ -117,7 +146,16 @@ const LoginPage = () => {
                         <div className="text-center mb-8 relative z-10 select-none">
                             <div className="w-28 h-28 mx-auto mb-4 flex items-center justify-center relative group-hover:scale-105 transition-transform">
                                 <div className="absolute inset-0 bg-[#D4AF37]/10 rounded-full blur-md animate-pulse"></div>
-                                <img src={logoUrl || "/jindungo_logo_v3.png"} alt="Piri-piri" className="w-full h-full object-contain p-0 scale-[1.18] filter drop-shadow-[0_0_12px_rgba(212,175,55,0.8)] relative z-10" />
+                                <img 
+                                    src={getAssetPath(logoUrl || "/jindungo_logo_v3.png")} 
+                                    alt="Piri-piri" 
+                                    onError={(e) => {
+                                        console.log("Online logoUrl failed to load. Falling back to local logo.");
+                                        e.target.onerror = null;
+                                        e.target.src = getAssetPath("/jindungo_logo_v3.png");
+                                    }}
+                                    className="w-full h-full object-contain p-0 scale-[1.18] filter drop-shadow-[0_0_12px_rgba(212,175,55,0.8)] relative z-10" 
+                                />
                             </div>
 
                             <h1 className="text-3xl sm:text-4xl font-serif font-black tracking-tight text-white uppercase tracking-wider bg-gradient-to-r from-white via-[#F3E5AB] to-[#D4AF37] bg-clip-text text-transparent mb-2">

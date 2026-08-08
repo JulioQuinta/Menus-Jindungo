@@ -32,6 +32,9 @@ function createWindow() {
         mainWindow.setMenuBarVisibility(false);
     }
 
+    // Open DevTools for debugging
+    mainWindow.webContents.openDevTools();
+
     if (isDev) {
         const loadDevServer = () => {
             mainWindow.loadURL('http://localhost:5174').catch(() => {

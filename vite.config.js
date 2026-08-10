@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: './',
+  base: process.env.IS_ELECTRON === 'true' || (process.env.npm_lifecycle_event && process.env.npm_lifecycle_event.includes('electron')) ? './' : '/',
   plugins: [
     react(),
     VitePWA({

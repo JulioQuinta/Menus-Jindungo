@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -23,7 +23,8 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            sandbox: true
+            sandbox: false, // Set sandbox to false to allow preload require statements
+            preload: path.join(__dirname, 'preload.js')
         }
     });
 
@@ -50,6 +51,58 @@ function createWindow() {
         mainWindow = null;
     });
 }
+
+// Register IPC handlers for silent printing and printer listing
+ipcMain.handle('get-printers', async () => {
+    if (!mainWindow) return [];
+    try {
+        return await mainWindow.webContents.getPrintersAsync();
+    } catch (e) {
+        console.error("Error fetching printers:", e);
+        return [];
+    }
+});
+
+ipcMain.handle('print-receipt', async (event, htmlContent, printerName) => {
+    return new Promise((resolve, reject) => {
+        try {
+            // Create a hidden window to load and print the HTML content silently
+            let printWindow = new BrowserWindow({
+                show: false,
+                webPreferences: {
+                    nodeIntegration: false,
+                    contextIsolation: true
+                }
+            });
+
+            // Load the HTML content as a data URL
+            const base64Html = Buffer.from(htmlContent, 'utf-8').toString('base64');
+            printWindow.loadURL(`data:text/html;base64,${base64Html}`);
+
+            printWindow.webContents.once('did-finish-load', () => {
+                const printOptions = {
+                    silent: true,
+                    printBackground: true
+                };
+                if (printerName) {
+                    printOptions.deviceName = printerName;
+                }
+
+                printWindow.webContents.print(printOptions, (success, errorType) => {
+                    printWindow.destroy();
+                    if (success) {
+                        resolve({ success: true });
+                    } else {
+                        reject(new Error(`Erro ao imprimir silenciosamente: ${errorType}`));
+                    }
+                });
+            });
+        } catch (e) {
+            console.error("Print IPC error:", e);
+            reject(e);
+        }
+    });
+});
 
 app.whenReady().then(() => {
     createWindow();

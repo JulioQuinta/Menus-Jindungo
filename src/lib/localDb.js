@@ -3,14 +3,21 @@ import seedData from '../utils/seedData.json';
 
 export const db = new Dexie('MenusJindungoLocalDB');
 
-// Define database schema
-// Note: We only declare the indexable keys. Other properties are stored implicitly.
 db.version(1).stores({
     restaurants: 'id, slug',
     categories: 'id, restaurant_id, sort_order',
     menu_items: 'id, category_id, restaurant_id, is_highlight',
     orders: 'id, restaurant_id, status, created_at, is_synced',
     sync_meta: 'key'
+});
+
+db.version(2).stores({
+    restaurants: 'id, slug',
+    categories: 'id, restaurant_id, sort_order',
+    menu_items: 'id, category_id, restaurant_id, is_highlight',
+    orders: 'id, restaurant_id, status, created_at, is_synced',
+    sync_meta: 'key',
+    stock_movements: 'id, item_id, type, created_at'
 });
 
 // Seed helper function to populate local database if empty (useful for 100% offline clients)
@@ -82,6 +89,23 @@ export const seedLocalDbIfEmpty = async () => {
 // Automatically seed database on load
 seedLocalDbIfEmpty();
 
+const downloadAndCacheImage = async (url) => {
+    if (!url || !url.startsWith('http')) return null;
+    try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+        });
+    } catch (e) {
+        console.warn("Failed to download image for caching:", url, e);
+        return null;
+    }
+};
+
 export const localDbService = {
     // Save or update restaurant details
     async saveRestaurant(restaurantData) {
@@ -111,7 +135,32 @@ export const localDbService = {
     // Save menu items in bulk
     async saveMenuItems(itemsList) {
         if (!itemsList || itemsList.length === 0) return;
+        // Save items immediately for layout responsiveness
         await db.menu_items.bulkPut(itemsList);
+        
+        // Background cache download task
+        if (navigator.onLine) {
+            (async () => {
+                console.log(`[LocalDB Image Cache] Starting background download of images for ${itemsList.length} items...`);
+                for (const item of itemsList) {
+                    if (item.img_url) {
+                        try {
+                            const cached = await db.menu_items.get(item.id);
+                            if (cached && cached.img_data) continue; // Already cached
+                            
+                            const base64 = await downloadAndCacheImage(item.img_url);
+                            if (base64) {
+                                await db.menu_items.update(item.id, { img_data: base64 });
+                                console.log(`[LocalDB Image Cache] Cached image for item: ${item.name}`);
+                            }
+                        } catch (err) {
+                            console.error(`[LocalDB Image Cache] Error caching item ${item.name}:`, err);
+                        }
+                    }
+                }
+                console.log("[LocalDB Image Cache] Background download finished.");
+            })();
+        }
     },
 
     // Get menu items for a category
@@ -147,5 +196,47 @@ export const localDbService = {
     // Set sync meta value
     async setSyncMeta(key, value) {
         await db.sync_meta.put({ key, value });
+    },
+
+    // Save a stock movement record
+    async addStockMovement(movement) {
+        const id = movement.id || `SM-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+        const movementRecord = {
+            id,
+            created_at: new Date().toISOString(),
+            ...movement
+        };
+        
+        // 1. Save movement log
+        await db.stock_movements.put(movementRecord);
+        
+        // 2. Adjust stock quantity on target menu_item
+        const item = await db.menu_items.get(movement.item_id);
+        if (item) {
+            const currentQty = parseInt(item.stock_quantity) || 0;
+            const newQty = currentQty + (parseInt(movement.quantity) || 0);
+            
+            await db.menu_items.update(movement.item_id, {
+                stock_quantity: Math.max(0, newQty),
+                ...(movement.cost_price ? { cost_price: parseFloat(movement.cost_price) } : {}),
+                ...(movement.supplier_name ? { supplier_name: movement.supplier_name } : {})
+            });
+            console.log(`[LocalDB Stock] Adjusted stock for ${item.name}: ${currentQty} -> ${newQty}`);
+        }
+        return movementRecord;
+    },
+
+    // Get all movements for a specific item
+    async getStockMovements(itemId) {
+        return await db.stock_movements
+            .where('item_id')
+            .equals(itemId)
+            .sortBy('created_at');
+    },
+
+    // Get all stock movements (reverse sorted by date)
+    async getAllStockMovements() {
+        const movements = await db.stock_movements.toArray();
+        return movements.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     }
 };

@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabaseClient';
-import { localDbService } from '../lib/localDb';
+import { localDbService, db } from '../lib/localDb';
 import { orderService } from '../services/orderService';
 
 export const syncManager = {
@@ -63,9 +63,10 @@ export const syncManager = {
 
             // 1.3 Extract and save Menu Items
             const itemsList = [];
-            categories.forEach(cat => {
+            for (const cat of categories) {
                 const items = cat.menu_items || [];
-                items.forEach(item => {
+                for (const item of items) {
+                    const localItem = await db.menu_items.get(item.id);
                     itemsList.push({
                         id: item.id,
                         category_id: cat.id,
@@ -80,10 +81,14 @@ export const syncManager = {
                         badge: item.badge,
                         track_stock: item.track_stock,
                         stock_quantity: item.stock_quantity,
-                        upsell_ids: item.upsell_ids || []
+                        upsell_ids: item.upsell_ids || [],
+                        cost_price: item.cost_price !== undefined ? item.cost_price : (localItem?.cost_price || null),
+                        min_safety_stock: item.min_safety_stock !== undefined ? item.min_safety_stock : (localItem?.min_safety_stock || 5),
+                        supplier_name: item.supplier_name !== undefined ? item.supplier_name : (localItem?.supplier_name || null),
+                        img_data: localItem?.img_data || null
                     });
-                });
-            });
+                }
+            }
             await localDbService.saveMenuItems(itemsList);
 
             // 1.4 Mark last sync success timestamp

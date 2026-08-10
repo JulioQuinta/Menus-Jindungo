@@ -210,3 +210,11 @@ body {
   overflow-x: clip;
   max-width: 100vw;
 }
+
+/* High Contrast Typography Helpers for readability in dark POS/Kitchen environments */
+.text-sec-contrast {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+.text-muted-contrast {
+  color: rgba(255, 255, 255, 0.60) !important;
+}

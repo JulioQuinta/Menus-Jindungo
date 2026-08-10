@@ -4,6 +4,7 @@ import { useReactToPrint } from 'react-to-print';
 import { QRCodeSVG } from 'qrcode.react';
 import { billingService } from '../services/billingService';
 import { supabase } from '../lib/supabaseClient';
+import { toast } from 'react-hot-toast';
 
 const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Lounge & Grill' }) => {
     const [viewMode, setViewMode] = useState('receipt'); // 'receipt' (80mm) vs 'invoice' (A4)
@@ -95,6 +96,97 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
         contentRef: invoiceRef,
         documentTitle: `Fatura_${localOrder?.id || '1042'}`,
     });
+
+    const handleSilentPrint = async (ref, docType) => {
+        if (!ref.current) return;
+        try {
+            const htmlContent = ref.current.innerHTML;
+            
+            // Format HTML body styles for ESC/POS printing
+            const widthStyles = docType === 'receipt' ? 'width: 290px;' : 'width: 800px; padding: 20px;';
+            const bodyStyles = `
+                font-family: 'Courier New', Courier, monospace;
+                ${widthStyles}
+                margin: 0;
+                color: #000;
+                background-color: #fff;
+                font-size: 11px;
+                line-height: 1.3;
+            `;
+
+            // Wrap printable element in HTML wrapper with CSS classes to map Tailwind styling to POS thermal outputs
+            const printHtml = `
+                <html>
+                <head>
+                    <style>
+                        body { ${bodyStyles} }
+                        .flex { display: flex; }
+                        .justify-between { justify-content: space-between; }
+                        .text-center { text-align: center; }
+                        .text-right { text-align: right; }
+                        .font-bold { font-weight: bold; }
+                        .text-xs { font-size: 9px; }
+                        .text-sm { font-size: 10px; }
+                        .text-lg { font-size: 13px; font-weight: bold; }
+                        .text-xl { font-size: 15px; font-weight: bold; }
+                        .border-b { border-bottom: 1px dashed #000; }
+                        .border-t { border-top: 1px dashed #000; }
+                        .border-dashed { border-style: dashed; }
+                        .pb-2 { padding-bottom: 8px; }
+                        .pt-2 { padding-top: 8px; }
+                        .py-2 { padding-top: 8px; padding-bottom: 8px; }
+                        .py-4 { padding-top: 16px; padding-bottom: 16px; }
+                        .my-4 { margin-top: 16px; margin-bottom: 16px; }
+                        .mb-2 { margin-bottom: 8px; }
+                        .mb-4 { margin-bottom: 16px; }
+                        .mt-4 { margin-top: 16px; }
+                        .gap-2 { gap: 8px; }
+                        .w-full { width: 100%; }
+                        .bg-zinc-950 { background-color: #ffffff; border: 1px solid #000; }
+                        .text-[#D4AF37] { color: #000; }
+                        .text-zinc-400 { color: #555; }
+                        .text-zinc-300 { color: #333; }
+                        svg { width: 64px; height: 64px; display: block; margin: 4px auto; }
+                    </style>
+                </head>
+                <body>
+                    ${printHtmlRawClean(htmlContent)}
+                </body>
+                </html>
+            `;
+            
+            await window.electronAPI.printReceipt(printHtml);
+            toast.success("Impressão enviada à impressora silenciosamente!");
+        } catch (e) {
+            console.error("Silent printing error:", e);
+            toast.error("Falha na impressão silenciosa: " + e.message);
+        }
+    };
+
+    // Helper to clean HTML contents of background styles that might render dark colors under thermal print
+    const printHtmlRawClean = (html) => {
+        return html
+            .replace(/bg-zinc-900/g, 'bg-white')
+            .replace(/text-zinc-400/g, 'text-zinc-500')
+            .replace(/text-white/g, 'text-black')
+            .replace(/border-zinc-800/g, 'border-b');
+    };
+
+    const triggerPrintReceipt = () => {
+        if (window.electronAPI) {
+            handleSilentPrint(receiptRef, 'receipt');
+        } else {
+            handlePrintReceipt();
+        }
+    };
+
+    const triggerPrintInvoice = () => {
+        if (window.electronAPI) {
+            handleSilentPrint(invoiceRef, 'invoice');
+        } else {
+            handlePrintInvoice();
+        }
+    };
 
     if (!isOpen || !localOrder) return null;
 
@@ -646,7 +738,7 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
                                     <Sparkles size={15} /> {isSubmitting ? 'A comunicar...' : 'Emitir Fatura Eletrónica'}
                                 </button>
                                 <button
-                                    onClick={viewMode === 'receipt' ? handlePrintReceipt : handlePrintInvoice}
+                                    onClick={viewMode === 'receipt' ? triggerPrintReceipt : triggerPrintInvoice}
                                     className="bg-zinc-900 border border-zinc-850 hover:bg-zinc-850 text-zinc-300 hover:text-white px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 active:scale-95 cursor-pointer uppercase tracking-wider"
                                     title="Imprimir Rascunho de Consulta"
                                 >
@@ -662,7 +754,7 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
                             </button>
                         ) : (
                             <button
-                                onClick={viewMode === 'receipt' ? handlePrintReceipt : handlePrintInvoice}
+                                onClick={viewMode === 'receipt' ? triggerPrintReceipt : triggerPrintInvoice}
                                 className="bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:brightness-110 text-black px-5 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-lg shadow-[#D4AF37]/20 active:scale-95 cursor-pointer uppercase tracking-wider"
                             >
                                 <Printer size={15} /> {viewMode === 'receipt' ? 'Imprimir Talão Térmico' : 'Imprimir Fatura A4'}

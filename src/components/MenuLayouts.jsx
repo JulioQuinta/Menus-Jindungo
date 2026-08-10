@@ -219,7 +219,7 @@ const CustomizationBottomSheet = ({ item, isOpen, onClose, primaryColor, darkMod
 
                 {/* Hero Image */}
                 <div className="h-40 sm:h-64 w-full relative shrink-0 bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                    <SmartImage src={item.img_url || item.img} alt={item.name} className="w-full h-full object-cover" />
+                    <SmartImage src={item.img_data || item.img_url || item.img} alt={item.name} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                     <div className="absolute bottom-4 left-6 right-6 text-white">
                         <h2 className="text-2xl sm:text-3xl font-serif font-black leading-tight drop-shadow-md">{getTrans(item, selectedLanguage, 'name')}</h2>
@@ -354,7 +354,7 @@ const MenuItemList = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
         >
             <div className="w-20 h-20 sm:w-32 sm:h-32 flex-shrink-0 rounded-[14px] sm:rounded-2xl overflow-hidden relative group-hover:scale-105 transition-transform duration-500 shadow-md">
                 <SmartImage
-                    src={item.img_url || item.img}
+                    src={item.img_data || item.img_url || item.img}
                     alt={item.name}
                     className="w-full h-full object-cover"
                 />
@@ -437,7 +437,7 @@ const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
             {/* Top Image Container matching screenshot */}
             <div className="relative h-28 sm:h-44 w-full overflow-hidden rounded-t-2xl sm:rounded-t-[28px] bg-[#1C1C1C] shadow-inner">
                 <SmartImage
-                    src={item.img_url || item.img}
+                    src={item.img_data || item.img_url || item.img}
                     alt={item.name}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />

@@ -7,7 +7,7 @@ import ReceiptModal from './ReceiptModal';
 import { printerService } from '../utils/bluetoothPrinter';
 import { useRealtimeOrders } from '../hooks/useRealtimeOrders';
 
-const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, staffMembers = [] }) => {
+const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, staffMembers = [], selectedCategories = [] }) => {
     const [elapsed, setElapsed] = useState('');
     const [showTimeSelector, setShowTimeSelector] = useState(false);
     const [customMins, setCustomMins] = useState('30');
@@ -192,7 +192,11 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, sta
 
             {/* Items List Squircles (Com Miniaturas de Imagem se disponível) */}
             <div className="space-y-2.5 my-4">
-                {order.items?.map((item, idx) => {
+                {((order.items || []).filter(item => {
+                    if (!selectedCategories || selectedCategories.length === 0) return true;
+                    const catName = String(item.category || '').toLowerCase().trim();
+                    return selectedCategories.some(selected => String(selected).toLowerCase().trim() === catName);
+                })).map((item, idx) => {
                     const itemImg = item.img || item.img_url || item.image_url;
                     return (
                         <div key={idx} className="flex items-center gap-3.5 bg-[#1C1C1C]/80 border border-white/5 p-3 rounded-2xl text-sm shadow-sm group/item">
@@ -621,6 +625,11 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [showAIPanel, setShowAIPanel] = useState(false);
 
+    // Estados para Estação de Preparação (KDS)
+    const [categoriesList, setCategoriesList] = useState([]);
+    const [selectedCategories, setSelectedCategories] = useState([]);
+    const [showStationModal, setShowStationModal] = useState(false);
+
     // Initial check for Bluetooth printer on component mount
     useEffect(() => {
         setTimeout(() => setIsBluetoothReady(printerService.isConnected()), 0);
@@ -739,6 +748,20 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
         };
         loadStaff();
 
+        const loadCategories = async () => {
+            try {
+                const { data } = await supabase
+                    .from('categories')
+                    .select('*')
+                    .eq('restaurant_id', restaurantId)
+                    .order('sort_order');
+                if (data) setCategoriesList(data || []);
+            } catch (err) {
+                console.error("Error loading categories:", err);
+            }
+        };
+        loadCategories();
+
         const channel = orderService.subscribeToOrders(restaurantId, (payload) => {
             console.log('Realtime State Update:', payload.eventType, payload.new?.id);
             
@@ -786,22 +809,33 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
         return customerMatch || tableMatch || itemsMatch;
     });
 
-    const pendingOrders = filteredOrders.filter(o => {
+    const filterOrdersByPrepStation = (ordersList) => {
+        if (!selectedCategories || selectedCategories.length === 0) return ordersList;
+        return ordersList.filter(o => {
+            const hasMatchingItems = o.items?.some(item => {
+                const catName = String(item.category || '').toLowerCase().trim();
+                return selectedCategories.some(selected => String(selected).toLowerCase().trim() === catName);
+            });
+            return hasMatchingItems;
+        });
+    };
+
+    const pendingOrders = filterOrdersByPrepStation(filteredOrders.filter(o => {
         const s = (o.status || '').toLowerCase().trim();
         return s === 'pending' || s === 'pendente';
-    });
-    const preparingOrders = filteredOrders.filter(o => {
+    }));
+    const preparingOrders = filterOrdersByPrepStation(filteredOrders.filter(o => {
         const s = (o.status || '').toLowerCase().trim();
         return s === 'preparing' || s === 'preparando';
-    });
-    const readyOrders = filteredOrders.filter(o => {
+    }));
+    const readyOrders = filterOrdersByPrepStation(filteredOrders.filter(o => {
         const s = (o.status || '').toLowerCase().trim();
         return s === 'ready' || s === 'pronto' || s === 'paid' || s === 'pago' || s === 'out_for_delivery' || s === 'arrived';
-    });
-    const deliveredOrders = filteredOrders.filter(o => {
+    }));
+    const deliveredOrders = filterOrdersByPrepStation(filteredOrders.filter(o => {
         const s = (o.status || '').toLowerCase().trim();
         return s === 'delivered' || s === 'entregue' || s === 'cancelled' || s === 'cancelado';
-    });
+    }));
 
     if (loading) return <div className="p-8 text-gray-500 font-bold">Carregando quadro de cozinha...</div>;
 
@@ -902,6 +936,19 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                         title="Impressão automática de novos pedidos"
                     >
                         <span>Auto-Print {autoPrint ? 'ON' : 'OFF'}</span>
+                    </button>
+
+                    <button
+                        onClick={() => setShowStationModal(true)}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs transition-all border cursor-pointer active:scale-95 ${
+                            selectedCategories.length > 0
+                                ? 'bg-orange-500/20 text-orange-300 border-orange-500/50 shadow-[0_0_20px_rgba(249,115,22,0.3)]' 
+                                : 'bg-[#161616] text-gray-400 border-white/5 hover:border-white/20'
+                        }`}
+                        title="Configurar categorias de pratos visíveis neste KDS"
+                    >
+                        <Settings2 size={16} />
+                        <span>Estação: {selectedCategories.length > 0 ? `${selectedCategories.length} Cat` : 'Geral'}</span>
                     </button>
                 </div>
             </div>
@@ -1018,7 +1065,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                             </div>
                             <div className="flex-1 overflow-y-auto pr-2 space-y-4 pt-1 custom-scrollbar z-10">
                                 {pendingOrders.map(order => (
-                                    <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} restaurantName={restaurantName} staffMembers={staffMembers} />
+                                    <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} restaurantName={restaurantName} staffMembers={staffMembers} selectedCategories={selectedCategories} />
                                 ))}
                             </div>
                         </div>
@@ -1038,7 +1085,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                             </div>
                             <div className="flex-1 overflow-y-auto pr-2 space-y-4 pt-1 custom-scrollbar z-10">
                                 {preparingOrders.map(order => (
-                                    <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} restaurantName={restaurantName} staffMembers={staffMembers} />
+                                    <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} restaurantName={restaurantName} staffMembers={staffMembers} selectedCategories={selectedCategories} />
                                 ))}
                             </div>
                         </div>
@@ -1058,7 +1105,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                             </div>
                             <div className="flex-1 overflow-y-auto pr-2 space-y-4 pt-1 custom-scrollbar z-10">
                                 {readyOrders.map(order => (
-                                    <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} restaurantName={restaurantName} staffMembers={staffMembers} />
+                                    <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} restaurantName={restaurantName} staffMembers={staffMembers} selectedCategories={selectedCategories} />
                                 ))}
                             </div>
                         </div>
@@ -1086,7 +1133,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                             </div>
                             <div className="flex-1 overflow-y-auto pr-2 space-y-4 pt-1 custom-scrollbar z-10 opacity-75 hover:opacity-100 transition-opacity">
                                 {deliveredOrders.map(order => (
-                                    <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} restaurantName={restaurantName} staffMembers={staffMembers} />
+                                    <OrderCard key={order.id} order={order} onStatusChange={handleStatusUpdate} onPrint={handlePrintOrder} enablePrint={config?.enableTableBill !== false} restaurantName={restaurantName} staffMembers={staffMembers} selectedCategories={selectedCategories} />
                                 ))}
                             </div>
                         </div>
@@ -1183,6 +1230,79 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
             order={selectedReceiptOrder}
             restaurantName={restaurantName || 'Jindungo'}
         />
+
+        {/* Modal de Configuração de Estação KDS */}
+        {showStationModal && (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+                <div className="bg-[#161616] border border-[#D4AF37]/30 rounded-[2.5rem] w-full max-w-md p-6 sm:p-8 shadow-2xl relative">
+                    <button 
+                        onClick={() => setShowStationModal(false)}
+                        className="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all cursor-pointer"
+                    >
+                        ✕
+                    </button>
+                    
+                    <h3 className="font-serif font-black text-xl text-white mb-2 flex items-center gap-2">
+                        <Settings2 className="text-[#D4AF37]" size={20} />
+                        Estação KDS / Preparação
+                    </h3>
+                    <p className="text-gray-400 text-xs mb-6 uppercase tracking-wider font-semibold">
+                        Selecione as categorias que esta tela irá gerir:
+                    </p>
+
+                    <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar mb-6">
+                        {categoriesList.map((cat) => {
+                            const isSelected = selectedCategories.includes(cat.name);
+                            return (
+                                <button
+                                    key={cat.id}
+                                    onClick={() => {
+                                        if (isSelected) {
+                                            setSelectedCategories(prev => prev.filter(c => c !== cat.name));
+                                        } else {
+                                            setSelectedCategories(prev => [...prev, cat.name]);
+                                        }
+                                    }}
+                                    className={`w-full flex items-center justify-between p-4 rounded-2xl border text-xs font-bold transition-all ${
+                                        isSelected 
+                                            ? 'bg-[#D4AF37]/15 border-[#D4AF37] text-white shadow-inner' 
+                                            : 'bg-black/40 border-white/5 text-gray-400 hover:border-white/20'
+                                    }`}
+                                >
+                                    <span>{cat.name}</span>
+                                    <span className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
+                                        isSelected 
+                                            ? 'border-[#D4AF37] bg-[#D4AF37]' 
+                                            : 'border-gray-600 bg-transparent'
+                                    }`}>
+                                        {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-black"></span>}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => {
+                                setSelectedCategories([]);
+                                setShowStationModal(false);
+                                toast.success('Estação configurada como Geral (todas as categorias)');
+                            }}
+                            className="flex-1 bg-white/5 hover:bg-white/10 text-white font-bold py-3 rounded-2xl text-xs uppercase border border-white/10 transition-all cursor-pointer text-center"
+                        >
+                            Limpar Filtro
+                        </button>
+                        <button
+                            onClick={() => setShowStationModal(false)}
+                            className="flex-1 bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-amber-400 hover:to-yellow-500 text-black font-black py-3 rounded-2xl text-xs uppercase tracking-wider shadow-lg shadow-[#D4AF37]/10 transition-all cursor-pointer text-center"
+                        >
+                            Aplicar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
         </>
     );
 };

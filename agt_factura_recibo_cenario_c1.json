@@ -1,0 +1,34 @@
+{
+  "senderNif": "5417289301",
+  "softwareCertNo": "000/JINDUNGO/2026",
+  "documents": [
+    {
+      "documentType": "FR",
+      "documentNumber": "FR 2026/1",
+      "dateEmitted": "2026-07-17T15:00:00Z",
+      "customerName": "Consumidor Final",
+      "customerNif": "999999999",
+      "customerAddress": "Luanda, Angola",
+      "items": [
+        {
+          "lineId": 1,
+          "description": "Muamba de Galinha com Funge",
+          "quantity": 2,
+          "unitPrice": "4500.00",
+          "taxRate": "14.00",
+          "taxType": "IVA",
+          "netAmount": "9000.00",
+          "taxAmount": "1260.00",
+          "grossAmount": "10260.00"
+        }
+      ],
+      "documentTotals": {
+        "netTotal": "9000.00",
+        "taxPayable": "1260.00",
+        "grossTotal": "10260.00"
+      },
+      "withholdingTaxList": [],
+      "signature": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXUyIsImNlcnRfbm8iOiIwMDAvSklORFVOR08vMjAyNiJ9.eyJkb2N1bWVudFR5cGUiOiJGUiIsImRvY3VtZW50TnVtYmVyIjoiRlIgMjAyNi8xIiwiZGF0ZUVtaXR0ZWQiOiIyMDI2LTA3LTE3VDE1OjAwOjAwWiIsImlzc3Vlck5pZiI6IjU0MTcyODkzMDEiLCJzb2Z0d2FyZU5hbWUiOiJNZW51c2ppbmR1bmdvIiwic29mdHdhcmVWZXJzaW9uIjoiMyIsImN1c3RvbWVyTmFtZSI6IkNvbnN1bWlkb3IgRmluYWwiLCJjdXN0b21lck5pZiI6Ijk5OTk5OTk5OSIsImN1c3RvbWVyQWRkcmVzcyI6Ikx1YW5kYSwgQW5nb2xhIiwiaXRlbXMiOlt7ImxpbmVJZCI6MSwiZGVzY3JpcHRpb24iOiJNdWFtYmEgZGUgR2FsaW5oYSBjb20gRnVuZ2UiLCJxdWFudGl0eSI6MiwidW5pdFByaWNlIjoiNDUwMC4wMCIsInRheFJhdGUiOiIxNC4wMCIsInRheFR5cGUiOiJJVkEiLCJuZXRBbW91bnQiOiI5MDAwLjAwIiwidGF4QW1vdW50IjoiMTI2MC4wMCIsImdyb3NzQW1vdW50IjoiMTAyNjAuMDAifV0sImRvY3VtZW50VG90YWxzIjp7Im5ldFRvdGFsIjoiOTAwMC4wMCIsInRheFBheWFibGUiOiIxMjYwLjAwIiwiZ3Jvc3NUb3RhbCI6IjEwMjYwLjAwIn0sIndpdGhob2xkaW5nVGF4TGlzdCI6W119.gdsDS_AYQPIE-taHaxsnBNPGE6ZOgQcSGpiRR9UgoGEmeWZ2Ftkpm1czeDKbMepwQOKozFGrN8CYkGm2FoM_BZNXAH1gRXbm_i9htm8pIRsTqCHVe0UYcLNwLKsymY0glA3zs0SW1m7fXTqZDI4Wi85RaQw_ij_BrIRXGV-TQixNZiDjcvhqJ8SCKFAMGGweWuKD0ojzQyOC7IrBpEq8Wp9kFDCa2vK8TFsq3cm05W2chFf0ytQ47KmczPSVw6qUUrnGyFhyFEOGmML-WaNNm0xhS7_p3gBcj3hmVDCi5ZvQicxcSdrmpS2nT87hSXXBH1Ke_J8hO2AHRVCANWAuzg"
+    }
+  ]
+}

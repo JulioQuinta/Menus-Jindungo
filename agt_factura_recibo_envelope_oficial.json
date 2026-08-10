@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "submissionUUID": "a9708cca-db3e-4f2d-afbe-f00afb0dc68a",
+  "taxRegistrationNumber": "5002569450",
+  "submissionTimeStamp": "2026-07-21T13:27:29.410Z",
+  "softwareInfo": {
+    "softwareInfoDetail": {
+      "productId": "Menusjindungo",
+      "productVersion": "3",
+      "softwareValidationNumber": "0"
+    },
+    "jwsSoftwareSignature": "eyJhbGciOiJSUzI1NiJ9.eyJwcm9kdWN0SWQiOiJNZW51c2ppbmR1bmdvIiwicHJvZHVjdFZlcnNpb24iOiIzIiwic29mdHdhcmVWYWxpZGF0aW9uTnVtYmVyIjoiMCJ9.RBpGFgHsc8MDKstx2ncZiSYAPh_UncTOMMcsJmXErwlCuLUnJAwOWrIIFyZCe3AplmkPVPRYIKPrpGNMmzXZko4ltDFN66TjU0IHjdAgiLCq_N5wLJJku4RdBAH2z4YCWQU7Bpy4wujcL7EsNpqDa6tG5F39u02PHHCxWpeO_pqtG_2RfHldZ1nKeVXojNOQ_urF8qgjcCjUQMaO6F60kAvBBpIZ8yTBaMyhXs24WEInl_jzJR2UxFgrCniITgcJdYYdvK7vYYhZwJCcjTeYdKyAZJYQyIRf0qxsl1bw-Yaao4lyOlYILJUlAB_RO1-VvINehIP7trkdDJrMOtooCg"
+  },
+  "numberOfEntries": "1",
+  "documents": [
+    {
+      "documentNo": "FR 2026/1",
+      "documentStatus": "N",
+      "documentDate": "2026-07-17",
+      "documentType": "FR",
+      "eacCode": "00000",
+      "systemEntryDate": "2026-07-17T15:00:00Z",
+      "customerTaxID": "999999999",
+      "customerCountry": "AO",
+      "companyName": "SUMBA AQUI - COMÉRCIO E SERVIÇOS,(SU) Lda",
+      "lines": [
+        {
+          "lineNumber": "1",
+          "productCode": "P001",
+          "productDescription": "Muamba de Galinha com Funge",
+          "quantity": "2",
+          "unitOfMeasure": "UN",
+          "unitPrice": "4500.00",
+          "unitPriceBase": "4500.00",
+          "creditAmount": "9000.00",
+          "taxes": [
+            {
+              "taxType": "IVA",
+              "taxCountryRegion": "AO",
+              "taxCode": "NOR",
+              "taxPercentage": "14",
+              "taxContribution": "1260.00"
+            }
+          ],
+          "settlementAmount": "10260.00"
+        }
+      ],
+      "documentTotals": {
+        "taxPayable": "1260.00",
+        "netTotal": "9000.00",
+        "grossTotal": "10260.00"
+      },
+      "jwsDocumentSignature": "eyJhbGciOiJSUzI1NiJ9.eyJkb2N1bWVudE5vIjoiRlIgMjAyNi8xIiwidGF4UmVnaXN0cmF0aW9uTnVtYmVyIjoiNTAwMjU2OTQ1MCIsImRvY3VtZW50VHlwZSI6IkZSIiwiZG9jdW1lbnREYXRlIjoiMjAyNi0wNy0xNyIsImN1c3RvbWVyVGF4SUQiOiI5OTk5OTk5OTkiLCJjdXN0b21lckNvdW50cnkiOiJBTyIsImNvbXBhbnlOYW1lIjoiU1VNQkEgQVFVSSAtIENPTcOJUkNJTyBFIFNFUlZJw4dPUywoU1UpIExkYSIsImRvY3VtZW50VG90YWxzIjp7InRheFBheWFibGUiOiIxMjYwLjAwIiwibmV0VG90YWwiOiI5MDAwLjAwIiwiZ3Jvc3NUb3RhbCI6IjEwMjYwLjAwIn19.xscIVAUZYDtqgjZTEDhb3aLmCpGbRtgucwr0rwD2T86YEfaU-ZPeL0Yt8E1DS_kE0VeDFdtfD3PoWEKW77-XiW8elqw4OdITxhYYBf5JIljlRPg2L-KV4Xf4c5bFisy7B_6uVOrEUjCnWURVruT0AJrWD_C1SUsfQk6LNqpqP_PqmfylpiuC0luTtGjBdPtPM9RbtEL3eNIAj68LijQh5TlZGudry8cpvB9164p9Y7XS8bG-0zkmBHNQjiqH_yshVONd1TdGnaE5VXVs5z9aihcJEQ1usfPybmz8QaTOo_2j37AhQsXnAc_iMQySOWjzI2DZ3Nb_4t9uQfX4ElFkew"
+    }
+  ]
+}

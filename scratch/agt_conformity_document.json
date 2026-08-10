@@ -1,0 +1,30 @@
+{
+  "documentType": "FR",
+  "documentNumber": "FR 2026/1",
+  "dateEmitted": "2026-07-17T15:00:00Z",
+  "issuerNif": "5417289301",
+  "softwareName": "Menusjindungo",
+  "softwareVersion": "3",
+  "customerName": "Consumidor Final",
+  "customerNif": "999999999",
+  "customerAddress": "Luanda, Angola",
+  "items": [
+    {
+      "lineId": 1,
+      "description": "Muamba de Galinha com Funge",
+      "quantity": 2,
+      "unitPrice": "4500.00",
+      "taxRate": "14.00",
+      "taxType": "IVA",
+      "netAmount": "9000.00",
+      "taxAmount": "1260.00",
+      "grossAmount": "10260.00"
+    }
+  ],
+  "documentTotals": {
+    "netTotal": "9000.00",
+    "taxPayable": "1260.00",
+    "grossTotal": "10260.00"
+  },
+  "withholdingTaxList": []
+}

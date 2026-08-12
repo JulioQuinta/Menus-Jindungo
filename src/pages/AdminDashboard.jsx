@@ -516,136 +516,206 @@ const AdminDashboard = () => {
                         <ComponentErrorBoundary componentName="Admin Main Area">
                             <Routes>
                                 <Route path="/" element={
-                                    <div className="animate-fade-in-up">
-                                        <DashboardStats restaurantId={restaurant?.id} features={features} />
-                                    </div>
+                                    checkStaffPermission(activeStaff?.role, '/admin') ? (
+                                        <div className="animate-fade-in-up">
+                                            <DashboardStats restaurantId={restaurant?.id} features={features} />
+                                        </div>
+                                    ) : (
+                                        <AccessDenied role={activeStaff?.role} />
+                                    )
                                 } />
-                                <Route path="/menu" element={<MenuManager categories={categories} restaurantId={restaurant?.id} onUpdate={handleMenuUpdate} />} />
+                                <Route path="/menu" element={
+                                    checkStaffPermission(activeStaff?.role, '/admin/menu') ? (
+                                        <MenuManager categories={categories} restaurantId={restaurant?.id} onUpdate={handleMenuUpdate} />
+                                    ) : (
+                                        <AccessDenied role={activeStaff?.role} />
+                                    )
+                                } />
 
-                        <Route path="/orders" element={
-                            features.canUseKDS ? (
-                                <KitchenBoard restaurantId={restaurant?.id} config={config} restaurantName={restaurant?.name} />
-                            ) : (
-                                <OrderHistory restaurantId={restaurant?.id} />
-                            )
-                        } />
-                        <Route path="/invoices" element={<InvoicesManager restaurantId={restaurant?.id} restaurantName={restaurant?.name} />} />
-                        <Route path="/inventory" element={<InventoryManager restaurantId={restaurant?.id} />} />
+                                <Route path="/orders" element={
+                                    checkStaffPermission(activeStaff?.role, '/admin/orders') ? (
+                                        features.canUseKDS ? (
+                                            <KitchenBoard restaurantId={restaurant?.id} config={config} restaurantName={restaurant?.name} />
+                                        ) : (
+                                            <OrderHistory restaurantId={restaurant?.id} />
+                                        )
+                                    ) : (
+                                        <AccessDenied role={activeStaff?.role} />
+                                    )
+                                } />
+                                <Route path="/invoices" element={
+                                    checkStaffPermission(activeStaff?.role, '/admin/invoices') ? (
+                                        <InvoicesManager restaurantId={restaurant?.id} restaurantName={restaurant?.name} />
+                                    ) : (
+                                        <AccessDenied role={activeStaff?.role} />
+                                    )
+                                } />
+                                <Route path="/inventory" element={
+                                    checkStaffPermission(activeStaff?.role, '/admin/inventory') ? (
+                                        <InventoryManager restaurantId={restaurant?.id} />
+                                    ) : (
+                                        <AccessDenied role={activeStaff?.role} />
+                                    )
+                                } />
 
-                        <Route path="/staff" element={
-                            features.canManageStaff ? (
-                                <StaffManager restaurantId={restaurant?.id} />
-                            ) : (
-                                <UpgradePrompt
-                                    title="Gestão de Staff & Garçons"
-                                    requiredPlan="Business"
-                                    features={[
-                                        "Criar sub-contas para a sua equipa",
-                                        "Atribuir funções (Cozinha, Receção, etc.)",
-                                        "Acesso rápido via PIN para tablets",
-                                        "Segurança e controlo de permissões"
-                                    ]}
-                                />
-                            )
-                        } />
+                                <Route path="/staff" element={
+                                    checkStaffPermission(activeStaff?.role, '/admin/staff') ? (
+                                        features.canManageStaff ? (
+                                            <StaffManager restaurantId={restaurant?.id} />
+                                        ) : (
+                                            <UpgradePrompt
+                                                title="Gestão de Staff & Garçons"
+                                                requiredPlan="Business"
+                                                features={[
+                                                    "Criar sub-contas para a sua equipa",
+                                                    "Atribuir funções (Cozinha, Receção, etc.)",
+                                                    "Acesso rápido via PIN para tablets",
+                                                    "Segurança e controlo de permissões"
+                                                ]}
+                                            />
+                                        )
+                                    ) : (
+                                        <AccessDenied role={activeStaff?.role} />
+                                    )
+                                } />
 
-                        <Route path="/crm" element={
-                            features.canCollectClientData ? (
-                                <CustomerManager restaurantId={restaurant?.id} />
-                            ) : (
-                                <UpgradePrompt
-                                    title="CRM & Base de Dados de Clientes"
-                                    requiredPlan="Corporate"
-                                    features={[
-                                        "Guardar automaticamente contactos de WhatsApp",
-                                        "Ver quem são os seus clientes mais fiéis",
-                                        "Exportar lista para campanhas de marketing",
-                                        "Análise de Ticket Médio por cliente"
-                                    ]}
-                                />
-                            )
-                        } />
+                                <Route path="/crm" element={
+                                    checkStaffPermission(activeStaff?.role, '/admin/crm') ? (
+                                        features.canCollectClientData ? (
+                                            <CustomerManager restaurantId={restaurant?.id} />
+                                        ) : (
+                                            <UpgradePrompt
+                                                title="CRM & Base de Dados de Clientes"
+                                                requiredPlan="Corporate"
+                                                features={[
+                                                    "Guardar automaticamente contactos de WhatsApp",
+                                                    "Ver quem são os seus clientes mais fiéis",
+                                                    "Exportar lista para campanhas de marketing",
+                                                    "Análise de Ticket Médio por cliente"
+                                                ]}
+                                            />
+                                        )
+                                    ) : (
+                                        <AccessDenied role={activeStaff?.role} />
+                                    )
+                                } />
 
-                        <Route path="/feedbacks" element={
-                            features.canCollectClientData ? (
-                                <FeedbackManager restaurantId={restaurant?.id} />
-                            ) : (
-                                <UpgradePrompt
-                                    title="Avaliações e Feedback"
-                                    requiredPlan="Corporate"
-                                    features={[
-                                        "Receber avaliações diretas dos clientes (1 a 5 estrelas)",
-                                        "Ver comentários privados sobre o serviço",
-                                        "Melhorar a qualidade baseada em opiniões reais"
-                                    ]}
-                                />
-                            )
-                        } />
+                                <Route path="/feedbacks" element={
+                                    checkStaffPermission(activeStaff?.role, '/admin/feedbacks') ? (
+                                        features.canCollectClientData ? (
+                                            <FeedbackManager restaurantId={restaurant?.id} />
+                                        ) : (
+                                            <UpgradePrompt
+                                                title="Avaliações e Feedback"
+                                                requiredPlan="Corporate"
+                                                features={[
+                                                    "Receber avaliações diretas dos clientes (1 a 5 estrelas)",
+                                                    "Ver comentários privados sobre o serviço",
+                                                    "Melhorar a qualidade baseada em opiniões reais"
+                                                ]}
+                                            />
+                                        )
+                                    ) : (
+                                        <AccessDenied role={activeStaff?.role} />
+                                    )
+                                } />
 
-                        <Route path="/loyalty" element={
-                            features.canCollectClientData ? (
-                                <LoyaltyManager restaurantId={restaurant?.id} />
-                            ) : (
-                                <UpgradePrompt
-                                    title="Hub de Fidelização"
-                                    requiredPlan="Corporate"
-                                    features={[
-                                        "Meta de pedidos personalizada",
-                                        "Recompensas automáticas para clientes fiéis",
-                                        "Cartão VIP digital no checkout",
-                                        "Aumento de taxa de recorrência"
-                                    ]}
-                                />
-                            )
-                        } />
+                                <Route path="/loyalty" element={
+                                    checkStaffPermission(activeStaff?.role, '/admin/loyalty') ? (
+                                        features.canCollectClientData ? (
+                                            <LoyaltyManager restaurantId={restaurant?.id} />
+                                        ) : (
+                                            <UpgradePrompt
+                                                title="Hub de Fidelização"
+                                                requiredPlan="Corporate"
+                                                features={[
+                                                    "Meta de pedidos personalizada",
+                                                    "Recompensas automáticas para clientes fiéis",
+                                                    "Cartão VIP digital no checkout",
+                                                    "Aumento de taxa de recorrência"
+                                                ]}
+                                            />
+                                        )
+                                    ) : (
+                                        <AccessDenied role={activeStaff?.role} />
+                                    )
+                                } />
 
-                        <Route path="/reservations" element={
-                            <ReservationManager restaurantId={restaurant?.id} restaurantName={restaurant?.name} />
-                        } />
+                                <Route path="/reservations" element={
+                                    checkStaffPermission(activeStaff?.role, '/admin/reservations') ? (
+                                        <ReservationManager restaurantId={restaurant?.id} restaurantName={restaurant?.name} />
+                                    ) : (
+                                        <AccessDenied role={activeStaff?.role} />
+                                    )
+                                } />
 
-                        <Route path="/info" element={
-                            <BusinessInfoManager
-                                info={businessInfo}
-                                onSave={handleBusinessInfoSave}
-                                isLoading={dataLoading}
-                                features={features}
-                            />
-                        } />
+                                <Route path="/info" element={
+                                    checkStaffPermission(activeStaff?.role, '/admin/info') ? (
+                                        <BusinessInfoManager
+                                            info={businessInfo}
+                                            onSave={handleBusinessInfoSave}
+                                            isLoading={dataLoading}
+                                            features={features}
+                                        />
+                                    ) : (
+                                        <AccessDenied role={activeStaff?.role} />
+                                    )
+                                } />
 
-                        <Route path="/marketing" element={
-                            features.canUseKDS ? (
-                                <CouponManager restaurantId={restaurant?.id} />
-                            ) : (
-                                <UpgradePrompt
-                                    title="Marketing & Cupões"
-                                    requiredPlan="Business"
-                                    features={[
-                                        "Criar códigos de desconto personalizados",
-                                        "Limitar uso por data ou quantidade",
-                                        "Atrair clientes via Redes Sociais",
-                                        "Aumentar faturação em dias calmos"
-                                    ]}
-                                />
-                            )
-                        } />
+                                <Route path="/marketing" element={
+                                    checkStaffPermission(activeStaff?.role, '/admin/marketing') ? (
+                                        features.canUseKDS ? (
+                                            <CouponManager restaurantId={restaurant?.id} />
+                                        ) : (
+                                            <UpgradePrompt
+                                                title="Marketing & Cupões"
+                                                requiredPlan="Business"
+                                                features={[
+                                                    "Criar códigos de desconto personalizados",
+                                                    "Limitar uso por data ou quantidade",
+                                                    "Atrair clientes via Redes Sociais",
+                                                    "Aumentar faturação em dias calmos"
+                                                ]}
+                                            />
+                                        )
+                                    ) : (
+                                        <AccessDenied role={activeStaff?.role} />
+                                    )
+                                } />
 
-                        <Route path="/chat" element={<ChatAdminPanel categories={categories} onUpdate={handleMenuUpdate} restaurantId={restaurant?.id} />} />
-                        <Route path="/qrcode" element={<QRCodeGenerator url={`${window.location.origin}/r/${restaurant?.slug}`} restaurantName={restaurant?.name || restaurant?.slug} logoUrl={config?.logoUrl} />} />
-                        <Route path="/settings" element={
-                            <SettingsManager
-                                restaurantId={restaurant?.id}
-                                restaurantName={restaurant?.name}
-                                slug={restaurant?.slug}
-                                config={config}
-                                setConfig={handleConfigChange}
-                                onNameChange={handleNameUpdate}
-                                onSlugChange={handleSlugUpdate}
-                                onLogoUpload={handleLogoUpload}
-                                onHeaderBgUpload={handleHeaderBgUpload}
-                                categories={categories}
-                                onCategoryUpdate={handleMenuUpdate}
-                            />
-                        } />
+                                <Route path="/chat" element={
+                                    checkStaffPermission(activeStaff?.role, '/admin/chat') ? (
+                                        <ChatAdminPanel categories={categories} onUpdate={handleMenuUpdate} restaurantId={restaurant?.id} />
+                                    ) : (
+                                        <AccessDenied role={activeStaff?.role} />
+                                    )
+                                } />
+                                <Route path="/qrcode" element={
+                                    checkStaffPermission(activeStaff?.role, '/admin/qrcode') ? (
+                                        <QRCodeGenerator url={`${window.location.origin}/r/${restaurant?.slug}`} restaurantName={restaurant?.name || restaurant?.slug} logoUrl={config?.logoUrl} />
+                                    ) : (
+                                        <AccessDenied role={activeStaff?.role} />
+                                    )
+                                } />
+                                <Route path="/settings" element={
+                                    checkStaffPermission(activeStaff?.role, '/admin/settings') ? (
+                                        <SettingsManager
+                                            restaurantId={restaurant?.id}
+                                            restaurantName={restaurant?.name}
+                                            slug={restaurant?.slug}
+                                            config={config}
+                                            setConfig={handleConfigChange}
+                                            onNameChange={handleNameUpdate}
+                                            onSlugChange={handleSlugUpdate}
+                                            onLogoUpload={handleLogoUpload}
+                                            onHeaderBgUpload={handleHeaderBgUpload}
+                                            categories={categories}
+                                            onCategoryUpdate={handleMenuUpdate}
+                                        />
+                                    ) : (
+                                        <AccessDenied role={activeStaff?.role} />
+                                    )
+                                } />
                             </Routes>
                         </ComponentErrorBoundary>
                     </Suspense>

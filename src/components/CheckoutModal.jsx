@@ -411,7 +411,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
             restaurant_id: restaurantId,
             items: cartItems,
             total: total,
-            status: (paymentMethod === 'express' || paymentMethod === 'multicaixa') ? 'waiting_payment' : 'pending',
+            status: (paymentMethod === 'express' || paymentMethod === 'transferencia') ? 'waiting_payment' : 'pending',
             customer_name: customerName || 'Cliente',
             customer_phone: customerPhone,
             table_number: `${baseTableOrAddress} | Pgto: ${paymentInfo}`,

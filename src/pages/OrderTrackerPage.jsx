@@ -5,7 +5,8 @@ import { orderService } from '../services/orderService';
 import { 
     Clock, ChefHat, CheckCircle2, Truck, XCircle, Award, 
     Phone, MessageSquare, ChevronLeft, MapPin, Share2, 
-    FileText, HelpCircle, UtensilsCrossed, Star, Check 
+    FileText, HelpCircle, UtensilsCrossed, Star, Check,
+    CreditCard, Smartphone
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
@@ -535,6 +536,90 @@ const OrderTrackerPage = () => {
                         </div>
                     )}
                 </div>
+
+                {/* PAYMENT PENDING DETAILS (waiting_payment) */}
+                {order?.status === 'waiting_payment' && (
+                    <div className="bg-[#121212]/95 border border-[#D4AF37]/30 rounded-[32px] p-6 shadow-2xl backdrop-blur-2xl border-t-2 border-t-[#D4AF37] space-y-6 animate-in slide-in-from-bottom-6 duration-500">
+                        <div className="flex items-center gap-3 border-b border-white/5 pb-3">
+                            <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37] border border-[#D4AF37]/20 shadow-[0_0_15px_rgba(212,175,55,0.1)]">
+                                <CreditCard size={20} />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-serif font-black text-white uppercase tracking-wider">Aguardando Pagamento Digital</h3>
+                                <p className="text-[10px] text-gray-500 font-medium">Por favor, conclua a transação para enviar o pedido à cozinha</p>
+                            </div>
+                        </div>
+
+                        {/* Determine if payment is express or reference */}
+                        {order.table_number?.includes('Pgto: Express') ? (
+                            <div className="space-y-4">
+                                <div className="bg-blue-500/5 border border-blue-500/20 p-4 rounded-2xl text-xs space-y-2 text-blue-400">
+                                    <p className="font-bold flex items-center gap-1.5"><Smartphone size={14} /> Multicaixa Express Push:</p>
+                                    <p>Enviámos uma solicitação de pagamento para o número associado <span className="font-mono font-bold text-white">{order.customer_phone || 'registado'}</span>.</p>
+                                    <p className="text-gray-400">Abra a sua aplicação Multicaixa Express no telemóvel e autorize o débito nas próximas notificações de compras.</p>
+                                </div>
+                                <div className="flex items-center justify-center gap-3 py-4">
+                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#D4AF37]"></div>
+                                    <span className="text-xs font-mono uppercase tracking-widest text-[#D4AF37]">A aguardar autorização do telemóvel...</span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-5">
+                                <div className="bg-purple-500/5 border border-purple-500/20 p-4 rounded-2xl text-xs space-y-1.5 text-purple-400">
+                                    <p className="font-bold flex items-center gap-1.5"><CreditCard size={14} /> Pagamento de Serviços (Referência Multicaixa):</p>
+                                    <p>Pode pagar num Caixa Automático (ATM) ou no seu Internet Banking usando a referência gerada.</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-black/40 border border-white/5 p-4 rounded-2xl text-xs">
+                                    <div>
+                                        <span className="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Entidade</span>
+                                        <strong className="text-base font-mono text-white block mt-0.5">20024</strong>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Referência</span>
+                                        <strong className="text-base font-mono text-[#D4AF37] block mt-0.5">
+                                            {(() => {
+                                                let hash = 0;
+                                                for (let i = 0; i < (order.id || '').length; i++) {
+                                                    hash = (order.id || '').charCodeAt(i) + ((hash << 5) - hash);
+                                                }
+                                                const ref = Math.abs(hash).toString().substring(0, 9).padEnd(9, '7');
+                                                return `${ref.substring(0, 3)} ${ref.substring(3, 6)} ${ref.substring(6, 9)}`;
+                                            })()}
+                                        </strong>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-500 text-[10px] uppercase font-bold tracking-wider">Valor a Pagar</span>
+                                        <strong className="text-base font-mono text-white block mt-0.5">{new Intl.NumberFormat('pt-AO').format(order.total || 0)} Kz</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Interactive Sandbox/Simulate Button */}
+                        <div className="pt-2 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Modo de Teste / Sandbox:</span>
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        const { error } = await supabase
+                                            .from('orders')
+                                            .update({ status: 'pending' })
+                                            .eq('id', order.id);
+                                        if (error) throw error;
+                                        toast.success("Pagamento Simulado! O pedido foi enviado para a cozinha.");
+                                        setOrder(prev => ({ ...prev, status: 'pending' }));
+                                    } catch (err) {
+                                        toast.error("Erro ao simular pagamento.");
+                                    }
+                                }}
+                                className="bg-[#D4AF37] text-gray-950 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                            >
+                                Simular Pagamento Concluído ✅
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* LIVE MAP CARD */}
                 {isDelivery && ['out_for_delivery', 'arrived'].includes(order?.status) && (

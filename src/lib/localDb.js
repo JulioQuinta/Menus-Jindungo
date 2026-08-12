@@ -20,6 +20,17 @@ db.version(2).stores({
     stock_movements: 'id, item_id, type, created_at'
 });
 
+db.version(3).stores({
+    restaurants: 'id, slug',
+    categories: 'id, restaurant_id, sort_order',
+    menu_items: 'id, category_id, restaurant_id, is_highlight',
+    orders: 'id, restaurant_id, status, created_at, is_synced',
+    sync_meta: 'key',
+    stock_movements: 'id, item_id, type, created_at',
+    cash_sessions: 'id, restaurant_id, opened_at, closed_at, status',
+    cash_transactions: 'id, session_id, type, amount, created_at'
+});
+
 // Seed helper function to populate local database if empty (useful for 100% offline clients)
 export const seedLocalDbIfEmpty = async () => {
     try {

@@ -16,7 +16,7 @@ import MapPicker from './MapPicker';
 import { getTranslation } from '../utils/i18n';
 import { calculateDistance } from '../utils/geoUtils';
 
-const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', whatsappNumber, features = {}, initialTable = '', deliveryConfig = {}, activeStaff = null, selectedLanguage = 'PT', restaurantClosed = false }) => {
+const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', whatsappNumber, features = {}, initialTable = '', deliveryConfig = {}, activeStaff = null, selectedLanguage = 'PT', restaurantClosed = false, config = {} }) => {
     const navigate = useNavigate();
     const { cartItems, getCartTotal, clearCart } = useCart();
     const t = (key) => getTranslation(selectedLanguage, key);
@@ -407,11 +407,21 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
             paymentInfo = paymentMethod;
         }
 
+        // Determine prepago/pos-pago policy based on config toggles
+        const isTableOrder = orderType === 'dine-in';
+        const isPrepaid = isTableOrder
+            ? (config?.qrMenuPrepaid ?? false)
+            : (config?.onlineDeliveryPrepaid ?? true);
+
+        const initialStatus = (isPrepaid && (paymentMethod === 'express' || paymentMethod === 'transferencia'))
+            ? 'waiting_payment'
+            : 'pending';
+
         const orderData = {
             restaurant_id: restaurantId,
             items: cartItems,
             total: total,
-            status: (paymentMethod === 'express' || paymentMethod === 'transferencia') ? 'waiting_payment' : 'pending',
+            status: initialStatus,
             customer_name: customerName || 'Cliente',
             customer_phone: customerPhone,
             table_number: `${baseTableOrAddress} | Pgto: ${paymentInfo}`,

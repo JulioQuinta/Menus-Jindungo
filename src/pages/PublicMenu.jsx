@@ -776,6 +776,7 @@ const PublicMenuInner = ({
                         activeStaff={activeStaff}
                         selectedLanguage={selectedLanguage}
                         restaurantClosed={isCurrentlyClosed || config.isOpen === false}
+                        config={config}
                     />
 
                     <BookingModal

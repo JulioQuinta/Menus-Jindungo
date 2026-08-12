@@ -14,7 +14,9 @@ export const useAdminData = (user) => {
         layoutMode: 'list',
         darkMode: false,
         whatsappNumber: '',
-        logoUrl: ''
+        logoUrl: '',
+        qrMenuPrepaid: false, // default post-paid for saloon QR menus
+        onlineDeliveryPrepaid: true // default pre-paid for delivery/takeaway
     });
 
     const fetchRestaurantData = useCallback(async () => {

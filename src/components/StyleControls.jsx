@@ -221,6 +221,30 @@ const StyleControls = ({ config, setConfig, onReset, onLogoUpload, onHeaderBgUpl
                         onChange={(val) => handleChange('enableTableBill', val)}
                     />
                 </div>
+
+                {/* Online Prepaid Policy Toggle */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <label className="text-sm font-bold text-white">Pré-pagamento de Encomendas (Online)</label>
+                        <p className="text-xs text-gray-400 mt-0.5">Exige pagamento (Express/Referência) antes de enviar para a cozinha.</p>
+                    </div>
+                    <ToggleSwitch
+                        checked={config.onlineDeliveryPrepaid !== false}
+                        onChange={(val) => handleChange('onlineDeliveryPrepaid', val)}
+                    />
+                </div>
+
+                {/* QR Code prepaid Policy Toggle */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <label className="text-sm font-bold text-white">Pré-pagamento de Mesa (QR Code)</label>
+                        <p className="text-xs text-gray-400 mt-0.5">Se desativado, o cliente consome no salão e paga apenas no final (pós-pago).</p>
+                    </div>
+                    <ToggleSwitch
+                        checked={config.qrMenuPrepaid || false}
+                        onChange={(val) => handleChange('qrMenuPrepaid', val)}
+                    />
+                </div>
             </div>
 
             {/* QR Code section */}

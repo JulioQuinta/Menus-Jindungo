@@ -12,6 +12,16 @@ import {
 import { toast } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 
+// Demo / default marketing photos matching screenshot
+const defaultPhotos = [
+    'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=600&q=80', // Cocktails
+    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80', // Restaurant food / Tag
+    'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80', // Steak
+    'https://images.unsplash.com/photo-1541544537156-7627a7a44b4b?auto=format&fit=crop&w=600&q=80', // Snack platter
+    'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=600&q=80', // Grilled skewers
+    'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&q=80', // Tacos / Pizza
+];
+
 const CouponManager = ({ restaurantId }) => {
     const [coupons, setCoupons] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -37,16 +47,6 @@ const CouponManager = ({ restaurantId }) => {
         maps_url: 'https://maps.app.goo.gl/vo6MNLiEXcwrn1L'
     });
 
-    // Demo / default marketing photos matching screenshot
-    const defaultPhotos = [
-        'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=600&q=80', // Cocktails
-        'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80', // Restaurant food / Tag
-        'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80', // Steak
-        'https://images.unsplash.com/photo-1541544537156-7627a7a44b4b?auto=format&fit=crop&w=600&q=80', // Snack platter
-        'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=600&q=80', // Grilled skewers
-        'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&q=80', // Tacos / Pizza
-    ];
-
     const fetchCoupons = useCallback(async () => {
         setLoading(true);
         if (restaurantId) {
@@ -66,7 +66,7 @@ const CouponManager = ({ restaurantId }) => {
             }
         }
         setLoading(false);
-    }, [restaurantId, defaultPhotos]);
+    }, [restaurantId]);
 
     useEffect(() => {
         fetchCoupons();

@@ -63,7 +63,7 @@ const AdminDashboard = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { logoUrl: globalLogoUrl } = useSettings();
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 1280);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     
     // [NEW] Hooks for Data & Alerts (Performance & Cleanliness)
@@ -85,6 +85,17 @@ const AdminDashboard = () => {
     const [dismissedNotifIds, setDismissedNotifIds] = useState(() => JSON.parse(localStorage.getItem('jindungo_dismissed_notifications') || '[]'));
     const [isExpirationDismissed, setIsExpirationDismissed] = useState(() => localStorage.getItem('jindungo_expiration_dismissed') === 'true');
     const [settingsTab, setSettingsTab] = useState('visual'); // 'visual' | 'delivery'
+
+    // Auto-collapse sidebar on tablet screens
+    useEffect(() => {
+        const handleResize = () => {
+            setIsSidebarOpen(window.innerWidth >= 1280);
+        };
+        // Run once on load to be sure
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // [NEW] Fetch Global Admin Notifications (Filtered by audience)
     useEffect(() => {

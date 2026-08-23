@@ -4,10 +4,18 @@
 @theme {
   --color-primary: #D4AF37;
   /* Ouro Angolano */
+  --color-primary-light: #F9E6A2;
+  /* Ouro Claro */
+  --color-primary-dark: #AA8B2C;
+  /* Dourado Escuro */
+  
   --color-secondary: #E63946;
   /* Vermelho Jindungo */
-  --color-success: #28a745;
-  --color-error: #dc3545;
+  --color-secondary-light: #FADBD8;
+  --color-secondary-dark: #C0392B;
+  
+  --color-success: #2E7D32;
+  --color-error: #D32F2F;
 
   /* Premium Dark Mode Foundations */
   --color-dark-bg: #0A0A0B;
@@ -84,7 +92,7 @@
 }
 
 @utility glass-dark {
-  @apply bg-black/30 backdrop-blur-lg border border-white/10 shadow-xl;
+  @apply bg-black/60 backdrop-blur-xl border border-white/10 shadow-2xl;
 }
 
 @utility scrollbar-hide {

@@ -55,6 +55,8 @@ import PaymentSaaSModal from '../components/PaymentSaaSModal';
 import CommandPalette from '../components/dashboard/CommandPalette';
 import HypnoticStats from '../components/dashboard/HypnoticStats';
 import ComponentErrorBoundary from '../components/ComponentErrorBoundary'; // [NEW] QA & Performance
+import { checkStaffPermission } from '../utils/staffPermissions';
+import AccessDenied from '../components/AccessDenied';
 
 const AdminDashboard = () => {
     const { user, role, signOut } = useAuth();
@@ -128,16 +130,18 @@ const AdminDashboard = () => {
             const STAFF_EXPIRY_MS = 8 * 60 * 60 * 1000; // 8 Hours
             const savedName = localStorage.getItem(`jindungo_staff_name_${restaurant.id}`);
             const savedId = localStorage.getItem(`jindungo_staff_id_${restaurant.id}`);
+            const savedRole = localStorage.getItem(`jindungo_staff_role_${restaurant.id}`);
             const loginTime = localStorage.getItem(`jindungo_staff_login_time_${restaurant.id}`);
 
             if (savedName && savedId && loginTime) {
                 const elapsed = Date.now() - parseInt(loginTime);
                 if (elapsed < STAFF_EXPIRY_MS) {
-                    setActiveStaff({ id: savedId, name: savedName });
+                    setActiveStaff({ id: savedId, name: savedName, role: savedRole });
                 } else {
                     // Session Expired
                     localStorage.removeItem(`jindungo_staff_id_${restaurant.id}`);
                     localStorage.removeItem(`jindungo_staff_name_${restaurant.id}`);
+                    localStorage.removeItem(`jindungo_staff_role_${restaurant.id}`);
                     localStorage.removeItem(`jindungo_staff_login_time_${restaurant.id}`);
                     toast.error("Sessão de staff expirada (Turno de 8h). Por favor, entre novamente.");
                     setActiveStaff(null);

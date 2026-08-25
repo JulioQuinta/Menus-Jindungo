@@ -29,6 +29,11 @@ export const billingService = {
     // 1.2. Fallback: Assinatura Local Segura (Regime de Contingência)
     async generateLocalJWSSignatureFallback(payload) {
         try {
+            // Se window ou crypto não estiver disponível (ex: SSR), recua para a simulação antiga
+            if (typeof window === 'undefined' || !window.crypto || !window.crypto.subtle) {
+                return this.legacyLocalSignatureFallback(payload);
+            }
+
             const header = {
                 alg: "RS256",
                 typ: "JWS",
@@ -45,17 +50,34 @@ export const billingService = {
                 .replace(/\+/g, "-")
                 .replace(/\//g, "_");
 
-            // Simula a encriptação com a chave privada RSA local
             const hashSource = `${headerBase64}.${payloadBase64}`;
-            let signatureHash = 0;
-            for (let i = 0; i < hashSource.length; i++) {
-                signatureHash = (signatureHash << 5) - signatureHash + hashSource.charCodeAt(i);
-                signatureHash |= 0;
-            }
             
-            const rawSignature = Math.abs(signatureHash).toString(16).repeat(4) + "abcdef1234567890";
-            const signatureBase64 = btoa(rawSignature)
-                .slice(0, 44)
+            // WebCrypto signing fallback using RSASSA-PKCS1-v1_5
+            // Geramos uma chave par de testes localmente de forma rápida
+            const keyPair = await window.crypto.subtle.generateKey(
+                {
+                    name: "RSASSA-PKCS1-v1_5",
+                    modulusLength: 2048,
+                    publicExponent: new Uint8Array([1, 0, 1]),
+                    hash: "SHA-256",
+                },
+                true,
+                ["sign", "verify"]
+            );
+
+            const signatureBuffer = await window.crypto.subtle.sign(
+                "RSASSA-PKCS1-v1_5",
+                keyPair.privateKey,
+                new TextEncoder().encode(hashSource)
+            );
+
+            // Converter ArrayBuffer da assinatura para base64url
+            const signatureArray = new Uint8Array(signatureBuffer);
+            let signatureString = "";
+            for (let i = 0; i < signatureArray.length; i++) {
+                signatureString += String.fromCharCode(signatureArray[i]);
+            }
+            const signatureBase64 = btoa(signatureString)
                 .replace(/=/g, "")
                 .replace(/\+/g, "-")
                 .replace(/\//g, "_");
@@ -69,9 +91,51 @@ export const billingService = {
                 signature: signatureBase64
             };
         } catch (err) {
-            console.error("Erro na assinatura local de contingência:", err);
-            throw new Error("Falha ao assinar documento digitalmente offline.");
+            console.warn("Falha na assinatura criptográfica local WebCrypto, recorrendo ao legado:", err);
+            return this.legacyLocalSignatureFallback(payload);
         }
+    },
+
+    // 1.3. Assinatura Tradicional Simulada (Contingência de Último Recurso)
+    legacyLocalSignatureFallback(payload) {
+        const header = {
+            alg: "RS256",
+            typ: "JWS",
+            cert_no: "000/JINDUNGO/2026-LOCAL"
+        };
+
+        const headerBase64 = btoa(JSON.stringify(header))
+            .replace(/=/g, "")
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_");
+
+        const payloadBase64 = btoa(JSON.stringify(payload))
+            .replace(/=/g, "")
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_");
+
+        const hashSource = `${headerBase64}.${payloadBase64}`;
+        let signatureHash = 0;
+        for (let i = 0; i < hashSource.length; i++) {
+            signatureHash = (signatureHash << 5) - signatureHash + hashSource.charCodeAt(i);
+            signatureHash |= 0;
+        }
+        
+        const rawSignature = Math.abs(signatureHash).toString(16).repeat(4) + "abcdef1234567890";
+        const signatureBase64 = btoa(rawSignature)
+            .slice(0, 44)
+            .replace(/=/g, "")
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_");
+
+        const fullJWS = `${headerBase64}.${payloadBase64}.${signatureBase64}`;
+        const controlChars = `${signatureBase64[0] || 'X'}${signatureBase64[10] || 'y'}${signatureBase64[20] || 'Z'}${signatureBase64[30] || '1'}`;
+
+        return {
+            jws: fullJWS,
+            hashControl: controlChars.toUpperCase(),
+            signature: signatureBase64
+        };
     },
 
     // 2. Comunicar Fatura à API REST da AGT (Envio Assíncrono)
@@ -85,15 +149,40 @@ export const billingService = {
             const isExempt = vatRate === 0;
 
             // Determinar o tipo de documento
-            const isDelivery = orderData.table_number?.includes('Entrega:') || orderData.order_type === 'delivery';
             const docType = (orderData.customer_nif && orderData.customer_nif !== '999999999') ? 'FR' : 'FS'; // FR (Fatura-Recibo) se tiver NIF real, FS (Fatura Simplificada) caso contrário
-            
-            // Gerar número sequencial simulado da série da AGT
             const currentYear = new Date().getFullYear();
-            const sequence = Math.floor(1000 + Math.random() * 9000);
-            const invoiceNumber = `${docType} ${currentYear}/${sequence}`;
 
-            // 1. Preparar Payload Fiscal em estrita conformidade com a especificação AGT DS-120
+            // 1. Obter a última fatura para Encadeamento (Previous Hash) e numeração sequencial rígida
+            const { data: lastOrder } = await supabase
+                .from('orders')
+                .select('invoice_number, jws_hash')
+                .eq('restaurant_id', restaurantId)
+                .not('invoice_number', 'is', null)
+                .not('jws_hash', 'is', null)
+                .like('invoice_number', `${docType} ${currentYear}/%`)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            let nextSequence = 1;
+            let previousHash = "0"; // "0" se for a primeira fatura da série
+
+            if (lastOrder) {
+                if (lastOrder.jws_hash) {
+                    previousHash = lastOrder.jws_hash;
+                }
+                if (lastOrder.invoice_number) {
+                    const parts = lastOrder.invoice_number.split('/');
+                    const lastSeq = parseInt(parts[parts.length - 1], 10);
+                    if (!isNaN(lastSeq)) {
+                        nextSequence = lastSeq + 1;
+                    }
+                }
+            }
+
+            const invoiceNumber = `${docType} ${currentYear}/${nextSequence}`;
+
+            // 2. Preparar Payload Fiscal em estrita conformidade com a especificação AGT DS-120
             const netTotal = (orderData.total || 0) / (1 + (vatRate / 100));
             const taxPayable = (orderData.total || 0) - netTotal;
 
@@ -136,13 +225,14 @@ export const billingService = {
                 customerTaxID: orderData.customer_nif || "999999999",
                 customerCountry: "AO",
                 companyName: orderData.restaurant?.name || "SUMBA AQUI - COMÉRCIO E SERVIÇOS,(SU) Lda",
-                documentTotals: documentTotals
+                documentTotals: documentTotals,
+                previousHash: previousHash // Encadeamento fiscal obrigatório da AGT
             };
 
-            // 2. Gerar assinatura digital JWS
+            // 3. Gerar assinatura digital JWS
             const { jws, hashControl } = await this.generateJWSSignature(fiscalPayload);
 
-            // 3. Atualizar Estado Local no Supabase para 'pending_agt' e gravar o requestID fictício
+            // 4. Atualizar Estado Local no Supabase para 'pending_agt' e gravar o requestID fictício
             const requestId = `REQ-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
             
             const { error: updateError } = await supabase
@@ -157,7 +247,7 @@ export const billingService = {
 
             if (updateError) throw updateError;
 
-            // 4. Iniciar processo assíncrono simulado de validação da AGT (Polling)
+            // 5. Iniciar processo assíncrono simulado de validação da AGT (Polling)
             this.iniciarProcessamentoSimuladoAGT(orderId, requestId, hashControl);
 
             return { success: true, requestId, invoiceNumber };

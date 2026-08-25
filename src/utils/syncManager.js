@@ -112,11 +112,14 @@ export const syncManager = {
                 return { success: true, count: 0 };
             }
 
-            console.log(`[Sync Upstream] A enviar ${unsyncedOrders.length} encomendas offline para o Supabase...`);
+            // Ordenar cronologicamente para garantir que a sequência de faturas e encadeamento JWS é preservada
+            unsyncedOrders.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+            console.log(`[Sync Upstream] A enviar ${unsyncedOrders.length} encomendas offline de forma cronológica para o Supabase...`);
             let successCount = 0;
 
             for (const localOrder of unsyncedOrders) {
-                // Prepare clean order payload for Supabase
+                // Prepare clean order payload for Supabase preserving offline invoice data
                 const orderPayload = {
                     restaurant_id: localOrder.restaurant_id,
                     items: localOrder.items,
@@ -126,7 +129,14 @@ export const syncManager = {
                     table_number: localOrder.table_number,
                     order_type: localOrder.order_type,
                     status: localOrder.status,
-                    created_at: new Date(localOrder.created_at).toISOString()
+                    created_at: new Date(localOrder.created_at).toISOString(),
+                    // Preservar dados fiscais gerados localmente/offline
+                    invoice_status: localOrder.invoice_status || null,
+                    invoice_number: localOrder.invoice_number || null,
+                    jws_hash: localOrder.jws_hash || null,
+                    validation_code: localOrder.validation_code || null,
+                    request_id: localOrder.request_id || null,
+                    customer_nif: localOrder.customer_nif || null
                 };
 
                 const { data, error } = await orderService.createOrder(orderPayload);

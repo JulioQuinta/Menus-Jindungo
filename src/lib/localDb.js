@@ -31,6 +31,24 @@ db.version(3).stores({
     cash_transactions: 'id, session_id, type, amount, created_at'
 });
 
+db.version(4).stores({
+    restaurants: 'id, slug',
+    categories: 'id, restaurant_id, sort_order',
+    menu_items: 'id, category_id, restaurant_id, is_highlight',
+    orders: 'id, restaurant_id, status, created_at, is_synced',
+    sync_meta: 'key',
+    stock_movements: 'id, item_id, type, created_at, is_synced',
+    cash_sessions: 'id, restaurant_id, opened_at, closed_at, status',
+    cash_transactions: 'id, session_id, type, amount, created_at'
+}).upgrade(async (tx) => {
+    // Marcar movimentos históricos como sincronizados por padrão para evitar re-sincronizar dados antigos
+    await tx.table('stock_movements').toCollection().modify(m => {
+        if (m.is_synced === undefined) {
+            m.is_synced = 1;
+        }
+    });
+});
+
 // Seed helper function to populate local database if empty (useful for 100% offline clients)
 export const seedLocalDbIfEmpty = async () => {
     try {
@@ -215,6 +233,7 @@ export const localDbService = {
         const movementRecord = {
             id,
             created_at: new Date().toISOString(),
+            is_synced: 0, // Não sincronizado por padrão
             ...movement
         };
         
@@ -249,5 +268,19 @@ export const localDbService = {
     async getAllStockMovements() {
         const movements = await db.stock_movements.toArray();
         return movements.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    },
+
+    // Get all unsynced stock movements
+    async getUnsyncedStockMovements(restaurantId) {
+        return await db.stock_movements
+            .where('is_synced')
+            .equals(0)
+            .and(m => m.restaurant_id === restaurantId)
+            .toArray();
+    },
+
+    // Mark a stock movement as successfully synced
+    async markStockMovementSynced(movementId) {
+        await db.stock_movements.update(movementId, { is_synced: 1 });
     }
 };

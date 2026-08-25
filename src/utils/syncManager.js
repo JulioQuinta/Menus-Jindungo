@@ -2,6 +2,8 @@ import { supabase } from '../lib/supabaseClient';
 import { localDbService, db } from '../lib/localDb';
 import { orderService } from '../services/orderService';
 
+let hasStockMovementsTable = true;
+
 export const syncManager = {
     // 1. PULL: Sync from Supabase to Local Dexie DB
     async syncDownstream(restaurantSlug) {
@@ -107,6 +109,51 @@ export const syncManager = {
         if (!restaurantId) return { success: false, error: 'restaurantId em falta' };
 
         try {
+            // 2.1 Sincronizar movimentos de stock se a tabela existir no Supabase
+            if (hasStockMovementsTable) {
+                try {
+                    const unsyncedMovements = await localDbService.getUnsyncedStockMovements(restaurantId);
+                    if (unsyncedMovements.length > 0) {
+                        console.log(`[Sync Upstream] A sincronizar ${unsyncedMovements.length} logs de movimentação de stock para o Supabase...`);
+                        let syncMovCount = 0;
+                        for (const localMov of unsyncedMovements) {
+                            const movPayload = {
+                                id: localMov.id,
+                                item_id: localMov.item_id,
+                                restaurant_id: localMov.restaurant_id,
+                                type: localMov.type,
+                                quantity: localMov.quantity,
+                                reason: localMov.reason || null,
+                                cost_price: localMov.cost_price || null,
+                                supplier_name: localMov.supplier_name || null,
+                                user_name: localMov.user_name || null,
+                                created_at: new Date(localMov.created_at).toISOString()
+                            };
+
+                            const { error: movError } = await supabase
+                                .from('stock_movements')
+                                .insert([movPayload]);
+
+                            if (movError) {
+                                if (movError.message && (movError.message.includes('relation') || movError.message.includes('stock_movements'))) {
+                                    console.warn("[Sync Upstream] A tabela 'stock_movements' não existe no Supabase. Desativada sincronização de logs em segundo plano.");
+                                    hasStockMovementsTable = false;
+                                    break;
+                                } else {
+                                    console.error(`[Sync Upstream] Erro ao sincronizar movimento de stock ${localMov.id}:`, movError);
+                                    continue;
+                                }
+                            }
+                            await localDbService.markStockMovementSynced(localMov.id);
+                            syncMovCount++;
+                        }
+                        console.log(`[Sync Upstream] Sincronização de stock concluída: ${syncMovCount} registos enviados.`);
+                    }
+                } catch (stockErr) {
+                    console.warn("[Sync Upstream] Erro não crítico na sincronização de movimentos de stock:", stockErr);
+                }
+            }
+
             const unsyncedOrders = await localDbService.getUnsyncedOrders(restaurantId);
             if (unsyncedOrders.length === 0) {
                 return { success: true, count: 0 };

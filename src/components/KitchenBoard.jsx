@@ -682,6 +682,36 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
         }
     };
 
+    const toggleNetworkPrinter = async () => {
+        try {
+            if (isBluetoothReady && printerService.type === 'network') {
+                await printerService.disconnect();
+                setIsBluetoothReady(false);
+                toast('Impressora de Rede Desconectada', { icon: '🔌' });
+            } else {
+                const ip = window.prompt("Insira o endereço IP da impressora de rede (ex: 192.168.1.100):", "192.168.1.100");
+                if (!ip) return;
+                
+                const portInput = window.prompt("Insira a porta da impressora (geralmente 9100):", "9100");
+                if (!portInput) return;
+                
+                const port = parseInt(portInput, 10);
+                if (isNaN(port)) {
+                    toast.error("Porta inválida!");
+                    return;
+                }
+
+                toast.loading(`A tentar conectar a ${ip}:${port}...`, { id: 'network-print' });
+                await printerService.connectNetwork(ip, port);
+                setIsBluetoothReady(true);
+                toast.success('Impressora de Rede Conectada com Sucesso!', { id: 'network-print' });
+            }
+        } catch (error) {
+            toast.error('Erro de ligação à Rede: ' + error.message, { id: 'network-print' });
+            setIsBluetoothReady(false);
+        }
+    };
+
     const handleTestPrint = async () => {
         if (!isBluetoothReady) {
              toast.error('Nenhuma impressora conectada!');
@@ -914,6 +944,19 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                     >
                         <Printer size={16} className={isBluetoothReady && printerService.type === 'usb' ? 'text-cyan-400' : ''} />
                         <span className="hidden sm:inline">USB</span> {isBluetoothReady && printerService.type === 'usb' ? 'ON' : 'OFF'}
+                    </button>
+
+                    <button
+                        onClick={toggleNetworkPrinter}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs transition-all border cursor-pointer active:scale-95 ${
+                            isBluetoothReady && printerService.type === 'network'
+                                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.3)]' 
+                                : 'bg-[#161616] text-gray-400 border-white/5 hover:border-white/20'
+                        }`}
+                        title="Conectar impressora de Rede (IP)"
+                    >
+                        <Printer size={16} className={isBluetoothReady && printerService.type === 'network' ? 'text-emerald-400' : ''} />
+                        <span className="hidden sm:inline">Rede (IP)</span> {isBluetoothReady && printerService.type === 'network' ? 'ON' : 'OFF'}
                     </button>
 
                     {isBluetoothReady && (

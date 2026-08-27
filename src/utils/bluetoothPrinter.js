@@ -24,10 +24,43 @@ export class NativePrinter {
         this.device = null;
         this.interface = null;
         this.endpoint = null;
-        this.type = null; // 'bluetooth' or 'usb'
+        this.type = null; // 'bluetooth', 'usb', or 'network'
         
         // Bluetooth specific
         this.btCharacteristic = null;
+
+        // Network (TCP) specific
+        this.ip = null;
+        this.port = 9100;
+    }
+
+    // Connects via TCP Network IP
+    async connectNetwork(ip, port) {
+        if (!window.electronAPI || !window.electronAPI.printRawTCP) {
+            throw new Error('A impressora de rede (TCP) requer a aplicação Desktop.');
+        }
+
+        // Test the connection by sending an ESC/POS reset code
+        const encoder = new TextEncoder();
+        const resetCmd = encoder.encode('\x1B\x40');
+        
+        let binary = '';
+        const len = resetCmd.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(resetCmd[i]);
+        }
+        const base64Data = btoa(binary);
+
+        try {
+            await window.electronAPI.printRawTCP(ip, port, base64Data);
+            this.ip = ip;
+            this.port = port;
+            this.type = 'network';
+            return true;
+        } catch (error) {
+            console.error('Network Connect Error:', error);
+            throw new Error(`Não foi possível conectar com a impressora em ${ip}:${port}. Verifique se o IP está correto e se o dispositivo está na mesma rede.`);
+        }
     }
 
     // Connects via Bluetooth
@@ -93,12 +126,14 @@ export class NativePrinter {
             this.device.close();
         }
         this.device = null;
+        this.ip = null;
         this.type = null;
     }
 
     isConnected() {
         if (this.type === 'bluetooth') return this.device?.gatt.connected;
         if (this.type === 'usb') return this.device?.opened;
+        if (this.type === 'network') return !!this.ip;
         return false;
     }
 
@@ -110,8 +145,20 @@ export class NativePrinter {
             for (let i = 0; i < data.length; i += chunkSize) {
                 await this.btCharacteristic.writeValue(data.slice(i, i + chunkSize));
             }
-        } else {
+        } else if (this.type === 'usb') {
             await this.device.transferOut(this.endpoint.endpointNumber, data);
+        } else if (this.type === 'network') {
+            let binary = '';
+            const len = data.byteLength;
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(data[i]);
+            }
+            const base64Data = btoa(binary);
+            if (window.electronAPI && window.electronAPI.printRawTCP) {
+                await window.electronAPI.printRawTCP(this.ip, this.port, base64Data);
+            } else {
+                throw new Error("A impressão TCP direta requer a aplicação Desktop.");
+            }
         }
     }
 

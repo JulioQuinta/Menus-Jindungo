@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import net from 'net';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -99,6 +100,37 @@ ipcMain.handle('print-receipt', async (event, htmlContent, printerName) => {
             });
         } catch (e) {
             console.error("Print IPC error:", e);
+            reject(e);
+        }
+    });
+});
+
+ipcMain.handle('print-raw-tcp', async (event, ip, port, base64Data) => {
+    return new Promise((resolve, reject) => {
+        try {
+            const client = new net.Socket();
+            const dataBuffer = Buffer.from(base64Data, 'base64');
+            const targetPort = parseInt(port) || 9100;
+
+            client.setTimeout(4000); // 4 seconds timeout
+
+            client.connect(targetPort, ip, () => {
+                client.write(dataBuffer, () => {
+                    client.end();
+                    resolve({ success: true });
+                });
+            });
+
+            client.on('error', (err) => {
+                client.destroy();
+                reject(err);
+            });
+
+            client.on('timeout', () => {
+                client.destroy();
+                reject(new Error("Erro de timeout na ligação com a impressora de rede (IP)."));
+            });
+        } catch (e) {
             reject(e);
         }
     });

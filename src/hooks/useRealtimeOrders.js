@@ -7,7 +7,7 @@ import { isNotificationSupported, sendNotification } from '../utils/notification
 const orderAlertSound = new Audio('/bell.mp3');
 orderAlertSound.volume = 0.8; // A bit louder for new orders
 
-export const useRealtimeOrders = (restaurantId, onNewOrderCallback) => {
+export const useRealtimeOrders = (restaurantId, onNewOrderCallback, isAudioEnabled = true) => {
 
     const playOrderSound = useCallback(() => {
         try {
@@ -32,8 +32,10 @@ export const useRealtimeOrders = (restaurantId, onNewOrderCallback) => {
                 const newOrder = payload.new;
                 const isDelivery = newOrder.table_number?.includes('Entrega:');
                 
-                // Dispara som para todos os novos pedidos
-                playOrderSound();
+                // Dispara som para todos os novos pedidos se áudio estiver ativado
+                if (isAudioEnabled) {
+                    playOrderSound();
+                }
 
                 if (!isDelivery) {
                     toast(`🛎️ NOVO PEDIDO NA MESA!\nCliente: ${newOrder.customer_name || 'Desconhecido'}\nMesa: ${newOrder.table_number?.split('|')[0] || '?'}`, {
@@ -76,6 +78,6 @@ export const useRealtimeOrders = (restaurantId, onNewOrderCallback) => {
         return () => {
             supabase.removeChannel(ordersChannel);
         };
-    }, [restaurantId, onNewOrderCallback, playOrderSound]);
+    }, [restaurantId, onNewOrderCallback, playOrderSound, isAudioEnabled]);
 
 };

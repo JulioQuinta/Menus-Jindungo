@@ -748,7 +748,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                 handlePrintOrder(newOrder);
             }, 1000);
         }
-    });
+    }, isAudioEnabled);
 
     useEffect(() => {
         if (!restaurantId) return;

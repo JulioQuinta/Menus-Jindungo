@@ -86,7 +86,7 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, sta
     const heroImage = itemWithImage ? (itemWithImage.img || itemWithImage.img_url || itemWithImage.image_url) : null;
 
     return (
-        <div className="bg-[#161616]/95 border border-[#2A2A2A] rounded-[28px] p-5 mb-5 relative overflow-hidden shadow-2xl backdrop-blur-2xl transition-all hover:scale-[1.01] hover:border-[#D4AF37]/30 group/card text-left">
+        <div className="bg-[#121213]/95 border border-[#2A2A2A] rounded-[28px] p-5 mb-5 relative overflow-hidden shadow-2xl backdrop-blur-2xl transition-all hover:scale-[1.01] hover:border-[#D4AF37]/30 group/card text-left">
             {/* Ambient Background Glow inside card */}
             <div className={`absolute -right-12 -top-12 w-36 h-36 rounded-full blur-[60px] opacity-15 group-hover/card:opacity-30 transition-opacity ${isPreparing ? 'bg-[#E67E22]' : isReady ? 'bg-[#2ECC71]' : 'bg-[#D4AF37]'}`}></div>
             
@@ -94,7 +94,7 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, sta
             {isPreparing && heroImage && (
                 <div className="relative -mx-5 -mt-5 mb-4 h-40 overflow-hidden rounded-t-[28px] border-b border-white/10">
                     <img src={heroImage} alt="Prato em Destaque" className="w-full h-full object-cover brightness-90 group-hover/card:scale-105 transition-transform duration-700" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#161616] via-[#161616]/40 to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#121213] via-[#121213]/40 to-transparent"></div>
                     <div className="absolute top-3 right-3 bg-black/80 backdrop-blur-md px-3 py-1 rounded-full border border-orange-500/30 flex items-center gap-1.5 shadow-lg">
                         <span className="w-2 h-2 rounded-full bg-orange-500 animate-ping"></span>
                         <span className="text-[11px] font-black tracking-wider text-orange-400 uppercase">⏱️ {elapsed}</span>
@@ -117,7 +117,7 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, sta
                         <Star size={13} className="text-[#D4AF37] fill-[#D4AF37]" />
                         <span>{isDelivery ? 'Entrega ao Domicílio' : isTakeaway ? 'Takeaway / Recolha' : 'Pedido de Sala'}</span>
                     </div>
-                    <div className="flex items-center gap-2 bg-[#1C1C1C] border border-[#2A2A2A] px-3 py-1 rounded-full text-xs text-gray-300 font-bold shadow-inner">
+                    <div className="flex items-center gap-2 bg-[#1A1A1C] border border-[#2A2A2A] px-3 py-1 rounded-full text-xs text-gray-300 font-bold shadow-inner">
                         <Clock size={12} className="text-[#D4AF37]" />
                         <span>{elapsed}</span>
                     </div>
@@ -157,7 +157,7 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, sta
 
             {/* Caixa de Logística / Entrega / Estafeta */}
             {(isDelivery || isTakeaway || order.courier_name) && (
-                <div className="mb-4 bg-[#1C1C1C] border border-white/10 rounded-2xl p-3 text-xs space-y-1.5 shadow-inner">
+                <div className="mb-4 bg-[#1A1A1C] border border-white/10 rounded-2xl p-3 text-xs space-y-1.5 shadow-inner">
                     {isTakeaway && (
                         <div className="flex items-center gap-2 text-amber-400 font-bold">
                             <ShoppingBag size={14} /> Takeaway / Recolha ao Balcão (Estimado: {order.takeaway_time || '30-40 min'})
@@ -199,11 +199,11 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, sta
                 })).map((item, idx) => {
                     const itemImg = item.img || item.img_url || item.image_url;
                     return (
-                        <div key={idx} className="flex items-center gap-3.5 bg-[#1C1C1C]/80 border border-white/5 p-3 rounded-2xl text-sm shadow-sm group/item">
+                        <div key={idx} className="flex items-center gap-3.5 bg-[#1A1A1C]/80 border border-white/5 p-3 rounded-2xl text-sm shadow-sm group/item">
                             {itemImg ? (
                                 <img src={itemImg} alt={item.name} className="w-12 h-12 rounded-xl object-cover shrink-0 border border-[#D4AF37]/30 shadow-md group-hover/item:scale-105 transition-all" />
                             ) : (
-                                <span className="bg-[#161616] border border-[#D4AF37]/40 text-[#D4AF37] font-black w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-sm shadow-sm">
+                                <span className="bg-[#121213] border border-[#D4AF37]/40 text-[#D4AF37] font-black w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-sm shadow-sm">
                                     {item.quantity}
                                 </span>
                             )}
@@ -225,7 +225,7 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, sta
             </div>
 
             {/* Caixa de Total / Método de Pagamento */}
-            <div className="mb-4 bg-[#1C1C1C]/80 border border-white/5 p-3 rounded-2xl flex justify-between items-center text-xs">
+            <div className="mb-4 bg-[#1A1A1C]/80 border border-white/5 p-3 rounded-2xl flex justify-between items-center text-xs">
                 <div>
                     <span className="text-[10px] text-gray-400 block uppercase font-bold tracking-widest">Total Estimado</span>
                     <span className="text-lg font-serif font-black text-[#D4AF37] leading-none">
@@ -279,11 +279,11 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, sta
                         >
                             <ChefHat size={16} /> Atribuir Chef
                         </button>
-                        <button onClick={() => onStatusChange(order.id, 'cancelled', 'Cancelado pela Cozinha')} className="w-12 h-12 bg-[#1C1C1C] border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Cancelar Pedido">
+                        <button onClick={() => onStatusChange(order.id, 'cancelled', 'Cancelado pela Cozinha')} className="w-12 h-12 bg-[#1A1A1C] border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Cancelar Pedido">
                             <XCircle size={18} />
                         </button>
                         {enablePrint && (
-                            <button onClick={() => onPrint(order)} className="w-12 h-12 bg-[#1C1C1C] border border-white/10 hover:border-[#D4AF37]/50 hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Imprimir">
+                            <button onClick={() => onPrint(order)} className="w-12 h-12 bg-[#1A1A1C] border border-white/10 hover:border-[#D4AF37]/50 hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Imprimir">
                                 <Printer size={18} />
                             </button>
                         )}
@@ -299,11 +299,11 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, sta
                             >
                                 <CheckCircle size={16} /> Pronto p/ Servir
                             </button>
-                            <button onClick={() => onStatusChange(order.id, 'cancelled', 'Cancelado pela Cozinha')} className="w-12 h-12 bg-[#1C1C1C] border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Cancelar Pedido">
+                            <button onClick={() => onStatusChange(order.id, 'cancelled', 'Cancelado pela Cozinha')} className="w-12 h-12 bg-[#1A1A1C] border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Cancelar Pedido">
                                 <XCircle size={18} />
                             </button>
                             {enablePrint && (
-                                <button onClick={() => onPrint(order)} className="w-12 h-12 bg-[#1C1C1C] border border-white/10 hover:border-emerald-500/50 hover:bg-emerald-500/10 hover:text-emerald-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Imprimir">
+                                <button onClick={() => onPrint(order)} className="w-12 h-12 bg-[#1A1A1C] border border-white/10 hover:border-emerald-500/50 hover:bg-emerald-500/10 hover:text-emerald-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Imprimir">
                                     <Printer size={18} />
                                 </button>
                             )}
@@ -332,7 +332,7 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, sta
                                     </button>
 
                                     {showChefDropdown && (
-                                        <div className="absolute right-0 bottom-7 bg-[#1C1C1C] border border-white/10 rounded-xl shadow-2xl p-2 z-[999] min-w-[155px] animate-in slide-in-from-bottom-2 duration-200">
+                                        <div className="absolute right-0 bottom-7 bg-[#1A1A1C] border border-white/10 rounded-xl shadow-2xl p-2 z-[999] min-w-[155px] animate-in slide-in-from-bottom-2 duration-200">
                                             <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest px-2 py-1 mb-1 border-b border-white/5 text-center">Selecionar Chef</p>
                                             <div className="max-h-[140px] overflow-y-auto custom-scrollbar scrollbar-hide space-y-0.5">
                                                 {staffMembers.length > 0 ? (
@@ -401,12 +401,12 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, sta
                                         >
                                             <Bike size={18} /> Despachar Mota
                                         </button>
-                                        <button onClick={() => onStatusChange(order.id, 'cancelled', 'Cancelado pela Cozinha')} className="w-12 h-12 bg-[#1C1C1C] border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Cancelar Pedido">
+                                        <button onClick={() => onStatusChange(order.id, 'cancelled', 'Cancelado pela Cozinha')} className="w-12 h-12 bg-[#1A1A1C] border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Cancelar Pedido">
                                             <XCircle size={20} />
                                         </button>
                                     </div>
                                 ) : (
-                                    <div className="bg-[#1C1C1C] p-4 rounded-2xl border border-cyan-500/30 animate-in zoom-in-95 duration-200">
+                                    <div className="bg-[#1A1A1C] p-4 rounded-2xl border border-cyan-500/30 animate-in zoom-in-95 duration-200">
                                         <p className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest mb-2 text-center">Atribuir Estafeta & Tempo</p>
                                         
                                         <div className="space-y-2 mb-3 pt-1 border-b border-white/5 pb-3">
@@ -508,11 +508,11 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, sta
                                     </div>
                                     <span className="text-xs sm:text-sm tracking-wide font-black">Finalizar Pedido (Entregue)</span>
                                 </button>
-                                <button onClick={() => onStatusChange(order.id, 'cancelled', 'Cancelado pela Cozinha')} className="w-12 h-12 bg-[#1C1C1C] border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Cancelar Pedido">
+                                <button onClick={() => onStatusChange(order.id, 'cancelled', 'Cancelado pela Cozinha')} className="w-12 h-12 bg-[#1A1A1C] border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Cancelar Pedido">
                                     <XCircle size={20} />
                                 </button>
                                 {enablePrint && (
-                                    <button onClick={() => onPrint(order)} className="w-12 h-12 bg-[#1C1C1C] border border-white/10 hover:border-blue-500/50 hover:bg-blue-500/10 hover:text-blue-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Imprimir">
+                                    <button onClick={() => onPrint(order)} className="w-12 h-12 bg-[#1A1A1C] border border-white/10 hover:border-blue-500/50 hover:bg-blue-500/10 hover:text-blue-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Imprimir">
                                         <Printer size={20} />
                                     </button>
                                 )}
@@ -532,11 +532,11 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, sta
                             </div>
                             <span className="text-xs sm:text-sm tracking-wide font-black">Finalizar Pedido (Entregue)</span>
                         </button>
-                        <button onClick={() => onStatusChange(order.id, 'cancelled', 'Cancelado pela Cozinha')} className="w-12 h-12 bg-[#1C1C1C] border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Cancelar Pedido">
+                        <button onClick={() => onStatusChange(order.id, 'cancelled', 'Cancelado pela Cozinha')} className="w-12 h-12 bg-[#1A1A1C] border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Cancelar Pedido">
                             <XCircle size={20} />
                         </button>
                         {enablePrint && (
-                            <button onClick={() => onPrint(order)} className="w-12 h-12 bg-[#1C1C1C] border border-white/10 hover:border-blue-500/50 hover:bg-blue-500/10 hover:text-blue-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Imprimir">
+                            <button onClick={() => onPrint(order)} className="w-12 h-12 bg-[#1A1A1C] border border-white/10 hover:border-blue-500/50 hover:bg-blue-500/10 hover:text-blue-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Imprimir">
                                 <Printer size={20} />
                             </button>
                         )}
@@ -562,7 +562,7 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, sta
                             >
                                 🔔 Estafeta Chegou
                             </button>
-                            <button onClick={() => onStatusChange(order.id, 'cancelled', 'Cancelado pela Cozinha')} className="w-12 h-12 bg-[#1C1C1C] border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Cancelar Pedido">
+                            <button onClick={() => onStatusChange(order.id, 'cancelled', 'Cancelado pela Cozinha')} className="w-12 h-12 bg-[#1A1A1C] border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Cancelar Pedido">
                                 <XCircle size={20} />
                             </button>
                         </div>
@@ -583,7 +583,7 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, sta
                             >
                                 <CheckCircle size={16} /> Entregue c/ Sucesso (Pago)
                             </button>
-                            <button onClick={() => onStatusChange(order.id, 'cancelled', 'Cancelado pela Cozinha')} className="w-12 h-12 bg-[#1C1C1C] border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Cancelar Pedido">
+                            <button onClick={() => onStatusChange(order.id, 'cancelled', 'Cancelado pela Cozinha')} className="w-12 h-12 bg-[#1A1A1C] border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 text-gray-400 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0" title="Cancelar Pedido">
                                 <XCircle size={20} />
                             </button>
                         </div>
@@ -912,7 +912,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs transition-all border cursor-pointer active:scale-95 ${
                             isAudioEnabled 
                                 ? 'bg-green-950/40 text-green-400 border-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.2)]' 
-                                : 'bg-[#161616] text-gray-400 border-white/5 hover:border-white/20'
+                                : 'bg-[#121213] text-gray-400 border-white/5 hover:border-white/20'
                         }`}
                         title="Alternar alertas sonoros"
                     >
@@ -925,7 +925,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs transition-all border cursor-pointer active:scale-95 ${
                             isBluetoothReady && printerService.type === 'bluetooth'
                                 ? 'bg-[#D4AF37]/20 text-[#D4AF37] border-[#D4AF37]/50 shadow-[0_0_20px_rgba(212,175,55,0.3)]' 
-                                : 'bg-[#161616] text-gray-400 border-white/5 hover:border-white/20'
+                                : 'bg-[#121213] text-gray-400 border-white/5 hover:border-white/20'
                         }`}
                         title="Conectar impressora Bluetooth"
                     >
@@ -938,7 +938,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs transition-all border cursor-pointer active:scale-95 ${
                             isBluetoothReady && printerService.type === 'usb'
                                 ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50 shadow-[0_0_20px_rgba(6,182,212,0.3)]' 
-                                : 'bg-[#161616] text-gray-400 border-white/5 hover:border-white/20'
+                                : 'bg-[#121213] text-gray-400 border-white/5 hover:border-white/20'
                         }`}
                         title="Conectar impressora USB"
                     >
@@ -951,7 +951,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs transition-all border cursor-pointer active:scale-95 ${
                             isBluetoothReady && printerService.type === 'network'
                                 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.3)]' 
-                                : 'bg-[#161616] text-gray-400 border-white/5 hover:border-white/20'
+                                : 'bg-[#121213] text-gray-400 border-white/5 hover:border-white/20'
                         }`}
                         title="Conectar impressora de Rede (IP)"
                     >
@@ -974,7 +974,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs transition-all border cursor-pointer active:scale-95 ${
                             autoPrint 
                                 ? 'bg-purple-500/20 text-purple-300 border-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.3)]' 
-                                : 'bg-[#161616] text-gray-400 border-white/5 hover:border-white/20'
+                                : 'bg-[#121213] text-gray-400 border-white/5 hover:border-white/20'
                         }`}
                         title="Impressão automática de novos pedidos"
                     >
@@ -986,7 +986,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs transition-all border cursor-pointer active:scale-95 ${
                             selectedCategories.length > 0
                                 ? 'bg-orange-500/20 text-orange-300 border-orange-500/50 shadow-[0_0_20px_rgba(249,115,22,0.3)]' 
-                                : 'bg-[#161616] text-gray-400 border-white/5 hover:border-white/20'
+                                : 'bg-[#121213] text-gray-400 border-white/5 hover:border-white/20'
                         }`}
                         title="Configurar categorias de pratos visíveis neste KDS"
                     >
@@ -998,7 +998,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
 
             {/* 3 Top Dash Cards (Estatísticas Premium em Noir & Gold) */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-6">
-                <div className="bg-[#161616]/90 border border-[#D4AF37]/30 rounded-[2.5rem] p-6 shadow-2xl relative overflow-hidden group">
+                <div className="bg-[#121213]/90 border border-[#D4AF37]/30 rounded-[2.5rem] p-6 shadow-2xl relative overflow-hidden group">
                     <div className="absolute -right-10 -top-10 w-28 h-28 rounded-full bg-[#D4AF37]/10 blur-[40px] group-hover:bg-[#D4AF37]/20 transition-all duration-700"></div>
                     <div className="flex justify-between items-start mb-2 relative z-10">
                         <span className="text-xs uppercase font-extrabold tracking-widest text-[#D4AF37] flex items-center gap-2">
@@ -1013,7 +1013,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                     <p className="text-xs text-gray-400 mt-2 font-medium relative z-10">Todos os pedidos processados hoje</p>
                 </div>
 
-                <div className="bg-[#161616]/90 border border-cyan-500/30 rounded-[2.5rem] p-6 shadow-2xl relative overflow-hidden group">
+                <div className="bg-[#121213]/90 border border-cyan-500/30 rounded-[2.5rem] p-6 shadow-2xl relative overflow-hidden group">
                     <div className="absolute -right-10 -top-10 w-28 h-28 rounded-full bg-cyan-500/10 blur-[40px] group-hover:bg-cyan-500/20 transition-all duration-700"></div>
                     <div className="flex justify-between items-start mb-2 relative z-10">
                         <span className="text-xs uppercase font-extrabold tracking-widest text-cyan-400 flex items-center gap-2">
@@ -1028,7 +1028,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                     <p className="text-xs text-gray-400 mt-2 font-medium relative z-10">Em andamento na cozinha</p>
                 </div>
 
-                <div className="bg-[#161616]/90 border border-orange-500/30 rounded-[2.5rem] p-6 shadow-2xl relative overflow-hidden group">
+                <div className="bg-[#121213]/90 border border-orange-500/30 rounded-[2.5rem] p-6 shadow-2xl relative overflow-hidden group">
                     <div className="absolute -right-10 -top-10 w-28 h-28 rounded-full bg-orange-500/10 blur-[40px] group-hover:bg-orange-500/20 transition-all duration-700"></div>
                     <div className="flex justify-between items-start mb-2 relative z-10">
                         <span className="text-xs uppercase font-extrabold tracking-widest text-orange-400 flex items-center gap-2">
@@ -1047,7 +1047,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
             </div>
 
             {/* Barra de Pesquisa e Filtros */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-6 items-center justify-between bg-[#161616] border border-white/5 p-4 rounded-3xl shadow-inner">
+            <div className="flex flex-col sm:flex-row gap-4 mb-6 items-center justify-between bg-[#121213] border border-white/5 p-4 rounded-3xl shadow-inner">
                 <div className="relative w-full sm:w-80">
                     <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400"><Search size={16} /></span>
                     <input 
@@ -1055,7 +1055,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Pesquisar mesa, cliente ou prato..."
-                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-2xl pl-11 pr-4 py-3 text-sm text-white placeholder-gray-500 outline-none focus:border-[#D4AF37]/50 focus:ring-1 focus:ring-[#D4AF37]/30 transition-all"
+                        className="w-full bg-[#1A1A1C] border border-white/10 rounded-2xl pl-11 pr-4 py-3 text-sm text-white placeholder-gray-500 outline-none focus:border-[#D4AF37]/50 focus:ring-1 focus:ring-[#D4AF37]/30 transition-all"
                     />
                 </div>
                 <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
@@ -1094,7 +1094,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                 ) : (
                     <div className="flex-1 flex flex-row gap-5 h-full min-h-0 overflow-x-auto snap-x snap-mandatory pb-4 px-2 custom-scrollbar">
                         {/* Column 1: Pendentes */}
-                        <div className="w-[85vw] sm:w-[350px] lg:w-[370px] shrink-0 snap-center bg-gradient-to-b from-[#D4AF37]/25 via-[#D4AF37]/5 to-[#121212]/95 rounded-[32px] p-5 flex flex-col h-full min-h-0 border border-[#D4AF37]/40 shadow-[0_0_50px_rgba(212,175,55,0.15)] relative overflow-hidden group">
+                        <div className="w-[85vw] sm:w-[350px] lg:w-[370px] shrink-0 snap-center bg-gradient-to-b from-[#D4AF37]/25 via-[#D4AF37]/5 to-[#0A0A0B]/95 rounded-[32px] p-5 flex flex-col h-full min-h-0 border border-[#D4AF37]/40 shadow-[0_0_50px_rgba(212,175,55,0.15)] relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 blur-[50px] rounded-full -mr-16 -mt-16 group-hover:bg-yellow-500/20 transition-all duration-700"></div>
                             <div className="flex items-center justify-between mb-5 z-10">
                                 <div className="flex items-center gap-2 text-[#D4AF37] font-bold uppercase tracking-wider text-xs">
@@ -1114,7 +1114,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                         </div>
 
                         {/* Column 2: Preparando */}
-                        <div className="w-[85vw] sm:w-[350px] lg:w-[370px] shrink-0 snap-center bg-gradient-to-b from-[#E67E22]/25 via-[#E67E22]/5 to-[#121212]/95 rounded-[32px] p-5 flex flex-col h-full min-h-0 border border-[#E67E22]/40 shadow-[0_0_50px_rgba(230,126,34,0.15)] relative overflow-hidden group">
+                        <div className="w-[85vw] sm:w-[350px] lg:w-[370px] shrink-0 snap-center bg-gradient-to-b from-[#E67E22]/25 via-[#E67E22]/5 to-[#0A0A0B]/95 rounded-[32px] p-5 flex flex-col h-full min-h-0 border border-[#E67E22]/40 shadow-[0_0_50px_rgba(230,126,34,0.15)] relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-[50px] rounded-full -mr-16 -mt-16 group-hover:bg-orange-500/20 transition-all duration-700"></div>
                             <div className="flex items-center justify-between mb-5 z-10">
                                 <div className="flex items-center gap-2 text-[#E67E22] font-bold uppercase tracking-wider text-xs">
@@ -1134,7 +1134,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                         </div>
 
                         {/* Column 3: Prontos */}
-                        <div className="w-[85vw] sm:w-[350px] lg:w-[370px] shrink-0 snap-center bg-gradient-to-b from-[#2ECC71]/25 via-[#2ECC71]/5 to-[#121212]/95 rounded-[32px] p-5 flex flex-col h-full min-h-0 border border-[#2ECC71]/40 shadow-[0_0_50px_rgba(46,204,113,0.15)] relative overflow-hidden group">
+                        <div className="w-[85vw] sm:w-[350px] lg:w-[370px] shrink-0 snap-center bg-gradient-to-b from-[#2ECC71]/25 via-[#2ECC71]/5 to-[#0A0A0B]/95 rounded-[32px] p-5 flex flex-col h-full min-h-0 border border-[#2ECC71]/40 shadow-[0_0_50px_rgba(46,204,113,0.15)] relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 blur-[50px] rounded-full -mr-16 -mt-16 group-hover:bg-green-500/20 transition-all duration-700"></div>
                             <div className="flex items-center justify-between mb-5 z-10">
                                 <div className="flex items-center gap-2 text-[#2ECC71] font-bold uppercase tracking-wider text-xs">
@@ -1154,7 +1154,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                         </div>
 
                         {/* Column 4: Entregues & Concluídos */}
-                        <div className="w-[85vw] sm:w-[350px] lg:w-[370px] shrink-0 snap-center bg-gradient-to-b from-blue-500/25 via-blue-500/5 to-[#121212]/95 rounded-[32px] p-5 flex flex-col h-full min-h-0 border border-blue-500/40 shadow-[0_0_50px_rgba(59,130,246,0.15)] relative overflow-hidden group">
+                        <div className="w-[85vw] sm:w-[350px] lg:w-[370px] shrink-0 snap-center bg-gradient-to-b from-blue-500/25 via-blue-500/5 to-[#0A0A0B]/95 rounded-[32px] p-5 flex flex-col h-full min-h-0 border border-blue-500/40 shadow-[0_0_50px_rgba(59,130,246,0.15)] relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-[50px] rounded-full -mr-16 -mt-16 group-hover:bg-blue-500/20 transition-all duration-700"></div>
                             <div className="flex items-center justify-between mb-5 z-10">
                                 <div className="flex items-center gap-2 text-blue-400 font-bold uppercase tracking-wider text-xs">
@@ -1185,7 +1185,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
 
                 {/* Painel Lateral Flutuante de IA ("Dicas de Tomada de Decisão") */}
                 {showAIPanel && (
-                    <div className="absolute right-0 top-0 bottom-0 w-full sm:w-[380px] bg-[#121212]/95 backdrop-blur-3xl border-l border-[#D4AF37]/30 p-6 shadow-[0_0_60px_rgba(0,0,0,0.8)] z-50 flex flex-col animate-in slide-in-from-right duration-500">
+                    <div className="absolute right-0 top-0 bottom-0 w-full sm:w-[380px] bg-[#0A0A0B]/95 backdrop-blur-3xl border-l border-[#D4AF37]/30 p-6 shadow-[0_0_60px_rgba(0,0,0,0.8)] z-50 flex flex-col animate-in slide-in-from-right duration-500">
                         <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
                             <div className="flex items-center gap-2.5">
                                 <div className="bg-[#D4AF37] p-2 rounded-xl text-black shadow-[0_0_15px_rgba(212,175,55,0.5)]">
@@ -1205,7 +1205,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                         </div>
 
                         <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar">
-                            <div className="bg-[#1C1C1C] border border-[#D4AF37]/30 rounded-3xl p-5 shadow-lg relative overflow-hidden group">
+                            <div className="bg-[#1A1A1C] border border-[#D4AF37]/30 rounded-3xl p-5 shadow-lg relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-24 h-24 bg-[#D4AF37]/10 blur-2xl rounded-full -mr-10 -mt-10"></div>
                                 <div className="flex items-center gap-2 mb-2">
                                     <span className="text-base">💡</span>
@@ -1220,7 +1220,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                                 </div>
                             </div>
 
-                            <div className="bg-[#1C1C1C] border border-cyan-500/30 rounded-3xl p-5 shadow-lg relative overflow-hidden group">
+                            <div className="bg-[#1A1A1C] border border-cyan-500/30 rounded-3xl p-5 shadow-lg relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 blur-2xl rounded-full -mr-10 -mt-10"></div>
                                 <div className="flex items-center gap-2 mb-2">
                                     <span className="text-base">⚡</span>
@@ -1235,7 +1235,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                                 </div>
                             </div>
 
-                            <div className="bg-[#1C1C1C] border border-orange-500/30 rounded-3xl p-5 shadow-lg relative overflow-hidden group">
+                            <div className="bg-[#1A1A1C] border border-orange-500/30 rounded-3xl p-5 shadow-lg relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/10 blur-2xl rounded-full -mr-10 -mt-10"></div>
                                 <div className="flex items-center gap-2 mb-2">
                                     <span className="text-base">🎯</span>
@@ -1277,7 +1277,7 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
         {/* Modal de Configuração de Estação KDS */}
         {showStationModal && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
-                <div className="bg-[#161616] border border-[#D4AF37]/30 rounded-[2.5rem] w-full max-w-md p-6 sm:p-8 shadow-2xl relative">
+                <div className="bg-[#121213] border border-[#D4AF37]/30 rounded-[2.5rem] w-full max-w-md p-6 sm:p-8 shadow-2xl relative">
                     <button 
                         onClick={() => setShowStationModal(false)}
                         className="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all cursor-pointer"

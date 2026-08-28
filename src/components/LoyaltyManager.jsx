@@ -246,7 +246,7 @@ const LoyaltyManager = ({ restaurantId }) => {
                     <button
                         onClick={() => setConfig(prev => ({ ...prev, is_active: !prev.is_active }))}
                         className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-300 cursor-pointer p-1 border border-white/20 ${
-                            config.is_active ? 'bg-gradient-to-r from-[#F5C542] to-[#D4AF37] shadow-[0_0_20px_#D4AF37]' : 'bg-gray-700'
+                            config.is_active ? 'bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] shadow-[0_0_20px_#D4AF37]' : 'bg-gray-700'
                         }`}
                     >
                         <span className={`inline-block h-6 w-6 transform rounded-full bg-black shadow-md transition-transform duration-300 ${
@@ -260,7 +260,7 @@ const LoyaltyManager = ({ restaurantId }) => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                 
                 {/* Column 1: Evolução de Pontos & Recompensas */}
-                <div className="bg-gradient-to-br from-[#1A1A1A]/95 via-[#161616]/95 to-[#121212]/95 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-7 shadow-2xl relative overflow-hidden flex flex-col justify-between">
+                <div className="bg-gradient-to-br from-[#1A1A1A]/95 via-[#121213]/95 to-[#0A0A0B]/95 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-7 shadow-2xl relative overflow-hidden flex flex-col justify-between">
                     <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/5 blur-[60px] rounded-full -mr-16 -mt-16 pointer-events-none" />
 
                     <div className="flex flex-col gap-4 pb-6 border-b border-white/5 relative z-10">
@@ -276,7 +276,7 @@ const LoyaltyManager = ({ restaurantId }) => {
                         {/* Screenshot Legend */}
                         <div className="flex flex-wrap items-center gap-6 text-xs text-gray-300">
                             <div className="flex items-center gap-2">
-                                <span className="w-3.5 h-3.5 rounded bg-[#F5C542] shadow-[0_0_10px_#F5C542]" />
+                                <span className="w-3.5 h-3.5 rounded bg-[#D4AF37] shadow-[0_0_10px_#D4AF37]" />
                                 <div>
                                     <span className="font-bold text-white">Pontos Ganhos</span>
                                     <span className="block text-[10px] text-gray-500">(Total de pontos ganhado)</span>
@@ -312,10 +312,10 @@ const LoyaltyManager = ({ restaurantId }) => {
                     {/* Chart Container */}
                     <div className="h-[360px] w-full pt-6 relative z-10">
                         {/* Callout Annotations matching screenshot */}
-                        <div className="absolute top-16 left-28 z-20 text-[10px] font-mono font-bold text-[#F5C542] -rotate-12 pointer-events-none drop-shadow-[0_0_8px_#F5C542] flex items-center gap-1">
+                        <div className="absolute top-16 left-28 z-20 text-[10px] font-mono font-bold text-[#D4AF37] -rotate-12 pointer-events-none drop-shadow-[0_0_8px_#D4AF37] flex items-center gap-1">
                             <span>↗ Growth as leads</span>
                         </div>
-                        <div className="absolute top-10 right-20 z-20 text-[10px] font-mono font-bold text-[#F5C542] -rotate-12 pointer-events-none drop-shadow-[0_0_8px_#F5C542] flex items-center gap-1">
+                        <div className="absolute top-10 right-20 z-20 text-[10px] font-mono font-bold text-[#D4AF37] -rotate-12 pointer-events-none drop-shadow-[0_0_8px_#D4AF37] flex items-center gap-1">
                             <span>↗ Growth of retention</span>
                         </div>
 
@@ -323,8 +323,8 @@ const LoyaltyManager = ({ restaurantId }) => {
                             <AreaChart data={evolutionData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="goldGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#F5C542" stopOpacity={0.6} />
-                                        <stop offset="95%" stopColor="#F5C542" stopOpacity={0} />
+                                        <stop offset="5%" stopColor="#D4AF37" stopOpacity={0.6} />
+                                        <stop offset="95%" stopColor="#D4AF37" stopOpacity={0} />
                                     </linearGradient>
                                     <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.5} />
@@ -335,7 +335,7 @@ const LoyaltyManager = ({ restaurantId }) => {
                                 <YAxis stroke="#666" fontSize={11} tickLine={false} axisLine={false} />
                                 <Tooltip 
                                     contentStyle={{ 
-                                        backgroundColor: '#121212', 
+                                        backgroundColor: '#0A0A0B', 
                                         borderColor: '#D4AF37', 
                                         borderRadius: '16px', 
                                         boxShadow: '0 10px 30px rgba(0,0,0,0.8)' 
@@ -354,7 +354,7 @@ const LoyaltyManager = ({ restaurantId }) => {
                                 <Area 
                                     type="monotone" 
                                     dataKey="pontos" 
-                                    stroke="#F5C542" 
+                                    stroke="#D4AF37" 
                                     strokeWidth={4}
                                     fillOpacity={1} 
                                     fill="url(#goldGradient)" 
@@ -389,7 +389,7 @@ const LoyaltyManager = ({ restaurantId }) => {
                         {/* Phone Content */}
                         <div className="flex-1 flex flex-col justify-center space-y-6">
                             {/* VIP Card matching screenshot */}
-                            <div className="bg-gradient-to-br from-[#1C1C1C] to-[#121212] rounded-3xl p-6 border border-[#D4AF37]/50 shadow-[0_0_30px_rgba(212,175,55,0.15)] relative overflow-hidden group">
+                            <div className="bg-gradient-to-br from-[#1A1A1C] to-[#0A0A0B] rounded-3xl p-6 border border-[#D4AF37]/50 shadow-[0_0_30px_rgba(212,175,55,0.15)] relative overflow-hidden group">
                                 <div className="absolute -top-12 -right-12 w-32 h-32 bg-[#D4AF37]/10 rounded-full blur-xl pointer-events-none" />
 
                                 <div className="flex justify-between items-start mb-6">
@@ -413,7 +413,7 @@ const LoyaltyManager = ({ restaurantId }) => {
                                                 key={idx} 
                                                 className={`aspect-square rounded-2xl flex items-center justify-center text-xs font-black transition-all ${
                                                     isCompleted 
-                                                        ? 'bg-gradient-to-br from-[#F5C542] to-[#D4AF37] text-gray-950 font-black shadow-[0_0_15px_#D4AF37] scale-105 rotate-3' 
+                                                        ? 'bg-gradient-to-br from-[#D4AF37] to-[#D4AF37] text-gray-950 font-black shadow-[0_0_15px_#D4AF37] scale-105 rotate-3' 
                                                         : 'bg-black/60 border border-white/15 text-gray-500'
                                                 }`}
                                             >
@@ -441,7 +441,7 @@ const LoyaltyManager = ({ restaurantId }) => {
                     </div>
 
                     {/* Integrated Configuration Control Box */}
-                    <div className="w-full bg-[#161616]/90 backdrop-blur-xl border border-[#D4AF37]/30 rounded-[2.5rem] p-6 shadow-xl space-y-4">
+                    <div className="w-full bg-[#121213]/90 backdrop-blur-xl border border-[#D4AF37]/30 rounded-[2.5rem] p-6 shadow-xl space-y-4">
                         <div className="flex items-center justify-between pb-3 border-b border-white/5">
                             <span className="text-xs font-black uppercase tracking-widest text-[#D4AF37] flex items-center gap-2">
                                 <Sliders size={16} /> Ajustar Regras VIP
@@ -478,7 +478,7 @@ const LoyaltyManager = ({ restaurantId }) => {
                         <button
                             onClick={handleSave}
                             disabled={saving}
-                            className="w-full py-3.5 bg-gradient-to-r from-[#F5C542] via-[#EAC775] to-[#D4AF37] text-black font-black text-xs uppercase tracking-widest rounded-xl hover:brightness-110 active:scale-95 transition-all shadow-[0_0_25px_rgba(212,175,55,0.4)] flex items-center justify-center gap-2 cursor-pointer"
+                            className="w-full py-3.5 bg-gradient-to-r from-[#D4AF37] via-[#F9E6A2] to-[#D4AF37] text-black font-black text-xs uppercase tracking-widest rounded-xl hover:brightness-110 active:scale-95 transition-all shadow-[0_0_25px_rgba(212,175,55,0.4)] flex items-center justify-center gap-2 cursor-pointer"
                         >
                             {saving ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
                             <span>Guardar Configurações</span>
@@ -490,7 +490,7 @@ const LoyaltyManager = ({ restaurantId }) => {
                 <div className="space-y-8">
                     
                     {/* Donut Chart Card matching screenshot exactly */}
-                    <div className="bg-gradient-to-br from-[#1A1A1A]/95 via-[#161616]/95 to-[#121212]/95 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-7 shadow-2xl relative overflow-hidden flex flex-col justify-between">
+                    <div className="bg-gradient-to-br from-[#1A1A1A]/95 via-[#121213]/95 to-[#0A0A0B]/95 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-7 shadow-2xl relative overflow-hidden flex flex-col justify-between">
                         <div className="flex items-center justify-between pb-4 border-b border-white/5 mb-6">
                             <h3 className="text-xl font-serif font-black text-white tracking-wide">
                                 Distribuição de Nível VIP
@@ -519,7 +519,7 @@ const LoyaltyManager = ({ restaurantId }) => {
                                         outerRadius={105}
                                         paddingAngle={4}
                                         dataKey="value"
-                                        stroke="#121212"
+                                        stroke="#0A0A0B"
                                         strokeWidth={3}
                                     >
                                         {vipDistribution.map((entry, index) => (
@@ -527,7 +527,7 @@ const LoyaltyManager = ({ restaurantId }) => {
                                         ))}
                                     </Pie>
                                     <Tooltip 
-                                        contentStyle={{ backgroundColor: '#161616', borderColor: '#D4AF37', borderRadius: '12px' }}
+                                        contentStyle={{ backgroundColor: '#121213', borderColor: '#D4AF37', borderRadius: '12px' }}
                                         itemStyle={{ color: '#fff', fontWeight: 'bold' }}
                                     />
                                 </PieChart>
@@ -549,7 +549,7 @@ const LoyaltyManager = ({ restaurantId }) => {
                     </div>
 
                     {/* Screenshot AI Floating Drawer: Dicas de Tomada de Decisão */}
-                    <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#161616]/95 to-[#101010]/95 backdrop-blur-xl border border-[#D4AF37]/40 rounded-[2.5rem] p-7 shadow-[0_0_40px_rgba(212,175,55,0.2)] relative overflow-hidden group">
+                    <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#121213]/95 to-[#101010]/95 backdrop-blur-xl border border-[#D4AF37]/40 rounded-[2.5rem] p-7 shadow-[0_0_40px_rgba(212,175,55,0.2)] relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/10 blur-[60px] rounded-full -mr-16 -mt-16 pointer-events-none" />
 
                         <div className="flex items-center justify-between pb-5 mb-6 border-b border-white/10 relative z-10">
@@ -599,7 +599,7 @@ const LoyaltyManager = ({ restaurantId }) => {
         </div>
 
             {/* NOVO: Painel de Automação & Campanhas WhatsApp */}
-            <div className="bg-gradient-to-br from-[#1A1A1A]/95 via-[#161616]/95 to-[#121212]/95 backdrop-blur-xl border border-[#D4AF37]/30 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden mt-8">
+            <div className="bg-gradient-to-br from-[#1A1A1A]/95 via-[#121213]/95 to-[#0A0A0B]/95 backdrop-blur-xl border border-[#D4AF37]/30 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden mt-8">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/5 blur-[70px] rounded-full pointer-events-none" />
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10 mb-8 relative z-10">
@@ -621,7 +621,7 @@ const LoyaltyManager = ({ restaurantId }) => {
                             onClick={() => setActiveTab('inactive')}
                             className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 ${
                                 activeTab === 'inactive'
-                                    ? 'bg-gradient-to-r from-[#F5C542] to-[#D4AF37] text-black shadow-lg font-black'
+                                    ? 'bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] text-black shadow-lg font-black'
                                     : 'text-gray-400 hover:text-white'
                             }`}
                         >
@@ -636,7 +636,7 @@ const LoyaltyManager = ({ restaurantId }) => {
                             onClick={() => setActiveTab('nearReward')}
                             className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 ${
                                 activeTab === 'nearReward'
-                                    ? 'bg-gradient-to-r from-[#F5C542] to-[#D4AF37] text-black shadow-lg font-black'
+                                    ? 'bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] text-black shadow-lg font-black'
                                     : 'text-gray-400 hover:text-white'
                             }`}
                         >
@@ -802,9 +802,9 @@ const LoyaltyManager = ({ restaurantId }) => {
             {/* Modal de Disparo WhatsApp de Alta Fidelidade */}
             {campaignModal.isOpen && campaignModal.customer && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[999] animate-in fade-in duration-300">
-                    <div className="bg-[#121212] border border-[#D4AF37]/50 rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-[0_0_50px_rgba(212,175,55,0.3)] flex flex-col relative animate-in zoom-in-95 duration-300">
+                    <div className="bg-[#0A0A0B] border border-[#D4AF37]/50 rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-[0_0_50px_rgba(212,175,55,0.3)] flex flex-col relative animate-in zoom-in-95 duration-300">
                         {/* Modal Header */}
-                        <div className="p-6 bg-gradient-to-b from-[#1C1C1C] to-black border-b border-white/5 flex items-center justify-between">
+                        <div className="p-6 bg-gradient-to-b from-[#1A1A1C] to-black border-b border-white/5 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/30 text-emerald-400">
                                     <MessageSquare size={20} className="stroke-[2]" />

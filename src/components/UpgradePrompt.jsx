@@ -17,7 +17,7 @@ const UpgradePrompt = ({ title, requiredPlan = "Business", features = [] }) => {
     };
 
     return (
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-8 sm:p-12 bg-[#121212] rounded-3xl shadow-2xl border border-white/5 text-center max-w-3xl mx-auto my-8 mt-12 mb-12 transform transition-all duration-500 hover:shadow-[0_0_40px_rgba(212,175,55,0.15)] group">
+        <div className="relative overflow-hidden flex flex-col items-center justify-center p-8 sm:p-12 bg-[#0A0A0B] rounded-3xl shadow-2xl border border-white/5 text-center max-w-3xl mx-auto my-8 mt-12 mb-12 transform transition-all duration-500 hover:shadow-[0_0_40px_rgba(212,175,55,0.15)] group">
 
             {/* Ambient Background Effects */}
             <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#D4AF37]/10 blur-[120px] pointer-events-none group-hover:bg-[#D4AF37]/20 transition-all duration-700"></div>

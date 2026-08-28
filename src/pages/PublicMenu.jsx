@@ -797,7 +797,7 @@ const PublicMenuInner = ({
 
                 {showRecentOrders && (
                     <div className="absolute inset-0 z-[2000] bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-300">
-                        <div className="w-full max-w-sm bg-[#121212] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl animate-in slide-in-from-bottom-10 duration-500">
+                        <div className="w-full max-w-sm bg-[#0A0A0B] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl animate-in slide-in-from-bottom-10 duration-500">
                             <div className="p-6">
                                 <div className="flex justify-between items-center mb-6">
                                     <h3 className="text-xl font-serif font-bold text-white">Os Meus Pedidos 🌶️</h3>
@@ -881,7 +881,7 @@ const PublicMenuInner = ({
 
                     {showInfo && (
                         <div className="absolute inset-0 z-[2000] bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-300">
-                            <div className="w-full max-w-sm bg-[#121212] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl animate-in slide-in-from-bottom-10 duration-500">
+                            <div className="w-full max-w-sm bg-[#0A0A0B] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl animate-in slide-in-from-bottom-10 duration-500">
                                 <div className="p-6">
                                     <div className="flex justify-between items-center mb-6">
                                         <h3 className="text-xl font-serif font-bold text-white">{t('aboutRestaurant')}</h3>

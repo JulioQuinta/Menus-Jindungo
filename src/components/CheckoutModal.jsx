@@ -475,7 +475,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                         icon: '🔌',
                         duration: 8000,
                         style: {
-                            background: '#161616',
+                            background: '#121213',
                             color: '#fff',
                             borderRadius: '20px',
                             border: '1px solid #D4AF37',
@@ -699,7 +699,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                         icon: '🛎️',
                         duration: 6000,
                         style: {
-                            background: '#161616',
+                            background: '#121213',
                             color: '#fff',
                             borderRadius: '20px',
                             border: '1px solid rgba(212, 175, 55, 0.4)',
@@ -717,7 +717,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                     icon: '⚠️',
                     duration: 5000,
                     style: {
-                        background: '#161616',
+                        background: '#121213',
                         color: '#fff',
                         borderRadius: '20px',
                         border: '1px solid rgba(239, 68, 68, 0.4)',

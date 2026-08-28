@@ -207,7 +207,7 @@ const OrderTrackerPage = () => {
 
             // Refined golden toasts
             const toastStyle = {
-                background: '#161616',
+                background: '#121213',
                 color: '#fff',
                 borderRadius: '20px',
                 border: `1px solid ${PRIMARY_GOLD}`,
@@ -439,7 +439,7 @@ const OrderTrackerPage = () => {
                 </div>
 
                 {/* Primary Status Card */}
-                <div className="bg-[#121212]/95 border border-white/10 rounded-[32px] p-6 shadow-2xl backdrop-blur-2xl relative overflow-hidden">
+                <div className="bg-[#0A0A0B]/95 border border-white/10 rounded-[32px] p-6 shadow-2xl backdrop-blur-2xl relative overflow-hidden">
                     <div className="flex items-center justify-between pb-4 border-b border-white/5 mb-6">
                         <div>
                             <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Código do Pedido</p>
@@ -514,8 +514,8 @@ const OrderTrackerPage = () => {
                                                     isCompleted 
                                                         ? 'bg-gradient-to-br from-[#D4AF37] to-amber-500 border-amber-600 text-gray-950 shadow-[0_0_15px_rgba(212,175,55,0.4)]'
                                                         : (isActive 
-                                                            ? 'bg-[#121212] border-[#D4AF37] text-[#D4AF37] animate-pulse shadow-[0_0_12px_rgba(212,175,55,0.2)]'
-                                                            : 'bg-[#1C1C1C] border-white/10 text-gray-600')
+                                                            ? 'bg-[#0A0A0B] border-[#D4AF37] text-[#D4AF37] animate-pulse shadow-[0_0_12px_rgba(212,175,55,0.2)]'
+                                                            : 'bg-[#1A1A1C] border-white/10 text-gray-600')
                                                 }`}
                                             >
                                                 {isCompleted ? <Check size={16} strokeWidth={3.5} /> : <StageIcon size={18} />}
@@ -539,7 +539,7 @@ const OrderTrackerPage = () => {
 
                 {/* PAYMENT PENDING DETAILS (waiting_payment) */}
                 {order?.status === 'waiting_payment' && (
-                    <div className="bg-[#121212]/95 border border-[#D4AF37]/30 rounded-[32px] p-6 shadow-2xl backdrop-blur-2xl border-t-2 border-t-[#D4AF37] space-y-6 animate-in slide-in-from-bottom-6 duration-500">
+                    <div className="bg-[#0A0A0B]/95 border border-[#D4AF37]/30 rounded-[32px] p-6 shadow-2xl backdrop-blur-2xl border-t-2 border-t-[#D4AF37] space-y-6 animate-in slide-in-from-bottom-6 duration-500">
                         <div className="flex items-center gap-3 border-b border-white/5 pb-3">
                             <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37] border border-[#D4AF37]/20 shadow-[0_0_15px_rgba(212,175,55,0.1)]">
                                 <CreditCard size={20} />
@@ -623,7 +623,7 @@ const OrderTrackerPage = () => {
 
                 {/* LIVE MAP CARD */}
                 {isDelivery && ['out_for_delivery', 'arrived'].includes(order?.status) && (
-                    <div className="bg-[#121212]/95 border border-white/10 rounded-[32px] p-5 shadow-2xl backdrop-blur-2xl relative overflow-hidden animate-in slide-in-from-bottom-6 duration-500">
+                    <div className="bg-[#0A0A0B]/95 border border-white/10 rounded-[32px] p-5 shadow-2xl backdrop-blur-2xl relative overflow-hidden animate-in slide-in-from-bottom-6 duration-500">
                         {/* Golden Header */}
                         <div className="flex justify-between items-center mb-4">
                             <div>
@@ -703,11 +703,11 @@ const OrderTrackerPage = () => {
                             }
                             .premium-dark-map .leaflet-bar {
                                 border: 1px solid rgba(255,255,255,0.1) !important;
-                                background-color: #121212 !important;
+                                background-color: #0A0A0B !important;
                                 box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5) !important;
                             }
                             .premium-dark-map .leaflet-bar a {
-                                background-color: #121212 !important;
+                                background-color: #0A0A0B !important;
                                 color: #D4AF37 !important;
                                 border-bottom: 1px solid rgba(255,255,255,0.1) !important;
                             }
@@ -727,7 +727,7 @@ const OrderTrackerPage = () => {
 
                 {/* Courier Logistics Card */}
                 {isDelivery && ['out_for_delivery', 'arrived'].includes(order?.status) && (
-                    <div className="bg-[#121212]/95 border border-white/10 rounded-[28px] p-5 shadow-xl backdrop-blur-2xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-bottom-6 duration-500">
+                    <div className="bg-[#0A0A0B]/95 border border-white/10 rounded-[28px] p-5 shadow-xl backdrop-blur-2xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-bottom-6 duration-500">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 text-[#D4AF37] border border-[#D4AF37]/30 rounded-2xl flex items-center justify-center shadow-inner">
                                 <Truck size={24} className="animate-bounce" />
@@ -764,7 +764,7 @@ const OrderTrackerPage = () => {
                 )}
 
                 {/* Receipt Details Card */}
-                <div className="bg-[#121212]/95 border border-white/10 rounded-[32px] p-6 shadow-xl backdrop-blur-2xl">
+                <div className="bg-[#0A0A0B]/95 border border-white/10 rounded-[32px] p-6 shadow-xl backdrop-blur-2xl">
                     <h3 className="font-serif font-bold text-white text-base mb-4 flex items-center gap-2 border-b border-white/5 pb-3">
                         <FileText size={18} className="text-[#D4AF37]" /> Talão de Consumo Digital
                     </h3>
@@ -816,7 +816,7 @@ const OrderTrackerPage = () => {
 
                 {/* Rating & Feedback Section (Visible only when delivered/paid) */}
                 {['delivered', 'paid', 'pago'].includes(String(order?.status).toLowerCase().trim()) && (
-                    <div className="bg-[#121212]/95 border border-[#D4AF37]/30 rounded-[32px] p-6 shadow-2xl backdrop-blur-2xl relative overflow-hidden border-t-2 border-t-[#D4AF37]">
+                    <div className="bg-[#0A0A0B]/95 border border-[#D4AF37]/30 rounded-[32px] p-6 shadow-2xl backdrop-blur-2xl relative overflow-hidden border-t-2 border-t-[#D4AF37]">
                         {!isSubmitted ? (
                             <div className="space-y-4">
                                 <div className="text-center">

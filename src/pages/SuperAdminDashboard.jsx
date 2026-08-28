@@ -1370,7 +1370,7 @@ const SuperAdminDashboard = () => {
             {/* SAAS: ADD RESTAURANT MODAL */}
             {isAddModalOpen && (
                 <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200 overflow-y-auto">
-                    <div className="bg-[#161616] border border-[#E2B755]/40 rounded-[2.5rem] p-8 max-w-md w-full my-8 shadow-[0_25px_70px_rgba(0,0,0,0.9)] relative overflow-hidden">
+                    <div className="bg-[#121213] border border-[#E2B755]/40 rounded-[2.5rem] p-8 max-w-md w-full my-8 shadow-[0_25px_70px_rgba(0,0,0,0.9)] relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-[#E2B755]/10 blur-[80px] rounded-full pointer-events-none -mr-20 -mt-20" />
                         
                         <div className="text-center mb-8 relative z-10">
@@ -1417,7 +1417,7 @@ const SuperAdminDashboard = () => {
                                 >
                                     <option value="" disabled className="text-zinc-500">Selecione o utilizador responsável...</option>
                                     {usersList.map(u => (
-                                        <option key={u.id} value={u.id} className="bg-[#121212]">{u.email} ({u.role})</option>
+                                        <option key={u.id} value={u.id} className="bg-[#0A0A0B]">{u.email} ({u.role})</option>
                                     ))}
                                 </select>
                             </div>
@@ -1446,7 +1446,7 @@ const SuperAdminDashboard = () => {
             {/* SAAS: EDIT ROLE MODAL */}
             {editingUser && (
                 <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200 overflow-y-auto">
-                    <div className="bg-[#161616] border border-[#E2B755]/40 rounded-[2.5rem] p-8 max-w-md w-full my-8 shadow-[0_25px_70px_rgba(0,0,0,0.9)] relative overflow-hidden">
+                    <div className="bg-[#121213] border border-[#E2B755]/40 rounded-[2.5rem] p-8 max-w-md w-full my-8 shadow-[0_25px_70px_rgba(0,0,0,0.9)] relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-[#E2B755]/10 blur-[80px] rounded-full pointer-events-none -mr-20 -mt-20" />
                         
                         <div className="text-center mb-8 border-b border-zinc-800/80 pb-6 relative z-10">
@@ -1495,7 +1495,7 @@ const SuperAdminDashboard = () => {
             {/* SAAS: RENEW PLAN MODAL */}
             {renewModal.isOpen && renewModal.restaurant && (
                 <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200 overflow-y-auto">
-                    <div className="bg-[#161616] border border-[#E2B755]/40 rounded-[2.5rem] p-8 max-w-md w-full my-8 shadow-[0_25px_70px_rgba(0,0,0,0.9)] relative overflow-hidden">
+                    <div className="bg-[#121213] border border-[#E2B755]/40 rounded-[2.5rem] p-8 max-w-md w-full my-8 shadow-[0_25px_70px_rgba(0,0,0,0.9)] relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[80px] rounded-full pointer-events-none -mr-20 -mt-20" />
                         
                         <div className="text-center mb-8 pb-6 border-b border-zinc-800 relative z-10 font-serif">
@@ -1808,7 +1808,7 @@ const SuperAdminDashboard = () => {
             {/* SAAS: DELETE CRITICAL MODAL */}
             {deleteModal.isOpen && (
                 <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200 overflow-y-auto">
-                    <div className="bg-[#161616] border border-red-500/40 rounded-[2.5rem] p-8 max-w-md w-full my-8 shadow-[0_25px_70px_rgba(239,68,68,0.2)] relative overflow-hidden">
+                    <div className="bg-[#121213] border border-red-500/40 rounded-[2.5rem] p-8 max-w-md w-full my-8 shadow-[0_25px_70px_rgba(239,68,68,0.2)] relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/10 blur-[80px] rounded-full pointer-events-none -mr-20 -mt-20" />
                         
                         <div className="text-center mb-6 relative z-10 font-serif">

@@ -367,7 +367,7 @@ const CustomerManager = ({ restaurantId }) => {
         <div className="space-y-8 animate-in fade-in duration-500 text-white min-h-screen pb-24 relative">
             
             {/* Top Action Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#121212]/95 border border-[#2A2A2A] rounded-3xl p-6 shadow-2xl backdrop-blur-xl">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#0A0A0B]/95 border border-[#2A2A2A] rounded-3xl p-6 shadow-2xl backdrop-blur-xl">
                 <div>
                     <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-mono text-[#D4AF37] uppercase font-bold tracking-widest">Workspace</span>
@@ -391,20 +391,20 @@ const CustomerManager = ({ restaurantId }) => {
                     {restaurantId && (
                         <button
                             onClick={() => setShowGatewayModal(true)}
-                            className="bg-[#1C1C1C] hover:bg-white/10 border border-[#D4AF37]/40 text-[#D4AF37] px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 flex-1 sm:flex-none justify-center shadow-md active:scale-95 cursor-pointer"
+                            className="bg-[#1A1A1C] hover:bg-white/10 border border-[#D4AF37]/40 text-[#D4AF37] px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 flex-1 sm:flex-none justify-center shadow-md active:scale-95 cursor-pointer"
                         >
                             <Phone size={16} /> Gateway API
                         </button>
                     )}
                     <button
                         onClick={() => setShowAIPanel(!showAIPanel)}
-                        className={`border px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 flex-1 sm:flex-none justify-center shadow-md active:scale-95 cursor-pointer ${showAIPanel ? 'bg-[#D4AF37] text-black border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.5)]' : 'bg-[#1C1C1C] text-[#D4AF37] border-[#D4AF37]/40 hover:bg-[#D4AF37]/10'}`}
+                        className={`border px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 flex-1 sm:flex-none justify-center shadow-md active:scale-95 cursor-pointer ${showAIPanel ? 'bg-[#D4AF37] text-black border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.5)]' : 'bg-[#1A1A1C] text-[#D4AF37] border-[#D4AF37]/40 hover:bg-[#D4AF37]/10'}`}
                     >
                         <Sparkles size={16} /> Dicas IA {showAIPanel ? '▲' : '▼'}
                     </button>
                     <button
                         onClick={handleExportCRM}
-                        className="bg-[#1C1C1C] hover:bg-white/10 border border-white/10 text-[#D4AF37] p-3.5 rounded-2xl transition-all shadow-md active:scale-95 cursor-pointer"
+                        className="bg-[#1A1A1C] hover:bg-white/10 border border-white/10 text-[#D4AF37] p-3.5 rounded-2xl transition-all shadow-md active:scale-95 cursor-pointer"
                         title="Exportar Base Completa (CSV)"
                     >
                         <Download size={18} />
@@ -416,7 +416,7 @@ const CustomerManager = ({ restaurantId }) => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
                 {/* Top Left Big Card: "CRM & Base de Clientes" (Span 7) */}
-                <div className="lg:col-span-7 bg-[#161616]/95 border border-[#D4AF37]/30 rounded-[2.5rem] p-6 sm:p-8 shadow-[0_0_50px_rgba(212,175,55,0.1)] backdrop-blur-2xl relative overflow-hidden flex flex-col justify-between">
+                <div className="lg:col-span-7 bg-[#121213]/95 border border-[#D4AF37]/30 rounded-[2.5rem] p-6 sm:p-8 shadow-[0_0_50px_rgba(212,175,55,0.1)] backdrop-blur-2xl relative overflow-hidden flex flex-col justify-between">
                     <div className="absolute -right-16 -top-16 w-48 h-48 rounded-full bg-[#D4AF37]/10 blur-[60px] pointer-events-none"></div>
                     
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 z-10">
@@ -462,7 +462,7 @@ const CustomerManager = ({ restaurantId }) => {
                                 <XAxis dataKey="phase" stroke="#71717A" fontSize={11} tickLine={false} axisLine={{ stroke: '#2A2A2A' }} />
                                 <YAxis stroke="#71717A" fontSize={11} tickLine={false} axisLine={{ stroke: '#2A2A2A' }} />
                                 <Tooltip 
-                                    contentStyle={{ backgroundColor: '#121212', borderColor: '#D4AF37', borderRadius: '16px', color: '#fff', fontSize: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)' }}
+                                    contentStyle={{ backgroundColor: '#0A0A0B', borderColor: '#D4AF37', borderRadius: '16px', color: '#fff', fontSize: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)' }}
                                     itemStyle={{ color: '#D4AF37' }}
                                 />
                                 <Area type="monotone" dataKey="Aquisicao" stroke="#06B6D4" strokeWidth={3} fillOpacity={1} fill="url(#colorAquisicao)" />
@@ -480,7 +480,7 @@ const CustomerManager = ({ restaurantId }) => {
                     <div className="grid grid-cols-2 gap-5">
                         
                         {/* Metric 1: Ticket Médio */}
-                        <div className="bg-[#161616]/95 border border-[#D4AF37]/30 rounded-[2.5rem] p-6 shadow-xl relative overflow-hidden group hover:border-[#D4AF37]/60 transition-all">
+                        <div className="bg-[#121213]/95 border border-[#D4AF37]/30 rounded-[2.5rem] p-6 shadow-xl relative overflow-hidden group hover:border-[#D4AF37]/60 transition-all">
                             <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/10 blur-2xl rounded-full -mr-10 -mt-10 group-hover:bg-green-500/20 transition-all"></div>
                             <div className="w-12 h-12 bg-green-500/10 border border-green-500/30 text-green-400 rounded-2xl flex items-center justify-center mb-4 shadow-md">
                                 <Ticket size={22} />
@@ -492,7 +492,7 @@ const CustomerManager = ({ restaurantId }) => {
                         </div>
 
                         {/* Metric 2: Taxa de Retorno */}
-                        <div className="bg-[#161616]/95 border border-[#D4AF37]/30 rounded-[2.5rem] p-6 shadow-xl relative overflow-hidden group hover:border-[#D4AF37]/60 transition-all">
+                        <div className="bg-[#121213]/95 border border-[#D4AF37]/30 rounded-[2.5rem] p-6 shadow-xl relative overflow-hidden group hover:border-[#D4AF37]/60 transition-all">
                             <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 blur-2xl rounded-full -mr-10 -mt-10 group-hover:bg-purple-500/20 transition-all"></div>
                             <div className="w-12 h-12 bg-purple-500/10 border border-purple-500/30 text-purple-400 rounded-2xl flex items-center justify-center mb-4 shadow-md">
                                 <History size={22} />
@@ -505,7 +505,7 @@ const CustomerManager = ({ restaurantId }) => {
                     </div>
 
                     {/* Bottom Row: Scatter Chart "Segmentação de cliente" */}
-                    <div className="flex-1 bg-[#161616]/95 border border-[#D4AF37]/30 rounded-[2.5rem] p-6 sm:p-8 shadow-xl relative overflow-hidden flex flex-col justify-between group">
+                    <div className="flex-1 bg-[#121213]/95 border border-[#D4AF37]/30 rounded-[2.5rem] p-6 sm:p-8 shadow-xl relative overflow-hidden flex flex-col justify-between group">
                         <div className="absolute -left-10 -bottom-10 w-36 h-36 bg-[#D4AF37]/10 blur-[50px] pointer-events-none"></div>
                         
                         <div className="flex justify-between items-start mb-4 z-10">
@@ -569,7 +569,7 @@ const CustomerManager = ({ restaurantId }) => {
             </div>
 
             {/* Barra de Filtros e Pesquisa da Grelha */}
-            <div className="bg-[#161616] border border-white/5 p-4 rounded-3xl shadow-inner flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="bg-[#121213] border border-white/5 p-4 rounded-3xl shadow-inner flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="relative w-full sm:w-96">
                     <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400"><Search size={16} /></span>
                     <input
@@ -577,7 +577,7 @@ const CustomerManager = ({ restaurantId }) => {
                         placeholder="Pesquisar por cliente, telefone ou prato favorito..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-2xl pl-11 pr-4 py-3 text-sm text-white placeholder-gray-500 outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all"
+                        className="w-full bg-[#1A1A1C] border border-white/10 rounded-2xl pl-11 pr-4 py-3 text-sm text-white placeholder-gray-500 outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all"
                     />
                 </div>
                 
@@ -619,7 +619,7 @@ const CustomerManager = ({ restaurantId }) => {
                 {loading ? (
                     <div className="py-20 text-center text-[#D4AF37] font-bold">A carregar inteligência de clientes...</div>
                 ) : filteredCustomers.length === 0 ? (
-                    <div className="py-20 text-center bg-[#161616]/50 rounded-3xl border border-white/5">
+                    <div className="py-20 text-center bg-[#121213]/50 rounded-3xl border border-white/5">
                         <User size={48} className="mx-auto mb-4 text-[#D4AF37] opacity-40" />
                         <p className="text-lg font-serif text-gray-300 font-bold">Nenhum cliente corresponde à pesquisa.</p>
                         <button onClick={() => { setSearchTerm(''); setActiveFilter('all'); }} className="mt-4 text-xs font-bold text-[#D4AF37] underline">Limpar filtros</button>
@@ -629,7 +629,7 @@ const CustomerManager = ({ restaurantId }) => {
                         {filteredCustomers.map((c, idx) => (
                             <div 
                                 key={idx} 
-                                className="bg-[#161616]/95 border border-[#D4AF37]/30 rounded-[2rem] p-5 shadow-xl transition-all hover:scale-[1.02] hover:border-[#D4AF37] hover:shadow-[0_0_30px_rgba(212,175,55,0.2)] flex flex-col justify-between relative group text-left backdrop-blur-xl"
+                                className="bg-[#121213]/95 border border-[#D4AF37]/30 rounded-[2rem] p-5 shadow-xl transition-all hover:scale-[1.02] hover:border-[#D4AF37] hover:shadow-[0_0_30px_rgba(212,175,55,0.2)] flex flex-col justify-between relative group text-left backdrop-blur-xl"
                             >
                                 <div className="absolute top-4 right-4 flex items-center gap-1.5">
                                     <span className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-lg border shadow-sm ${
@@ -667,11 +667,11 @@ const CustomerManager = ({ restaurantId }) => {
 
                                     {/* Contagem de Pedidos e Ultima Visita */}
                                     <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
-                                        <div className="bg-[#1C1C1C] border border-white/5 p-2.5 rounded-xl text-center">
+                                        <div className="bg-[#1A1A1C] border border-white/5 p-2.5 rounded-xl text-center">
                                             <span className="text-[10px] uppercase font-bold text-gray-400 block mb-0.5">Frequência</span>
                                             <span className="font-black text-white text-sm">{c.totalOrders} {c.totalOrders === 1 ? 'pedido' : 'pedidos'}</span>
                                         </div>
-                                        <div className="bg-[#1C1C1C] border border-white/5 p-2.5 rounded-xl text-center">
+                                        <div className="bg-[#1A1A1C] border border-white/5 p-2.5 rounded-xl text-center">
                                             <span className="text-[10px] uppercase font-bold text-gray-400 block mb-0.5">Última Visita</span>
                                             <span className="font-bold text-gray-300 text-xs">{new Date(c.lastOrder).toLocaleDateString()}</span>
                                         </div>
@@ -702,7 +702,7 @@ const CustomerManager = ({ restaurantId }) => {
 
             {/* Painel Flutuante Lateral IA ("Dicas de Tomada de Decisão") */}
             {showAIPanel && (
-                <div className="fixed right-0 top-0 bottom-0 w-full sm:w-[400px] bg-[#121212]/95 backdrop-blur-3xl border-l border-[#D4AF37]/30 p-6 sm:p-8 shadow-[0_0_60px_rgba(0,0,0,0.9)] z-50 flex flex-col animate-in slide-in-from-right duration-500">
+                <div className="fixed right-0 top-0 bottom-0 w-full sm:w-[400px] bg-[#0A0A0B]/95 backdrop-blur-3xl border-l border-[#D4AF37]/30 p-6 sm:p-8 shadow-[0_0_60px_rgba(0,0,0,0.9)] z-50 flex flex-col animate-in slide-in-from-right duration-500">
                     <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
                         <div className="flex items-center gap-3">
                             <div className="bg-[#D4AF37] p-2.5 rounded-2xl text-black shadow-[0_0_20px_rgba(212,175,55,0.5)]">
@@ -723,7 +723,7 @@ const CustomerManager = ({ restaurantId }) => {
 
                     <div className="flex-1 overflow-y-auto space-y-5 pr-1 custom-scrollbar">
                         
-                        <div className="bg-[#1C1C1C] border border-[#D4AF37]/30 rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden group">
+                        <div className="bg-[#1A1A1C] border border-[#D4AF37]/30 rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-28 h-28 bg-[#D4AF37]/10 blur-2xl rounded-full -mr-10 -mt-10"></div>
                             <div className="flex items-center gap-2 mb-3">
                                 <span className="text-lg">💡</span>
@@ -740,7 +740,7 @@ const CustomerManager = ({ restaurantId }) => {
                             </div>
                         </div>
 
-                        <div className="bg-[#1C1C1C] border border-cyan-500/30 rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden group">
+                        <div className="bg-[#1A1A1C] border border-cyan-500/30 rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-28 h-28 bg-cyan-500/10 blur-2xl rounded-full -mr-10 -mt-10"></div>
                             <div className="flex items-center gap-2 mb-3">
                                 <span className="text-lg">⚡</span>
@@ -755,7 +755,7 @@ const CustomerManager = ({ restaurantId }) => {
                             </div>
                         </div>
 
-                        <div className="bg-[#1C1C1C] border border-orange-500/30 rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden group">
+                        <div className="bg-[#1A1A1C] border border-orange-500/30 rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-28 h-28 bg-orange-500/10 blur-2xl rounded-full -mr-10 -mt-10"></div>
                             <div className="flex items-center gap-2 mb-3">
                                 <span className="text-lg">🎯</span>
@@ -788,7 +788,7 @@ const CustomerManager = ({ restaurantId }) => {
             {/* Campaign Modal */}
             {showCampaignModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in zoom-in-95 duration-200">
-                    <div className="bg-[#161616] border border-[#D4AF37]/30 p-8 rounded-[2.5rem] max-w-md w-full relative shadow-2xl">
+                    <div className="bg-[#121213] border border-[#D4AF37]/30 p-8 rounded-[2.5rem] max-w-md w-full relative shadow-2xl">
                         <button onClick={() => setShowCampaignModal(false)} className="absolute top-6 right-6 text-gray-500 hover:text-white cursor-pointer font-bold">
                             <X size={20} />
                         </button>
@@ -801,14 +801,14 @@ const CustomerManager = ({ restaurantId }) => {
                             <div>
                                 <label className="text-xs font-bold text-[#D4AF37] uppercase tracking-widest mb-1.5 block">Dias Inativos (Filtro)</label>
                                 <select 
-                                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-2xl px-4 py-3.5 text-white outline-none focus:border-[#D4AF37] text-sm font-bold"
+                                    className="w-full bg-[#1A1A1C] border border-white/10 rounded-2xl px-4 py-3.5 text-white outline-none focus:border-[#D4AF37] text-sm font-bold"
                                     value={campaignData.daysInactive}
                                     onChange={(e) => setCampaignData({...campaignData, daysInactive: e.target.value})}
                                 >
-                                    <option value="15" className="bg-[#121212]">Mais de 15 Dias</option>
-                                    <option value="30" className="bg-[#121212]">Mais de 30 Dias</option>
-                                    <option value="60" className="bg-[#121212]">Mais de 60 Dias</option>
-                                    <option value="90" className="bg-[#121212]">Mais de 90 Dias (Risco de Churn)</option>
+                                    <option value="15" className="bg-[#0A0A0B]">Mais de 15 Dias</option>
+                                    <option value="30" className="bg-[#0A0A0B]">Mais de 30 Dias</option>
+                                    <option value="60" className="bg-[#0A0A0B]">Mais de 60 Dias</option>
+                                    <option value="90" className="bg-[#0A0A0B]">Mais de 90 Dias (Risco de Churn)</option>
                                 </select>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
@@ -819,7 +819,7 @@ const CustomerManager = ({ restaurantId }) => {
                                     <input 
                                         type="text" 
                                         placeholder="Ex: VOLTA10"
-                                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-2xl px-4 py-3.5 text-white outline-none focus:border-[#D4AF37] uppercase font-mono text-sm font-bold"
+                                        className="w-full bg-[#1A1A1C] border border-white/10 rounded-2xl px-4 py-3.5 text-white outline-none focus:border-[#D4AF37] uppercase font-mono text-sm font-bold"
                                         value={campaignData.couponCode}
                                         onChange={(e) => setCampaignData({...campaignData, couponCode: e.target.value})}
                                     />
@@ -829,7 +829,7 @@ const CustomerManager = ({ restaurantId }) => {
                                     <input 
                                         type="text" 
                                         placeholder="Ex: 20% / 2000 Kz"
-                                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-2xl px-4 py-3.5 text-white outline-none focus:border-[#D4AF37] text-sm font-bold"
+                                        className="w-full bg-[#1A1A1C] border border-white/10 rounded-2xl px-4 py-3.5 text-white outline-none focus:border-[#D4AF37] text-sm font-bold"
                                         value={campaignData.discountText}
                                         onChange={(e) => setCampaignData({...campaignData, discountText: e.target.value})}
                                     />
@@ -868,7 +868,7 @@ const CustomerManager = ({ restaurantId }) => {
                             )}
                             <button
                                 onClick={() => handleRunCampaign(false)}
-                                className="w-full bg-[#1C1C1C] hover:bg-white/5 border border-white/10 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer text-xs uppercase tracking-wider"
+                                className="w-full bg-[#1A1A1C] hover:bg-white/5 border border-white/10 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer text-xs uppercase tracking-wider"
                             >
                                 <Send size={14} /> {gatewayConfig.apiUrl ? 'Copiar Lista e Texto (Manual)' : 'Compilar & Copiar Campanha'}
                             </button>
@@ -880,7 +880,7 @@ const CustomerManager = ({ restaurantId }) => {
             {/* WhatsApp Gateway Settings Modal */}
             {showGatewayModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in zoom-in-95 duration-200">
-                    <div className="bg-[#161616] border border-[#D4AF37]/30 p-8 rounded-[2.5rem] max-w-md w-full relative shadow-2xl">
+                    <div className="bg-[#121213] border border-[#D4AF37]/30 p-8 rounded-[2.5rem] max-w-md w-full relative shadow-2xl">
                         <button onClick={() => setShowGatewayModal(false)} className="absolute top-6 right-6 text-gray-500 hover:text-white cursor-pointer font-bold">
                             <X size={20} />
                         </button>
@@ -893,12 +893,12 @@ const CustomerManager = ({ restaurantId }) => {
                             <div>
                                 <label className="text-xs font-bold text-[#D4AF37] uppercase tracking-widest mb-1.5 block">Tipo de API / Gateway</label>
                                 <select 
-                                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-2xl px-4 py-3.5 text-white outline-none focus:border-[#D4AF37] text-sm font-bold"
+                                    className="w-full bg-[#1A1A1C] border border-white/10 rounded-2xl px-4 py-3.5 text-white outline-none focus:border-[#D4AF37] text-sm font-bold"
                                     value={gatewayConfig.gatewayType}
                                     onChange={(e) => setGatewayConfig({...gatewayConfig, gatewayType: e.target.value})}
                                 >
-                                    <option value="evolution" className="bg-[#121212]">Evolution API (Recomendado)</option>
-                                    <option value="zapi" className="bg-[#121212]">Z-API</option>
+                                    <option value="evolution" className="bg-[#0A0A0B]">Evolution API (Recomendado)</option>
+                                    <option value="zapi" className="bg-[#0A0A0B]">Z-API</option>
                                 </select>
                             </div>
                             <div>
@@ -906,7 +906,7 @@ const CustomerManager = ({ restaurantId }) => {
                                 <input 
                                     type="text" 
                                     placeholder="Ex: https://api.exemplo.com"
-                                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-2xl px-4 py-3.5 text-white outline-none focus:border-[#D4AF37] text-sm font-medium"
+                                    className="w-full bg-[#1A1A1C] border border-white/10 rounded-2xl px-4 py-3.5 text-white outline-none focus:border-[#D4AF37] text-sm font-medium"
                                     value={gatewayConfig.apiUrl}
                                     onChange={(e) => setGatewayConfig({...gatewayConfig, apiUrl: e.target.value})}
                                 />
@@ -917,7 +917,7 @@ const CustomerManager = ({ restaurantId }) => {
                                     <input 
                                         type="text" 
                                         placeholder="Ex: jindungo-rest"
-                                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-2xl px-4 py-3.5 text-white outline-none focus:border-[#D4AF37] text-sm font-medium"
+                                        className="w-full bg-[#1A1A1C] border border-white/10 rounded-2xl px-4 py-3.5 text-white outline-none focus:border-[#D4AF37] text-sm font-medium"
                                         value={gatewayConfig.instanceName}
                                         onChange={(e) => setGatewayConfig({...gatewayConfig, instanceName: e.target.value})}
                                     />
@@ -927,7 +927,7 @@ const CustomerManager = ({ restaurantId }) => {
                                     <input 
                                         type="password" 
                                         placeholder="••••••••"
-                                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-2xl px-4 py-3.5 text-white outline-none focus:border-[#D4AF37] text-sm font-medium"
+                                        className="w-full bg-[#1A1A1C] border border-white/10 rounded-2xl px-4 py-3.5 text-white outline-none focus:border-[#D4AF37] text-sm font-medium"
                                         value={gatewayConfig.token}
                                         onChange={(e) => setGatewayConfig({...gatewayConfig, token: e.target.value})}
                                     />
@@ -949,7 +949,7 @@ const CustomerManager = ({ restaurantId }) => {
             {/* Campaign Progress Overlay */}
             {campaignProgress && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-                    <div className="bg-[#121212] border border-green-500/30 p-8 rounded-[2.5rem] max-w-sm w-full text-center relative shadow-[0_0_50px_rgba(16,185,129,0.2)]">
+                    <div className="bg-[#0A0A0B] border border-green-500/30 p-8 rounded-[2.5rem] max-w-sm w-full text-center relative shadow-[0_0_50px_rgba(16,185,129,0.2)]">
                         <div className="w-16 h-16 bg-green-500/10 border border-green-500/30 text-green-400 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
                             <Send size={28} />
                         </div>

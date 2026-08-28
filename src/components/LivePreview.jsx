@@ -189,7 +189,7 @@ const CategorySection = ({ cat, Layout, commonProps, onItemAdded, selectedLangua
                     className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-[11px] sm:text-xs font-black tracking-wider transition-all shadow-md ${
                         activeFilter === 'Todos'
                             ? 'bg-gradient-to-r from-[#D4AF37] via-[#E5C27B] to-[#C59B27] text-gray-950 shadow-[0_0_25px_rgba(229,194,123,0.5)] font-black'
-                            : 'bg-[#1C1C1C] text-gray-400 border border-white/10 hover:bg-[#252525] hover:text-white font-medium'
+                            : 'bg-[#1A1A1C] text-gray-400 border border-white/10 hover:bg-[#252525] hover:text-white font-medium'
                     }`}
                 >
                     {getTranslation(selectedLanguage, 'all')}
@@ -199,7 +199,7 @@ const CategorySection = ({ cat, Layout, commonProps, onItemAdded, selectedLangua
                     className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-[11px] sm:text-xs font-black tracking-wider transition-all shadow-md ${
                         activeFilter === 'Recomendados'
                             ? 'bg-gradient-to-r from-[#D4AF37] via-[#E5C27B] to-[#C59B27] text-gray-950 shadow-[0_0_25px_rgba(229,194,123,0.5)] font-black'
-                            : 'bg-[#1C1C1C] text-gray-400 border border-white/10 hover:bg-[#252525] hover:text-white font-medium'
+                            : 'bg-[#1A1A1C] text-gray-400 border border-white/10 hover:bg-[#252525] hover:text-white font-medium'
                     }`}
                 >
                     {getTranslation(selectedLanguage, 'recommended')}
@@ -256,7 +256,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
 
         if (!categories || categories.length === 0) {
             return (
-                <div className="text-center py-20 flex flex-col items-center gap-4 bg-[#161616] rounded-3xl border border-[#262626] mx-4 my-8 shadow-2xl">
+                <div className="text-center py-20 flex flex-col items-center gap-4 bg-[#121213] rounded-3xl border border-[#1E1E20] mx-4 my-8 shadow-2xl">
                     <div className="w-16 h-16 bg-[#E5C27B]/10 rounded-full flex items-center justify-center text-[#E5C27B] border border-[#E5C27B]/30 animate-pulse">
                         <Utensils size={32} strokeWidth={1.5} />
                     </div>
@@ -317,7 +317,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
 
             {/* Top Cover Header matching screenshot with deep atmospheric shadow gradient */}
             <div
-                className="relative p-6 pt-16 sm:pt-24 pb-12 flex flex-col items-center justify-center text-center overflow-hidden border-b border-[#1C1C1C] shadow-[0_25px_60px_rgba(0,0,0,0.95)]"
+                className="relative p-6 pt-16 sm:pt-24 pb-12 flex flex-col items-center justify-center text-center overflow-hidden border-b border-[#1A1A1C] shadow-[0_25px_60px_rgba(0,0,0,0.95)]"
                 style={{
                     backgroundImage: `linear-gradient(rgba(0,0,0,0.72), rgba(10,10,10,0.98)), url(${config.headerBgUrl || defaultCoverImg})`,
                     backgroundSize: 'cover',
@@ -404,7 +404,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
 
             {/* Footer Branding */}
             {!features.canHideBranding && (
-                <div className="pb-20 pt-8 text-center opacity-40 flex flex-col items-center justify-center pointer-events-none border-t border-[#1C1C1C] mx-6">
+                <div className="pb-20 pt-8 text-center opacity-40 flex flex-col items-center justify-center pointer-events-none border-t border-[#1A1A1C] mx-6">
                     <span className="text-[9px] uppercase tracking-widest font-black mb-1">Tecnologia Jindungo</span>
                     <div className="flex items-center gap-2">
                         <span className="text-base">🌶️</span>

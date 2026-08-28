@@ -77,7 +77,7 @@ const StaffPinModal = ({ isOpen, onClose, restaurantId, onLogin }) => {
 
     return (
         <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-xl">
-            <div className={`bg-[#121212] w-full max-w-sm rounded-[32px] p-8 relative border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ${isShaking ? 'animate-shake border-red-500/50' : 'animate-fade-in-up'}`}>
+            <div className={`bg-[#0A0A0B] w-full max-w-sm rounded-[32px] p-8 relative border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ${isShaking ? 'animate-shake border-red-500/50' : 'animate-fade-in-up'}`}>
                 <button 
                     onClick={onClose}
                     className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors"

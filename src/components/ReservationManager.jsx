@@ -15,7 +15,7 @@ const MOCK_PERIOD_DATA = [
 ];
 
 const MOCK_MIX_DATA = [
-    { name: 'Jantar Casal', value: 25, color: '#F5C542' },
+    { name: 'Jantar Casal', value: 25, color: '#D4AF37' },
     { name: 'Almoço de Grupo', value: 38, color: '#3B82F6' },
     { name: 'Evento Corporativo', value: 23.9, color: '#8E8E93' },
     { name: 'Aniversários / Festas', value: 13.1, color: '#D4AF37' },
@@ -480,7 +480,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
             
             {/* Outer Tab Bar Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-[#161616]/95 border border-white/5 p-6 rounded-[2rem] shadow-xl gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-[#121213]/95 border border-white/5 p-6 rounded-[2rem] shadow-xl gap-4">
                 <div className="flex items-center gap-3">
                     <Calendar className="text-[#D4AF37]" size={24} />
                     <div>
@@ -509,7 +509,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
             {/* 3 Top Glowing Dash Cards */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Card 1: Total de Reservas */}
-                <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#161616]/95 to-[#101010]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-[#D4AF37]/30 shadow-[0_0_40px_rgba(212,175,55,0.15)] relative overflow-hidden group hover:border-[#D4AF37]/60 transition-all duration-500 flex flex-col justify-between">
+                <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#121213]/95 to-[#101010]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-[#D4AF37]/30 shadow-[0_0_40px_rgba(212,175,55,0.15)] relative overflow-hidden group hover:border-[#D4AF37]/60 transition-all duration-500 flex flex-col justify-between">
                     <div className="absolute top-0 right-0 w-36 h-36 bg-[#D4AF37]/10 blur-[50px] rounded-full -mr-16 -mt-16 group-hover:bg-[#D4AF37]/20 transition-all duration-700"></div>
                     <div>
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">TOTAL DE RESERVAS</p>
@@ -518,7 +518,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
                 </div>
 
                 {/* Card 2: Confirmadas */}
-                <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#161616]/95 to-[#101010]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-green-500/30 shadow-[0_0_40px_rgba(34,197,94,0.15)] relative overflow-hidden group hover:border-green-500/60 transition-all duration-500 flex flex-col justify-between">
+                <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#121213]/95 to-[#101010]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-green-500/30 shadow-[0_0_40px_rgba(34,197,94,0.15)] relative overflow-hidden group hover:border-green-500/60 transition-all duration-500 flex flex-col justify-between">
                     <div className="absolute top-0 right-0 w-36 h-36 bg-green-500/10 blur-[50px] rounded-full -mr-16 -mt-16 group-hover:bg-green-500/20 transition-all duration-700"></div>
                     <div>
                         <p className="text-[10px] font-black text-green-500/60 uppercase tracking-widest mb-1">CONFIRMADAS</p>
@@ -527,7 +527,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
                 </div>
 
                 {/* Card 3: Pendentes Hoje */}
-                <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#161616]/95 to-[#101010]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-amber-500/30 shadow-[0_0_40px_rgba(245,197,66,0.15)] relative overflow-hidden group hover:border-amber-500/60 transition-all duration-500 flex flex-col justify-between">
+                <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#121213]/95 to-[#101010]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-amber-500/30 shadow-[0_0_40px_rgba(245,197,66,0.15)] relative overflow-hidden group hover:border-amber-500/60 transition-all duration-500 flex flex-col justify-between">
                     <div className="absolute top-0 right-0 w-36 h-36 bg-amber-500/10 blur-[50px] rounded-full -mr-16 -mt-16 group-hover:bg-amber-500/20 transition-all duration-700"></div>
                     <div>
                         <p className="text-[10px] font-black text-amber-500/60 uppercase tracking-widest mb-1">PENDENTES HOJE</p>
@@ -537,7 +537,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
             </div>
 
             {/* Search + Filter Pill Bar */}
-            <div className="bg-[#161616]/90 backdrop-blur-xl border border-white/5 rounded-full p-2.5 flex flex-col md:flex-row justify-between items-center gap-4 shadow-xl">
+            <div className="bg-[#121213]/90 backdrop-blur-xl border border-white/5 rounded-full p-2.5 flex flex-col md:flex-row justify-between items-center gap-4 shadow-xl">
                 <div className="relative flex-1 w-full pl-2 group">
                     <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-[#D4AF37] transition-colors" size={18} />
                     <input
@@ -557,7 +557,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
                                 onClick={() => setFilter(f)}
                                 className={`px-6 py-2.5 rounded-full text-xs transition-all whitespace-nowrap cursor-pointer ${
                                     active 
-                                        ? 'bg-gradient-to-r from-[#F5C542] via-[#EAC775] to-[#D4AF37] text-black font-black shadow-[0_0_20px_rgba(245,197,66,0.5)] scale-105' 
+                                        ? 'bg-gradient-to-r from-[#D4AF37] via-[#F9E6A2] to-[#D4AF37] text-black font-black shadow-[0_0_20px_rgba(245,197,66,0.5)] scale-105' 
                                         : 'text-gray-400 hover:text-white font-medium hover:bg-white/5'
                                 }`}
                             >
@@ -571,7 +571,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
             {/* Analytics Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* Section 1: Reservas por Período */}
-                <div className="lg:col-span-5 bg-[#161616]/90 backdrop-blur-xl border border-white/5 rounded-[2.5rem] p-6 shadow-2xl flex flex-col justify-between relative hover:border-[#D4AF37]/30 transition-all">
+                <div className="lg:col-span-5 bg-[#121213]/90 backdrop-blur-xl border border-white/5 rounded-[2.5rem] p-6 shadow-2xl flex flex-col justify-between relative hover:border-[#D4AF37]/30 transition-all">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="font-serif font-bold text-lg text-white">Reservas por Período</h3>
                         <div className="flex gap-1.5 p-1 bg-black/40 rounded-full border border-white/5">
@@ -581,7 +581,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
                                     onClick={() => setPeriodTab(t)}
                                     className={`px-4 py-1.5 rounded-full text-[10px] font-black transition-all ${
                                         periodTab === t 
-                                            ? 'bg-gradient-to-r from-[#F5C542] to-[#D4AF37] text-black shadow-[0_0_12px_rgba(245,197,66,0.4)]' 
+                                            ? 'bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] text-black shadow-[0_0_12px_rgba(245,197,66,0.4)]' 
                                             : 'text-gray-500 hover:text-white font-bold'
                                     }`}
                                 >
@@ -596,8 +596,8 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
                             <AreaChart data={MOCK_PERIOD_DATA} margin={{ top: 20, right: 10, left: -25, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="goldResArea" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#F5C542" stopOpacity={0.6}/>
-                                        <stop offset="95%" stopColor="#F5C542" stopOpacity={0}/>
+                                        <stop offset="5%" stopColor="#D4AF37" stopOpacity={0.6}/>
+                                        <stop offset="95%" stopColor="#D4AF37" stopOpacity={0}/>
                                     </linearGradient>
                                     <linearGradient id="blueResArea" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
@@ -607,16 +607,16 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
                                 <CartesianGrid vertical={false} stroke="#242424" />
                                 <XAxis dataKey="time" stroke="#777" fontSize={10} axisLine={false} tickLine={false} />
                                 <YAxis stroke="#777" fontSize={10} axisLine={false} tickLine={false} />
-                                <Tooltip contentStyle={{ background: '#141414', border: '1px solid #F5C542', borderRadius: '16px', color: '#fff', boxShadow: '0 0 20px rgba(245,197,66,0.3)' }} />
+                                <Tooltip contentStyle={{ background: '#141414', border: '1px solid #D4AF37', borderRadius: '16px', color: '#fff', boxShadow: '0 0 20px rgba(245,197,66,0.3)' }} />
                                 <Area type="monotone" dataKey="grupo" stroke="#3B82F6" strokeWidth={2.5} fill="url(#blueResArea)" name="Grupos" />
-                                <Area type="monotone" dataKey="casal" stroke="#F5C542" strokeWidth={3.5} fill="url(#goldResArea)" name="Casais" />
+                                <Area type="monotone" dataKey="casal" stroke="#D4AF37" strokeWidth={3.5} fill="url(#goldResArea)" name="Casais" />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
                 {/* Section 2: Mix de Reservas */}
-                <div className="lg:col-span-4 bg-[#161616]/90 backdrop-blur-xl border border-white/5 rounded-[2.5rem] p-6 shadow-2xl flex flex-col justify-between relative hover:border-[#D4AF37]/30 transition-all">
+                <div className="lg:col-span-4 bg-[#121213]/90 backdrop-blur-xl border border-white/5 rounded-[2.5rem] p-6 shadow-2xl flex flex-col justify-between relative hover:border-[#D4AF37]/30 transition-all">
                     <h3 className="font-serif font-bold text-lg text-white mb-4">Mix de Reservas</h3>
                     <div className="h-64 w-full flex items-center justify-center relative">
                         <ResponsiveContainer width="100%" height="100%">
@@ -631,7 +631,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
                                     dataKey="value"
                                 >
                                     {MOCK_MIX_DATA.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} stroke="#161616" strokeWidth={3} className="hover:opacity-80 transition-opacity" />
+                                        <Cell key={`cell-${index}`} fill={entry.color} stroke="#121213" strokeWidth={3} className="hover:opacity-80 transition-opacity" />
                                     ))}
                                 </Pie>
                                 <Tooltip contentStyle={{ background: '#141414', border: '1px solid #D4AF37', borderRadius: '16px', color: '#fff' }} formatter={(val) => `${val}%`} />
@@ -654,7 +654,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
                 </div>
 
                 {/* Section 3: Dicas de Tomada de Decisão */}
-                <div className="lg:col-span-3 bg-[#161616]/90 backdrop-blur-xl border border-white/5 rounded-[2.5rem] p-6 shadow-2xl flex flex-col justify-between relative hover:border-[#D4AF37]/30 transition-all max-h-[380px] overflow-hidden">
+                <div className="lg:col-span-3 bg-[#121213]/90 backdrop-blur-xl border border-white/5 rounded-[2.5rem] p-6 shadow-2xl flex flex-col justify-between relative hover:border-[#D4AF37]/30 transition-all max-h-[380px] overflow-hidden">
                     <div className="flex justify-between items-center mb-4 pb-3 border-b border-white/5 shrink-0">
                         <h4 className="text-[11px] font-black uppercase text-gray-400 tracking-widest flex items-center gap-2">
                             <Sparkles size={14} className="text-[#D4AF37] animate-pulse" />
@@ -681,7 +681,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
             </div>
 
             {/* Table/List */}
-            <div className="bg-[#161616]/90 backdrop-blur-xl border border-white/5 rounded-[2.5rem] p-2 sm:p-6 shadow-2xl overflow-hidden">
+            <div className="bg-[#121213]/90 backdrop-blur-xl border border-white/5 rounded-[2.5rem] p-2 sm:p-6 shadow-2xl overflow-hidden">
                 {loading ? (
                     <div className="p-24 text-center text-gray-500 animate-pulse font-serif text-sm tracking-widest uppercase">Carregando reservas...</div>
                 ) : filteredReservations.length > 0 ? (
@@ -702,7 +702,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-white/10 to-transparent p-0.5 border border-white/10 shrink-0 overflow-hidden shadow-md flex items-center justify-center group-hover:border-[#D4AF37]/50 transition-colors">
-                                                    <div className="w-full h-full rounded-2xl bg-[#121212] flex items-center justify-center">
+                                                    <div className="w-full h-full rounded-2xl bg-[#0A0A0B] flex items-center justify-center">
                                                         <User size={20} className="text-[#D4AF37]" />
                                                     </div>
                                                 </div>
@@ -791,7 +791,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
             {activeTab === 'tables' && (
                 <div className="space-y-6 animate-in fade-in duration-300">
                     {/* Table Map Legend & Refresh */}
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#161616]/90 backdrop-blur-xl p-6 rounded-[2.5rem] border border-white/5 shadow-xl">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#121213]/90 backdrop-blur-xl p-6 rounded-[2.5rem] border border-white/5 shadow-xl">
                         <div>
                             <h3 className="font-serif font-black text-lg text-white">Mapa de Mesas Interativo</h3>
                             <p className="text-gray-400 text-xs mt-1">
@@ -860,7 +860,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
                                     <div
                                         key={tableName}
                                         onClick={() => handleTableClick(tableName, tableOrder, tableReservation)}
-                                        className={`bg-[#161616]/90 border rounded-[2.5rem] p-6 flex flex-col justify-between items-center text-center cursor-pointer transition-all duration-300 min-h-[190px] relative ${cardStyle}`}
+                                        className={`bg-[#121213]/90 border rounded-[2.5rem] p-6 flex flex-col justify-between items-center text-center cursor-pointer transition-all duration-300 min-h-[190px] relative ${cardStyle}`}
                                     >
                                         <span className={`text-[9px] font-black px-2.5 py-1 rounded-full border uppercase tracking-wider ${statusBadge} absolute top-4`}>
                                             {statusLabel}
@@ -905,7 +905,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
             {/* Assign Tables Modal */}
             {showAssignModal && (
                 <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
-                    <div className="bg-[#121212] w-full max-w-md rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl relative">
+                    <div className="bg-[#0A0A0B] w-full max-w-md rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl relative">
                         <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/10 rounded-full blur-[60px] -mr-24 -mt-24"></div>
                         <div className="p-8 relative z-10">
                             <h3 className="text-2xl font-serif font-black text-white mb-2">Atribuir Mesas</h3>
@@ -931,7 +931,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
                                                 isOccupied
                                                     ? 'bg-red-950/40 border-red-500/30 text-red-500/40 cursor-not-allowed'
                                                     : isSelected
-                                                        ? 'bg-gradient-to-br from-[#F5C542] to-[#D4AF37] border-[#D4AF37] text-black font-black shadow-[0_0_20px_rgba(212,175,55,0.5)] scale-105'
+                                                        ? 'bg-gradient-to-br from-[#D4AF37] to-[#D4AF37] border-[#D4AF37] text-black font-black shadow-[0_0_20px_rgba(212,175,55,0.5)] scale-105'
                                                         : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20 hover:text-white'
                                             }`}
                                         >
@@ -955,7 +955,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
                                 </button>
                                 <button
                                     onClick={() => updateStatus(showAssignModal.id, 'confirmed', null, selectedTables)}
-                                    className="flex-1 px-6 py-4 rounded-full bg-gradient-to-r from-[#F5C542] to-[#D4AF37] text-black font-black hover:brightness-110 shadow-[0_0_25px_rgba(212,175,55,0.4)] hover:scale-105 active:scale-95 transition-all text-xs tracking-wider uppercase cursor-pointer"
+                                    className="flex-1 px-6 py-4 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] text-black font-black hover:brightness-110 shadow-[0_0_25px_rgba(212,175,55,0.4)] hover:scale-105 active:scale-95 transition-all text-xs tracking-wider uppercase cursor-pointer"
                                 >
                                     Confirmar
                                 </button>
@@ -968,7 +968,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
             {/* Reject Modal */}
             {showRejectModal && (
                 <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
-                    <div className="bg-[#121212] w-full max-w-md rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl relative">
+                    <div className="bg-[#0A0A0B] w-full max-w-md rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl relative">
                         <div className="absolute top-0 right-0 w-48 h-48 bg-red-500/10 rounded-full blur-[60px] -mr-24 -mt-24"></div>
                         <div className="p-8 relative z-10">
                             <div className="w-16 h-16 bg-red-950/50 rounded-2xl flex items-center justify-center mb-6 border border-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.3)]">
@@ -979,7 +979,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
 
                             <div className="space-y-4 mb-8">
                                 <textarea
-                                    className="w-full bg-[#161616] border border-white/10 rounded-2xl p-4 text-white text-xs focus:outline-none focus:border-red-500/50 min-h-[120px] shadow-inner font-sans leading-relaxed placeholder-gray-600"
+                                    className="w-full bg-[#121213] border border-white/10 rounded-2xl p-4 text-white text-xs focus:outline-none focus:border-red-500/50 min-h-[120px] shadow-inner font-sans leading-relaxed placeholder-gray-600"
                                     placeholder="Ex: Pedimos desculpa, mas o restaurante encontra-se lotado neste horário..."
                                     value={rejectionReason}
                                     onChange={(e) => setRejectionReason(e.target.value)}
@@ -1019,7 +1019,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
             {/* WhatsApp Notification Modal */}
             {showWhatsAppModal && (
                 <div className="fixed inset-0 z-[110] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
-                    <div className="bg-[#121212] w-full max-w-md rounded-[2.5rem] border border-[#D4AF37]/30 overflow-hidden shadow-2xl relative">
+                    <div className="bg-[#0A0A0B] w-full max-w-md rounded-[2.5rem] border border-[#D4AF37]/30 overflow-hidden shadow-2xl relative">
                         <div className="absolute top-0 right-0 w-48 h-48 bg-[#25D366]/10 rounded-full blur-[60px] -mr-24 -mt-24"></div>
                         <div className="p-8 relative z-10">
                             {/* WhatsApp Glowing Logo */}
@@ -1079,7 +1079,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
             {/* Quick Table Management / Order Modal */}
             {showQuickOrderModal && selectedTableDetails && (
                 <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
-                    <div className="bg-[#121212] w-full max-w-4xl rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[90vh]">
+                    <div className="bg-[#0A0A0B] w-full max-w-4xl rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[90vh]">
                         {/* LEFT COLUMN: Consumption & Action Buttons */}
                         <div className="w-full md:w-1/2 p-6 sm:p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r border-white/5 overflow-y-auto custom-scrollbar">
                             <div>
@@ -1209,7 +1209,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
                                     placeholder="Pesquisar artigo..."
                                     value={quickSearchQuery}
                                     onChange={(e) => setQuickSearchQuery(e.target.value)}
-                                    className="w-full bg-[#121212] border border-white/10 rounded-2xl pl-12 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#D4AF37]"
+                                    className="w-full bg-[#0A0A0B] border border-white/10 rounded-2xl pl-12 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#D4AF37]"
                                 />
                             </div>
 
@@ -1222,7 +1222,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
                                             <div
                                                 key={product.id}
                                                 onClick={() => handleAddToQuickCart(product)}
-                                                className="bg-[#161616] border border-white/5 rounded-2xl p-3 flex flex-col justify-between items-center text-center cursor-pointer hover:border-[#D4AF37]/40 hover:scale-[1.02] active:scale-[0.98] transition-all min-h-[120px]"
+                                                className="bg-[#121213] border border-white/5 rounded-2xl p-3 flex flex-col justify-between items-center text-center cursor-pointer hover:border-[#D4AF37]/40 hover:scale-[1.02] active:scale-[0.98] transition-all min-h-[120px]"
                                             >
                                                 {productImg ? (
                                                     <img src={productImg} alt={product.name} className="w-10 h-10 rounded-xl object-cover mb-2 border border-white/10" />
@@ -1246,7 +1246,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
             {/* Quick Table Management / Order Modal */}
             {showQuickOrderModal && selectedTableDetails && (
                 <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
-                    <div className="bg-[#121212] w-full max-w-4xl rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[90vh]">
+                    <div className="bg-[#0A0A0B] w-full max-w-4xl rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[90vh]">
                         {/* LEFT COLUMN: Consumption & Action Buttons */}
                         <div className="w-full md:w-1/2 p-6 sm:p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r border-white/5 overflow-y-auto custom-scrollbar">
                             <div>
@@ -1376,7 +1376,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
                                     placeholder="Pesquisar artigo..."
                                     value={quickSearchQuery}
                                     onChange={(e) => setQuickSearchQuery(e.target.value)}
-                                    className="w-full bg-[#121212] border border-white/10 rounded-2xl pl-12 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#D4AF37]"
+                                    className="w-full bg-[#0A0A0B] border border-white/10 rounded-2xl pl-12 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#D4AF37]"
                                 />
                             </div>
 
@@ -1389,7 +1389,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
                                             <div
                                                 key={product.id}
                                                 onClick={() => handleAddToQuickCart(product)}
-                                                className="bg-[#161616] border border-white/5 rounded-2xl p-3 flex flex-col justify-between items-center text-center cursor-pointer hover:border-[#D4AF37]/40 hover:scale-[1.02] active:scale-[0.98] transition-all min-h-[120px]"
+                                                className="bg-[#121213] border border-white/5 rounded-2xl p-3 flex flex-col justify-between items-center text-center cursor-pointer hover:border-[#D4AF37]/40 hover:scale-[1.02] active:scale-[0.98] transition-all min-h-[120px]"
                                             >
                                                 {productImg ? (
                                                     <img src={productImg} alt={product.name} className="w-10 h-10 rounded-xl object-cover mb-2 border border-white/10" />

@@ -335,7 +335,7 @@ const StyleControls = ({ config, setConfig, onReset, onLogoUpload, onHeaderBgUpl
                     {[
                         { value: '', label: 'Inteligente (Auto)', desc: 'Adapta-se ao Logo' },
                         { value: '#ffffff', label: 'Branco Puro', desc: 'Clássico & Limpo' },
-                        { value: '#121212', label: 'Preto Profundo', desc: 'Elegância Dark' },
+                        { value: '#0A0A0B', label: 'Preto Profundo', desc: 'Elegância Dark' },
                         { value: '#fdf6e3', label: 'Creme Vintage', desc: 'Estilo Papiro' },
                         { value: '#1a1a1a', label: 'Grafite', desc: 'Moderno' },
                         { value: '#f8f9fa', label: 'Gelo', desc: 'Minimalista' }

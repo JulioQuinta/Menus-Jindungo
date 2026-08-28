@@ -185,7 +185,7 @@ const CouponManager = ({ restaurantId }) => {
 
                     <button
                         onClick={() => setShowAiModal(true)}
-                        className="bg-gradient-to-r from-[#F5C542] via-[#EAC775] to-[#D4AF37] text-gray-950 font-black px-6 py-3.5 rounded-2xl shadow-[0_0_30px_rgba(212,175,55,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center gap-2 border border-amber-300/40 text-xs tracking-wider uppercase cursor-pointer shrink-0"
+                        className="bg-gradient-to-r from-[#D4AF37] via-[#F9E6A2] to-[#D4AF37] text-gray-950 font-black px-6 py-3.5 rounded-2xl shadow-[0_0_30px_rgba(212,175,55,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center gap-2 border border-amber-300/40 text-xs tracking-wider uppercase cursor-pointer shrink-0"
                     >
                         <Sparkles size={16} />
                         <span>AI Business Assistant</span>
@@ -195,7 +195,7 @@ const CouponManager = ({ restaurantId }) => {
 
             {/* Coupon / Campaign Creator Form */}
             {isAdding && (
-                <div className="bg-[#161616]/95 backdrop-blur-xl border border-[#D4AF37]/40 rounded-[2.5rem] p-8 shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="bg-[#121213]/95 backdrop-blur-xl border border-[#D4AF37]/40 rounded-[2.5rem] p-8 shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300">
                     <div className="flex items-center justify-between pb-4 mb-6 border-b border-white/10">
                         <h3 className="text-xl font-serif font-bold text-[#D4AF37] flex items-center gap-2">
                             <Ticket size={24} /> Criar Novo Cupão VIP
@@ -284,7 +284,7 @@ const CouponManager = ({ restaurantId }) => {
                             </button>
                             <button
                                 type="submit"
-                                className="px-8 py-3 bg-gradient-to-r from-[#F5C542] to-[#D4AF37] hover:brightness-110 rounded-xl text-xs font-black text-gray-950 uppercase tracking-widest shadow-lg transition-all cursor-pointer"
+                                className="px-8 py-3 bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] hover:brightness-110 rounded-xl text-xs font-black text-gray-950 uppercase tracking-widest shadow-lg transition-all cursor-pointer"
                             >
                                 Guardar Campanha Ativa
                             </button>
@@ -294,7 +294,7 @@ const CouponManager = ({ restaurantId }) => {
             )}
 
             {/* Top Large Section: Dual Chart Card matching screenshot exactly */}
-            <div className="bg-gradient-to-br from-[#1C1C1C]/95 via-[#161616]/95 to-[#121212]/95 backdrop-blur-xl p-8 rounded-[2.5rem] border border-[#D4AF37]/40 shadow-[0_0_60px_rgba(212,175,55,0.2)] relative overflow-hidden">
+            <div className="bg-gradient-to-br from-[#1A1A1C]/95 via-[#121213]/95 to-[#0A0A0B]/95 backdrop-blur-xl p-8 rounded-[2.5rem] border border-[#D4AF37]/40 shadow-[0_0_60px_rgba(212,175,55,0.2)] relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-[#3B82F6]/10 blur-[100px] rounded-full pointer-events-none -mr-32 -mt-32" />
                 <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#D4AF37]/10 blur-[100px] rounded-full pointer-events-none -ml-32 -mb-32" />
 
@@ -343,7 +343,7 @@ const CouponManager = ({ restaurantId }) => {
                                     </defs>
                                     <XAxis dataKey="day" stroke="#666" fontSize={10} tickLine={false} />
                                     <YAxis stroke="#666" fontSize={10} tickLine={false} axisLine={false} />
-                                    <Tooltip contentStyle={{ backgroundColor: '#161616', borderColor: '#D4AF37', borderRadius: '12px' }} />
+                                    <Tooltip contentStyle={{ backgroundColor: '#121213', borderColor: '#D4AF37', borderRadius: '12px' }} />
                                     <Area type="monotone" dataKey="engajamento" stroke="#3B82F6" strokeWidth={3} fill="url(#engGrad)" />
                                     <Area type="monotone" dataKey="conversao" stroke="#D4AF37" strokeWidth={3} fill="url(#convGrad)" />
                                 </AreaChart>
@@ -371,7 +371,7 @@ const CouponManager = ({ restaurantId }) => {
                                 <BarChart data={hourlyData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
                                     <XAxis dataKey="hour" stroke="#666" fontSize={9} tickLine={false} interval={1} />
                                     <YAxis stroke="#666" fontSize={9} tickLine={false} axisLine={false} />
-                                    <Tooltip contentStyle={{ backgroundColor: '#161616', borderColor: '#D4AF37', borderRadius: '12px' }} />
+                                    <Tooltip contentStyle={{ backgroundColor: '#121213', borderColor: '#D4AF37', borderRadius: '12px' }} />
                                     <Bar dataKey="clicks" fill="#D4AF37" radius={[4, 4, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
@@ -399,7 +399,7 @@ const CouponManager = ({ restaurantId }) => {
                             return (
                                 <div 
                                     key={coupon.id || idx}
-                                    className="bg-[#161616]/90 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-6 shadow-2xl relative overflow-hidden flex flex-col justify-between group hover:border-[#D4AF37]/50 transition-all duration-500 min-h-[220px]"
+                                    className="bg-[#121213]/90 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-6 shadow-2xl relative overflow-hidden flex flex-col justify-between group hover:border-[#D4AF37]/50 transition-all duration-500 min-h-[220px]"
                                 >
                                     {/* Background Image / Tint */}
                                     <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-30 transition-opacity bg-cover bg-center" style={{ backgroundImage: `url('${photoUrl}')` }} />
@@ -416,7 +416,7 @@ const CouponManager = ({ restaurantId }) => {
                                         </div>
 
                                         {/* Golden Ribbon Icon matching screenshot */}
-                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#F5C542] to-[#D4AF37] text-gray-950 flex items-center justify-center font-black shadow-[0_0_20px_rgba(212,175,55,0.4)] rotate-3 group-hover:rotate-12 transition-transform shrink-0">
+                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#D4AF37] text-gray-950 flex items-center justify-center font-black shadow-[0_0_20px_rgba(212,175,55,0.4)] rotate-3 group-hover:rotate-12 transition-transform shrink-0">
                                             <Award size={24} />
                                         </div>
                                     </div>
@@ -447,7 +447,7 @@ const CouponManager = ({ restaurantId }) => {
                 <div className="space-y-6">
                     
                     {/* Card 1: Link Google Maps + Geo-Fencing Campaign matching screenshot */}
-                    <div className="bg-[#161616]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-xl relative overflow-hidden space-y-4">
+                    <div className="bg-[#121213]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-xl relative overflow-hidden space-y-4">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30 shadow-inner">
                                 <Target size={20} />
@@ -487,7 +487,7 @@ const CouponManager = ({ restaurantId }) => {
                     </div>
 
                     {/* Card 2: Redes Sociais & Contacto matching screenshot */}
-                    <div className="bg-[#161616]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-xl relative space-y-4">
+                    <div className="bg-[#121213]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-xl relative space-y-4">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-2xl bg-pink-500/20 text-pink-400 flex items-center justify-center border border-pink-500/30">
                                 <Share2 size={20} />
@@ -521,7 +521,7 @@ const CouponManager = ({ restaurantId }) => {
                                 </div>
                                 <button 
                                     onClick={() => toast.success("Campanha Geo-Fencing de WhatsApp ativada!")}
-                                    className="bg-gradient-to-r from-[#F5C542] to-[#D4AF37] text-gray-950 font-black px-4 py-3 rounded-2xl shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:brightness-110 active:scale-95 transition-all text-[11px] uppercase tracking-wider shrink-0 cursor-pointer"
+                                    className="bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] text-gray-950 font-black px-4 py-3 rounded-2xl shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:brightness-110 active:scale-95 transition-all text-[11px] uppercase tracking-wider shrink-0 cursor-pointer"
                                 >
                                     Geo-Fenc. Campaign
                                 </button>
@@ -530,7 +530,7 @@ const CouponManager = ({ restaurantId }) => {
                     </div>
 
                     {/* Card 3: Marketing & Texto de Partilha */}
-                    <div className="bg-[#161616]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-xl relative space-y-4">
+                    <div className="bg-[#121213]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-xl relative space-y-4">
                         <div>
                             <label className={labelClasses}>Marketing & Texto de Partilha</label>
                             <input type="text" className={inputClasses} defaultValue="Veja o nosso menu digital!" />
@@ -549,7 +549,7 @@ const CouponManager = ({ restaurantId }) => {
                     </div>
 
                     {/* Screenshot AI Drawer: Dicas de Tomada de Decisão */}
-                    <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#161616]/95 to-[#101010]/95 backdrop-blur-xl border border-[#D4AF37]/40 rounded-[2.5rem] p-7 shadow-[0_0_40px_rgba(212,175,55,0.2)] relative overflow-hidden group">
+                    <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#121213]/95 to-[#101010]/95 backdrop-blur-xl border border-[#D4AF37]/40 rounded-[2.5rem] p-7 shadow-[0_0_40px_rgba(212,175,55,0.2)] relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/10 blur-[60px] rounded-full -mr-16 -mt-16 pointer-events-none" />
 
                         <div className="flex items-center justify-between pb-5 mb-6 border-b border-white/10 relative z-10">
@@ -601,7 +601,7 @@ const CouponManager = ({ restaurantId }) => {
             {/* AI Assistant Modal */}
             {showAiModal && (
                 <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-[#161616] border border-[#D4AF37]/50 rounded-[2.5rem] p-8 max-w-lg w-full shadow-[0_25px_70px_rgba(0,0,0,0.9)] relative overflow-hidden">
+                    <div className="bg-[#121213] border border-[#D4AF37]/50 rounded-[2.5rem] p-8 max-w-lg w-full shadow-[0_25px_70px_rgba(0,0,0,0.9)] relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/10 blur-[60px] rounded-full -mr-16 -mt-16 pointer-events-none" />
 
                         <div className="flex items-center justify-between pb-5 mb-6 border-b border-white/10 relative z-10">

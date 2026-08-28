@@ -68,7 +68,7 @@ const BookingModal = ({ isOpen, onClose, restaurantId, restaurantName, whatsappN
 
     return (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-md bg-black/60 animate-in fade-in duration-300">
-            <div className="bg-[#121212] w-full max-w-lg rounded-t-[2.5rem] sm:rounded-[2.5rem] border-t border-x sm:border border-white/10 shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-500 flex flex-col max-h-[92vh] sm:max-h-[90vh]">
+            <div className="bg-[#0A0A0B] w-full max-w-lg rounded-t-[2.5rem] sm:rounded-[2.5rem] border-t border-x sm:border border-white/10 shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-500 flex flex-col max-h-[92vh] sm:max-h-[90vh]">
 
                 {/* Header */}
                 <div className="p-6 border-b border-white/5 flex justify-between items-center relative shrink-0">

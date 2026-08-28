@@ -38,7 +38,7 @@ const StatCard = ({ label, value, icon: Icon, trend, color = 'primary', delay = 
 
     return (
         <div 
-            className={`relative group overflow-hidden bg-[#111111]/80 backdrop-blur-3xl border border-white/5 rounded-[2.5rem] p-8 transition-all duration-700 hover:scale-[1.02] hover:-translate-y-1 hover:border-white/10 hover:shadow-[0_30px_60px_rgba(0,0,0,0.4)] animate-fade-in-up`}
+            className={`relative group overflow-hidden bg-white border border-gray-200/80 rounded-[2.5rem] p-8 transition-all duration-700 hover:scale-[1.02] hover:-translate-y-1 hover:border-gray-300 hover:shadow-[0_20px_40px_rgba(0,0,0,0.05)] animate-fade-in-up`}
             style={{ animationDelay: `${delay}ms` }}
         >
             {/* Ambient Background Glow */}
@@ -50,18 +50,18 @@ const StatCard = ({ label, value, icon: Icon, trend, color = 'primary', delay = 
                         <Icon size={24} className="drop-shadow-[0_0_8px_rgba(currentColor,0.5)]" />
                     </div>
                     {trend && (
-                        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase border ${trend > 0 ? 'text-green-400 border-green-500/20 bg-green-500/10' : 'text-red-400 border-red-500/20 bg-red-500/10'}`}>
+                        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase border ${trend > 0 ? 'text-green-600 border-green-200 bg-green-50' : 'text-red-600 border-red-200 bg-red-50'}`}>
                             {trend > 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
                             {Math.abs(trend)}%
                         </div>
                     )}
                 </div>
 
-                <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.4em] mb-2">{label}</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-2">{label}</p>
                 <div className="flex items-baseline gap-2">
-                    <h3 className="text-4xl font-serif font-black text-white tracking-tighter">
+                    <h3 className="text-4xl font-serif font-black text-gray-900 tracking-tighter">
                         {displayValue.toLocaleString('pt-AO', { maximumFractionDigits: (suffix === '' ? 0 : 1) })}
-                        {suffix && <span className="text-xs text-gray-500 ml-1 uppercase tracking-widest font-sans">{suffix}</span>}
+                        {suffix && <span className="text-xs text-gray-400 ml-1 uppercase tracking-widest font-sans">{suffix}</span>}
                     </h3>
                     <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse opacity-50"></div>
                 </div>

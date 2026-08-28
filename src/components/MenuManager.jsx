@@ -230,16 +230,16 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
     };
 
     if (editingItem) {
-        const inputClasses = "w-full px-4 py-3 bg-[#111] border border-[#2E2E2E] rounded-2xl focus:ring-2 focus:ring-[#F5C542]/50 focus:border-[#F5C542] outline-none transition-all text-white font-medium";
+        const inputClasses = "w-full px-4 py-3 bg-[#111] border border-[#222224] rounded-2xl focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] outline-none transition-all text-white font-medium";
         const labelClasses = "block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 mt-4 first:mt-0";
 
         return (
-            <div className="bg-[#161616]/95 backdrop-blur-2xl rounded-3xl p-6 sm:p-10 shadow-[0_25px_60px_rgba(0,0,0,0.95)] border border-[#2A2A2A] flex flex-col gap-6 w-full max-w-4xl mx-auto h-[85vh] overflow-y-auto transition-all animate-in zoom-in-95">
-                <div className="flex items-center justify-between border-b border-[#282828] pb-5">
-                    <h2 className="text-2xl font-serif font-bold text-[#F5C542] flex items-center gap-3">
-                        <span className="p-2 bg-[#F5C542]/10 rounded-xl">🍽️</span> {editingItem.id ? 'Editar Prato' : 'Novo Prato'}
+            <div className="bg-[#121213]/95 backdrop-blur-2xl rounded-3xl p-6 sm:p-10 shadow-[0_25px_60px_rgba(0,0,0,0.95)] border border-[#2A2A2A] flex flex-col gap-6 w-full max-w-4xl mx-auto h-[85vh] overflow-y-auto transition-all animate-in zoom-in-95">
+                <div className="flex items-center justify-between border-b border-[#222224] pb-5">
+                    <h2 className="text-2xl font-serif font-bold text-[#D4AF37] flex items-center gap-3">
+                        <span className="p-2 bg-[#D4AF37]/10 rounded-xl">🍽️</span> {editingItem.id ? 'Editar Prato' : 'Novo Prato'}
                     </h2>
-                    <button onClick={() => setEditingItem(null)} className="p-2 bg-[#1C1C1C] hover:bg-[#282828] rounded-full transition-colors text-gray-400 hover:text-white border border-[#2A2A2A]">
+                    <button onClick={() => setEditingItem(null)} className="p-2 bg-[#1A1A1C] hover:bg-[#222224] rounded-full transition-colors text-gray-400 hover:text-white border border-[#2A2A2A]">
                         <X size={18} />
                     </button>
                 </div>
@@ -256,7 +256,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                                 onClick={() => setActiveLang(lang.id)}
                                 className={`px-4 py-2 rounded-xl text-xs font-black tracking-wider uppercase transition-all flex items-center gap-2 ${
                                     activeLang === lang.id 
-                                        ? 'bg-gradient-to-r from-[#F5C542] to-[#EAC775] text-black shadow-lg scale-105' 
+                                        ? 'bg-gradient-to-r from-[#D4AF37] to-[#F9E6A2] text-black shadow-lg scale-105' 
                                         : 'text-gray-400 hover:text-white bg-[#1A1A1A]'
                                 }`}
                             >
@@ -266,7 +266,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                         ))}
                     </div>
 
-                    <div className="p-6 bg-[#1A1A1A] rounded-3xl border border-[#2E2E2E] space-y-6 shadow-inner">
+                    <div className="p-6 bg-[#1A1A1A] rounded-3xl border border-[#222224] space-y-6 shadow-inner">
                         {activeLang === 'pt' ? (
                             <>
                                 <div>
@@ -282,7 +282,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                                                 const templates = [`O delicioso ${editingItem.name} é preparado com ingredientes frescos da mais alta qualidade, garantindo um sabor único.`, `Experimente o nosso incrível ${editingItem.name}, a escolha perfeita para o seu dia.` ];
                                                 setEditingItem({ ...editingItem, desc_text: templates[Math.floor(Math.random() * templates.length)] });
                                             }}
-                                            className="text-[10px] bg-gradient-to-r from-[#F5C542] to-amber-500 text-black px-3 py-1 rounded-full font-black uppercase flex items-center gap-1 shadow-md hover:scale-105 transition-all"
+                                            className="text-[10px] bg-gradient-to-r from-[#D4AF37] to-amber-500 text-black px-3 py-1 rounded-full font-black uppercase flex items-center gap-1 shadow-md hover:scale-105 transition-all"
                                         ><Sparkles size={12} /> Sugestão IA</button>
                                     </div>
                                     <textarea className={`${inputClasses} min-h-[100px] leading-relaxed`} rows={3} value={editingItem.desc_text || ''} onChange={e => setEditingItem({ ...editingItem, desc_text: e.target.value })} placeholder="Descreva os ingredientes, modo de preparação e sabor..." />
@@ -338,18 +338,18 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                                 onChange={e => setEditingItem({ ...editingItem, category_id: e.target.value })}
                             >
                                 {categories.map(c => (
-                                    <option key={c.id} value={c.id} className="bg-[#1C1C1C] text-white font-medium">{c.label || c.name}</option>
+                                    <option key={c.id} value={c.id} className="bg-[#1A1A1C] text-white font-medium">{c.label || c.name}</option>
                                 ))}
                             </select>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div className="flex items-center justify-between p-4 bg-[#1A1A1A] rounded-2xl border border-[#2E2E2E]">
+                        <div className="flex items-center justify-between p-4 bg-[#1A1A1A] rounded-2xl border border-[#222224]">
                             <span className="text-xs font-black text-gray-300 uppercase tracking-widest">Controlo de Estoque</span>
                             <label className="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" className="sr-only peer" checked={editingItem.track_stock} onChange={e => setEditingItem({ ...editingItem, track_stock: e.target.checked })} />
-                                <div className="w-12 h-6 bg-gray-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F5C542]"></div>
+                                <div className="w-12 h-6 bg-gray-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#D4AF37]"></div>
                             </label>
                         </div>
                         {editingItem.track_stock && (
@@ -362,7 +362,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
 
                     <div>
                         <label className={labelClasses}>Fotografia do Prato</label>
-                        <div className="flex items-center gap-6 p-4 bg-[#1A1A1A] rounded-3xl border border-[#2E2E2E]">
+                        <div className="flex items-center gap-6 p-4 bg-[#1A1A1A] rounded-3xl border border-[#222224]">
                             <div className="w-20 h-20 rounded-2xl overflow-hidden bg-black/60 border border-[#2A2A2A] shrink-0 shadow-inner flex items-center justify-center">
                                 {editingItem.img_url ? (
                                     <img src={editingItem.img_url} className="w-full h-full object-cover" alt="Preview" />
@@ -388,15 +388,15 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                                         setEditingItem({ ...editingItem, img_url: publicUrl });
                                         toast.success("Enviado com sucesso!", { id: 'upload' });
                                     } catch (err) { toast.error("Erro no upload."); }
-                                }} className="block w-full text-xs text-gray-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:tracking-wider file:bg-[#F5C542] file:text-black hover:file:bg-[#EAC775] file:transition-all file:cursor-pointer" />
+                                }} className="block w-full text-xs text-gray-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:tracking-wider file:bg-[#D4AF37] file:text-black hover:file:bg-[#F9E6A2] file:transition-all file:cursor-pointer" />
                                 <p className="text-[10px] text-gray-500 font-light">Formato quadrado recomendado (JPG ou PNG). Otimização automática ativada.</p>
                             </div>
                         </div>
                     </div>
 
                     <div className="mt-8 flex gap-4">
-                        <button className="flex-1 px-6 py-4 rounded-2xl bg-[#1C1C1C] hover:bg-[#282828] text-white font-bold transition-all border border-[#2E2E2E]" onClick={() => setEditingItem(null)}>Cancelar</button>
-                        <button className="flex-1 px-6 py-4 rounded-2xl bg-gradient-to-r from-[#F5C542] to-[#EAC775] text-gray-950 font-black tracking-wider uppercase transition-all shadow-lg shadow-[#F5C542]/20 hover:scale-[1.01]" onClick={() => handleSave(editingItem)} disabled={isSaving}>Salvar Alterações</button>
+                        <button className="flex-1 px-6 py-4 rounded-2xl bg-[#1A1A1C] hover:bg-[#222224] text-white font-bold transition-all border border-[#222224]" onClick={() => setEditingItem(null)}>Cancelar</button>
+                        <button className="flex-1 px-6 py-4 rounded-2xl bg-gradient-to-r from-[#D4AF37] to-[#F9E6A2] text-gray-950 font-black tracking-wider uppercase transition-all shadow-lg shadow-[#D4AF37]/20 hover:scale-[1.01]" onClick={() => handleSave(editingItem)} disabled={isSaving}>Salvar Alterações</button>
                     </div>
                 </div>
             </div>
@@ -408,10 +408,10 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
         <div className="menu-manager h-full relative flex flex-col gap-8 items-start animate-fade-in font-sans text-gray-100 pb-20">
             
             {/* TOP BAR: EDITOR DE MENU HEADER + SEARCH + REPOR STOCK + CATEGORIAS */}
-            <div className="w-full bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 sm:p-8 shadow-[0_15px_40px_rgba(0,0,0,0.8)] flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6 hover:border-[#F5C542]/40 transition-all">
+            <div className="w-full bg-[#121213]/90 backdrop-blur-xl border border-[#222224] rounded-3xl p-6 sm:p-8 shadow-[0_15px_40px_rgba(0,0,0,0.8)] flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6 hover:border-[#D4AF37]/40 transition-all">
                 <div className="space-y-1">
                     <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white tracking-tight flex items-center gap-3">
-                        Editor de Menu <span className="text-sm font-sans font-medium text-[#F5C542] bg-[#F5C542]/10 px-3 py-1 rounded-full border border-[#F5C542]/30">Comidas da Terra</span>
+                        Editor de Menu <span className="text-sm font-sans font-medium text-[#D4AF37] bg-[#D4AF37]/10 px-3 py-1 rounded-full border border-[#D4AF37]/30">Comidas da Terra</span>
                     </h2>
                     <p className="text-xs text-gray-400 font-light">Gerencie seus pratos e categorias com sincronização instantânea.</p>
                 </div>
@@ -424,7 +424,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                             placeholder="Procurar pratos ou categorias..." 
                             value={adminSearch} 
                             onChange={(e) => setAdminSearch(e.target.value)} 
-                            className="w-full pl-10 pr-4 py-3 bg-[#111111] border border-[#2E2E2E] focus:border-[#F5C542] rounded-2xl text-white text-xs outline-none transition-all shadow-inner" 
+                            className="w-full pl-10 pr-4 py-3 bg-[#111111] border border-[#222224] focus:border-[#D4AF37] rounded-2xl text-white text-xs outline-none transition-all shadow-inner" 
                         />
                         {adminSearch && (
                             <button onClick={() => setAdminSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">✕</button>
@@ -433,7 +433,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
 
                     <button 
                         onClick={handleResetStock}
-                        className="px-5 py-3 bg-[#F5C542]/10 text-[#F5C542] rounded-2xl border border-[#F5C542]/40 flex items-center gap-2 hover:bg-[#F5C542] hover:text-black transition-all font-black uppercase tracking-widest text-[10px] shadow-[0_0_15px_rgba(245,197,66,0.2)]"
+                        className="px-5 py-3 bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl border border-[#D4AF37]/40 flex items-center gap-2 hover:bg-[#D4AF37] hover:text-black transition-all font-black uppercase tracking-widest text-[10px] shadow-[0_0_15px_rgba(245,197,66,0.2)]"
                         title="Repor Stock Global"
                     >
                         <RotateCcw size={14} className="animate-spin-slow" />
@@ -442,7 +442,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
 
                     <button 
                         onClick={() => setShowCategoryManager(true)} 
-                        className="px-6 py-3 bg-[#1C1C1C] text-gray-200 rounded-2xl border border-[#2E2E2E] hover:border-[#F5C542]/50 hover:text-white transition-all font-black uppercase tracking-widest text-[10px] shadow-md"
+                        className="px-6 py-3 bg-[#1A1A1C] text-gray-200 rounded-2xl border border-[#222224] hover:border-[#D4AF37]/50 hover:text-white transition-all font-black uppercase tracking-widest text-[10px] shadow-md"
                     >
                         Categorias
                     </button>
@@ -456,7 +456,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                 <aside className="lg:col-span-3 lg:sticky lg:top-8 space-y-6 flex flex-col">
                     <div className="flex items-center justify-between px-2">
                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em]">Navegação Rápida</span>
-                        <span className="text-[10px] font-black text-[#F5C542] bg-[#F5C542]/10 px-2 py-0.5 rounded-full">{categories.length} Categorias</span>
+                        <span className="text-[10px] font-black text-[#D4AF37] bg-[#D4AF37]/10 px-2 py-0.5 rounded-full">{categories.length} Categorias</span>
                     </div>
 
                     <div className="space-y-6 max-h-[calc(100vh-220px)] overflow-y-auto pr-2 no-scrollbar">
@@ -473,19 +473,19 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                                     }}
                                     className={`relative rounded-3xl p-6 transition-all duration-500 cursor-pointer overflow-hidden border ${
                                         isSelected 
-                                            ? 'bg-[#161616]/95 border-[#F5C542] shadow-[0_0_30px_rgba(245,197,66,0.3)] scale-[1.02]' 
-                                            : 'bg-[#161616]/75 border-[#282828] hover:border-[#F5C542]/40 hover:bg-[#161616]/90 opacity-80 hover:opacity-100'
+                                            ? 'bg-[#121213]/95 border-[#D4AF37] shadow-[0_0_30px_rgba(245,197,66,0.3)] scale-[1.02]' 
+                                            : 'bg-[#121213]/75 border-[#222224] hover:border-[#D4AF37]/40 hover:bg-[#121213]/90 opacity-80 hover:opacity-100'
                                     }`}
                                 >
                                     {/* Ambient Glow inside card */}
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-radial from-[#F5C542]/15 to-transparent blur-2xl pointer-events-none"></div>
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-radial from-[#D4AF37]/15 to-transparent blur-2xl pointer-events-none"></div>
 
                                     <div className="flex flex-col items-center justify-center gap-4 relative z-10 py-4">
                                         <div className="w-28 h-28 rounded-full bg-[#111] border border-white/10 p-2 shadow-2xl flex items-center justify-center overflow-hidden">
                                             <img src={illustration} alt={cat.label || cat.name} className="w-full h-full object-cover rounded-full filter drop-shadow-[0_10px_15px_rgba(0,0,0,0.8)]" />
                                         </div>
                                         <h3 className="text-base font-serif font-bold text-white tracking-wide text-center drop-shadow">{cat.label || cat.name}</h3>
-                                        <span className="text-[10px] uppercase font-black tracking-widest text-gray-500 bg-[#1C1C1C] px-3 py-1 rounded-full border border-[#2E2E2E]">{cat.items?.length || 0} Pratos</span>
+                                        <span className="text-[10px] uppercase font-black tracking-widest text-gray-500 bg-[#1A1A1C] px-3 py-1 rounded-full border border-[#222224]">{cat.items?.length || 0} Pratos</span>
                                     </div>
                                 </div>
                             );
@@ -509,10 +509,10 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                                                 <div className="scroll-mt-32 space-y-6" id={`cat-section-${cat.id}`}>
                                                     
                                                     {/* CATEGORY SECTION HEADER PILL & AI ASSISTANT BUTTON */}
-                                                    <div className="flex items-center justify-between p-4 bg-[#161616]/90 backdrop-blur-xl rounded-2xl border border-[#282828] shadow-lg">
+                                                    <div className="flex items-center justify-between p-4 bg-[#121213]/90 backdrop-blur-xl rounded-2xl border border-[#222224] shadow-lg">
                                                         <div className="flex items-center gap-3">
                                                             <div {...context.attributes} {...context.listeners} className="cursor-grab text-gray-600 hover:text-white p-1">⋮⋮</div>
-                                                            <div className="w-2.5 h-2.5 rounded-full bg-[#F5C542]"></div>
+                                                            <div className="w-2.5 h-2.5 rounded-full bg-[#D4AF37]"></div>
                                                             <h3 className="text-lg font-serif font-bold text-white">{cat.label || cat.name}</h3>
                                                             <span className="text-xs font-mono text-gray-500 font-medium">({filteredItems?.length || 0})</span>
                                                         </div>
@@ -520,7 +520,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                                                         <button 
                                                             onClick={() => triggerAIAssistant(cat.label || cat.name)}
                                                             disabled={aiGenerating}
-                                                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#F5C542]/20 to-[#EAC775]/10 hover:from-[#F5C542]/30 text-[#F5C542] rounded-xl border border-[#F5C542]/40 font-black uppercase tracking-wider text-[10px] shadow-[0_0_12px_rgba(245,197,66,0.15)] transition-all"
+                                                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#D4AF37]/20 to-[#F9E6A2]/10 hover:from-[#D4AF37]/30 text-[#D4AF37] rounded-xl border border-[#D4AF37]/40 font-black uppercase tracking-wider text-[10px] shadow-[0_0_12px_rgba(245,197,66,0.15)] transition-all"
                                                         >
                                                             <Sparkles size={13} className="animate-pulse" />
                                                             <span>AI Menu Assistant</span>
@@ -533,8 +533,8 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                                                             {filteredItems?.map(item => (
                                                                 <SortableItem key={item.id} id={item.id} useHandle={true}>
                                                                     {(context) => (
-                                                                        <div className="group relative bg-[#161616]/90 backdrop-blur-xl rounded-3xl border border-[#282828] hover:border-[#F5C542]/50 p-4 flex items-center gap-4 transition-all duration-300 shadow-xl hover:shadow-[0_15px_30px_rgba(0,0,0,0.8)]">
-                                                                            <div {...context.attributes} {...context.listeners} className="cursor-move text-gray-600 hover:text-[#F5C542] transition-colors p-1"><GripVertical size={16} /></div>
+                                                                        <div className="group relative bg-[#121213]/90 backdrop-blur-xl rounded-3xl border border-[#222224] hover:border-[#D4AF37]/50 p-4 flex items-center gap-4 transition-all duration-300 shadow-xl hover:shadow-[0_15px_30px_rgba(0,0,0,0.8)]">
+                                                                            <div {...context.attributes} {...context.listeners} className="cursor-move text-gray-600 hover:text-[#D4AF37] transition-colors p-1"><GripVertical size={16} /></div>
                                                                             
                                                                             <div className="w-16 h-16 rounded-2xl overflow-hidden bg-[#111] border border-white/10 shrink-0 relative shadow-inner">
                                                                                 <img src={item.img_url || 'https://via.placeholder.com/150'} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -547,16 +547,16 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
 
                                                                             <div className="flex-1 min-w-0 space-y-1">
                                                                                 <div className="flex items-start justify-between gap-1">
-                                                                                    <h4 className="font-bold text-sm text-white truncate group-hover:text-[#F5C542] transition-colors">{item.name}</h4>
-                                                                                    <button onClick={() => setEditingItem({ ...item })} className="text-gray-500 hover:text-[#F5C542] p-1 transition-colors">
+                                                                                    <h4 className="font-bold text-sm text-white truncate group-hover:text-[#D4AF37] transition-colors">{item.name}</h4>
+                                                                                    <button onClick={() => setEditingItem({ ...item })} className="text-gray-500 hover:text-[#D4AF37] p-1 transition-colors">
                                                                                         <Pencil size={13} />
                                                                                     </button>
                                                                                 </div>
 
                                                                                 <div className="flex items-center justify-between pt-1">
-                                                                                    <p className="text-[#F5C542] font-black text-xs font-mono">{item.price}</p>
+                                                                                    <p className="text-[#D4AF37] font-black text-xs font-mono">{item.price}</p>
                                                                                     {item.track_stock && (
-                                                                                        <span className="text-[9px] font-mono font-bold text-gray-400 bg-[#1C1C1C] px-2 py-0.5 rounded-md border border-[#2E2E2E]">
+                                                                                        <span className="text-[9px] font-mono font-bold text-gray-400 bg-[#1A1A1C] px-2 py-0.5 rounded-md border border-[#222224]">
                                                                                             {item.stock_quantity} UN
                                                                                         </span>
                                                                                     )}
@@ -593,7 +593,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, onUpdat
                                                             {/* NOVO PRATO CARD */}
                                                             <div 
                                                                 onClick={() => setEditingItem({ ...DEFAULT_ITEM, category_id: cat.id })}
-                                                                className="group border-2 border-dashed border-[#2A2A2A] hover:border-[#F5C542] rounded-3xl p-6 flex flex-col items-center justify-center text-gray-600 hover:text-[#F5C542] transition-all cursor-pointer h-28 bg-[#161616]/40 hover:bg-[#161616]/80 shadow-md"
+                                                                className="group border-2 border-dashed border-[#2A2A2A] hover:border-[#D4AF37] rounded-3xl p-6 flex flex-col items-center justify-center text-gray-600 hover:text-[#D4AF37] transition-all cursor-pointer h-28 bg-[#121213]/40 hover:bg-[#121213]/80 shadow-md"
                                                             >
                                                                 <Plus size={24} className="group-hover:scale-125 transition-transform duration-300" />
                                                                 <span className="text-[10px] font-black uppercase tracking-widest mt-2">Novo Prato</span>

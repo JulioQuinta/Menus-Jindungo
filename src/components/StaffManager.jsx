@@ -243,7 +243,7 @@ const StaffManager = ({ restaurantId }) => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                 
                 {/* Left Chart: Carga de Trabalho por Dia da Semana */}
-                <div className="bg-gradient-to-br from-[#1C1C1C]/95 via-[#161616]/95 to-[#121212]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-[#D4AF37]/30 shadow-[0_0_50px_rgba(212,175,55,0.15)] relative overflow-hidden space-y-4">
+                <div className="bg-gradient-to-br from-[#1A1A1C]/95 via-[#121213]/95 to-[#0A0A0B]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-[#D4AF37]/30 shadow-[0_0_50px_rgba(212,175,55,0.15)] relative overflow-hidden space-y-4">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/10 blur-[80px] rounded-full pointer-events-none -mr-20 -mt-20" />
 
                     <div className="flex items-center justify-between pb-3 border-b border-white/5 relative z-10">
@@ -283,7 +283,7 @@ const StaffManager = ({ restaurantId }) => {
                         <div className="absolute top-12 left-44 z-20 text-[10px] font-mono font-bold text-[#D4AF37] bg-black/80 px-2 py-0.5 rounded border border-[#D4AF37]/50 drop-shadow pointer-events-none">
                             Peaks
                         </div>
-                        <div className="absolute top-4 right-24 z-20 text-[10px] font-mono font-bold text-[#F5C542] bg-black/90 px-2.5 py-1 rounded-lg border border-[#F5C542] drop-shadow-[0_0_10px_#F5C542] pointer-events-none">
+                        <div className="absolute top-4 right-24 z-20 text-[10px] font-mono font-bold text-[#D4AF37] bg-black/90 px-2.5 py-1 rounded-lg border border-[#D4AF37] drop-shadow-[0_0_10px_#D4AF37] pointer-events-none">
                             ★ 12.1k
                         </div>
 
@@ -301,7 +301,7 @@ const StaffManager = ({ restaurantId }) => {
                                 </defs>
                                 <XAxis dataKey="label" stroke="#666" fontSize={10} tickLine={false} />
                                 <YAxis stroke="#666" fontSize={10} tickLine={false} axisLine={false} />
-                                <Tooltip contentStyle={{ backgroundColor: '#121212', borderColor: '#D4AF37', borderRadius: '12px' }} />
+                                <Tooltip contentStyle={{ backgroundColor: '#0A0A0B', borderColor: '#D4AF37', borderRadius: '12px' }} />
                                 <Area type="monotone" dataKey="pedidos" stroke="#3B82F6" strokeWidth={3} fill="url(#pedidosGrad)" />
                                 <Area type="monotone" dataKey="horas" stroke="#D4AF37" strokeWidth={3} fill="url(#horasGrad)" />
                             </AreaChart>
@@ -310,7 +310,7 @@ const StaffManager = ({ restaurantId }) => {
                 </div>
 
                 {/* Right Chart: Eficiência de Preparação p/ Chefe */}
-                <div className="bg-gradient-to-br from-[#1C1C1C]/95 via-[#161616]/95 to-[#121212]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden space-y-4">
+                <div className="bg-gradient-to-br from-[#1A1A1C]/95 via-[#121213]/95 to-[#0A0A0B]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden space-y-4">
                     <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#D4AF37]/5 blur-[80px] rounded-full pointer-events-none -ml-20 -mb-20" />
 
                     <div className="flex items-center justify-between pb-3 border-b border-white/5 relative z-10">
@@ -331,7 +331,7 @@ const StaffManager = ({ restaurantId }) => {
                             <BarChart data={efficiencyData} margin={{ top: 20, right: 5, left: -25, bottom: 0 }}>
                                 <XAxis dataKey="hour" stroke="#666" fontSize={9} tickLine={false} />
                                 <YAxis stroke="#666" fontSize={9} tickLine={false} axisLine={false} />
-                                <Tooltip contentStyle={{ backgroundColor: '#121212', borderColor: '#D4AF37', borderRadius: '12px' }} />
+                                <Tooltip contentStyle={{ backgroundColor: '#0A0A0B', borderColor: '#D4AF37', borderRadius: '12px' }} />
                                 <Bar dataKey="val" fill="#D4AF37" radius={[4, 4, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
@@ -344,7 +344,7 @@ const StaffManager = ({ restaurantId }) => {
                 
                 {/* Left Area (2 Cols): Base de Staff & Escala matching screenshot exactly */}
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-[#161616]/95 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-7 shadow-2xl space-y-6">
+                    <div className="bg-[#121213]/95 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-7 shadow-2xl space-y-6">
                         
                         {/* Table Header with AI Button & Atribuir Novas Tarefas */}
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-white/10">
@@ -365,7 +365,7 @@ const StaffManager = ({ restaurantId }) => {
 
                                 <button
                                     onClick={() => setShowAddModal(true)}
-                                    className="px-6 py-3.5 bg-gradient-to-r from-[#F5C542] to-[#D4AF37] text-gray-950 font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                                    className="px-6 py-3.5 bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] text-gray-950 font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                                 >
                                     <Plus size={16} />
                                     <span>Atribuir Novas Tarefas</span>
@@ -448,7 +448,7 @@ const StaffManager = ({ restaurantId }) => {
                 <div className="space-y-6">
                     
                     {/* Top Right Card: ADMIN ACESSOS matching screenshot exactly */}
-                    <div className="bg-[#161616]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-xl space-y-4">
+                    <div className="bg-[#121213]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-xl space-y-4">
                         <div className="flex items-center justify-between pb-3 border-b border-white/10">
                             <h3 className="font-serif font-black text-white text-base tracking-wide">ADMIN ACESSOS</h3>
                             <span className="text-[10px] text-[#D4AF37] font-mono">Hardware &amp; KDS</span>
@@ -478,7 +478,7 @@ const StaffManager = ({ restaurantId }) => {
                     </div>
 
                     {/* Screenshot AI Drawer: Dicas de Tomada de Decisão */}
-                    <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#161616]/95 to-[#101010]/95 backdrop-blur-xl border border-[#D4AF37]/40 rounded-[2.5rem] p-7 shadow-[0_0_40px_rgba(212,175,55,0.2)] relative overflow-hidden group">
+                    <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#121213]/95 to-[#101010]/95 backdrop-blur-xl border border-[#D4AF37]/40 rounded-[2.5rem] p-7 shadow-[0_0_40px_rgba(212,175,55,0.2)] relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/10 blur-[60px] rounded-full -mr-16 -mt-16 pointer-events-none" />
 
                         <div className="flex items-center justify-between pb-5 mb-6 border-b border-white/10 relative z-10">
@@ -530,7 +530,7 @@ const StaffManager = ({ restaurantId }) => {
             {/* Add Staff / Atribuir Tarefas Modal */}
             {showAddModal && (
                 <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-[#161616] border border-[#D4AF37]/50 rounded-[2.5rem] p-8 max-w-md w-full shadow-[0_25px_70px_rgba(0,0,0,0.9)] relative overflow-hidden">
+                    <div className="bg-[#121213] border border-[#D4AF37]/50 rounded-[2.5rem] p-8 max-w-md w-full shadow-[0_25px_70px_rgba(0,0,0,0.9)] relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/10 blur-[60px] rounded-full pointer-events-none -mr-16 -mt-16" />
 
                         <div className="flex items-center justify-between pb-4 mb-6 border-b border-white/10 relative z-10">
@@ -612,7 +612,7 @@ const StaffManager = ({ restaurantId }) => {
                                 <button
                                     type="submit"
                                     disabled={isSaving}
-                                    className="px-8 py-3 bg-gradient-to-r from-[#F5C542] to-[#D4AF37] hover:brightness-110 text-gray-950 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg transition-all disabled:opacity-50 cursor-pointer"
+                                    className="px-8 py-3 bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] hover:brightness-110 text-gray-950 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg transition-all disabled:opacity-50 cursor-pointer"
                                 >
                                     {isSaving ? 'A Gravar...' : 'Confirmar Escala'}
                                 </button>
@@ -625,7 +625,7 @@ const StaffManager = ({ restaurantId }) => {
             {/* AI Assistant Modal */}
             {showAiModal && (
                 <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-[#161616] border border-[#D4AF37]/50 rounded-[2.5rem] p-8 max-w-lg w-full shadow-[0_25px_70px_rgba(0,0,0,0.9)] relative overflow-hidden">
+                    <div className="bg-[#121213] border border-[#D4AF37]/50 rounded-[2.5rem] p-8 max-w-lg w-full shadow-[0_25px_70px_rgba(0,0,0,0.9)] relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/10 blur-[60px] rounded-full pointer-events-none -mr-16 -mt-16" />
 
                         <div className="flex items-center justify-between pb-5 mb-6 border-b border-white/10 relative z-10">

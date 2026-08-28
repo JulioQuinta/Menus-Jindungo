@@ -211,7 +211,7 @@ const CategoryManager = ({ categories, restaurantId, onUpdate, onClose, isInline
                     <button
                         onClick={handleAdd}
                         disabled={isLoading || !newCategory.trim()}
-                        className="bg-gradient-to-r from-[#F5C542] via-[#EAC775] to-[#D4AF37] text-gray-950 px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-lg disabled:opacity-50 disabled:shadow-none whitespace-nowrap cursor-pointer"
+                        className="bg-gradient-to-r from-[#D4AF37] via-[#F9E6A2] to-[#D4AF37] text-gray-950 px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-lg disabled:opacity-50 disabled:shadow-none whitespace-nowrap cursor-pointer"
                     >
                         Criar Categoria
                     </button>

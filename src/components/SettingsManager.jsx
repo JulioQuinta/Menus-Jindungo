@@ -112,7 +112,7 @@ const SettingsManager = ({
                 <div className="flex items-center gap-4 z-10 w-full sm:w-auto justify-end">
                     <button
                         onClick={() => handleOpenModule('profile')}
-                        className="bg-gradient-to-r from-[#F5C542] via-[#EAC775] to-[#D4AF37] text-gray-950 font-black px-6 py-3.5 rounded-2xl shadow-[0_0_30px_rgba(212,175,55,0.4)] hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 text-xs uppercase tracking-wider shrink-0 cursor-pointer"
+                        className="bg-gradient-to-r from-[#D4AF37] via-[#F9E6A2] to-[#D4AF37] text-gray-950 font-black px-6 py-3.5 rounded-2xl shadow-[0_0_30px_rgba(212,175,55,0.4)] hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 text-xs uppercase tracking-wider shrink-0 cursor-pointer"
                     >
                         <Settings size={16} />
                         <span>Personalizar Design &amp; Cores</span>
@@ -125,7 +125,7 @@ const SettingsManager = ({
                 
                 {/* Far Left Column (Col 3): Centro de Configurações Card matching screenshot exactly */}
                 <div className="lg:col-span-3">
-                    <div className="bg-gradient-to-b from-[#1C1C1C]/95 via-[#161616]/95 to-[#101010]/95 backdrop-blur-xl p-8 rounded-[2.5rem] border border-[#D4AF37]/40 shadow-2xl relative overflow-hidden flex flex-col justify-between min-h-[480px]">
+                    <div className="bg-gradient-to-b from-[#1A1A1C]/95 via-[#121213]/95 to-[#101010]/95 backdrop-blur-xl p-8 rounded-[2.5rem] border border-[#D4AF37]/40 shadow-2xl relative overflow-hidden flex flex-col justify-between min-h-[480px]">
                         <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/10 blur-[60px] rounded-full pointer-events-none -mr-16 -mt-16" />
 
                         <div className="space-y-4 relative z-10">
@@ -163,7 +163,7 @@ const SettingsManager = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         
                         {/* Left Chart: Monitor de Atividade de Definições */}
-                        <div className="bg-[#161616]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-xl space-y-4 relative overflow-hidden">
+                        <div className="bg-[#121213]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-xl space-y-4 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-48 h-48 bg-[#3B82F6]/10 blur-[60px] rounded-full pointer-events-none -mr-16 -mt-16" />
 
                             <div className="flex items-center justify-between pb-3 border-b border-white/5 relative z-10">
@@ -206,7 +206,7 @@ const SettingsManager = ({
                                         </defs>
                                         <XAxis dataKey="hour" stroke="#666" fontSize={10} tickLine={false} />
                                         <YAxis stroke="#666" fontSize={10} tickLine={false} axisLine={false} />
-                                        <Tooltip contentStyle={{ backgroundColor: '#121212', borderColor: '#D4AF37', borderRadius: '12px' }} />
+                                        <Tooltip contentStyle={{ backgroundColor: '#0A0A0B', borderColor: '#D4AF37', borderRadius: '12px' }} />
                                         <Area type="monotone" dataKey="leituras" stroke="#3B82F6" strokeWidth={3} fill="url(#leiturasGrad)" />
                                         <Area type="monotone" dataKey="taxa" stroke="#D4AF37" strokeWidth={3} fill="url(#taxaGrad)" />
                                     </AreaChart>
@@ -215,7 +215,7 @@ const SettingsManager = ({
                         </div>
 
                         {/* Right Chart: Eficiência de Sincronização API */}
-                        <div className="bg-[#161616]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-xl space-y-4 relative overflow-hidden">
+                        <div className="bg-[#121213]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-xl space-y-4 relative overflow-hidden">
                             <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#D4AF37]/10 blur-[60px] rounded-full pointer-events-none -ml-16 -mb-16" />
 
                             <div className="flex items-center justify-between pb-3 border-b border-white/5 relative z-10">
@@ -246,7 +246,7 @@ const SettingsManager = ({
                                     <BarChart data={syncData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
                                         <XAxis dataKey="hour" stroke="#666" fontSize={9} tickLine={false} interval={2} />
                                         <YAxis stroke="#666" fontSize={9} tickLine={false} axisLine={false} />
-                                        <Tooltip contentStyle={{ backgroundColor: '#121212', borderColor: '#D4AF37', borderRadius: '12px' }} />
+                                        <Tooltip contentStyle={{ backgroundColor: '#0A0A0B', borderColor: '#D4AF37', borderRadius: '12px' }} />
                                         <Bar dataKey="val" fill="#D4AF37" radius={[4, 4, 0, 0]} />
                                     </BarChart>
                                 </ResponsiveContainer>
@@ -258,7 +258,7 @@ const SettingsManager = ({
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                         
                         {/* Table Card (2 Cols) matching screenshot exactly */}
-                        <div className="lg:col-span-2 bg-[#161616]/95 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-7 shadow-2xl space-y-6">
+                        <div className="lg:col-span-2 bg-[#121213]/95 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-7 shadow-2xl space-y-6">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-white/10">
                                 <div>
                                     <h3 className="text-xl font-serif font-bold text-white tracking-wide">Base de Definições &amp; Perfis</h3>
@@ -333,7 +333,7 @@ const SettingsManager = ({
                                                     {idx === 0 ? (
                                                         <button
                                                             onClick={() => handleOpenModule('profile', mod.name)}
-                                                            className="px-4 py-2 bg-gradient-to-r from-[#F5C542] to-[#D4AF37] hover:brightness-110 text-gray-950 text-[11px] font-black uppercase tracking-wider rounded-xl shadow-lg transition-all cursor-pointer whitespace-nowrap"
+                                                            className="px-4 py-2 bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] hover:brightness-110 text-gray-950 text-[11px] font-black uppercase tracking-wider rounded-xl shadow-lg transition-all cursor-pointer whitespace-nowrap"
                                                         >
                                                             Atribuir Novas Permissões
                                                         </button>
@@ -360,14 +360,14 @@ const SettingsManager = ({
                             {/* AI Assistant Button matching screenshot exactly */}
                             <button 
                                 onClick={() => setShowAiModal(true)}
-                                className="w-full py-4.5 bg-gradient-to-r from-[#1E1E1E]/95 via-[#161616]/95 to-[#101010]/95 backdrop-blur-xl border border-[#D4AF37]/50 rounded-[2.5rem] shadow-[0_0_30px_rgba(212,175,55,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 cursor-pointer group"
+                                className="w-full py-4.5 bg-gradient-to-r from-[#1E1E1E]/95 via-[#121213]/95 to-[#101010]/95 backdrop-blur-xl border border-[#D4AF37]/50 rounded-[2.5rem] shadow-[0_0_30px_rgba(212,175,55,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 cursor-pointer group"
                             >
                                 <Brain size={24} className="text-[#D4AF37] group-hover:rotate-12 transition-transform duration-300" />
                                 <span className="font-serif font-black text-white text-base tracking-wide">AI Business Assistant</span>
                             </button>
 
                             {/* Screenshot AI Drawer: Dicas de Tomada de Decisão */}
-                            <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#161616]/95 to-[#101010]/95 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-7 shadow-2xl relative space-y-4">
+                            <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#121213]/95 to-[#101010]/95 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-7 shadow-2xl relative space-y-4">
                                 <div className="flex items-center justify-between pb-3 border-b border-white/10">
                                     <h3 className="font-serif font-bold text-white text-sm">Dicas de Tomada de Decisão</h3>
                                     <span className="text-gray-400 font-mono text-xs">^</span>
@@ -390,21 +390,21 @@ const SettingsManager = ({
                             <div className="grid grid-cols-3 gap-4">
                                 <button 
                                     onClick={() => handleOpenModule('profile')}
-                                    className="p-6 bg-[#161616]/95 border border-[#D4AF37]/50 hover:bg-[#D4AF37]/10 rounded-[2rem] flex items-center justify-center text-[#D4AF37] shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                                    className="p-6 bg-[#121213]/95 border border-[#D4AF37]/50 hover:bg-[#D4AF37]/10 rounded-[2rem] flex items-center justify-center text-[#D4AF37] shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
                                     title="Personalização Visual"
                                 >
                                     <Settings size={28} />
                                 </button>
                                 <button 
                                     onClick={() => handleOpenModule('menu')}
-                                    className="p-6 bg-[#161616]/95 border border-white/10 hover:border-white/30 hover:bg-white/5 rounded-[2rem] flex items-center justify-center text-gray-400 hover:text-white shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                                    className="p-6 bg-[#121213]/95 border border-white/10 hover:border-white/30 hover:bg-white/5 rounded-[2rem] flex items-center justify-center text-gray-400 hover:text-white shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
                                     title="Módulo de Menu Digital"
                                 >
                                     <User size={28} />
                                 </button>
                                 <button 
                                     onClick={() => handleOpenModule('delivery')}
-                                    className="p-6 bg-[#161616]/95 border border-white/10 hover:border-white/30 hover:bg-white/5 rounded-[2rem] flex items-center justify-center text-gray-400 hover:text-white shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                                    className="p-6 bg-[#121213]/95 border border-white/10 hover:border-white/30 hover:bg-white/5 rounded-[2rem] flex items-center justify-center text-gray-400 hover:text-white shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
                                     title="Logística e Taxas de Entrega"
                                 >
                                     <Lock size={28} />
@@ -418,7 +418,7 @@ const SettingsManager = ({
             {/* Advanced Configuration Modal abrigando StyleControls / DeliverySettings / CategoryManager */}
             {activeModal && (
                 <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200 overflow-y-auto">
-                    <div className="bg-[#161616] border border-[#D4AF37]/50 rounded-[2.5rem] p-8 max-w-4xl w-full my-8 shadow-[0_25px_70px_rgba(0,0,0,0.9)] relative overflow-hidden">
+                    <div className="bg-[#121213] border border-[#D4AF37]/50 rounded-[2.5rem] p-8 max-w-4xl w-full my-8 shadow-[0_25px_70px_rgba(0,0,0,0.9)] relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-72 h-72 bg-[#D4AF37]/10 blur-[90px] rounded-full pointer-events-none -mr-24 -mt-24" />
 
                         <div className="flex items-center justify-between pb-5 mb-6 border-b border-white/10 relative z-10">
@@ -583,7 +583,7 @@ const SettingsManager = ({
                         <div className="pt-6 mt-6 border-t border-white/10 flex justify-end gap-3 relative z-10">
                             <button
                                 onClick={() => setActiveModal(null)}
-                                className="px-8 py-3.5 bg-gradient-to-r from-[#F5C542] via-[#EAC775] to-[#D4AF37] text-gray-950 font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+                                className="px-8 py-3.5 bg-gradient-to-r from-[#D4AF37] via-[#F9E6A2] to-[#D4AF37] text-gray-950 font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer"
                             >
                                 Guardar e Concluir Definições
                             </button>
@@ -595,7 +595,7 @@ const SettingsManager = ({
             {/* AI Assistant Modal */}
             {showAiModal && (
                 <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-[#161616] border border-[#D4AF37]/50 rounded-[2.5rem] p-8 max-w-lg w-full shadow-[0_25px_70px_rgba(0,0,0,0.9)] relative overflow-hidden">
+                    <div className="bg-[#121213] border border-[#D4AF37]/50 rounded-[2.5rem] p-8 max-w-lg w-full shadow-[0_25px_70px_rgba(0,0,0,0.9)] relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/10 blur-[60px] rounded-full pointer-events-none -mr-16 -mt-16" />
 
                         <div className="flex items-center justify-between pb-5 mb-6 border-b border-white/10 relative z-10">

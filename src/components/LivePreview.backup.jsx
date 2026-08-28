@@ -200,7 +200,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
     const effectivePrimaryColor = primaryColor || '#D4AF37';
     // If background is not set, use a very light tint of the primary color for a themed look
     const defaultLightBg = darkenColor(effectivePrimaryColor, -92).slice(0, 7);
-    const effectiveBgColor = backgroundColor || (darkMode ? '#121212' : defaultLightBg);
+    const effectiveBgColor = backgroundColor || (darkMode ? '#0A0A0B' : defaultLightBg);
     const effectiveTextColor = backgroundColor ? getContrastColor(effectiveBgColor) : (darkMode ? '#ffffff' : '#1a1a1a');
 
     const t = (key) => getTranslation(selectedLanguage, key);

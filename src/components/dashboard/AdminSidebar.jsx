@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, LogOut, ExternalLink, ShieldCheck } from 'lucide-react';
+import { Menu, LogOut, ExternalLink, ShieldCheck, Tv } from 'lucide-react';
 
 import { getAssetPath } from '../../utils/assetResolver';
 
@@ -21,6 +21,21 @@ const AdminSidebar = memo(({
         if (path === '/admin') return location.pathname === '/admin';
         return location.pathname.includes(path);
     };
+
+    const categories = [
+        {
+            title: "Operações",
+            paths: ['/admin', '/admin/menu', '/admin/orders', '/admin/invoices', '/admin/inventory', '/admin/reservations', '/admin/info']
+        },
+        {
+            title: "Crescimento & Clientes",
+            paths: ['/admin/chat', '/admin/crm', '/admin/feedbacks', '/admin/loyalty', '/admin/marketing']
+        },
+        {
+            title: "Configurações",
+            paths: ['/admin/qrcode', '/admin/staff', '/admin/settings']
+        }
+    ];
 
     return (
         <aside className={`fixed lg:relative z-50 bg-[#0D0D0D] border-r border-white/5 transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] h-screen flex flex-col shadow-[10px_0_40px_rgba(0,0,0,0.4)] will-change-transform
@@ -65,7 +80,7 @@ const AdminSidebar = memo(({
 
             {/* Restaurant Quick Card (Shown when open) */}
             {(isSidebarOpen || isMobileMenuOpen) && (
-                <div className="px-6 py-6 border-b border-white/5 bg-gradient-to-b from-white/[0.02] to-transparent">
+                <div className="px-6 py-4 border-b border-white/5 bg-gradient-to-b from-white/[0.02] to-transparent">
                     <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col gap-3 group/card hover:bg-white/[0.08] transition-all">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -87,40 +102,68 @@ const AdminSidebar = memo(({
                 </div>
             )}
 
-            {/* Navigation Navigation */}
-            <nav className="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar-sidebar mt-2">
-                {menuItems.map((item) => {
-                    const active = isActive(item.path);
+            {/* Navigation Categories */}
+            <nav className="flex-1 p-4 space-y-6 overflow-y-auto custom-scrollbar-sidebar mt-2">
+                {categories.map((cat, catIdx) => {
+                    const itemsInCat = menuItems.filter(item => cat.paths.includes(item.path));
+                    if (itemsInCat.length === 0) return null;
+
                     return (
-                        <Link
-                            key={item.path}
-                            to={item.path}
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className={`group relative flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 ${active
-                                ? 'bg-gradient-to-r from-[#D4AF37]/20 to-transparent text-[#D4AF37] border-l-4 border-[#D4AF37]'
-                                : 'text-gray-500 hover:bg-white/5 hover:text-white'
-                                }`}
-                        >
-                            {active && (
-                                <div className="absolute inset-0 bg-[#D4AF37]/5 blur-xl pointer-events-none"></div>
+                        <div key={catIdx} className="space-y-1.5">
+                            {(isSidebarOpen || isMobileMenuOpen) ? (
+                                <h5 className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] px-4 mb-2.5">
+                                    {cat.title}
+                                </h5>
+                            ) : (
+                                <div className="h-[1px] bg-white/5 my-4 mx-2"></div>
                             )}
-                            <div className={`transition-transform duration-300 ${active ? 'scale-110' : 'group-hover:scale-110 group-hover:rotate-6'}`}>
-                                <item.icon size={active ? 20 : 18} />
-                            </div>
-                            <span className={`text-sm font-bold tracking-tight whitespace-nowrap transition-all duration-500 ${(isSidebarOpen || isMobileMenuOpen) ? 'opacity-100 translate-x-0' : 'lg:opacity-0 lg:-translate-x-10 lg:absolute'}`}>
-                                {item.label}
-                            </span>
-                            
-                            {/* Hover Indicator for Collapsed State */}
-                            {!isSidebarOpen && !isMobileMenuOpen && (
-                                <div className="absolute left-full ml-4 px-3 py-2 bg-[#1A1A1A] border border-white/10 rounded-lg text-white text-xs font-bold opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-[100] shadow-2xl">
-                                    {item.label}
-                                </div>
-                            )}
-                        </Link>
-                    )
+
+                            {itemsInCat.map((item) => {
+                                const active = isActive(item.path);
+                                return (
+                                    <Link
+                                        key={item.path}
+                                        to={item.path}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className={`group relative flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 ${active
+                                            ? 'bg-gradient-to-r from-[#D4AF37]/15 to-transparent text-[#D4AF37] border-l-4 border-[#D4AF37] shadow-[inset_4px_0_12px_rgba(212,175,55,0.05)]'
+                                            : 'text-gray-500 hover:bg-white/5 hover:text-white'
+                                            }`}
+                                    >
+                                        {active && (
+                                            <div className="absolute inset-0 bg-[#D4AF37]/5 blur-xl pointer-events-none"></div>
+                                        )}
+                                        <div className={`transition-transform duration-300 ${active ? 'scale-110' : 'group-hover:scale-110 group-hover:rotate-6'}`}>
+                                            <item.icon size={active ? 18 : 16} />
+                                        </div>
+                                        <span className={`text-xs font-bold tracking-tight whitespace-nowrap transition-all duration-500 ${(isSidebarOpen || isMobileMenuOpen) ? 'opacity-100 translate-x-0' : 'lg:opacity-0 lg:-translate-x-10 lg:absolute'}`}>
+                                            {item.label}
+                                        </span>
+                                        
+                                        {!isSidebarOpen && !isMobileMenuOpen && (
+                                            <div className="absolute left-full ml-4 px-3 py-2 bg-[#1A1A1A] border border-white/10 rounded-lg text-white text-xs font-bold opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-[100] shadow-2xl">
+                                                {item.label}
+                                            </div>
+                                        )}
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    );
                 })}
             </nav>
+
+            {/* Quick Launch Monitor KDS (Special Action) */}
+            <div className="px-4 py-2 shrink-0">
+                <Link
+                    to="/admin/orders"
+                    className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-[#D4AF37]/10 to-transparent border border-[#D4AF37]/20 hover:border-[#D4AF37]/50 text-[#D4AF37] transition-all hover:scale-[1.02] shadow-[0_4px_20px_rgba(212,175,55,0.05)] ${(!isSidebarOpen && !isMobileMenuOpen) && 'justify-center'}`}
+                    title="Monitor de Cozinha (KDS)"
+                >
+                    <Tv size={18} className="animate-pulse shrink-0" />
+                    <span className={`text-xs font-black uppercase tracking-wider ${(isSidebarOpen || isMobileMenuOpen) ? 'block' : 'hidden'}`}>Monitor KDS</span>
+                </Link>
+            </div>
 
             {/* Footer / Logout */}
             <div className="p-6 border-t border-white/5 shrink-0 bg-gradient-to-t from-black/20 to-transparent">

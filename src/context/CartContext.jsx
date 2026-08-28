@@ -37,7 +37,7 @@ export const CartProvider = ({ children }) => {
                         icon: '🛎️',
                         duration: 5000,
                         style: {
-                            background: '#161616',
+                            background: '#121213',
                             color: '#fff',
                             borderRadius: '20px',
                             border: '1px solid rgba(212, 175, 55, 0.4)',
@@ -54,7 +54,7 @@ export const CartProvider = ({ children }) => {
                         icon: '📦',
                         duration: 5000,
                         style: {
-                            background: '#161616',
+                            background: '#121213',
                             color: '#fff',
                             borderRadius: '20px',
                             border: '1px solid rgba(212, 175, 55, 0.4)',

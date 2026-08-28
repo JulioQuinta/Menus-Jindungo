@@ -56,7 +56,7 @@ const SmartImage = ({ src, alt, className = '', style = {}, borderRadius = '0' }
             )}
 
             {isFallback ? (
-                <div className="absolute inset-0 bg-gradient-to-br from-[#1C1C1C] via-[#222222] to-[#141414] flex flex-col items-center justify-center text-center p-3 border border-white/5">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#1A1A1C] via-[#222222] to-[#141414] flex flex-col items-center justify-center text-center p-3 border border-white/5">
                     <span className="text-3xl filter drop-shadow-[0_4px_10px_rgba(229,194,123,0.3)]">🍽️</span>
                     <span className="text-[10px] uppercase font-bold text-gray-500 mt-2 tracking-widest line-clamp-1">{alt || 'Iguaria'}</span>
                 </div>

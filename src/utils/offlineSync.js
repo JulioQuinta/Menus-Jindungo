@@ -88,7 +88,7 @@ export const syncOfflineOrders = async () => {
                             icon: '⚡',
                             duration: 7000,
                             style: {
-                                background: '#161616',
+                                background: '#121213',
                                 color: '#fff',
                                 borderRadius: '20px',
                                 border: '1px solid #D4AF37',

@@ -11,7 +11,7 @@ const UpsellModal = ({ isOpen, onClose, mainItem, upsellItems, onAddUpsell, prim
 
             {/* Content */}
             <div 
-                className={`relative w-full max-w-lg rounded-t-[40px] sm:rounded-[40px] overflow-hidden border border-white/10 shadow-2xl animate-in slide-in-from-bottom-10 duration-500 flex flex-col max-h-[90vh] ${darkMode ? 'bg-[#121212]' : 'bg-white'}`}
+                className={`relative w-full max-w-lg rounded-t-[40px] sm:rounded-[40px] overflow-hidden border border-white/10 shadow-2xl animate-in slide-in-from-bottom-10 duration-500 flex flex-col max-h-[90vh] ${darkMode ? 'bg-[#0A0A0B]' : 'bg-white'}`}
                 style={{ fontFamily: 'Inter, sans-serif' }}
             >
                 {/* Header Accent */}

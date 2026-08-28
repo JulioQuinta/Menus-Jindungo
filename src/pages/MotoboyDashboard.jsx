@@ -97,11 +97,11 @@ export default function MotoboyDashboard() {
         }
     };
 
-    if (loading) return <div className="min-h-screen bg-[#121212] flex items-center justify-center p-4">
+    if (loading) return <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center p-4">
         <div className="w-12 h-12 border-4 border-[#D4AF37]/20 border-t-[#D4AF37] rounded-full animate-spin"></div>
     </div>;
 
-    if (!order) return <div className="min-h-screen bg-[#121212] flex items-center justify-center p-4 text-white flex-col gap-2">
+    if (!order) return <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center p-4 text-white flex-col gap-2">
         <AlertTriangle size={64} className="text-red-500 mb-4" />
         <h2 className="text-xl font-bold bg-red-500/20 px-6 py-2 border border-red-500/50 rounded-full text-red-500 uppercase tracking-widest text-center">Ligação Expirada</h2>
         <p className="text-gray-400 text-center opacity-80 max-w-sm mt-2">Esta entrega fechou fisicamente ou o link está incorreto. Confirme com o Gerente do Restaurante.</p>
@@ -173,7 +173,7 @@ export default function MotoboyDashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-[#121212] pb-8 pt-4 px-4 font-sans max-w-md mx-auto">
+        <div className="min-h-screen bg-[#0A0A0B] pb-8 pt-4 px-4 font-sans max-w-md mx-auto">
             {/* Header */}
             <header className="flex justify-between items-center bg-white/5 border border-white/10 rounded-2xl p-4 mb-6 relative overflow-hidden backdrop-blur-xl animate-fade-in-down shadow-xl shadow-cyan-900/10">
                 <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">

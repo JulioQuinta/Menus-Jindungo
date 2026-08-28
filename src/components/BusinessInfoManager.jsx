@@ -133,7 +133,7 @@ const BusinessInfoManager = ({ info, onSave, isLoading, features = {} }) => {
                 <div className="flex items-center gap-4 z-10 w-full sm:w-auto justify-end">
                     <button
                         onClick={() => setShowAiModal(true)}
-                        className="bg-gradient-to-r from-[#F5C542] via-[#EAC775] to-[#D4AF37] text-gray-950 font-black px-6 py-3.5 rounded-2xl shadow-[0_0_30px_rgba(212,175,55,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center gap-2 border border-amber-300/40 text-xs tracking-wider uppercase cursor-pointer"
+                        className="bg-gradient-to-r from-[#D4AF37] via-[#F9E6A2] to-[#D4AF37] text-gray-950 font-black px-6 py-3.5 rounded-2xl shadow-[0_0_30px_rgba(212,175,55,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center gap-2 border border-amber-300/40 text-xs tracking-wider uppercase cursor-pointer"
                     >
                         <Sparkles size={16} />
                         <span>AI Business Assistant</span>
@@ -145,7 +145,7 @@ const BusinessInfoManager = ({ info, onSave, isLoading, features = {} }) => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                 
                 {/* Column 1: Horário de Funcionamento */}
-                <div className="bg-gradient-to-br from-[#1C1C1C]/95 via-[#161616]/95 to-[#121212]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-[#3B82F6]/30 shadow-[0_0_50px_rgba(59,130,246,0.15)] relative overflow-hidden">
+                <div className="bg-gradient-to-br from-[#1A1A1C]/95 via-[#121213]/95 to-[#0A0A0B]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-[#3B82F6]/30 shadow-[0_0_50px_rgba(59,130,246,0.15)] relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-[#3B82F6]/10 blur-[80px] rounded-full pointer-events-none -mr-20 -mt-20" />
                     <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#D4AF37]/10 blur-[80px] rounded-full pointer-events-none -ml-20 -mb-20" />
 
@@ -171,7 +171,7 @@ const BusinessInfoManager = ({ info, onSave, isLoading, features = {} }) => {
                                     onClick={() => setEditingDayIndex(idx)}
                                     className={`p-5 rounded-3xl border transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between aspect-[8/5] ${
                                         isMonday 
-                                            ? 'bg-gradient-to-br from-[#2A2415] to-[#161616] border-[#D4AF37] shadow-[0_0_25px_rgba(212,175,55,0.25)] scale-[1.02]' 
+                                            ? 'bg-gradient-to-br from-[#2A2415] to-[#121213] border-[#D4AF37] shadow-[0_0_25px_rgba(212,175,55,0.25)] scale-[1.02]' 
                                             : item.closed 
                                                 ? 'bg-red-950/20 border-red-500/20 opacity-60' 
                                                 : isSelected
@@ -266,7 +266,7 @@ const BusinessInfoManager = ({ info, onSave, isLoading, features = {} }) => {
                 <div className="space-y-6">
                     
                     {/* Card 1: Link Google Maps */}
-                    <div className="bg-[#161616]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-xl relative overflow-hidden space-y-4">
+                    <div className="bg-[#121213]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-xl relative overflow-hidden space-y-4">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
                                 <MapPin size={20} />
@@ -306,7 +306,7 @@ const BusinessInfoManager = ({ info, onSave, isLoading, features = {} }) => {
                     </div>
 
                     {/* Card 2: Redes Sociais & Contacto */}
-                    <div className="bg-[#161616]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-xl relative space-y-4">
+                    <div className="bg-[#121213]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-xl relative space-y-4">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-2xl bg-pink-500/20 text-pink-400 flex items-center justify-center border border-pink-500/30">
                                 <Share2 size={20} />
@@ -356,7 +356,7 @@ const BusinessInfoManager = ({ info, onSave, isLoading, features = {} }) => {
                                 <button
                                     onClick={() => onSave(localInfo)}
                                     disabled={isLoading}
-                                    className="bg-gradient-to-r from-[#F5C542] to-[#D4AF37] text-gray-950 font-black px-6 py-3 rounded-2xl shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:brightness-110 active:scale-95 transition-all text-xs uppercase tracking-wider flex items-center gap-1.5 shrink-0"
+                                    className="bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] text-gray-950 font-black px-6 py-3 rounded-2xl shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:brightness-110 active:scale-95 transition-all text-xs uppercase tracking-wider flex items-center gap-1.5 shrink-0"
                                 >
                                     <Save size={16} /> Gravar
                                 </button>
@@ -365,7 +365,7 @@ const BusinessInfoManager = ({ info, onSave, isLoading, features = {} }) => {
                     </div>
 
                     {/* Card 3: Marketing & Mapa de Mesas */}
-                    <div className="bg-[#161616]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-xl relative space-y-4">
+                    <div className="bg-[#121213]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/10 shadow-xl relative space-y-4">
                         <div>
                             <label className={labelClasses}>Marketing & Texto de Partilha</label>
                             <input
@@ -430,7 +430,7 @@ const BusinessInfoManager = ({ info, onSave, isLoading, features = {} }) => {
                 </div>
 
                 {/* Column 3: AI Insights & Marketing (Floating Drawer Card matching screenshot exactly) */}
-                <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#161616]/95 to-[#101010]/95 backdrop-blur-xl border border-[#D4AF37]/40 rounded-[2.5rem] p-7 shadow-[0_0_50px_rgba(212,175,55,0.2)] relative overflow-hidden space-y-6">
+                <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#121213]/95 to-[#101010]/95 backdrop-blur-xl border border-[#D4AF37]/40 rounded-[2.5rem] p-7 shadow-[0_0_50px_rgba(212,175,55,0.2)] relative overflow-hidden space-y-6">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/10 blur-[80px] rounded-full pointer-events-none -mr-20 -mt-20" />
 
                     <div className="flex items-center gap-3 pb-4 border-b border-white/10 relative z-10">
@@ -489,7 +489,7 @@ const BusinessInfoManager = ({ info, onSave, isLoading, features = {} }) => {
                                     <XAxis dataKey="day" stroke="#666" fontSize={10} tickLine={false} />
                                     <YAxis stroke="#666" fontSize={10} tickLine={false} axisLine={false} />
                                     <Tooltip 
-                                        contentStyle={{ backgroundColor: '#121212', borderColor: '#D4AF37', borderRadius: '12px' }}
+                                        contentStyle={{ backgroundColor: '#0A0A0B', borderColor: '#D4AF37', borderRadius: '12px' }}
                                         labelStyle={{ color: '#fff', fontWeight: 'bold' }}
                                     />
                                     <Area type="monotone" dataKey="menu" stroke="#3B82F6" strokeWidth={3} fill="url(#menuGrad)" />
@@ -527,7 +527,7 @@ const BusinessInfoManager = ({ info, onSave, isLoading, features = {} }) => {
                                     <XAxis dataKey="hour" stroke="#666" fontSize={9} tickLine={false} interval={1} />
                                     <YAxis stroke="#666" fontSize={9} tickLine={false} axisLine={false} />
                                     <Tooltip 
-                                        contentStyle={{ backgroundColor: '#121212', borderColor: '#D4AF37', borderRadius: '12px' }}
+                                        contentStyle={{ backgroundColor: '#0A0A0B', borderColor: '#D4AF37', borderRadius: '12px' }}
                                         labelStyle={{ color: '#fff', fontWeight: 'bold' }}
                                     />
                                     <Bar 
@@ -558,7 +558,7 @@ const BusinessInfoManager = ({ info, onSave, isLoading, features = {} }) => {
             {/* AI Business Assistant Modal */}
             {showAiModal && (
                 <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-[#161616] border border-[#D4AF37]/50 rounded-[2.5rem] p-8 max-w-lg w-full shadow-[0_25px_70px_rgba(0,0,0,0.9)] relative overflow-hidden">
+                    <div className="bg-[#121213] border border-[#D4AF37]/50 rounded-[2.5rem] p-8 max-w-lg w-full shadow-[0_25px_70px_rgba(0,0,0,0.9)] relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/10 blur-[60px] rounded-full pointer-events-none -mr-16 -mt-16" />
 
                         <div className="flex items-center justify-between pb-5 mb-6 border-b border-white/10 relative z-10">

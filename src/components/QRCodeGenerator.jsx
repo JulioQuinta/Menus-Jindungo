@@ -212,7 +212,7 @@ const QRCodeGenerator = ({ url = "https://menusjindungo.com/menu/demo", restaura
                                 {/* Premium Golden Download Button */}
                                 <button
                                     onClick={() => downloadQRCode(qrRef)}
-                                    className="w-full py-4 bg-gradient-to-r from-[#F5C542] via-[#EAC775] to-[#D4AF37] text-gray-950 font-black text-sm uppercase tracking-widest rounded-2xl shadow-[0_0_30px_rgba(212,175,55,0.4)] hover:shadow-[0_0_45px_rgba(234,179,8,0.6)] hover:brightness-110 transform active:scale-[0.98] transition-all flex items-center justify-center gap-3 cursor-pointer group"
+                                    className="w-full py-4 bg-gradient-to-r from-[#D4AF37] via-[#F9E6A2] to-[#D4AF37] text-gray-950 font-black text-sm uppercase tracking-widest rounded-2xl shadow-[0_0_30px_rgba(212,175,55,0.4)] hover:shadow-[0_0_45px_rgba(234,179,8,0.6)] hover:brightness-110 transform active:scale-[0.98] transition-all flex items-center justify-center gap-3 cursor-pointer group"
                                 >
                                     <Download size={20} className="group-hover:translate-y-0.5 transition-transform" />
                                     <span>Baixar QR Code {tableNumber ? `(Mesa ${tableNumber})` : 'Geral'}</span>
@@ -222,7 +222,7 @@ const QRCodeGenerator = ({ url = "https://menusjindungo.com/menu/demo", restaura
                     </div>
 
                     {/* Pilar 2: Visual Print Mockups (Maquetes de Impressão) */}
-                    <div className="bg-[#161616]/95 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 shadow-2xl space-y-6">
+                    <div className="bg-[#121213]/95 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 shadow-2xl space-y-6">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
                             <div>
                                 <span className="text-xs font-mono text-[#D4AF37] font-bold uppercase tracking-widest flex items-center gap-1.5">
@@ -341,7 +341,7 @@ const QRCodeGenerator = ({ url = "https://menusjindungo.com/menu/demo", restaura
                     <div className="lg:col-span-4 space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
                         
                         {/* Metrics Card */}
-                        <div className="bg-[#161616]/95 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-7 shadow-2xl space-y-6">
+                        <div className="bg-[#121213]/95 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-7 shadow-2xl space-y-6">
                             <div className="flex items-center justify-between pb-4 border-b border-white/10">
                                 <div>
                                     <h3 className="text-lg font-serif font-bold text-white flex items-center gap-2 tracking-wide">
@@ -371,7 +371,7 @@ const QRCodeGenerator = ({ url = "https://menusjindungo.com/menu/demo", restaura
                                             </defs>
                                             <XAxis dataKey="day" stroke="#666" fontSize={10} tickLine={false} />
                                             <YAxis stroke="#666" fontSize={10} tickLine={false} axisLine={false} />
-                                            <Tooltip contentStyle={{ backgroundColor: '#121212', borderColor: '#EAB308', borderRadius: '12px', fontSize: '12px' }} />
+                                            <Tooltip contentStyle={{ backgroundColor: '#0A0A0B', borderColor: '#EAB308', borderRadius: '12px', fontSize: '12px' }} />
                                             <Area type="monotone" dataKey="leituras" stroke="#EAB308" strokeWidth={2.5} fill="url(#scansGrad)" />
                                         </AreaChart>
                                     </ResponsiveContainer>
@@ -389,7 +389,7 @@ const QRCodeGenerator = ({ url = "https://menusjindungo.com/menu/demo", restaura
                                         <BarChart data={hourlyScansData} margin={{ top: 5, right: 5, left: -30, bottom: 0 }}>
                                             <XAxis dataKey="hour" stroke="#666" fontSize={9} tickLine={false} />
                                             <YAxis stroke="#666" fontSize={9} tickLine={false} axisLine={false} />
-                                            <Tooltip contentStyle={{ backgroundColor: '#121212', borderColor: '#3B82F6', borderRadius: '12px', fontSize: '12px' }} />
+                                            <Tooltip contentStyle={{ backgroundColor: '#0A0A0B', borderColor: '#3B82F6', borderRadius: '12px', fontSize: '12px' }} />
                                             <Bar dataKey="scans" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
@@ -398,7 +398,7 @@ const QRCodeGenerator = ({ url = "https://menusjindungo.com/menu/demo", restaura
                         </div>
 
                         {/* AI Tips for Printing */}
-                        <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#161616]/95 to-[#101010]/95 backdrop-blur-xl border border-[#D4AF37]/40 rounded-[2.5rem] p-7 shadow-[0_0_40px_rgba(212,175,55,0.2)] relative overflow-hidden group">
+                        <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#121213]/95 to-[#101010]/95 backdrop-blur-xl border border-[#D4AF37]/40 rounded-[2.5rem] p-7 shadow-[0_0_40px_rgba(212,175,55,0.2)] relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/10 blur-[60px] rounded-full -mr-16 -mt-16 pointer-events-none" />
 
                             <div className="flex items-center justify-between pb-5 mb-6 border-b border-white/10 relative z-10">

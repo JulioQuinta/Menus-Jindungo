@@ -205,7 +205,7 @@ const CustomizationBottomSheet = ({ item, isOpen, onClose, primaryColor, darkMod
             onClick={onClose}
         >
             <div 
-                className={`w-full max-w-lg bg-white dark:bg-[#1C1C1C] rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[85vh] overflow-hidden animate-slide-up sm:animate-fade-in border border-gray-100 dark:border-gray-800 relative`}
+                className={`w-full max-w-lg bg-white dark:bg-[#1A1A1C] rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[85vh] overflow-hidden animate-slide-up sm:animate-fade-in border border-gray-100 dark:border-gray-800 relative`}
                 onClick={e => e.stopPropagation()}
             >
                 <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto my-3 shrink-0 sm:hidden" />
@@ -300,7 +300,7 @@ const CustomizationBottomSheet = ({ item, isOpen, onClose, primaryColor, darkMod
                     </div>
                 </div>
 
-                <div className="p-6 bg-white dark:bg-[#1C1C1C] border-t border-gray-100 dark:border-gray-800/80 shadow-[0_-10px_30px_rgba(0,0,0,0.15)] flex items-center gap-4 shrink-0 relative z-50">
+                <div className="p-6 bg-white dark:bg-[#1A1A1C] border-t border-gray-100 dark:border-gray-800/80 shadow-[0_-10px_30px_rgba(0,0,0,0.15)] flex items-center gap-4 shrink-0 relative z-50">
                     <div className="flex items-center gap-3 bg-gray-100 dark:bg-gray-800 rounded-2xl p-1.5 border border-gray-200 dark:border-gray-700">
                         <button
                             type="button"
@@ -430,12 +430,12 @@ const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
     return (
         <div
             onClick={() => { if (!isEditing && !restaurantClosed) onOpenModal(); }}
-            className={`rounded-2xl sm:rounded-[28px] shadow-[0_8px_25px_rgba(0,0,0,0.5)] transition-all duration-300 overflow-hidden border flex flex-col h-full group relative cursor-pointer active:scale-[0.99] bg-[#141414] border-[#262626] hover:border-[#E5C27B]/60 hover:shadow-[0_12px_30px_rgba(0,0,0,0.7)] ${
+            className={`rounded-2xl sm:rounded-[28px] shadow-[0_8px_25px_rgba(0,0,0,0.5)] transition-all duration-300 overflow-hidden border flex flex-col h-full group relative cursor-pointer active:scale-[0.99] bg-[#141414] border-[#1E1E20] hover:border-[#E5C27B]/60 hover:shadow-[0_12px_30px_rgba(0,0,0,0.7)] ${
                 isSoldOut ? 'opacity-85' : ''
             }`}
         >
             {/* Top Image Container matching screenshot */}
-            <div className="relative h-28 sm:h-44 w-full overflow-hidden rounded-t-2xl sm:rounded-t-[28px] bg-[#1C1C1C] shadow-inner">
+            <div className="relative h-28 sm:h-44 w-full overflow-hidden rounded-t-2xl sm:rounded-t-[28px] bg-[#1A1A1C] shadow-inner">
                 <SmartImage
                     src={item.img_data || item.img_url || item.img}
                     alt={item.name}

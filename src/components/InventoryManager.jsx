@@ -483,7 +483,7 @@ const InventoryManager = ({ restaurantId }) => {
                         <button 
                             onClick={saveInlineChanges}
                             disabled={saving}
-                            className="bg-gradient-to-r from-[#F5C542] to-[#D4AF37] hover:brightness-110 text-black px-5 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-lg shadow-[#D4AF37]/20 active:scale-95 cursor-pointer"
+                            className="bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] hover:brightness-110 text-black px-5 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-lg shadow-[#D4AF37]/20 active:scale-95 cursor-pointer"
                         >
                             {saving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
                             Salvar Alterações
@@ -627,7 +627,7 @@ const InventoryManager = ({ restaurantId }) => {
                     </div>
 
                     {/* Stock Table */}
-                    <div className="bg-[#161616]/90 border border-white/5 rounded-[2.5rem] p-2 sm:p-6 shadow-2xl overflow-hidden">
+                    <div className="bg-[#121213]/90 border border-white/5 rounded-[2.5rem] p-2 sm:p-6 shadow-2xl overflow-hidden">
                         <div className="overflow-x-auto custom-scrollbar">
                             <table className="w-full text-left border-collapse">
                                 <thead>
@@ -667,7 +667,7 @@ const InventoryManager = ({ restaurantId }) => {
                                                 <td className="px-5 py-4 shrink-0">
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-white/10 to-transparent p-0.5 border border-white/10 shrink-0 overflow-hidden shadow-md">
-                                                            <div className="w-full h-full rounded-xl bg-[#121212] flex items-center justify-center overflow-hidden">
+                                                            <div className="w-full h-full rounded-xl bg-[#0A0A0B] flex items-center justify-center overflow-hidden">
                                                                 {item.img_url ? (
                                                                     <img src={item.img_url} alt={item.name} className="w-full h-full object-cover" />
                                                                 ) : (
@@ -698,7 +698,7 @@ const InventoryManager = ({ restaurantId }) => {
                                                         <div 
                                                             className={`w-4 h-4 rounded-full transition-transform duration-300 shadow-md ${
                                                                 isTracking 
-                                                                    ? 'bg-gradient-to-r from-[#F5C542] to-[#D4AF37] translate-x-5' 
+                                                                    ? 'bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] translate-x-5' 
                                                                     : 'bg-gray-600 translate-x-0'
                                                             }`}
                                                         />
@@ -807,7 +807,7 @@ const InventoryManager = ({ restaurantId }) => {
             {/* TAB 3: HISTÓRICO DE MOVIMENTAÇÕES (LEDGER) */}
             {activeTab === 'historico' && (
                 <div className="space-y-6 animate-in fade-in duration-300">
-                    <div className="bg-[#161616]/90 border border-white/5 rounded-[2.5rem] p-6 shadow-2xl overflow-hidden">
+                    <div className="bg-[#121213]/90 border border-white/5 rounded-[2.5rem] p-6 shadow-2xl overflow-hidden">
                         <h4 className="text-white font-serif font-bold text-lg mb-4 flex items-center gap-2">
                             <ClipboardList className="text-[#D4AF37]" size={20} />
                             Livro Razão de Movimentações de Stock
@@ -917,7 +917,7 @@ const InventoryManager = ({ restaurantId }) => {
             {/* TAB 4: AUTOMATIC SHOPPING LIST */}
             {activeTab === 'lista_compras' && (
                 <div className="space-y-6 animate-in fade-in duration-300">
-                    <div className="bg-[#161616]/90 border border-white/5 rounded-[2.5rem] p-6 shadow-2xl overflow-hidden">
+                    <div className="bg-[#121213]/90 border border-white/5 rounded-[2.5rem] p-6 shadow-2xl overflow-hidden">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-5 mb-5">
                             <div>
                                 <h4 className="text-white font-serif font-bold text-lg flex items-center gap-2">
@@ -1003,7 +1003,7 @@ const InventoryManager = ({ restaurantId }) => {
                     />
 
                     {/* Modal Box */}
-                    <div className="bg-[#161616] border border-white/10 rounded-[2.5rem] max-w-md w-full p-8 shadow-2xl relative z-10 animate-in zoom-in-95 duration-200 text-left">
+                    <div className="bg-[#121213] border border-white/10 rounded-[2.5rem] max-w-md w-full p-8 shadow-2xl relative z-10 animate-in zoom-in-95 duration-200 text-left">
                         <div className="flex items-center gap-3 border-b border-white/5 pb-4 mb-6">
                             <ArrowUpDown className="text-[#D4AF37]" size={24} />
                             <div>
@@ -1102,7 +1102,7 @@ const InventoryManager = ({ restaurantId }) => {
                             </button>
                             <button
                                 onClick={executeStockAdjustment}
-                                className="flex-1 bg-gradient-to-r from-[#F5C542] to-[#D4AF37] text-black px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider shadow-lg shadow-[#D4AF37]/20 hover:scale-105 active:scale-95 transition-all cursor-pointer text-center"
+                                className="flex-1 bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] text-black px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider shadow-lg shadow-[#D4AF37]/20 hover:scale-105 active:scale-95 transition-all cursor-pointer text-center"
                             >
                                 Gravar Registo
                             </button>

@@ -135,7 +135,7 @@ const FeedbackManager = ({ restaurantId }) => {
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 text-white font-sans">
             {/* Header Title Banner */}
-            <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#161616]/95 to-[#101010]/95 backdrop-blur-xl p-8 rounded-[2.5rem] border border-[#D4AF37]/30 shadow-[0_0_50px_rgba(212,175,55,0.15)] relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#121213]/95 to-[#101010]/95 backdrop-blur-xl p-8 rounded-[2.5rem] border border-[#D4AF37]/30 shadow-[0_0_50px_rgba(212,175,55,0.15)] relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/10 blur-[80px] rounded-full -mr-20 -mt-20 pointer-events-none" />
                 <div className="relative z-10">
                     <div className="flex items-center gap-3 mb-2">
@@ -159,7 +159,7 @@ const FeedbackManager = ({ restaurantId }) => {
             {/* Top 3 High-End Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Card 1: CSAT */}
-                <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#161616]/95 to-[#101010]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-emerald-500/30 shadow-[0_0_40px_rgba(16,185,129,0.15)] relative overflow-hidden group hover:border-emerald-500/60 transition-all duration-500 flex flex-col justify-between">
+                <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#121213]/95 to-[#101010]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-emerald-500/30 shadow-[0_0_40px_rgba(16,185,129,0.15)] relative overflow-hidden group hover:border-emerald-500/60 transition-all duration-500 flex flex-col justify-between">
                     <div className="absolute top-0 right-0 w-36 h-36 bg-emerald-500/10 blur-[50px] rounded-full -mr-16 -mt-16 group-hover:bg-emerald-500/20 transition-all duration-700" />
                     <div className="flex justify-between items-start z-10">
                         <div>
@@ -186,7 +186,7 @@ const FeedbackManager = ({ restaurantId }) => {
                 </div>
 
                 {/* Card 2: Média Geral */}
-                <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#161616]/95 to-[#101010]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-[#D4AF37]/30 shadow-[0_0_40px_rgba(212,175,55,0.15)] relative overflow-hidden group hover:border-[#D4AF37]/60 transition-all duration-500 flex flex-col justify-between">
+                <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#121213]/95 to-[#101010]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-[#D4AF37]/30 shadow-[0_0_40px_rgba(212,175,55,0.15)] relative overflow-hidden group hover:border-[#D4AF37]/60 transition-all duration-500 flex flex-col justify-between">
                     <div className="absolute top-0 right-0 w-36 h-36 bg-[#D4AF37]/10 blur-[50px] rounded-full -mr-16 -mt-16 group-hover:bg-[#D4AF37]/20 transition-all duration-700" />
                     <div className="flex justify-between items-start z-10">
                         <div>
@@ -211,7 +211,7 @@ const FeedbackManager = ({ restaurantId }) => {
                 </div>
 
                 {/* Card 3: Total Feedbacks */}
-                <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#161616]/95 to-[#101010]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-cyan-500/30 shadow-[0_0_40px_rgba(6,182,212,0.15)] relative overflow-hidden group hover:border-cyan-500/60 transition-all duration-500 flex flex-col justify-between">
+                <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#121213]/95 to-[#101010]/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-cyan-500/30 shadow-[0_0_40px_rgba(6,182,212,0.15)] relative overflow-hidden group hover:border-cyan-500/60 transition-all duration-500 flex flex-col justify-between">
                     <div className="absolute top-0 right-0 w-36 h-36 bg-cyan-500/10 blur-[50px] rounded-full -mr-16 -mt-16 group-hover:bg-cyan-500/20 transition-all duration-700" />
                     <div className="flex justify-between items-start z-10">
                         <div>
@@ -240,7 +240,7 @@ const FeedbackManager = ({ restaurantId }) => {
                 {/* Left Area (2 Columns on large screens): Search & Cards */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Controls Bar */}
-                    <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 bg-[#161616]/90 p-4 rounded-3xl border border-white/5 backdrop-blur-xl shadow-lg">
+                    <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 bg-[#121213]/90 p-4 rounded-3xl border border-white/5 backdrop-blur-xl shadow-lg">
                         <div className="relative flex-1 group">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-[#D4AF37] transition-colors" size={18} />
                             <input 
@@ -298,7 +298,7 @@ const FeedbackManager = ({ restaurantId }) => {
                                 return (
                                     <div 
                                         key={fb.id} 
-                                        className={`bg-[#161616]/90 backdrop-blur-xl border p-6 rounded-[2.5rem] shadow-xl transition-all duration-500 flex flex-col justify-between group hover:-translate-y-1 ${
+                                        className={`bg-[#121213]/90 backdrop-blur-xl border p-6 rounded-[2.5rem] shadow-xl transition-all duration-500 flex flex-col justify-between group hover:-translate-y-1 ${
                                             isExcellent 
                                                 ? 'border-[#D4AF37]/30 hover:border-[#D4AF37]/70 hover:shadow-[0_15px_30px_rgba(212,175,55,0.15)]' 
                                                 : isWarning 
@@ -368,7 +368,7 @@ const FeedbackManager = ({ restaurantId }) => {
 
                 {/* Right Area: AI Live Tips Floating Drawer */}
                 <div className="space-y-6">
-                    <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#161616]/95 to-[#101010]/95 backdrop-blur-xl border border-[#D4AF37]/30 rounded-[2.5rem] p-7 shadow-[0_0_40px_rgba(212,175,55,0.15)] relative overflow-hidden group">
+                    <div className="bg-gradient-to-br from-[#1E1E1E]/95 via-[#121213]/95 to-[#101010]/95 backdrop-blur-xl border border-[#D4AF37]/30 rounded-[2.5rem] p-7 shadow-[0_0_40px_rgba(212,175,55,0.15)] relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/10 blur-[60px] rounded-full -mr-16 -mt-16 pointer-events-none" />
                         
                         <div className="flex items-center justify-between pb-5 mb-6 border-b border-white/10 relative z-10">

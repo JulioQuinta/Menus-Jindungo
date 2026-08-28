@@ -19,7 +19,7 @@ const AdminHeader = memo(({
     const isManualClosed = !!businessInfo?.is_manual_closed;
 
     return (
-        <header className="sticky top-0 z-30 bg-[#0D0D0D]/80 border-b border-white/5 px-4 sm:px-10 flex items-center h-20 sm:h-24 backdrop-blur-2xl">
+        <header className="sticky top-0 z-30 bg-[#0A0A0B]/85 border-b border-white/5 px-4 sm:px-10 flex items-center h-20 sm:h-24 backdrop-blur-2xl text-gray-100">
             <div className="flex justify-between items-center w-full">
                 
                 {/* Left: Breadcrumbs & Title */}
@@ -32,11 +32,11 @@ const AdminHeader = memo(({
                     </button>
 
                     <div className="flex flex-col">
-                        <div className="hidden sm:flex items-center gap-2 text-[9px] text-gray-500 uppercase tracking-[0.3em] mb-1.5 font-black">
+                        <div className="hidden sm:flex items-center gap-2 text-[9px] text-gray-400 uppercase tracking-[0.3em] mb-1.5 font-black">
                             <Link to="/admin" className="hover:text-[#D4AF37] transition-colors">Workspace</Link>
                             {location.pathname !== '/admin' && (
                                 <>
-                                    <ChevronRight size={10} className="text-gray-700" />
+                                    <ChevronRight size={10} className="text-gray-500" />
                                     <span className="text-[#D4AF37]/80">
                                         {currentMenuItem?.label || 'Detalhes'}
                                     </span>
@@ -52,7 +52,7 @@ const AdminHeader = memo(({
                 {/* Center: Search Bar (User Friendly Navigation) */}
                 <div className="hidden md:flex flex-1 max-w-md mx-8 lg:mx-12">
                     <div className="relative w-full group">
-                        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-[#D4AF37] transition-colors">
+                        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#D4AF37] transition-colors">
                             <Search size={16} />
                         </div>
                         <input 
@@ -60,10 +60,10 @@ const AdminHeader = memo(({
                             readOnly
                             onClick={onOpenCommandPalette}
                             placeholder="Pesquisar funções, pedidos ou pratos... (Ctrl+K)"
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37]/40 transition-all cursor-pointer"
+                            className="w-full bg-[#161618] border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37]/40 transition-all cursor-pointer"
                         />
                         <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-                            <kbd className="hidden sm:inline-block px-1.5 py-0.5 border border-white/10 rounded bg-white/5 text-[10px] font-mono text-gray-500">⌘K</kbd>
+                            <kbd className="hidden sm:inline-block px-1.5 py-0.5 border border-white/10 rounded bg-[#0A0A0B] text-[10px] font-mono text-gray-500">⌘K</kbd>
                         </div>
                     </div>
                 </div>
@@ -107,17 +107,17 @@ const AdminHeader = memo(({
 
                     <button className="relative p-2.5 text-gray-400 hover:text-white transition-colors hover:bg-white/5 rounded-2xl group border border-white/5 hover:border-white/10">
                         <Bell size={20} className="group-hover:scale-110 transition-transform" />
-                        <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 border-2 border-[#0D0D0D]"></span>
+                        <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 border-2 border-[#0A0A0B]"></span>
                     </button>
 
-                    <div className="h-8 w-[1px] bg-white/10 hidden sm:block mx-1 sm:mx-2"></div>
+                    <div className="h-8 w-[1px] bg-zinc-800 hidden sm:block mx-1 sm:mx-2"></div>
 
                     <div onClick={() => setShowStaffModal(true)} className="flex items-center gap-3 pl-1 sm:pl-2 cursor-pointer group">
                         <div className="text-right hidden xl:block">
-                            <p className={`text-sm font-black transition-colors ${activeStaff ? 'text-green-400' : 'text-white group-hover:text-[#D4AF37]'}`}>
+                            <p className={`text-sm font-black transition-colors ${activeStaff ? 'text-green-400' : 'text-gray-200 group-hover:text-[#D4AF37]'}`}>
                                 {activeStaff ? activeStaff.name : user?.email?.split('@')[0]}
                             </p>
-                            <p className="text-[9px] text-gray-500 mt-0.5 uppercase tracking-[0.2em] font-bold">
+                            <p className="text-[9px] text-gray-400 mt-0.5 uppercase tracking-[0.2em] font-bold">
                                 {activeStaff ? 'Equipa Ativa' : 'Administrador'}
                             </p>
                         </div>

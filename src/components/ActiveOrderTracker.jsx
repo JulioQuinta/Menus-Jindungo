@@ -80,27 +80,27 @@ const ActiveOrderTracker = ({ restaurantId, restaurantName, primaryColor = '#D4A
                 toast("🛵 O Estafeta chegou! Por favor, vá ao encontro dele.", {
                     icon: '📍',
                     duration: 10000,
-                    style: { background: '#121212', color: '#fff', border: '1px solid #D4AF37', fontWeight: 'bold' }
+                    style: { background: '#0A0A0B', color: '#fff', border: '1px solid #D4AF37', fontWeight: 'bold' }
                 });
                 playSound();
             } else if (currentStatus === 'out_for_delivery') {
                 toast("🛵 A sua encomenda saiu para entrega!", {
                     icon: '💨',
                     duration: 6000,
-                    style: { background: '#121212', color: '#fff', border: '1px solid #06b6d4', fontWeight: 'bold' }
+                    style: { background: '#0A0A0B', color: '#fff', border: '1px solid #06b6d4', fontWeight: 'bold' }
                 });
                 playSound();
             } else if (currentStatus === 'ready') {
                 toast(isDelivery ? "✅ A sua encomenda está pronta a sair!" : "✅ A sua encomenda está pronta a levantar/servir!", {
                     icon: '🛎️',
                     duration: 6000,
-                    style: { background: '#121212', color: '#fff', border: '1px solid #22c55e', fontWeight: 'bold' }
+                    style: { background: '#0A0A0B', color: '#fff', border: '1px solid #22c55e', fontWeight: 'bold' }
                 });
                 playSound();
             } else if (currentStatus === 'cancelled') {
                  toast.error("A sua encomenda foi rejeitada/cancelada.", {
                      duration: 6000,
-                     style: { background: '#121212', color: '#fff', border: '1px solid #ef4444' }
+                     style: { background: '#0A0A0B', color: '#fff', border: '1px solid #ef4444' }
                  });
                  playSound();
             }
@@ -260,7 +260,7 @@ const ActiveOrderTracker = ({ restaurantId, restaurantName, primaryColor = '#D4A
                 <div className="flex gap-2 mt-3.5">
                     <button
                         onClick={() => navigate(`/track/${activeOrder.id}`)}
-                        className="flex-1 bg-gradient-to-r from-[#F5C542] to-[#D4AF37] text-[#0A0A0A] font-black py-2.5 rounded-xl text-xs flex justify-center items-center gap-1.5 transition-all uppercase tracking-wider cursor-pointer shadow-lg active:scale-95 border border-[#F5C542]/20 hover:brightness-110"
+                        className="flex-1 bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] text-[#0A0A0A] font-black py-2.5 rounded-xl text-xs flex justify-center items-center gap-1.5 transition-all uppercase tracking-wider cursor-pointer shadow-lg active:scale-95 border border-[#D4AF37]/20 hover:brightness-110"
                     >
                         <span>Acompanhar 🚀</span>
                     </button>

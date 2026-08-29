@@ -26,7 +26,7 @@ export const billingService = {
             if (typeof window !== 'undefined' && window.electronAPI && window.electronAPI.signInvoiceOffline) {
                 try {
                     console.log("Iniciando assinatura real local offline via Electron...");
-                    const certNo = payload.certNo || "000/JINDUNGO/2026-LOCAL";
+                    const certNo = payload.certNo || "FE/305/AGT/2026";
                     const offlineResult = await window.electronAPI.signInvoiceOffline(payload, certNo);
                     if (offlineResult && offlineResult.success) {
                         console.log("Assinatura offline real efetuada com sucesso!");
@@ -58,7 +58,7 @@ export const billingService = {
             const header = {
                 alg: "RS256",
                 typ: "JWS",
-                cert_no: "000/JINDUNGO/2026-LOCAL"
+                cert_no: "FE/305/AGT/2026"
             };
 
             const headerBase64 = btoa(JSON.stringify(header))
@@ -122,7 +122,7 @@ export const billingService = {
         const header = {
             alg: "RS256",
             typ: "JWS",
-            cert_no: "000/JINDUNGO/2026-LOCAL"
+            cert_no: "FE/305/AGT/2026"
         };
 
         const headerBase64 = btoa(JSON.stringify(header))

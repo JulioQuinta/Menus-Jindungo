@@ -180,7 +180,7 @@ const SuperAdminDashboard = () => {
     const [localInvoiceConfig, setLocalInvoiceConfig] = useState({
         nif: '',
         address: '',
-        certification_number: '000/JINDUNGO',
+        certification_number: 'FE/305/AGT/2026',
         software_version: 'v3.1',
         layout_color: '#D4AF37',
         show_logo: true,
@@ -196,7 +196,7 @@ const SuperAdminDashboard = () => {
             setLocalInvoiceConfig({
                 nif: config.nif || '',
                 address: config.address || '',
-                certification_number: config.certification_number || '000/JINDUNGO',
+                certification_number: config.certification_number || 'FE/305/AGT/2026',
                 software_version: config.software_version || 'v3.1',
                 layout_color: config.layout_color || '#D4AF37',
                 show_logo: config.show_logo !== false,

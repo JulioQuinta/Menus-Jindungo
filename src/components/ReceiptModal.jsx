@@ -220,7 +220,7 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
         address: invoiceConfig.address || dbRestaurant?.address || localOrder?.restaurant?.address || 'Av. Talatona, Edifício Jindungo, Luanda',
         phone: dbRestaurant?.phone || localOrder?.restaurant?.phone || '+244 923 456 789',
         email: dbRestaurant?.admin_email || localOrder?.restaurant?.admin_email || 'contato@jindungo.ao',
-        certification_number: invoiceConfig.certification_number || '000/JINDUNGO',
+        certification_number: invoiceConfig.certification_number || 'FE/305/AGT/2026',
         software_version: invoiceConfig.software_version || 'v3.1',
         layout_color: invoiceConfig.layout_color || '#D4AF37',
         show_logo: invoiceConfig.show_logo !== false,

@@ -138,7 +138,7 @@ ipcMain.handle('print-raw-tcp', async (event, ip, port, base64Data) => {
     });
 });
 
-ipcMain.handle('sign-invoice-offline', async (event, payload, certNo = "000/JINDUNGO/2026") => {
+ipcMain.handle('sign-invoice-offline', async (event, payload, certNo = "FE/305/AGT/2026") => {
     try {
         let keyPath = path.join(__dirname, 'keys/agt_private_key.pem');
         if (!fs.existsSync(keyPath)) {

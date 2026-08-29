@@ -488,13 +488,13 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
                                     {localOrder.invoice_status === 'validated' ? (
                                         <>
                                             <p className="font-bold text-emerald-700">Este documento serve de Fatura</p>
-                                            <p className="font-bold text-gray-700">Software Certificado n.º {companyInfo.certification_number}/AGT</p>
+                                            <p className="font-bold text-gray-700">Software Certificado n.º {companyInfo.certification_number}</p>
                                             <p className="text-[8px] lowercase font-mono">Assinatura JWS: {localOrder.jws_hash?.slice(-20)}</p>
                                         </>
                                     ) : (
                                         <>
                                             <p className="font-bold text-red-600">Este documento não serve de Fatura</p>
-                                            <p className="font-bold text-gray-700">Software Certificado n.º {companyInfo.certification_number}/AGT</p>
+                                            <p className="font-bold text-gray-700">Software Certificado n.º {companyInfo.certification_number}</p>
                                         </>
                                     )}
                                     <p>Processado por Sistema Jindungo POS {companyInfo.software_version}</p>

@@ -2,6 +2,8 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import net from 'net';
+import fs from 'fs';
+import crypto from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -134,6 +136,61 @@ ipcMain.handle('print-raw-tcp', async (event, ip, port, base64Data) => {
             reject(e);
         }
     });
+});
+
+ipcMain.handle('sign-invoice-offline', async (event, payload, certNo = "000/JINDUNGO/2026") => {
+    try {
+        let keyPath = path.join(__dirname, 'keys/agt_private_key.pem');
+        if (!fs.existsSync(keyPath)) {
+            keyPath = path.join(app.getAppPath(), 'keys/agt_private_key.pem');
+        }
+        if (!fs.existsSync(keyPath)) {
+            keyPath = path.join(app.getAppPath(), '../keys/agt_private_key.pem');
+        }
+        if (!fs.existsSync(keyPath)) {
+            throw new Error("Chave privada da AGT não foi encontrada nos caminhos locais.");
+        }
+
+        const privateKey = fs.readFileSync(keyPath, 'utf8');
+
+        const header = {
+            alg: "RS256",
+            typ: "JWS",
+            cert_no: certNo
+        };
+
+        const toBase64Url = (obj) => {
+            return Buffer.from(JSON.stringify(obj))
+                .toString('base64')
+                .replace(/=/g, "")
+                .replace(/\+/g, "-")
+                .replace(/\//g, "_");
+        };
+
+        const headerBase64 = toBase64Url(header);
+        const payloadBase64 = toBase64Url(payload);
+        const signSource = `${headerBase64}.${payloadBase64}`;
+
+        const signer = crypto.createSign('RSA-SHA256');
+        signer.update(signSource);
+        const signature = signer.sign(privateKey, 'base64')
+            .replace(/=/g, "")
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_");
+
+        const fullJWS = `${signSource}.${signature}`;
+        const controlChars = `${signature[0] || 'X'}${signature[10] || 'y'}${signature[20] || 'Z'}${signature[30] || '1'}`;
+
+        return {
+            success: true,
+            jws: fullJWS,
+            hashControl: controlChars.toUpperCase(),
+            signature: signature
+        };
+    } catch (e) {
+        console.error("Erro na assinatura JWS offline:", e);
+        return { success: false, error: e.message };
+    }
 });
 
 app.whenReady().then(() => {

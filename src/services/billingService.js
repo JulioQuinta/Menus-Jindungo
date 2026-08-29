@@ -21,6 +21,27 @@ export const billingService = {
             throw new Error(error?.message || "Servidor não retornou dados de assinatura.");
         } catch (err) {
             console.warn("⚠️ [Cibersegurança] Erro ao assinar no servidor. Ativando assinatura local em regime de contingência:", err.message);
+            
+            // Se estiver no ambiente Electron (desktop), tenta assinar nativamente com a chave da AGT real local
+            if (typeof window !== 'undefined' && window.electronAPI && window.electronAPI.signInvoiceOffline) {
+                try {
+                    console.log("Iniciando assinatura real local offline via Electron...");
+                    const certNo = payload.certNo || "000/JINDUNGO/2026-LOCAL";
+                    const offlineResult = await window.electronAPI.signInvoiceOffline(payload, certNo);
+                    if (offlineResult && offlineResult.success) {
+                        console.log("Assinatura offline real efetuada com sucesso!");
+                        return {
+                            jws: offlineResult.jws,
+                            hashControl: offlineResult.hashControl,
+                            signature: offlineResult.signature
+                        };
+                    }
+                    console.warn("Assinatura nativa offline falhou ou retornou erro, recuando para WebCrypto:", offlineResult?.error);
+                } catch (offErr) {
+                    console.warn("Erro ao comunicar com a assinatura offline do Electron:", offErr);
+                }
+            }
+
             // Plano Alternativo / Fallback Offline: assinatura local
             return this.generateLocalJWSSignatureFallback(payload);
         }

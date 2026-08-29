@@ -331,8 +331,15 @@ export const billingService = {
                 }
             }
 
-            // 5. Iniciar processo assíncrono simulado de validação da AGT (Polling)
-            this.iniciarProcessamentoSimuladoAGT(orderId, requestId, hashControl);
+            // 5. Iniciar processamento da AGT
+            // Se a base de dados (Supabase) estiver online e possuir a integração real com a AGT configurada,
+            // desativamos o override simulado do cliente para não sobrescrever os dados reais no banco.
+            const useClientSimulation = false; // Defina como true apenas para testes locais sem a integração da base de dados
+            if (useClientSimulation) {
+                this.iniciarProcessamentoSimuladoAGT(orderId, requestId, hashControl);
+            } else {
+                console.log("Fatura enviada para processamento. Aguardando resposta em tempo real da API da AGT via Supabase...");
+            }
 
             return { success: true, requestId, invoiceNumber };
         } catch (err) {

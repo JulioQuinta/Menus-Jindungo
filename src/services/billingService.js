@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'react-hot-toast';
+import { db } from '../lib/localDb';
 
 export const billingService = {
     // 1. Assinatura Criptográfica JWS (Preferencialmente em Servidor para Cibersegurança)
@@ -174,16 +175,42 @@ export const billingService = {
             const currentYear = new Date().getFullYear();
 
             // 1. Obter a última fatura para Encadeamento (Previous Hash) e numeração sequencial rígida
-            const { data: lastOrder } = await supabase
-                .from('orders')
-                .select('invoice_number, jws_hash')
-                .eq('restaurant_id', restaurantId)
-                .not('invoice_number', 'is', null)
-                .not('jws_hash', 'is', null)
-                .like('invoice_number', `${docType} ${currentYear}/%`)
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .maybeSingle();
+            let lastOrder = null;
+            try {
+                const { data } = await supabase
+                    .from('orders')
+                    .select('invoice_number, jws_hash')
+                    .eq('restaurant_id', restaurantId)
+                    .not('invoice_number', 'is', null)
+                    .not('jws_hash', 'is', null)
+                    .like('invoice_number', `${docType} ${currentYear}/%`)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+                lastOrder = data;
+            } catch (supabaseErr) {
+                console.warn("⚠️ Falha ao obter última fatura online (Supabase). Buscando no banco local Dexie:", supabaseErr.message);
+                try {
+                    const localOrders = await db.orders
+                        .where('restaurant_id')
+                        .equals(restaurantId)
+                        .toArray();
+                    
+                    const filtered = localOrders
+                        .filter(o => o.invoice_number && o.jws_hash && o.invoice_number.startsWith(`${docType} ${currentYear}/`))
+                        .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+                    
+                    if (filtered.length > 0) {
+                        lastOrder = {
+                            invoice_number: filtered[0].invoice_number,
+                            jws_hash: filtered[0].jws_hash
+                        };
+                        console.log("Última fatura localizada localmente via Dexie:", lastOrder);
+                    }
+                } catch (dexieErr) {
+                    console.error("Erro crítico ao buscar faturas no Dexie:", dexieErr);
+                }
+            }
 
             let nextSequence = 1;
             let previousHash = "0"; // "0" se for a primeira fatura da série
@@ -256,17 +283,53 @@ export const billingService = {
             // 4. Atualizar Estado Local no Supabase para 'pending_agt' e gravar o requestID fictício
             const requestId = `REQ-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
             
-            const { error: updateError } = await supabase
-                .from('orders')
-                .update({
-                    invoice_status: 'pending_agt',
-                    request_id: requestId,
-                    invoice_number: invoiceNumber,
-                    jws_hash: jws
-                })
-                .eq('id', orderId);
+            let updateError = null;
+            try {
+                const { error } = await supabase
+                    .from('orders')
+                    .update({
+                        invoice_status: 'pending_agt',
+                        request_id: requestId,
+                        invoice_number: invoiceNumber,
+                        jws_hash: jws
+                    })
+                    .eq('id', orderId);
+                updateError = error;
+            } catch (supErr) {
+                updateError = supErr;
+            }
 
-            if (updateError) throw updateError;
+            if (updateError) {
+                console.warn("⚠️ Falha ao atualizar fatura no Supabase. Atualizando localmente no Dexie:", updateError.message);
+                try {
+                    const localOrder = await db.orders.get(orderId);
+                    if (localOrder) {
+                        await db.orders.update(orderId, {
+                            invoice_status: 'pending_agt',
+                            request_id: requestId,
+                            invoice_number: invoiceNumber,
+                            jws_hash: jws,
+                            is_synced: 0
+                        });
+                    } else {
+                        await db.orders.put({
+                            id: orderId,
+                            restaurant_id: restaurantId,
+                            invoice_status: 'pending_agt',
+                            request_id: requestId,
+                            invoice_number: invoiceNumber,
+                            jws_hash: jws,
+                            is_synced: 0,
+                            created_at: new Date().toISOString()
+                        });
+                    }
+                    this.iniciarProcessamentoSimuladoLocalOffline(orderId, requestId, hashControl);
+                    return { success: true, requestId, invoiceNumber };
+                } catch (dexieUpdateErr) {
+                    console.error("Erro crítico ao atualizar fatura no Dexie:", dexieUpdateErr);
+                    throw updateError;
+                }
+            }
 
             // 5. Iniciar processo assíncrono simulado de validação da AGT (Polling)
             this.iniciarProcessamentoSimuladoAGT(orderId, requestId, hashControl);
@@ -326,6 +389,25 @@ export const billingService = {
                 }
             } catch (err) {
                 console.error("Erro no processador assíncrono da AGT:", err);
+            }
+        }, agtProcessingTime);
+    },
+
+    iniciarProcessamentoSimuladoLocalOffline(orderId, requestId, hashControl) {
+        const agtProcessingTime = 6000;
+        setTimeout(async () => {
+            try {
+                const validationCode = `AGT-VAL-${Math.random().toString(36).substr(2, 6).toUpperCase()}-${hashControl}`;
+                await db.orders.update(orderId, {
+                    invoice_status: 'validated',
+                    validation_code: validationCode,
+                    is_synced: 0
+                });
+                console.log(`[Dexie Offline] Fatura #${orderId} validada localmente com sucesso! Código: ${validationCode}`);
+                
+                window.dispatchEvent(new Event('local_order_updated'));
+            } catch (err) {
+                console.error("Erro ao validar fatura offline no Dexie:", err);
             }
         }, agtProcessingTime);
     },

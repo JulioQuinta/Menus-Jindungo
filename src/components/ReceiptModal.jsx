@@ -5,6 +5,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { billingService } from '../services/billingService';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'react-hot-toast';
+import { db } from '../lib/localDb';
 
 const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Lounge & Grill' }) => {
     const [viewMode, setViewMode] = useState('receipt'); // 'receipt' (80mm) vs 'invoice' (A4)
@@ -66,6 +67,23 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
 
         return () => clearInterval(interval);
     }, [localOrder?.id, localOrder?.invoice_status]);
+
+    useEffect(() => {
+        const handleLocalUpdate = async () => {
+            if (!localOrder?.id) return;
+            try {
+                const localData = await db.orders.get(localOrder.id);
+                if (localData) {
+                    setLocalOrder(localData);
+                }
+            } catch (e) {
+                console.error("Error loading offline updated order:", e);
+            }
+        };
+
+        window.addEventListener('local_order_updated', handleLocalUpdate);
+        return () => window.removeEventListener('local_order_updated', handleLocalUpdate);
+    }, [localOrder?.id]);
 
     const handleEmitirFatura = async () => {
         if (!localOrder?.id) return;

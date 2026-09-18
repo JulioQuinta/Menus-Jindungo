@@ -14,7 +14,9 @@ const DAYS = [
     'Sexta-feira', 'Sábado', 'Domingo'
 ];
 
-const BusinessInfoManager = ({ info, onSave, isLoading, features = {} }) => {
+const BusinessInfoManager = ({ info, onSave, isLoading, features = {}, businessSector }) => {
+    const isPharmacy = businessSector === 'pharmacy' || businessSector === 'health_medical';
+
     const [localInfo, setLocalInfo] = useState(() => {
         const defaultHours = DAYS.map(day => ({
             day,
@@ -35,12 +37,16 @@ const BusinessInfoManager = ({ info, onSave, isLoading, features = {} }) => {
             });
         }
 
+        const defaultTableMap = isPharmacy
+            ? ['Balcão 1', 'Balcão 2', 'Atendimento Rápido', 'Gabinete Enfermagem', 'Guiché 1']
+            : ['Mesa 1', 'Mesa 2', 'Mesa 3', 'Mesa 4', 'VIP 1', 'Esplanada'];
+
         return {
             opening_hours: hours,
             location: initialInfo.location || { address: 'Luanda, Angola', maps_link: 'https://maps.app.goo.gl/vo6MNLiEXcwrn1' },
             socials: initialInfo.socials || { instagram: '@jindungo', facebook: 'jindungo.ao', phone: '931775117' },
-            share_text: initialInfo.share_text || 'Veja o nosso menu digital!',
-            table_map: initialInfo.table_map || ['Mesa 1', 'Mesa 2', 'Mesa 3', 'Mesa 4', 'VIP 1', 'Esplanada']
+            share_text: initialInfo.share_text || (isPharmacy ? 'Veja o nosso catálogo de medicamentos!' : 'Veja o nosso menu digital!'),
+            table_map: initialInfo.table_map || defaultTableMap
         };
     });
 

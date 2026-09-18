@@ -463,6 +463,42 @@ const PublicMenu = () => {
         );
     }
 
+    // Se o restaurante estiver no Módulo "Apenas Faturação" (sem QR Menu)
+    if (restaurant?.module_type === 'billing_only') {
+        return (
+            <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center p-6 text-white font-sans selection:bg-[#D4AF37] selection:text-black">
+                <div className="max-w-md w-full bg-[#111111]/90 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 text-center shadow-2xl space-y-6 animate-fade-in-up">
+                    <div className="w-24 h-24 mx-auto rounded-3xl overflow-hidden bg-black/40 border border-[#D4AF37]/30 flex items-center justify-center p-2 shadow-2xl">
+                        {config?.logoUrl ? (
+                            <img src={config.logoUrl} alt={restaurant.name} className="w-full h-full object-contain" />
+                        ) : (
+                            <span className="text-4xl">🧾</span>
+                        )}
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-serif font-black text-white tracking-tight">{restaurant.name}</h1>
+                        <p className="text-[10px] text-[#D4AF37] font-mono uppercase tracking-[0.2em] mt-1.5 font-bold">Faturação & Gestão Certificada AGT</p>
+                    </div>
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-xs text-gray-400 leading-relaxed text-left space-y-2">
+                        <p className="text-white font-bold flex items-center gap-2">
+                            <span>ℹ️</span> Informação Institucional
+                        </p>
+                        <p>Este estabelecimento utiliza a solução <strong>Menús Jindungo</strong> para emissão de Faturação e Vendas. O Menu QR Público não se encontra ativado para esta conta.</p>
+                    </div>
+                    {businessInfo && (
+                        <div className="space-y-2 text-xs text-gray-300 text-left bg-black/40 p-4 rounded-2xl border border-white/5 font-mono">
+                            {businessInfo.address && <p className="flex items-center gap-2">📍 <span>{businessInfo.address}</span></p>}
+                            {businessInfo.phone && <p className="flex items-center gap-2">📞 <span>{businessInfo.phone}</span></p>}
+                        </div>
+                    )}
+                    <div className="pt-4 border-t border-white/5 text-[9px] text-gray-600 font-mono tracking-widest uppercase">
+                        Plataforma Menús Jindungo © 2026
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <CartProvider>
             <PublicMenuInner 

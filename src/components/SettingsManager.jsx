@@ -58,17 +58,17 @@ const SettingsManager = ({
 
     // Modules Roster matching screenshot exactly
     const modules = [
-        { id: 'profile', name: 'Perfil Geral do Restaurante', owner: 'Naivo', pills: ['Nome', 'Link', 'Cores'], status: 'Ativado', changes: '14 alterações', modalKey: 'profile' },
-        { id: 'menu', name: 'Módulo de Menu Digital', owner: 'PQuinta', pills: ['Categorias', 'Pratos'], status: 'Ativado', changes: '7 alterações', modalKey: 'menu' },
-        { id: 'kds', name: 'Cozinha & Pedidos Kanban', owner: 'Guto-J6', pills: ['Colunas', 'Cores de Alerta'], status: 'Ativado', changes: '5 alterações', modalKey: 'kds' },
-        { id: 'crm', name: 'Reservas & CRM Hub', owner: 'Cliente', pills: ['Escala de Mesas', 'Dicas IA'], status: 'Ativado', changes: '14 alterações', modalKey: 'crm' },
+        { id: 'profile', name: 'Perfil Geral do Estabelecimento', owner: 'Naivo', pills: ['Nome', 'Link', 'Cores'], status: 'Ativado', changes: '14 alterações', modalKey: 'profile' },
+        { id: 'menu', name: 'Módulo de Catálogo & Produtos', owner: 'PQuinta', pills: ['Categorias', 'Artigos'], status: 'Ativado', changes: '7 alterações', modalKey: 'menu' },
+        { id: 'kds', name: 'Gestão de Pedidos & Faturação', owner: 'Guto-J6', pills: ['Colunas', 'Cores de Alerta'], status: 'Ativado', changes: '5 alterações', modalKey: 'kds' },
+        { id: 'crm', name: 'Atendimento & CRM Hub', owner: 'Cliente', pills: ['Escala', 'Dicas IA'], status: 'Ativado', changes: '14 alterações', modalKey: 'crm' },
         { id: 'loyalty', name: 'Fidelização & Marketing', owner: 'António', pills: ['Níveis VIP', 'Campanhas'], status: 'Ativado', changes: '23 alterações', modalKey: 'loyalty' },
         { id: 'delivery', name: 'Logística & Taxas de Entrega', owner: 'Sistema', pills: ['Raios', 'Taxas Automáticas'], status: 'Ativado', changes: '12 alterações', modalKey: 'delivery' }
     ];
 
     const aiTips = [
-        { title: "Rever Staff p/ Picos de Sábado", desc: "Rever Staff p/ Picos e ritmos de Sábado. Sugerimos ativar sincronização em tempo real para os ecrãs KDS antes das 18h.", badge: "Escala" },
-        { title: "Sugerir Campanha p/ Naivo: Novo Prato", desc: "A latência da API de pratos está otimizada em 12ms. Recomendamos criar um destaque dourado no menu para os pratos mais vendidos.", badge: "Performance" },
+        { title: "Rever Carga p/ Picos de Atendimento", desc: "Sugerimos ativar sincronização em tempo real para os ecrãs de pedidos antes dos horários de pico.", badge: "Escala" },
+        { title: "Sugerir Campanha de Produtos de Topo", desc: "A latência da API está otimizada em 12ms. Recomendamos criar um destaque dourado no catálogo para os artigos mais vendidos.", badge: "Performance" },
         { title: "Sincronização de Fidelização Hub", desc: "O hub de pontos VIP processou 23 alterações automáticas hoje. Mantendo este fluxo, a conversão mensal subirá 15%.", badge: "Conversão" }
     ];
 
@@ -429,9 +429,9 @@ const SettingsManager = ({
                                 <div>
                                     <h3 className="font-serif font-black text-white text-xl">
                                         {activeModal === 'profile' ? 'Configuração Visual & Perfil' :
-                                            activeModal === 'menu' ? 'Gestão de Categorias e Pratos' :
-                                                activeModal === 'kds' ? 'Configuração da Cozinha & Kanban' :
-                                                    activeModal === 'crm' ? 'Configuração de Reservas & Mesas' :
+                                            activeModal === 'menu' ? 'Gestão de Categorias e Catálogo' :
+                                                activeModal === 'kds' ? 'Configuração do Monitor de Pedidos / KDS' :
+                                                    activeModal === 'crm' ? 'Configuração de Reservas & Atendimento' :
                                                         activeModal === 'loyalty' ? 'Configuração de Fidelização & VIP' :
                                                             'Logística e Taxas de Entrega'}
                                     </h3>
@@ -486,7 +486,7 @@ const SettingsManager = ({
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold text-gray-400 mb-1">Coluna 2 (Em Processo)</label>
-                                                <input defaultValue="Em Preparação" className="w-full px-4 py-3 bg-black/60 border border-white/20 rounded-xl text-white font-bold text-sm" />
+                                                <input defaultValue="Em Processamento" className="w-full px-4 py-3 bg-black/60 border border-white/20 rounded-xl text-white font-bold text-sm" />
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold text-gray-400 mb-1">Coluna 3 (Finalizados)</label>
@@ -494,7 +494,7 @@ const SettingsManager = ({
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold text-gray-400 mb-1">Coluna 4 (Entregues)</label>
-                                                <input defaultValue="Despachado" className="w-full px-4 py-3 bg-black/60 border border-white/20 rounded-xl text-white font-bold text-sm" />
+                                                <input defaultValue="Despachado / Concluído" className="w-full px-4 py-3 bg-black/60 border border-white/20 rounded-xl text-white font-bold text-sm" />
                                             </div>
                                         </div>
                                     </div>
@@ -505,7 +505,7 @@ const SettingsManager = ({
                                         <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
                                             <div>
                                                 <span className="font-bold text-white block text-sm">Alerta de Novo Pedido (Campainha)</span>
-                                                <span className="text-xs text-gray-400">Tocar sinal sonoro no ecrã da cozinha a cada novo pedido</span>
+                                                <span className="text-xs text-gray-400">Tocar sinal sonoro no ecrã de vendas a cada novo pedido</span>
                                             </div>
                                             <input type="checkbox" defaultChecked className="w-5 h-5 accent-[#D4AF37] cursor-pointer" />
                                         </div>
@@ -524,15 +524,15 @@ const SettingsManager = ({
                                 <div className="space-y-6 text-white font-sans">
                                     <div className="bg-black/40 p-6 rounded-2xl border border-white/10 space-y-4">
                                         <h4 className="text-[#D4AF37] font-bold text-base flex items-center gap-2">
-                                            <span>🪑</span> Escala e Capacidade de Mesas
+                                            <span>🪑</span> Escala e Capacidade de Atendimento
                                         </h4>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-xs font-bold text-gray-400 mb-1">Número Máximo de Mesas no Salão</label>
+                                                <label className="block text-xs font-bold text-gray-400 mb-1">Capacidade Máxima Simultânea</label>
                                                 <input type="number" defaultValue="45" className="w-full px-4 py-3 bg-black/60 border border-white/20 rounded-xl text-white font-bold text-sm" />
                                             </div>
                                             <div>
-                                                <label className="block text-xs font-bold text-gray-400 mb-1">Tempo Médio de Ocupação (Minutos)</label>
+                                                <label className="block text-xs font-bold text-gray-400 mb-1">Tempo Médio de Atendimento (Minutos)</label>
                                                 <input type="number" defaultValue="75" className="w-full px-4 py-3 bg-black/60 border border-white/20 rounded-xl text-white font-bold text-sm" />
                                             </div>
                                         </div>
@@ -543,8 +543,8 @@ const SettingsManager = ({
                                         </h4>
                                         <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
                                             <div>
-                                                <span className="font-bold text-white block text-sm">Notificação Automática de Reserva</span>
-                                                <span className="text-xs text-gray-400">Enviar link de confirmação 2 horas antes da mesa</span>
+                                                <span className="font-bold text-white block text-sm">Notificação Automática de Agenda / Reserva</span>
+                                                <span className="text-xs text-gray-400">Enviar link de confirmação antes do atendimento</span>
                                             </div>
                                             <input type="checkbox" defaultChecked className="w-5 h-5 accent-[#D4AF37] cursor-pointer" />
                                         </div>
@@ -561,17 +561,17 @@ const SettingsManager = ({
                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                             <div className="p-4 bg-white/5 rounded-xl border border-[#D4AF37]/30">
                                                 <span className="text-xs font-bold text-[#D4AF37] block uppercase font-mono">Nível Ouro</span>
-                                                <span className="text-lg font-black text-white mt-1">10 Pts / €10</span>
-                                                <span className="text-xs text-gray-400 block mt-1">15% de Cashback em pratos</span>
+                                                <span className="text-lg font-black text-white mt-1">10 Pts / Kz 1.000</span>
+                                                <span className="text-xs text-gray-400 block mt-1">15% de Cashback em produtos</span>
                                             </div>
                                             <div className="p-4 bg-white/5 rounded-xl border border-white/10">
                                                 <span className="text-xs font-bold text-gray-300 block uppercase font-mono">Nível Prata</span>
-                                                <span className="text-lg font-black text-white mt-1">7 Pts / €10</span>
+                                                <span className="text-lg font-black text-white mt-1">7 Pts / Kz 1.000</span>
                                                 <span className="text-xs text-gray-400 block mt-1">10% de Cashback</span>
                                             </div>
                                             <div className="p-4 bg-white/5 rounded-xl border border-white/10">
                                                 <span className="text-xs font-bold text-amber-600 block uppercase font-mono">Nível Bronze</span>
-                                                <span className="text-lg font-black text-white mt-1">5 Pts / €10</span>
+                                                <span className="text-lg font-black text-white mt-1">5 Pts / Kz 1.000</span>
                                                 <span className="text-xs text-gray-400 block mt-1">5% de Cashback</span>
                                             </div>
                                         </div>

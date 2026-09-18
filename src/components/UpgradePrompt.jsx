@@ -5,10 +5,13 @@ import { generateWhatsAppLink } from '../utils/whatsappGenerator';
 /**
  * Premium Upgrade Prompt to persuade users to subscribe to higher tiers.
  */
-const UpgradePrompt = ({ title, requiredPlan = "Business", features = [] }) => {
+const UpgradePrompt = ({ title, requiredPlan = "Business", features = [], businessSector = 'pharmacy' }) => {
 
     // Support/Sales number
     const supportNumber = "244923000000";
+
+    const isPharm = businessSector === 'farmacia' || businessSector === 'pharmacy' || businessSector === 'health_medical';
+    const businessTerm = isPharm ? 'da sua farmácia' : 'do seu estabelecimento';
 
     const handleUpgradeClick = () => {
         const text = `Olá Equipa Menús Jindungo! 🚀 Gostaria de saber mais sobre o Plano ${requiredPlan} para desbloquear a funcionalidade: ${title}. Como posso avançar?`;
@@ -35,7 +38,7 @@ const UpgradePrompt = ({ title, requiredPlan = "Business", features = [] }) => {
             </h2>
 
             <p className="relative z-10 text-gray-400 mb-10 max-w-xl text-lg leading-relaxed">
-                Revolucione a gestão do seu restaurante. Esta ferramenta avançada é exclusiva para parceiros do majestoso <span className="font-bold text-[#D4AF37]">Plano {requiredPlan}</span>.
+                Revolucione a gestão {businessTerm}. Esta ferramenta avançada é exclusiva para parceiros do majestoso <span className="font-bold text-[#D4AF37]">Plano {requiredPlan}</span>.
             </p>
 
             {/* Features Box */}

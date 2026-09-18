@@ -1,3 +1,51 @@
+export const MODULE_TYPES = {
+    BILLING_ONLY: 'billing_only',
+    QR_ONLY: 'qr_only',
+    FULL_SUITE: 'full_suite'
+};
+
+export const MODULE_NAMES = {
+    billing_only: 'Faturação Simples',
+    qr_only: 'Menu QR & Pedidos',
+    full_suite: 'Faturação + Menu QR (Completo)'
+};
+
+/**
+ * Retorna as capacidades de funcionalidade ativas consoante o módulo contratado.
+ * 
+ * @param {string} moduleType 'billing_only' | 'qr_only' | 'full_suite'
+ * @returns {object} Objeto com sinalizadores booleanos para cada módulo funcional
+ */
+export const getModuleFeatures = (moduleType) => {
+    const type = (moduleType || MODULE_TYPES.FULL_SUITE).toLowerCase().trim();
+
+    const isBillingOnly = type === MODULE_TYPES.BILLING_ONLY;
+    const isQROnly = type === MODULE_TYPES.QR_ONLY;
+    const isFullSuite = type === MODULE_TYPES.FULL_SUITE || (!isBillingOnly && !isQROnly);
+
+    return {
+        isBillingOnly,
+        isQROnly,
+        isFullSuite,
+        // Funcionalidades de Faturação Fiscal e Emissão AGT
+        hasBilling: isBillingOnly || isFullSuite,
+        // Funcionalidades de Menu Digital QR e Pedidos Públicos
+        hasQRMenu: isQROnly || isFullSuite,
+        // Gestão de Stock e Inventário de Produtos
+        hasInventory: isBillingOnly || isFullSuite,
+        // Gestão de Cozinha KDS e Pedidos de Mesa
+        hasKDS: isQROnly || isFullSuite,
+        // Reservas de Mesa e Calendário
+        hasReservations: isQROnly || isFullSuite,
+        // Programa de Fidelização
+        hasLoyalty: isQROnly || isFullSuite,
+        // Gestão de Mesas e Garçom
+        hasTables: isQROnly || isFullSuite,
+        // Catalogo de Artigos/Menu
+        hasProductsMenu: true // Todos os módulos cadastram artigos ou pratos
+    };
+};
+
 export const PLANS = {
     START: 'start',
     BUSINESS: 'business',
@@ -52,3 +100,4 @@ export const getPlanFeatures = (planString) => {
         hasAdvancedAnalytics: hasCorporate  // Relatórios de vendas profundos
     };
 };
+

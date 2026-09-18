@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Shield, ChefHat, Utensils, CheckCircle, Smartphone, Mail, Award, Lock, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Shield, ChefHat, Utensils, CheckCircle, Smartphone, Mail, Award, Lock, ArrowLeft, Store } from 'lucide-react';
+import { SECTOR_PRESETS } from '../utils/sectorConfig';
 
 const getPasswordStrength = (pass) => {
     if (!pass) return { score: 0, text: '', color: 'bg-transparent w-0' };
@@ -26,6 +27,8 @@ const Register = () => {
     const [fullName, setFullName] = useState('');
     const [phone, setPhone] = useState('');
     const [restaurantName, setRestaurantName] = useState('');
+    const [businessSector, setBusinessSector] = useState('retail'); // 'retail' | 'wholesale' | 'bakery' | 'restaurant' | 'pharmacy' | 'education' | 'hotel' | 'services'
+    const [moduleType, setModuleType] = useState('full_suite'); // 'billing_only' | 'qr_only' | 'full_suite'
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [error, setError] = useState('');
@@ -63,7 +66,9 @@ const Register = () => {
                 data: {
                     full_name: fullName,
                     phone: phone,
-                    restaurant_name: restaurantName
+                    restaurant_name: restaurantName,
+                    module_type: moduleType,
+                    business_sector: businessSector
                 }
             });
             if (error) throw error;
@@ -305,6 +310,116 @@ const Register = () => {
                                             {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                         </button>
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* Seleção do Setor de Atividade / Tipo de Serviço (19 Sectores AGT) */}
+                            <div className="space-y-2 pt-2">
+                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest block flex items-center justify-between">
+                                    <span>Setor de Atividade / Serviço</span>
+                                    <span className="text-[10px] text-[#D4AF37] font-mono lowercase">19 Presets AGT</span>
+                                </label>
+                                <div className="relative">
+                                    <select
+                                        value={businessSector}
+                                        onChange={(e) => setBusinessSector(e.target.value)}
+                                        className="w-full bg-[#1A1A1C] border border-white/15 rounded-2xl px-4 py-3.5 text-white font-bold text-xs focus:outline-none focus:border-[#D4AF37] transition-all cursor-pointer shadow-inner appearance-none pr-10"
+                                    >
+                                        {SECTOR_PRESETS.map((sector) => (
+                                            <option key={sector.id} value={sector.id} className="bg-[#121213] text-white py-2">
+                                                {sector.icon} {sector.name} ({sector.badge})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#D4AF37] font-mono text-xs">
+                                        ▼
+                                    </div>
+                                </div>
+
+                                {/* Preview Dinâmico do Setor Selecionado */}
+                                {(() => {
+                                    const active = SECTOR_PRESETS.find(s => s.id === businessSector);
+                                    if (!active) return null;
+                                    return (
+                                        <div className="p-3 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-xl flex items-center gap-3 animate-in fade-in duration-200">
+                                            <span className="text-2xl">{active.icon}</span>
+                                            <div>
+                                                <h5 className="text-xs font-black text-white">{active.name}</h5>
+                                                <p className="text-[10px] text-gray-400 leading-tight mt-0.5">{active.description}</p>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+
+                            {/* Escolha do Módulo de Plataforma */}
+                            <div className="space-y-3 pt-2">
+                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest block">
+                                    Escolha o Módulo Pretendido
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    {/* Módulo 1: Faturação Simples */}
+                                    <button
+                                        type="button"
+                                        onClick={() => setModuleType('billing_only')}
+                                        className={`p-4 rounded-2xl border text-left transition-all duration-300 flex flex-col justify-between cursor-pointer ${
+                                            moduleType === 'billing_only'
+                                                ? 'bg-[#D4AF37]/15 border-[#D4AF37] text-white shadow-[0_0_20px_rgba(212,175,55,0.15)]'
+                                                : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20 hover:text-white'
+                                        }`}
+                                    >
+                                        <div>
+                                            <span className="text-lg block mb-1">🧾</span>
+                                            <h4 className="text-xs font-black text-white">Faturação Simples</h4>
+                                            <p className="text-[10px] text-gray-400 mt-1 leading-tight">Faturação AGT + Stock. Sem Menu QR.</p>
+                                        </div>
+                                        <div className="mt-3 flex items-center justify-between">
+                                            <span className="text-[9px] font-bold uppercase tracking-wider text-[#D4AF37]">Lojas & Serviços</span>
+                                            {moduleType === 'billing_only' && <CheckCircle size={14} className="text-[#D4AF37]" />}
+                                        </div>
+                                    </button>
+
+                                    {/* Módulo 2: Menu QR & Pedidos */}
+                                    <button
+                                        type="button"
+                                        onClick={() => setModuleType('qr_only')}
+                                        className={`p-4 rounded-2xl border text-left transition-all duration-300 flex flex-col justify-between cursor-pointer ${
+                                            moduleType === 'qr_only'
+                                                ? 'bg-[#D4AF37]/15 border-[#D4AF37] text-white shadow-[0_0_20px_rgba(212,175,55,0.15)]'
+                                                : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20 hover:text-white'
+                                        }`}
+                                    >
+                                        <div>
+                                            <span className="text-lg block mb-1">📱</span>
+                                            <h4 className="text-xs font-black text-white">Menu QR & Pedidos</h4>
+                                            <p className="text-[10px] text-gray-400 mt-1 leading-tight">Menu Digital + KDS. Sem Faturação AGT.</p>
+                                        </div>
+                                        <div className="mt-3 flex items-center justify-between">
+                                            <span className="text-[9px] font-bold uppercase tracking-wider text-[#D4AF37]">Software Existente</span>
+                                            {moduleType === 'qr_only' && <CheckCircle size={14} className="text-[#D4AF37]" />}
+                                        </div>
+                                    </button>
+
+                                    {/* Módulo 3: Completo 360º */}
+                                    <button
+                                        type="button"
+                                        onClick={() => setModuleType('full_suite')}
+                                        className={`p-4 rounded-2xl border text-left transition-all duration-300 flex flex-col justify-between cursor-pointer ${
+                                            moduleType === 'full_suite'
+                                                ? 'bg-[#D4AF37]/15 border-[#D4AF37] text-white shadow-[0_0_20px_rgba(212,175,55,0.15)]'
+                                                : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20 hover:text-white'
+                                        }`}
+                                    >
+                                        <div>
+                                            <span className="text-lg block mb-1">🚀</span>
+                                            <h4 className="text-xs font-black text-white">Solução Completa</h4>
+                                            <p className="text-[10px] text-gray-400 mt-1 leading-tight">Faturação AGT + Menu QR + Stock.</p>
+                                        </div>
+                                        <div className="mt-3 flex items-center justify-between">
+                                            <span className="text-[9px] font-bold uppercase tracking-wider text-[#D4AF37]">Gestão 360º</span>
+                                            {moduleType === 'full_suite' && <CheckCircle size={14} className="text-[#D4AF37]" />}
+                                        </div>
+                                    </button>
                                 </div>
                             </div>
 

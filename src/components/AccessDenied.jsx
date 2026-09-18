@@ -36,11 +36,14 @@ const AccessDenied = ({ role }) => {
 
                 <div className="flex flex-col gap-3">
                     <button
-                        onClick={() => navigate('/admin')}
+                        onClick={() => {
+                            if (role === 'kitchen') navigate('/admin/orders');
+                            else navigate('/admin/invoices');
+                        }}
                         className="w-full py-4 bg-gradient-to-r from-[#D4AF37] to-[#F1C40F] text-black font-black rounded-2xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2"
                     >
                         <ArrowLeft size={16} />
-                        Voltar à Visão Geral
+                        Ir para Faturação & Vendas
                     </button>
 
                     <p className="text-[10px] text-gray-500 font-mono mt-4 flex items-center justify-center gap-1">

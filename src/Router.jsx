@@ -26,7 +26,7 @@ const PageLoader = () => (
                 <span className="text-black font-serif font-black text-xl">J</span>
             </div>
         </div>
-        <p className="text-[#D4AF37] font-serif font-bold text-sm tracking-[0.2em] uppercase animate-pulse">A Preparar a Cozinha...</p>
+        <p className="text-[#D4AF37] font-serif font-bold text-sm tracking-[0.2em] uppercase animate-pulse">A Carregar o Sistema...</p>
     </div>
 );
 

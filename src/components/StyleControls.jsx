@@ -213,8 +213,8 @@ const StyleControls = ({ config, setConfig, onReset, onLogoUpload, onHeaderBgUpl
                 {/* Table Bill Toggle */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <label className="text-sm font-bold text-white">Impressão na Cozinha</label>
-                        <p className="text-xs text-gray-400 mt-0.5">Permite a impressão mágica (Conta de Conferência).</p>
+                        <label className="text-sm font-bold text-white">Impressão de Pedidos (KDS / Balcão)</label>
+                        <p className="text-xs text-gray-400 mt-0.5">Permite a impressão de comanda de conferência.</p>
                     </div>
                     <ToggleSwitch
                         checked={config.enableTableBill !== false}
@@ -226,7 +226,7 @@ const StyleControls = ({ config, setConfig, onReset, onLogoUpload, onHeaderBgUpl
                 <div className="flex items-center justify-between">
                     <div>
                         <label className="text-sm font-bold text-white">Pré-pagamento de Encomendas (Online)</label>
-                        <p className="text-xs text-gray-400 mt-0.5">Exige pagamento (Express/Referência) antes de enviar para a cozinha.</p>
+                        <p className="text-xs text-gray-400 mt-0.5">Exige pagamento (Express/Referência) antes de processar o pedido.</p>
                     </div>
                     <ToggleSwitch
                         checked={config.onlineDeliveryPrepaid !== false}

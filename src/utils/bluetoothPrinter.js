@@ -190,7 +190,7 @@ export class NativePrinter {
         layout += COMMANDS.DOUBLE_ON;
         layout += `${restaurantName || 'Jindungo'}` + COMMANDS.LF;
         layout += COMMANDS.NORMAL_TEXT;
-        layout += `COZINHA - PEDIDO ATIVO` + COMMANDS.LF;
+        layout += `PEDIDO DE VENDA - COMANDA` + COMMANDS.LF;
         layout += COMMANDS.LF;
         
         layout += COMMANDS.ALIGN_LEFT;

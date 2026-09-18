@@ -3,9 +3,11 @@ import { supabase } from '../lib/supabaseClient';
 import { orderService } from '../services/orderService';
 import { ResponsiveContainer, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { useNavigate } from 'react-router-dom';
-import { Clock, TrendingUp, Download, Printer, Utensils, ClipboardList, QrCode, Mail, ChevronRight, X, Sparkles, Package, Truck, BarChart2, Users, Settings, Calendar } from 'lucide-react';
+import { Clock, TrendingUp, Download, Printer, Utensils, ClipboardList, QrCode, Mail, ChevronRight, X, Sparkles, Package, Truck, BarChart2, Users, Settings, Calendar, FileText, User } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 import toast from 'react-hot-toast';
+import { getModuleFeatures } from '../utils/planLimits';
+import { getSectorDetails } from '../utils/sectorConfig';
 
 
 // Paleta Ouro Incandescente Vibrante
@@ -140,7 +142,15 @@ const MOCK_PERIOD_DATA = {
     }
 };
 
-const DashboardStats = ({ restaurantId }) => {
+const DashboardStats = ({ restaurantId, businessSector, restaurantInfo: initialRestaurantInfo }) => {
+    const [restaurantInfo, setRestaurantInfo] = useState(initialRestaurantInfo || {});
+
+    // Sector & Theme Determination
+    const activeSector = businessSector || restaurantInfo?.business_sector;
+    const isPharmacy = activeSector === 'pharmacy' || activeSector === 'health_medical';
+    const sectorDetails = getSectorDetails(activeSector);
+    const sectorTerms = sectorDetails?.terms || {};
+
     const [selectedPeriod, setSelectedPeriod] = useState('hoje');
     const [isDemoMode, setIsDemoMode] = useState(false);
     const [salesStats, setSalesStats] = useState({
@@ -152,13 +162,24 @@ const DashboardStats = ({ restaurantId }) => {
         chartData: MOCK_PERIOD_DATA.hoje.chart,
         discounts: 320,
         cancellationRate: 2.1,
-        categoriesMix: [
+        categoriesMix: isPharmacy ? [
+            { name: 'Medicamentos MSR (Com Receita)', value: 1250 },
+            { name: 'Analgesia & Anti-inflamatórios', value: 890 },
+            { name: 'Antibióticos & Infeção', value: 640 },
+            { name: 'Suplementos & Puericultura', value: 410 },
+        ] : [
             { name: 'Pratos Principais', value: 955 },
             { name: 'Bebidas', value: 695 },
             { name: 'Sobremesas', value: 340 },
             { name: 'Entradas', value: 210 },
         ],
-        topDishes: [
+        topDishes: isPharmacy ? [
+            { name: 'Paracetamol 500mg (Caixa 20 Comp.)', value: 12800 },
+            { name: 'Amoxicilina 500mg (Caixa 16 Comp.)', value: 9400 },
+            { name: 'Omeprazol 20mg (Caixa 14 Cáp.)', value: 7200 },
+            { name: 'Ben-u-ron 960mg', value: 5400 },
+            { name: 'Bisolvon Xarope 200ml', value: 3900 },
+        ] : [
             { name: 'Galinha à Jindungo (Grelhada)', value: 8900 },
             { name: 'Mufete de Cacusso Completo', value: 5800 },
             { name: 'Bacalhau com Natas Jindungo', value: 4500 },
@@ -185,7 +206,6 @@ const DashboardStats = ({ restaurantId }) => {
     });
 
     const [showAITips, setShowAITips] = useState(true);
-    const [restaurantInfo, setRestaurantInfo] = useState({ name: 'Comidas da Terra' });
     const navigate = useNavigate();
     const reportTemplateRef = useRef(null);
     const [filterDateText, setFilterDateText] = useState('');
@@ -397,7 +417,7 @@ const DashboardStats = ({ restaurantId }) => {
     const loadRealData = React.useCallback(async (periodKey) => {
         if (!restaurantId) return;
         try {
-            const { data: resData } = await supabase.from('restaurants').select('name').eq('id', restaurantId).single();
+            const { data: resData } = await supabase.from('restaurants').select('name, module_type, business_sector').eq('id', restaurantId).single();
             if (resData) setRestaurantInfo(resData);
 
             const { start, end } = getDateRange(periodKey);
@@ -497,14 +517,14 @@ const DashboardStats = ({ restaurantId }) => {
                             {p.label}
                         </button>
                     ))}
-                    <button onClick={handlePrint} className="bg-[#262626] hover:bg-[#333] text-gray-200 border border-white/10 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg transition-all ml-2" title="Imprimir Relatório ou Salvar em PDF">
-                        <Printer size={14} className="text-[#F5C542]" /> PDF / Imprimir
+                    <button onClick={handlePrint} className={`border px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg transition-all ml-2 ${isPharmacy ? 'bg-[#06171E] hover:bg-[#0E3240] text-gray-200 border-[#103544]' : 'bg-[#262626] hover:bg-[#333] text-gray-200 border-white/10'}`} title="Imprimir Relatório ou Salvar em PDF">
+                        <Printer size={14} className={isPharmacy ? "text-emerald-400" : "text-[#F5C542]"} /> PDF / Imprimir
                     </button>
-                    <button onClick={handleExportSalesCSV} className="bg-[#262626] hover:bg-[#333] text-gray-200 border border-white/10 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg transition-all ml-2" title="Exportar Extração CSV de Vendas">
-                        <Download size={14} className="text-[#F5C542]" /> CSV Vendas
+                    <button onClick={handleExportSalesCSV} className={`border px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg transition-all ml-2 ${isPharmacy ? 'bg-[#06171E] hover:bg-[#0E3240] text-gray-200 border-[#103544]' : 'bg-[#262626] hover:bg-[#333] text-gray-200 border-white/10'}`} title="Exportar Extração CSV de Vendas">
+                        <Download size={14} className={isPharmacy ? "text-emerald-400" : "text-[#F5C542]"} /> CSV Vendas
                     </button>
-                    <button onClick={handleExportProductsCSV} className="bg-[#262626] hover:bg-[#333] text-gray-200 border border-white/10 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg transition-all ml-2" title="Exportar Extração CSV de Produtos">
-                        <Download size={14} className="text-[#F5C542]" /> CSV Produtos
+                    <button onClick={handleExportProductsCSV} className={`border px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg transition-all ml-2 ${isPharmacy ? 'bg-[#06171E] hover:bg-[#0E3240] text-gray-200 border-[#103544]' : 'bg-[#262626] hover:bg-[#333] text-gray-200 border-white/10'}`} title="Exportar Extração CSV de Produtos">
+                        <Download size={14} className={isPharmacy ? "text-emerald-400" : "text-[#F5C542]"} /> CSV Produtos
                     </button>
 
                 </div>
@@ -513,42 +533,62 @@ const DashboardStats = ({ restaurantId }) => {
             {/* TOP ROW: HERO + EVOLUTION CHART + QUICK ACCESS */}
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                 {/* 1. HERO WELCOME CARD */}
-                <div className="xl:col-span-4 bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-8 relative flex flex-col justify-between shadow-[0_15px_40px_rgba(0,0,0,0.8)] overflow-hidden group hover:border-[#F5C542]/40 transition-all">
+                <div className={`xl:col-span-4 rounded-3xl p-8 relative flex flex-col justify-between overflow-hidden group transition-all ${isPharmacy ? 'bg-[#0B2530]/90 border border-[#143E4E] hover:border-emerald-500/40 shadow-[0_15px_40px_rgba(0,0,0,0.5)]' : 'bg-[#161616]/90 border border-[#282828] hover:border-[#F5C542]/40 shadow-[0_15px_40px_rgba(0,0,0,0.8)]'}`}>
                     <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700 pointer-events-none select-none">
-                        <span className="text-8xl font-serif text-[#F5C542]">Ψ ϼ</span>
+                        <span className={`text-8xl font-serif ${isPharmacy ? 'text-emerald-400' : 'text-[#F5C542]'}`}>{isPharmacy ? '⚕ 💊' : 'Ψ ϼ'}</span>
                     </div>
 
-                    <div className="relative z-10 space-y-4">
-                        <h1 className="text-3xl sm:text-4xl font-serif font-bold text-[#F5C542] tracking-wide leading-tight drop-shadow-[0_0_25px_rgba(245,197,66,0.3)]">
-                            Boas-vindas,<br/>ao {restaurantInfo.name || 'seu Jindungo'}.
-                        </h1>
-                        <p className="text-xs text-[#A0A0A5] leading-relaxed font-light max-w-sm">
-                            O seu menu digital está online e a processar encomendas e métricas de desempenho em tempo real.
-                        </p>
-                    </div>
+                    {(() => {
+                        const moduleFeats = getModuleFeatures(restaurantInfo.module_type);
+                        const sectorDetails = getSectorDetails(restaurantInfo.business_sector);
+                        const sectorTheme = sectorDetails.theme || {};
+                        const rawName = restaurantInfo.name || sectorDetails.terms.establishment;
+                        const cleanName = isPharmacy 
+                            ? (rawName.startsWith('Farmácia') ? rawName : `Farmácia ${rawName.replace(/^Restaurante\s+/i, '')}`)
+                            : rawName;
+                        return (
+                            <div className="relative z-10 space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold font-mono border flex items-center gap-1.5" style={{ backgroundColor: `${sectorTheme.primary || '#D4AF37'}15`, color: sectorTheme.primary || '#D4AF37', borderColor: `${sectorTheme.primary || '#D4AF37'}30` }}>
+                                        <span>{sectorDetails.icon}</span>
+                                        <span>{sectorDetails.badge}</span>
+                                    </span>
+                                </div>
+                                <h1 className="text-3xl sm:text-4xl font-serif font-bold tracking-wide leading-tight" style={{ color: isPharmacy ? '#34D399' : (sectorTheme.primary || '#F5C542') }}>
+                                    Boas-vindas,<br/>ao {cleanName}.
+                                </h1>
+                                <p className="text-xs text-[#A0A0A5] leading-relaxed font-light max-w-sm">
+                                    {moduleFeats.isBillingOnly 
+                                        ? `${sectorDetails.terms.welcomeMessage || 'A sua plataforma de faturação eletrónica certificada AGT está pronta.'}`
+                                        : 'O seu portal está online a processar métricas e vendas em tempo real.'
+                                    }
+                                </p>
+                            </div>
+                        );
+                    })()}
 
                     <div className="relative z-10 pt-8 flex items-center justify-between border-t border-[#262626] mt-6">
                         <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_#10B981]"></span>
                             <span className="text-xs font-bold text-gray-300">Sistema Operacional Ativo</span>
                         </div>
-                        <span className="text-[10px] uppercase font-black tracking-widest text-[#F5C542] bg-[#F5C542]/10 px-3 py-1 rounded-full border border-[#F5C542]/30 shadow-[0_0_15px_rgba(245,197,66,0.2)]">
+                        <span className={`text-[10px] uppercase font-black tracking-widest px-3 py-1 rounded-full border shadow-lg ${isPharmacy ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' : 'text-[#F5C542] bg-[#F5C542]/10 border-[#F5C542]/30'}`}>
                             v3.1 Pro
                         </span>
                     </div>
                 </div>
 
                 {/* 2. MAIN EVOLUTION CHART CARD */}
-                <div className="xl:col-span-5 bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-[0_15px_40px_rgba(0,0,0,0.8)] flex flex-col justify-between relative hover:border-[#F5C542]/40 transition-all">
+                <div className={`xl:col-span-5 rounded-3xl p-6 flex flex-col justify-between relative transition-all ${isPharmacy ? 'bg-[#0B2530]/90 border border-[#143E4E] hover:border-emerald-500/40 shadow-[0_15px_40px_rgba(0,0,0,0.5)]' : 'bg-[#161616]/90 border border-[#282828] hover:border-[#F5C542]/40 shadow-[0_15px_40px_rgba(0,0,0,0.8)]'}`}>
                     <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                         <div>
                             <h3 className="font-serif font-bold text-base sm:text-lg text-white drop-shadow">{salesStats.chartTitle}</h3>
                             <p className="text-[11px] text-gray-400 font-light mt-0.5">Comparação de vendas e volume entre os períodos de análise</p>
                         </div>
                         <div className="flex items-center gap-3 text-xs font-medium">
-                            <span className="flex items-center gap-1.5 text-gray-200 font-bold"><span className="w-2.5 h-2.5 rounded-full bg-[#F5C542] shadow-[0_0_10px_#F5C542]"></span> Atual</span>
+                            <span className="flex items-center gap-1.5 text-gray-200 font-bold"><span className={`w-2.5 h-2.5 rounded-full ${isPharmacy ? 'bg-emerald-400 shadow-[0_0_10px_#10B981]' : 'bg-[#F5C542] shadow-[0_0_10px_#F5C542]'}`}></span> Atual</span>
                             <span className="flex items-center gap-1.5 text-gray-400"><span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Anterior</span>
-                            <span className="flex items-center gap-1.5 text-gray-400 font-mono"><span className="w-3 h-0.5 bg-[#F5C542] border border-dashed"></span> Meta</span>
+                            <span className="flex items-center gap-1.5 text-gray-400 font-mono"><span className={`w-3 h-0.5 ${isPharmacy ? 'bg-emerald-400' : 'bg-[#F5C542]'} border border-dashed`}></span> Meta</span>
                             <span className="bg-green-500/20 text-green-400 font-black px-3 py-1 rounded-full text-[10px] border border-green-500/30 shadow-[0_0_12px_rgba(16,185,129,0.3)]">{salesStats.growth}</span>
                         </div>
                     </div>
@@ -557,87 +597,129 @@ const DashboardStats = ({ restaurantId }) => {
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={salesStats.chartData} margin={{ top: 15, right: 15, left: -20, bottom: 0 }}>
                                 <defs>
-                                    <linearGradient id="goldIncandescente" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#F5C542" stopOpacity={0.55}/>
-                                        <stop offset="95%" stopColor="#F5C542" stopOpacity={0}/>
+                                    <linearGradient id="primaryIncandescente" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor={isPharmacy ? "#10B981" : "#F5C542"} stopOpacity={0.55}/>
+                                        <stop offset="95%" stopColor={isPharmacy ? "#10B981" : "#F5C542"} stopOpacity={0}/>
                                     </linearGradient>
                                     <linearGradient id="blueIncandescente" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
                                         <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid vertical={false} stroke="#242424" />
+                                <CartesianGrid vertical={false} stroke={isPharmacy ? "#103544" : "#242424"} />
                                 <XAxis dataKey="date" stroke="#777" fontSize={10} axisLine={false} tickLine={false} />
                                 <YAxis stroke="#777" fontSize={10} axisLine={false} tickLine={false} />
-                                <Tooltip contentStyle={{ background: '#141414', border: '1px solid #F5C542', borderRadius: '14px', color: '#fff', boxShadow: '0 0 20px rgba(245,197,66,0.3)' }} />
+                                <Tooltip contentStyle={{ background: isPharmacy ? '#06171E' : '#141414', border: `1px solid ${isPharmacy ? '#10B981' : '#F5C542'}`, borderRadius: '14px', color: '#fff' }} />
                                 <Area type="monotone" dataKey="passado" stroke="#3B82F6" strokeWidth={2.5} fill="url(#blueIncandescente)" />
-                                <Area type="monotone" dataKey="valor" stroke="#F5C542" strokeWidth={3.5} fill="url(#goldIncandescente)" />
+                                <Area type="monotone" dataKey="valor" stroke={isPharmacy ? "#10B981" : "#F5C542"} strokeWidth={3.5} fill="url(#primaryIncandescente)" />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
                 {/* 3. QUICK NAVIGATION GRID */}
-                <div className="xl:col-span-3 bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-[0_15px_40px_rgba(0,0,0,0.8)] flex flex-col justify-between hover:border-[#F5C542]/40 transition-all">
+                <div className={`xl:col-span-3 rounded-3xl p-6 flex flex-col justify-between transition-all ${isPharmacy ? 'bg-[#0B2530]/90 border border-[#143E4E] hover:border-emerald-500/40 shadow-[0_15px_40px_rgba(0,0,0,0.5)]' : 'bg-[#161616]/90 border border-[#282828] hover:border-[#F5C542]/40 shadow-[0_15px_40px_rgba(0,0,0,0.8)]'}`}>
                     <div className="flex justify-between items-center mb-4 border-b border-[#262626] pb-3">
                         <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Acessos Rápidos</h4>
-                        <button onClick={() => setShowAITips(!showAITips)} className="text-xs text-[#F5C542] hover:underline flex items-center gap-1 font-black drop-shadow-[0_0_8px_rgba(245,197,66,0.5)]">
+                        <button onClick={() => setShowAITips(!showAITips)} className={`text-xs hover:underline flex items-center gap-1 font-black ${isPharmacy ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'text-[#F5C542] drop-shadow-[0_0_8px_rgba(245,197,66,0.5)]'}`}>
                             <Sparkles size={13} /> {showAITips ? 'Ocultar IA' : 'Dicas IA'}
                         </button>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3.5 my-auto">
-                        <button onClick={() => navigate('/admin/menu')} className="bg-[#1C1C1C] border border-[#2E2E2E] rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 hover:border-[#F5C542] hover:bg-[#242424] active:scale-95 transition-all group shadow-md hover:shadow-[0_0_15px_rgba(245,197,66,0.25)]">
-                            <Utensils size={22} className="text-[#F5C542] group-hover:scale-110 transition-transform filter drop-shadow-[0_0_8px_rgba(245,197,66,0.5)]" />
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">Restaurante</span>
-                        </button>
-                        <button onClick={() => navigate('/admin/orders')} className="bg-[#1C1C1C] border border-[#2E2E2E] rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 hover:border-[#F5C542] hover:bg-[#242424] active:scale-95 transition-all group shadow-md hover:shadow-[0_0_15px_rgba(245,197,66,0.25)]">
-                            <ClipboardList size={22} className="text-[#F5C542] group-hover:scale-110 transition-transform filter drop-shadow-[0_0_8px_rgba(245,197,66,0.5)]" />
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">Cozinha</span>
-                        </button>
-                        <button onClick={() => navigate('/admin/inventory')} className="bg-[#1C1C1C] border border-[#2E2E2E] rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 hover:border-[#F5C542] hover:bg-[#242424] active:scale-95 transition-all group shadow-md hover:shadow-[0_0_15px_rgba(245,197,66,0.25)]">
-                            <Package size={22} className="text-[#F5C542] group-hover:scale-110 transition-transform filter drop-shadow-[0_0_8px_rgba(245,197,66,0.5)]" />
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">Stock</span>
-                        </button>
-                        <button onClick={() => navigate('/admin/orders')} className="bg-[#1C1C1C] border border-[#2E2E2E] rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 hover:border-[#F5C542] hover:bg-[#242424] active:scale-95 transition-all group shadow-md hover:shadow-[0_0_15px_rgba(245,197,66,0.25)]">
-                            <Truck size={22} className="text-[#F5C542] group-hover:scale-110 transition-transform filter drop-shadow-[0_0_8px_rgba(245,197,66,0.5)]" />
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">Entregas</span>
-                        </button>
-                        <button onClick={() => navigate('/admin/staff')} className="bg-[#1C1C1C] border border-[#2E2E2E] rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 hover:border-[#F5C542] hover:bg-[#242424] active:scale-95 transition-all group shadow-md hover:shadow-[0_0_15px_rgba(245,197,66,0.25)]">
-                            <Users size={22} className="text-[#F5C542] group-hover:scale-110 transition-transform filter drop-shadow-[0_0_8px_rgba(245,197,66,0.5)]" />
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">Equipa</span>
-                        </button>
-                        <button onClick={() => navigate('/admin/settings')} className="bg-[#1C1C1C] border border-[#2E2E2E] rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 hover:border-[#F5C542] hover:bg-[#242424] active:scale-95 transition-all group shadow-md hover:shadow-[0_0_15px_rgba(245,197,66,0.25)]">
-                            <Settings size={22} className="text-[#F5C542] group-hover:scale-110 transition-transform filter drop-shadow-[0_0_8px_rgba(245,197,66,0.5)]" />
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">Configurações</span>
-                        </button>
+                        {(() => {
+                            const moduleFeats = getModuleFeatures(restaurantInfo.module_type);
+                            const sectorDetails = getSectorDetails(restaurantInfo.business_sector);
+                            const sectorTheme = sectorDetails.theme || {};
+                            const sectorColor = isPharmacy ? '#10B981' : (sectorTheme.primary || '#F5C542');
+                            const btnBg = isPharmacy ? 'bg-[#06171E] border-[#103544] hover:bg-[#0E3240] hover:border-emerald-500/50' : 'bg-[#1C1C1C] border-[#2E2E2E] hover:bg-[#242424] hover:border-[#F5C542]';
+
+                            if (moduleFeats.isBillingOnly) {
+                                return (
+                                    <>
+                                        <button onClick={() => navigate('/admin/invoices')} className={`${btnBg} rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 active:scale-95 transition-all group shadow-md`}>
+                                            <FileText size={22} style={{ color: sectorColor }} className="group-hover:scale-110 transition-transform" />
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300 truncate w-full text-center">{sectorDetails.terms.sales || 'Faturação AGT'}</span>
+                                        </button>
+                                        <button onClick={() => navigate('/admin/inventory')} className={`${btnBg} rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 active:scale-95 transition-all group shadow-md`}>
+                                            <Package size={22} style={{ color: sectorColor }} className="group-hover:scale-110 transition-transform" />
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300 truncate w-full text-center">{sectorDetails.terms.stockLabel || 'Stock & Artigos'}</span>
+                                        </button>
+                                        <button onClick={() => navigate('/admin/crm')} className={`${btnBg} rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 active:scale-95 transition-all group shadow-md`}>
+                                            <User size={22} style={{ color: sectorColor }} className="group-hover:scale-110 transition-transform" />
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300 truncate w-full text-center">Clientes CRM</span>
+                                        </button>
+                                        <button onClick={() => navigate('/admin/chat')} className={`${btnBg} rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 active:scale-95 transition-all group shadow-md`}>
+                                            <Sparkles size={22} style={{ color: sectorColor }} className="group-hover:scale-110 transition-transform" />
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300 truncate w-full text-center">Assistente IA</span>
+                                        </button>
+                                        <button onClick={() => navigate('/admin/staff')} className={`${btnBg} rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 active:scale-95 transition-all group shadow-md`}>
+                                            <Users size={22} style={{ color: sectorColor }} className="group-hover:scale-110 transition-transform" />
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300 truncate w-full text-center">Equipa</span>
+                                        </button>
+                                        <button onClick={() => navigate('/admin/settings')} className={`${btnBg} rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 active:scale-95 transition-all group shadow-md`}>
+                                            <Settings size={22} style={{ color: sectorColor }} className="group-hover:scale-110 transition-transform" />
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300 truncate w-full text-center">Configurações</span>
+                                        </button>
+                                    </>
+                                );
+                            }
+                            return (
+                                <>
+                                    <button onClick={() => navigate('/admin/menu')} className={`${btnBg} rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 active:scale-95 transition-all group shadow-md`}>
+                                        <Package size={22} style={{ color: sectorColor }} className="group-hover:scale-110 transition-transform" />
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300 truncate w-full text-center">{isPharmacy ? 'Catálogo Fármacos' : 'Menu Digital'}</span>
+                                    </button>
+                                    <button onClick={() => navigate(isPharmacy ? '/admin/invoices' : '/admin/orders')} className={`${btnBg} rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 active:scale-95 transition-all group shadow-md`}>
+                                        <ClipboardList size={22} style={{ color: sectorColor }} className="group-hover:scale-110 transition-transform" />
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300 truncate w-full text-center">{isPharmacy ? 'Dispensação POS' : 'Cozinha KDS'}</span>
+                                    </button>
+                                    <button onClick={() => navigate('/admin/inventory')} className={`${btnBg} rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 active:scale-95 transition-all group shadow-md`}>
+                                        <Package size={22} style={{ color: sectorColor }} className="group-hover:scale-110 transition-transform" />
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">Stock</span>
+                                    </button>
+                                    <button onClick={() => navigate('/admin/orders')} className={`${btnBg} rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 active:scale-95 transition-all group shadow-md`}>
+                                        <Truck size={22} style={{ color: sectorColor }} className="group-hover:scale-110 transition-transform" />
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">Entregas</span>
+                                    </button>
+                                    <button onClick={() => navigate('/admin/staff')} className={`${btnBg} rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 active:scale-95 transition-all group shadow-md`}>
+                                        <Users size={22} style={{ color: sectorColor }} className="group-hover:scale-110 transition-transform" />
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">Equipa</span>
+                                    </button>
+                                    <button onClick={() => navigate('/admin/settings')} className={`${btnBg} rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 active:scale-95 transition-all group shadow-md`}>
+                                        <Settings size={22} style={{ color: sectorColor }} className="group-hover:scale-110 transition-transform" />
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300">Configurações</span>
+                                    </button>
+                                </>
+                            );
+                        })()}
                     </div>
                 </div>
             </div>
 
             {/* MIDDLE ROW: 4 KEY METRICS + FLOATING AI POPUP OVER TICKET MEDIO AND NOVOS CLIENTES */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
-                {/* Floating AI Popup precisely positioned in front of Ticket Médio / Novos Clientes exactly as in the screenshot */}
+                {/* Floating AI Popup */}
                 {showAITips && (
-                    <div className="absolute right-4 sm:right-16 top-[-30px] z-50 bg-[#1F1F1F]/95 backdrop-blur-2xl border border-[#F5C542]/70 rounded-2xl p-5 shadow-[0_30px_80px_rgba(0,0,0,0.99)] max-w-sm w-full animate-in zoom-in-95 duration-300 border-t-2 border-t-[#F5C542]">
+                    <div className={`absolute right-4 sm:right-16 top-[-30px] z-50 backdrop-blur-2xl rounded-2xl p-5 shadow-[0_30px_80px_rgba(0,0,0,0.99)] max-w-sm w-full animate-in zoom-in-95 duration-300 border-t-2 ${isPharmacy ? 'bg-[#06171E]/95 border-[#10B981]/70 border-t-[#10B981]' : 'bg-[#1F1F1F]/95 border-[#F5C542]/70 border-t-[#F5C542]'}`}>
                         <div className="flex justify-between items-center mb-3 border-b border-gray-800 pb-2.5">
-                            <h4 className="text-xs font-bold font-serif text-[#F5C542] flex items-center gap-2 drop-shadow-[0_0_10px_rgba(245,197,66,0.4)]">
-                                <Sparkles size={15} className="animate-pulse text-[#F5C542]" /> Dicas de Tomada de Decisão
+                            <h4 className={`text-xs font-bold font-serif flex items-center gap-2 ${isPharmacy ? 'text-emerald-400' : 'text-[#F5C542]'}`}>
+                                <Sparkles size={15} className={`animate-pulse ${isPharmacy ? 'text-emerald-400' : 'text-[#F5C542]'}`} /> Dicas de Tomada de Decisão
                             </h4>
                             <button onClick={() => setShowAITips(false)} className="text-gray-400 hover:text-white transition-colors p-1" title="Fechar dicas">
                                 <X size={16} />
                             </button>
                         </div>
                         <ul className="space-y-2.5 text-xs text-gray-300 font-light list-disc pl-4">
-                            <li><strong className="text-white font-semibold">Micro-insights:</strong> Sugestão de aumento de margem em pratos com alta rotatividade durante o pico.</li>
-                            <li><strong className="text-white font-semibold">Otimização de Equipa:</strong> Reforçar a cozinha aos fins de semana com base no pico histórico de pedidos.</li>
-                            <li><strong className="text-white font-semibold">Campanhas Dinâmicas:</strong> Criar combo promocional para sobremesas e bebidas leves para impulsionar o ticket médio em 15%.</li>
+                            <li><strong className="text-white font-semibold">Micro-insights:</strong> Sugestão de otimização de margens e rotação dos medicamentos essenciais.</li>
+                            <li><strong className="text-white font-semibold">Gestão de Turnos:</strong> Reforçar o atendimento nos horários de maior afluência balcão/receita.</li>
+                            <li><strong className="text-white font-semibold">Faturação Certificada AGT:</strong> Monitorizar os lotes com validade próxima para promoção ativa.</li>
                         </ul>
                     </div>
                 )}
 
                 {/* Card 1: Receita Diária */}
-                <div className="bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-xl flex flex-col justify-between h-44 relative overflow-hidden group hover:border-[#F5C542]/40 transition-all">
+                <div className={`rounded-3xl p-6 flex flex-col justify-between h-44 relative overflow-hidden group transition-all ${isPharmacy ? 'bg-[#0B2530]/90 border border-[#143E4E] hover:border-emerald-500/40 shadow-xl' : 'bg-[#161616]/90 border border-[#282828] hover:border-[#F5C542]/40 shadow-xl'}`}>
                     <div className="flex justify-between items-start">
                         <div>
                             <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1 block">Faturação do Período</span>
@@ -652,64 +734,64 @@ const DashboardStats = ({ restaurantId }) => {
                     <div className="absolute bottom-0 left-0 right-0 h-10 pointer-events-none opacity-50">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={salesStats.chartData}>
-                                <Area type="monotone" dataKey="valor" stroke="#F5C542" strokeWidth={2.5} fill="#F5C542" fillOpacity={0.15} />
+                                <Area type="monotone" dataKey="valor" stroke={isPharmacy ? "#10B981" : "#F5C542"} strokeWidth={2.5} fill={isPharmacy ? "#10B981" : "#F5C542"} fillOpacity={0.15} />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
                 {/* Card 2: Novos Clientes */}
-                <div className="bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-xl flex flex-col justify-between h-44 relative hover:border-[#F5C542]/40 transition-all">
+                <div className={`rounded-3xl p-6 flex flex-col justify-between h-44 relative transition-all ${isPharmacy ? 'bg-[#0B2530]/90 border border-[#143E4E] hover:border-emerald-500/40 shadow-xl' : 'bg-[#161616]/90 border border-[#282828] hover:border-[#F5C542]/40 shadow-xl'}`}>
                     <div>
                         <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1 block">Novos Clientes</span>
                         <h3 className="text-3xl font-serif font-bold text-white tracking-tight">{salesStats.ordersCount}</h3>
                     </div>
                     <div className="space-y-2">
                         <div className="h-3 w-full bg-[#222] rounded-full overflow-hidden flex shadow-inner">
-                            <div className="bg-[#F5C542] h-full shadow-[0_0_10px_#F5C542]" style={{ width: '45%' }}></div>
+                            <div className={isPharmacy ? 'bg-emerald-400 h-full shadow-[0_0_10px_#10B981]' : 'bg-[#F5C542] h-full shadow-[0_0_10px_#F5C542]'} style={{ width: '45%' }}></div>
                             <div className="bg-gray-400 h-full" style={{ width: '25%' }}></div>
                             <div className="bg-blue-500 h-full" style={{ width: '20%' }}></div>
                             <div className="bg-green-500 h-full" style={{ width: '10%' }}></div>
                         </div>
                         <div className="flex items-center justify-between text-[10px] text-gray-400 pt-1 font-medium">
-                            <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#F5C542] shadow-[0_0_6px_#F5C542]"></span> Custonente</span>
-                            <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Custenmises</span>
-                            <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Pronto</span>
-                            <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Entregue</span>
+                            <span className="flex items-center gap-1"><span className={`w-1.5 h-1.5 rounded-full ${isPharmacy ? 'bg-emerald-400' : 'bg-[#F5C542]'}`}></span> Clientes</span>
+                            <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Faturação</span>
+                            <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Balcão</span>
+                            <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Concluído</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Card 3: Ticket Médio */}
-                <div className="bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-xl flex flex-col justify-between h-44 relative hover:border-[#F5C542]/40 transition-all">
+                <div className={`rounded-3xl p-6 flex flex-col justify-between h-44 relative transition-all ${isPharmacy ? 'bg-[#0B2530]/90 border border-[#143E4E] hover:border-emerald-500/40 shadow-xl' : 'bg-[#161616]/90 border border-[#282828] hover:border-[#F5C542]/40 shadow-xl'}`}>
                     <div className="flex justify-between items-start">
                         <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest block">Ticket Médio</span>
-                        <span className="text-xs font-serif font-bold text-[#F5C542] drop-shadow-[0_0_8px_rgba(245,197,66,0.4)]">{formatCurrency(salesStats.avgTicket)}</span>
+                        <span className={`text-xs font-serif font-bold ${isPharmacy ? 'text-emerald-400' : 'text-[#F5C542]'}`}>{formatCurrency(salesStats.avgTicket)}</span>
                     </div>
-                    {/* Semicircular Gauge Mock matching screenshot */}
+                    {/* Semicircular Gauge Mock */}
                     <div className="flex flex-col items-center justify-center my-auto pt-2">
                         <div className="relative w-32 h-16 overflow-hidden">
-                            <div className="absolute top-0 left-0 w-32 h-32 rounded-full border-[12px] border-[#242424] border-t-[#F5C542] border-r-[#F5C542] rotate-45 transition-transform duration-1000 shadow-[0_0_15px_rgba(245,197,66,0.3)]"></div>
-                            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-[#F5C542] shadow-[0_0_12px_#F5C542]"></div>
+                            <div className={`absolute top-0 left-0 w-32 h-32 rounded-full border-[12px] border-[#103544] ${isPharmacy ? 'border-t-emerald-400 border-r-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'border-t-[#F5C542] border-r-[#F5C542] shadow-[0_0_15px_rgba(245,197,66,0.3)]'} rotate-45 transition-transform duration-1000`}></div>
+                            <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full ${isPharmacy ? 'bg-emerald-400 shadow-[0_0_12px_#10B981]' : 'bg-[#F5C542] shadow-[0_0_12px_#F5C542]'}`}></div>
                         </div>
-                        <span className="text-[10px] uppercase font-black text-gray-400 mt-2 tracking-widest">Trend 1500</span>
+                        <span className="text-[10px] uppercase font-black text-gray-400 mt-2 tracking-widest">Meta Kz 15.000</span>
                     </div>
                 </div>
 
-                {/* Card 4: Custo Médio p/ Prato */}
-                <div className="bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-xl flex flex-col justify-between h-44 relative hover:border-[#F5C542]/40 transition-all">
+                {/* Card 4: Custo Médio p/ Artigo */}
+                <div className={`rounded-3xl p-6 flex flex-col justify-between h-44 relative transition-all ${isPharmacy ? 'bg-[#0B2530]/90 border border-[#143E4E] hover:border-emerald-500/40 shadow-xl' : 'bg-[#161616]/90 border border-[#282828] hover:border-[#F5C542]/40 shadow-xl'}`}>
                     <div className="flex justify-between items-start">
-                        <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest block">Custo Médio p/ Prato</span>
-                        <span className="bg-[#F5C542]/10 text-[#F5C542] font-black px-3 py-1 rounded-full text-[10px] border border-[#F5C542]/40 shadow-[0_0_12px_rgba(245,197,66,0.3)]">$3.00</span>
+                        <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest block">Custo Médio p/ {sectorTerms.item || 'Medicamento'}</span>
+                        <span className={`font-black px-3 py-1 rounded-full text-[10px] border shadow-lg ${isPharmacy ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/40' : 'bg-[#F5C542]/10 text-[#F5C542] border-[#F5C542]/40'}`}>Kz 2.500</span>
                     </div>
                     <div className="space-y-3 my-auto">
-                        <div className="relative h-4 w-full bg-[#222] rounded-full overflow-hidden shadow-inner p-0.5">
-                            <div className="bg-gradient-to-r from-amber-600 via-[#F5C542] to-yellow-500 h-full rounded-full shadow-[0_0_10px_#F5C542]" style={{ width: '70%' }}></div>
+                        <div className="relative h-4 w-full bg-[#06171E] rounded-full overflow-hidden shadow-inner p-0.5 border border-[#103544]">
+                            <div className={`h-full rounded-full ${isPharmacy ? 'bg-gradient-to-r from-teal-600 via-emerald-400 to-cyan-400 shadow-[0_0_10px_#10B981]' : 'bg-gradient-to-r from-amber-600 via-[#F5C542] to-yellow-500 shadow-[0_0_10px_#F5C542]'}`} style={{ width: '70%' }}></div>
                         </div>
                         <div className="flex justify-between items-center text-[10px] text-gray-400 font-mono font-medium">
-                            <span>Mín: $1.20</span>
-                            <span className="text-[#F5C542] font-black drop-shadow-[0_0_8px_rgba(245,197,66,0.4)]">Atual: $3.00</span>
-                            <span>Máx: $8.50</span>
+                            <span>Mín: Kz 500</span>
+                            <span className={isPharmacy ? 'text-emerald-400 font-black' : 'text-[#F5C542] font-black'}>Média: Kz 2.500</span>
+                            <span>Máx: Kz 12.000</span>
                         </div>
                     </div>
                 </div>
@@ -718,62 +800,62 @@ const DashboardStats = ({ restaurantId }) => {
             {/* BOTTOM ROW: DONUT + BARS + WEEKLY + ORDERS */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* 1. MIX DE CATEGORIAS */}
-                <div className="lg:col-span-3 bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-2xl flex flex-col justify-between h-80 hover:border-[#F5C542]/40 transition-all">
+                <div className={`lg:col-span-3 rounded-3xl p-6 flex flex-col justify-between h-80 transition-all ${isPharmacy ? 'bg-[#0B2530]/90 border border-[#143E4E] hover:border-emerald-500/40 shadow-2xl' : 'bg-[#161616]/90 border border-[#282828] hover:border-[#F5C542]/40 shadow-2xl'}`}>
                     <h3 className="font-serif font-bold text-base text-white mb-2">Mix de Categorias</h3>
                     <div className="h-44 w-full relative flex items-center justify-center">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie data={salesStats.categoriesMix} innerRadius={45} outerRadius={70} dataKey="value" paddingAngle={4}>
-                                    {salesStats.categoriesMix.map((e, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                    {salesStats.categoriesMix.map((e, i) => <Cell key={i} fill={isPharmacy ? ['#10B981', '#06B6D4', '#3B82F6', '#6366F1', '#EC4899'][i % 5] : COLORS[i % COLORS.length]} />)}
                                 </Pie>
-                                <Tooltip contentStyle={{ background: '#141414', border: '1px solid #F5C542', borderRadius: '12px', color: '#fff', boxShadow: '0 0 20px rgba(245,197,66,0.3)' }} />
+                                <Tooltip contentStyle={{ background: isPharmacy ? '#06171E' : '#141414', border: `1px solid ${isPharmacy ? '#10B981' : '#F5C542'}`, borderRadius: '12px', color: '#fff' }} />
                             </PieChart>
                         </ResponsiveContainer>
                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <span className="text-xs font-black text-white drop-shadow">Peak, 14:00</span>
-                            <span className="text-[10px] text-gray-400 font-light">Pratos: 955</span>
+                            <span className="text-xs font-black text-white drop-shadow">Pico 14:00</span>
+                            <span className="text-[10px] text-gray-400 font-light">{sectorTerms.items || 'Medicamentos'}: 955</span>
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#262626] text-[10px] text-gray-300 font-medium">
-                        <span className="flex items-center gap-1.5 truncate"><span className="w-2 h-2 rounded-full bg-[#F5C542] shadow-[0_0_6px_#F5C542]"></span> Pratos Princ.</span>
-                        <span className="flex items-center gap-1.5 truncate"><span className="w-2 h-2 rounded-full bg-[#EAC775]"></span> Bebidas</span>
-                        <span className="flex items-center gap-1.5 truncate"><span className="w-2 h-2 rounded-full bg-[#3B82F6]"></span> Sobremesas</span>
-                        <span className="flex items-center gap-1.5 truncate"><span className="w-2 h-2 rounded-full bg-[#8E8E93]"></span> Entradas</span>
+                        <span className="flex items-center gap-1.5 truncate"><span className={`w-2 h-2 rounded-full ${isPharmacy ? 'bg-emerald-400' : 'bg-[#F5C542]'}`}></span> Principal</span>
+                        <span className="flex items-center gap-1.5 truncate"><span className="w-2 h-2 rounded-full bg-[#06B6D4]"></span> Secundária</span>
+                        <span className="flex items-center gap-1.5 truncate"><span className="w-2 h-2 rounded-full bg-[#3B82F6]"></span> Suplementos</span>
+                        <span className="flex items-center gap-1.5 truncate"><span className="w-2 h-2 rounded-full bg-[#8E8E93]"></span> Outros</span>
                     </div>
                 </div>
 
-                {/* 2. TOP 5 PRATOS */}
-                <div className="lg:col-span-3 bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-2xl flex flex-col justify-between h-80 hover:border-[#F5C542]/40 transition-all">
-                    <h3 className="font-serif font-bold text-base text-white mb-4">Top 5 Pratos - Vendas p/ Categoria</h3>
+                {/* 2. TOP 5 ARTIGOS */}
+                <div className={`lg:col-span-3 rounded-3xl p-6 flex flex-col justify-between h-80 transition-all ${isPharmacy ? 'bg-[#0B2530]/90 border border-[#143E4E] hover:border-emerald-500/40 shadow-2xl' : 'bg-[#161616]/90 border border-[#282828] hover:border-[#F5C542]/40 shadow-2xl'}`}>
+                    <h3 className="font-serif font-bold text-base text-white mb-4">Top 5 {sectorTerms.items || 'Medicamentos'}</h3>
                     <div className="h-56 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={salesStats.topDishes} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
-                                <CartesianGrid vertical={false} stroke="#242424" />
+                                <CartesianGrid vertical={false} stroke={isPharmacy ? "#103544" : "#242424"} />
                                 <XAxis dataKey="name" stroke="#777" fontSize={9} axisLine={false} tickLine={false} />
                                 <YAxis stroke="#777" fontSize={9} axisLine={false} tickLine={false} />
-                                <Tooltip contentStyle={{ background: '#141414', border: '1px solid #F5C542', borderRadius: '12px', color: '#fff', boxShadow: '0 0 20px rgba(245,197,66,0.3)' }} />
-                                <Bar dataKey="value" fill="#F5C542" radius={[6, 6, 0, 0]} barSize={20} />
+                                <Tooltip contentStyle={{ background: isPharmacy ? '#06171E' : '#141414', border: `1px solid ${isPharmacy ? '#10B981' : '#F5C542'}`, borderRadius: '12px', color: '#fff' }} />
+                                <Bar dataKey="value" fill={isPharmacy ? "#10B981" : "#F5C542"} radius={[6, 6, 0, 0]} barSize={20} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
                 {/* 3. FATURAÇÃO SEMANAL */}
-                <div className="lg:col-span-3 bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-2xl flex flex-col justify-between h-80 hover:border-[#F5C542]/40 transition-all">
+                <div className={`lg:col-span-3 rounded-3xl p-6 flex flex-col justify-between h-80 transition-all ${isPharmacy ? 'bg-[#0B2530]/90 border border-[#143E4E] hover:border-emerald-500/40 shadow-2xl' : 'bg-[#161616]/90 border border-[#282828] hover:border-[#F5C542]/40 shadow-2xl'}`}>
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="font-serif font-bold text-base text-white truncate">Faturação Semanal</h3>
-                        <span className="text-[9px] font-black uppercase text-[#F5C542] border border-[#F5C542]/40 px-2.5 py-0.5 rounded-full bg-[#F5C542]/10 shadow-[0_0_10px_rgba(245,197,66,0.2)]">Previsão</span>
+                        <span className={`text-[9px] font-black uppercase border px-2.5 py-0.5 rounded-full ${isPharmacy ? 'text-emerald-400 border-emerald-500/40 bg-emerald-500/10' : 'text-[#F5C542] border-[#F5C542]/40 bg-[#F5C542]/10'}`}>Previsão</span>
                     </div>
                     <div className="h-56 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={salesStats.weeklyTrends} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
-                                <CartesianGrid vertical={false} stroke="#242424" />
+                                <CartesianGrid vertical={false} stroke={isPharmacy ? "#103544" : "#242424"} />
                                 <XAxis dataKey="week" stroke="#777" fontSize={9} axisLine={false} tickLine={false} />
                                 <YAxis stroke="#777" fontSize={9} axisLine={false} tickLine={false} />
-                                <Tooltip contentStyle={{ background: '#141414', border: '1px solid #F5C542', borderRadius: '12px', color: '#fff', boxShadow: '0 0 20px rgba(245,197,66,0.3)' }} />
-                                <Bar dataKey="value" fill="#F5C542" radius={[6, 6, 0, 0]} barSize={16}>
+                                <Tooltip contentStyle={{ background: isPharmacy ? '#06171E' : '#141414', border: `1px solid ${isPharmacy ? '#10B981' : '#F5C542'}`, borderRadius: '12px', color: '#fff' }} />
+                                <Bar dataKey="value" fill={isPharmacy ? "#10B981" : "#F5C542"} radius={[6, 6, 0, 0]} barSize={16}>
                                     {salesStats.weeklyTrends.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.isPred ? '#8E8E93' : '#F5C542'} fillOpacity={entry.isPred ? 0.6 : 1} />
+                                        <Cell key={`cell-${index}`} fill={entry.isPred ? '#8E8E93' : (isPharmacy ? '#10B981' : '#F5C542')} fillOpacity={entry.isPred ? 0.6 : 1} />
                                     ))}
                                 </Bar>
                             </BarChart>
@@ -782,15 +864,15 @@ const DashboardStats = ({ restaurantId }) => {
                 </div>
 
                 {/* 4. PEDIDOS RECENTES */}
-                <div className="lg:col-span-3 bg-[#161616]/90 backdrop-blur-xl border border-[#282828] rounded-3xl p-6 shadow-2xl flex flex-col justify-between h-80 overflow-hidden hover:border-[#F5C542]/40 transition-all">
+                <div className={`lg:col-span-3 rounded-3xl p-6 flex flex-col justify-between h-80 overflow-hidden transition-all ${isPharmacy ? 'bg-[#0B2530]/90 border border-[#143E4E] hover:border-emerald-500/40 shadow-2xl' : 'bg-[#161616]/90 border border-[#282828] hover:border-[#F5C542]/40 shadow-2xl'}`}>
                     <div className="flex justify-between items-center mb-4 border-b border-[#262626] pb-3">
-                        <h3 className="font-serif font-bold text-base text-white">Pedidos Recentes</h3>
-                        <button onClick={() => navigate('/admin/orders')} className="text-xs text-[#F5C542] hover:underline font-black drop-shadow-[0_0_8px_rgba(245,197,66,0.4)]">Ver todos</button>
+                        <h3 className="font-serif font-bold text-base text-white">Vendas & Receitas</h3>
+                        <button onClick={() => navigate('/admin/orders')} className={`text-xs hover:underline font-black ${isPharmacy ? 'text-emerald-400' : 'text-[#F5C542]'}`}>Ver todos</button>
                     </div>
                     <div className="flex-1 overflow-y-auto no-scrollbar pr-1">
                         <div className="space-y-3">
                             {salesStats.recentOrders.map(ord => (
-                                <div key={ord.id} onClick={() => navigate('/admin/orders')} className="flex items-center justify-between p-2.5 rounded-2xl bg-[#1C1C1C] border border-[#2A2A2A] hover:border-[#F5C542]/60 cursor-pointer transition-all shadow-sm hover:shadow-[0_0_15px_rgba(245,197,66,0.2)]">
+                                <div key={ord.id} onClick={() => navigate('/admin/orders')} className={`flex items-center justify-between p-2.5 rounded-2xl border cursor-pointer transition-all shadow-sm ${isPharmacy ? 'bg-[#06171E] border-[#103544] hover:border-emerald-500/60 shadow-emerald-500/5' : 'bg-[#1C1C1C] border-[#2A2A2A] hover:border-[#F5C542]/60'}`}>
                                     <div className="flex items-center gap-3">
                                         <span className="w-8 h-8 rounded-full bg-black/60 border border-white/10 flex items-center justify-center text-sm shadow-inner">{ord.avatar}</span>
                                         <div>

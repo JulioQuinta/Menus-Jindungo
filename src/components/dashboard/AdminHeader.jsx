@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Menu, ChevronRight, MessageSquare, Search, Bell, Sparkles, Power } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+import { MODULE_NAMES } from '../../utils/planLimits';
+
 const AdminHeader = memo(({ 
     setIsMobileMenuOpen, 
     location, 
@@ -17,9 +19,10 @@ const AdminHeader = memo(({
 }) => {
     const currentMenuItem = menuItems?.find(i => (i.path === '/admin' ? location.pathname === '/admin' : location.pathname.includes(i.path)));
     const isManualClosed = !!businessInfo?.is_manual_closed;
+    const isPharmacy = restaurant?.business_sector === 'pharmacy';
 
     return (
-        <header className="sticky top-0 z-30 bg-[#0A0A0B]/85 border-b border-white/5 px-4 sm:px-10 flex items-center h-20 sm:h-24 backdrop-blur-2xl text-gray-100">
+        <header className={`sticky top-0 z-30 px-4 sm:px-10 flex items-center h-20 sm:h-24 backdrop-blur-2xl text-gray-100 transition-colors duration-300 ${isPharmacy ? 'bg-[#06171E]/90 border-b border-[#103544]' : 'bg-[#0A0A0B]/85 border-b border-white/5'}`}>
             <div className="flex justify-between items-center w-full">
                 
                 {/* Left: Breadcrumbs & Title */}
@@ -33,11 +36,14 @@ const AdminHeader = memo(({
 
                     <div className="flex flex-col">
                         <div className="hidden sm:flex items-center gap-2 text-[9px] text-gray-400 uppercase tracking-[0.3em] mb-1.5 font-black">
-                            <Link to="/admin" className="hover:text-[#D4AF37] transition-colors">Workspace</Link>
+                            <Link to="/admin" className={`transition-colors ${isPharmacy ? 'hover:text-emerald-400' : 'hover:text-[#D4AF37]'}`}>Workspace</Link>
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-normal uppercase border ${isPharmacy ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20'}`}>
+                                {MODULE_NAMES[restaurant?.module_type] || 'Faturação + Menu QR'}
+                            </span>
                             {location.pathname !== '/admin' && (
                                 <>
                                     <ChevronRight size={10} className="text-gray-500" />
-                                    <span className="text-[#D4AF37]/80">
+                                    <span className={isPharmacy ? 'text-emerald-400/80' : 'text-[#D4AF37]/80'}>
                                         {currentMenuItem?.label || 'Detalhes'}
                                     </span>
                                 </>
@@ -52,18 +58,18 @@ const AdminHeader = memo(({
                 {/* Center: Search Bar (User Friendly Navigation) */}
                 <div className="hidden md:flex flex-1 max-w-md mx-8 lg:mx-12">
                     <div className="relative w-full group">
-                        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#D4AF37] transition-colors">
+                        <div className={`absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 transition-colors ${isPharmacy ? 'group-focus-within:text-emerald-400' : 'group-focus-within:text-[#D4AF37]'}`}>
                             <Search size={16} />
                         </div>
                         <input 
                             type="text" 
                             readOnly
                             onClick={onOpenCommandPalette}
-                            placeholder="Pesquisar funções, pedidos ou pratos... (Ctrl+K)"
-                            className="w-full bg-[#161618] border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37]/40 transition-all cursor-pointer"
+                            placeholder={isPharmacy ? "Pesquisar medicamentos, receitas, clientes... (Ctrl+K)" : "Pesquisar funções, pedidos ou pratos... (Ctrl+K)"}
+                            className={`w-full border rounded-2xl pl-12 pr-4 py-3 text-sm text-gray-200 placeholder-gray-500 focus:outline-none transition-all cursor-pointer ${isPharmacy ? 'bg-[#0B2530] border-[#103544] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/40' : 'bg-[#161618] border-white/10 focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37]/40'}`}
                         />
                         <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-                            <kbd className="hidden sm:inline-block px-1.5 py-0.5 border border-white/10 rounded bg-[#0A0A0B] text-[10px] font-mono text-gray-500">⌘K</kbd>
+                            <kbd className={`hidden sm:inline-block px-1.5 py-0.5 border rounded text-[10px] font-mono text-gray-500 ${isPharmacy ? 'bg-[#06171E] border-[#103544]' : 'bg-[#0A0A0B] border-white/10'}`}>⌘K</kbd>
                         </div>
                     </div>
                 </div>
@@ -100,7 +106,7 @@ const AdminHeader = memo(({
                     </button>
 
                     {/* IA Assistant Quick Access */}
-                    <Link to="/admin/chat" className="hidden lg:flex items-center gap-2 px-3 sm:px-4 py-2.5 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-2xl text-[#D4AF37] hover:bg-[#D4AF37]/20 transition-all group shadow-lg shadow-[#D4AF37]/5">
+                    <Link to="/admin/chat" className={`hidden lg:flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-2xl transition-all group shadow-lg ${isPharmacy ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 shadow-emerald-500/5' : 'bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#D4AF37] hover:bg-[#D4AF37]/20 shadow-[#D4AF37]/5'}`}>
                         <Sparkles size={14} className="group-hover:rotate-12 transition-transform" />
                         <span className="text-[10px] font-black uppercase tracking-widest hidden xl:inline">Menús Jindungo AI</span>
                     </Link>
@@ -114,14 +120,14 @@ const AdminHeader = memo(({
 
                     <div onClick={() => setShowStaffModal(true)} className="flex items-center gap-3 pl-1 sm:pl-2 cursor-pointer group">
                         <div className="text-right hidden xl:block">
-                            <p className={`text-sm font-black transition-colors ${activeStaff ? 'text-green-400' : 'text-gray-200 group-hover:text-[#D4AF37]'}`}>
+                            <p className={`text-sm font-black transition-colors ${activeStaff ? 'text-green-400' : (isPharmacy ? 'text-gray-200 group-hover:text-emerald-400' : 'text-gray-200 group-hover:text-[#D4AF37]')}`}>
                                 {activeStaff ? activeStaff.name : user?.email?.split('@')[0]}
                             </p>
                             <p className="text-[9px] text-gray-400 mt-0.5 uppercase tracking-[0.2em] font-bold">
                                 {activeStaff ? 'Equipa Ativa' : 'Administrador'}
                             </p>
                         </div>
-                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl border flex items-center justify-center font-black shadow-2xl transition-all transform group-hover:scale-105 group-hover:rotate-3 ${activeStaff ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-[#D4AF37]/10 border-[#D4AF37]/30 text-[#D4AF37]'}`}>
+                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl border flex items-center justify-center font-black shadow-2xl transition-all transform group-hover:scale-105 group-hover:rotate-3 ${activeStaff ? 'bg-green-500/10 border-green-500/30 text-green-400' : (isPharmacy ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-[#D4AF37]/10 border-[#D4AF37]/30 text-[#D4AF37]')}`}>
                             {activeStaff ? activeStaff.name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase()}
                         </div>
                     </div>

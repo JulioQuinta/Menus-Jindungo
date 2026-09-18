@@ -1,7 +1,7 @@
 import React from 'react';
 
 const MasqueradeBanner = ({ restaurantName }) => {
-    const isMasquerading = localStorage.getItem('masquerade_restaurant_id');
+    const isMasquerading = localStorage.getItem('masquerade_restaurant_id') && localStorage.getItem('is_super_admin_masquerade') === 'true';
     
     if (!isMasquerading) return null;
 

@@ -1,8 +1,8 @@
 import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, LogOut, ExternalLink, ShieldCheck, Tv } from 'lucide-react';
-
 import { getAssetPath } from '../../utils/assetResolver';
+import { getSectorDetails } from '../../utils/sectorConfig';
 
 const AdminSidebar = memo(({ 
     isSidebarOpen, 
@@ -15,8 +15,15 @@ const AdminSidebar = memo(({
     restaurantLogoUrl,
     signOut,
     restaurantName,
-    restaurantSlug
+    restaurantSlug,
+    moduleFeatures,
+    businessSector
 }) => {
+    const sectorDetails = getSectorDetails(businessSector);
+    const sectorTheme = sectorDetails?.theme || {};
+
+    const isPharmacy = businessSector === 'pharmacy';
+
     const isActive = (path) => {
         if (path === '/admin') return location.pathname === '/admin';
         return location.pathname.includes(path);
@@ -38,7 +45,8 @@ const AdminSidebar = memo(({
     ];
 
     return (
-        <aside className={`fixed lg:relative z-50 bg-[#0D0D0D] border-r border-white/5 transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] h-screen flex flex-col shadow-[10px_0_40px_rgba(0,0,0,0.4)] will-change-transform
+        <aside className={`fixed lg:relative z-50 transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] h-screen flex flex-col shadow-[10px_0_40px_rgba(0,0,0,0.4)] will-change-transform
+            ${isPharmacy ? 'bg-[#041218] border-r border-[#103544]' : 'bg-[#0D0D0D] border-r border-white/5'}
             ${isMobileMenuOpen ? 'translate-x-0 w-72' : '-translate-x-full lg:translate-x-0'} 
             ${isSidebarOpen ? 'lg:w-72' : 'lg:w-24'}`}>
 
@@ -46,24 +54,24 @@ const AdminSidebar = memo(({
             <div className="p-6 sm:p-8 flex items-center justify-between border-b border-white/5 relative overflow-hidden group">
                 <div className={`flex items-center gap-4 transition-all duration-500 ${isSidebarOpen || isMobileMenuOpen ? 'opacity-100' : 'lg:opacity-0 lg:scale-50 pointer-events-none'}`}>
                     <div className="relative">
-                        <div className="absolute inset-0 bg-[#D4AF37] blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                        <div className="relative w-16 h-16 rounded-full overflow-hidden bg-black/40 flex items-center justify-center border border-[#D4AF37]/30 shadow-2xl transition-all duration-300">
+                        <div className={`absolute inset-0 blur-lg opacity-20 group-hover:opacity-40 transition-opacity ${isPharmacy ? 'bg-emerald-500' : 'bg-[#D4AF37]'}`}></div>
+                        <div className={`relative w-16 h-16 rounded-full overflow-hidden bg-black/40 flex items-center justify-center border shadow-2xl transition-all duration-300 ${isPharmacy ? 'border-emerald-500/30' : 'border-[#D4AF37]/30'}`}>
                             <img 
                                 src={getAssetPath(restaurantLogoUrl || globalLogoUrl || "/jindungo_logo_v3.png")} 
                                 onError={(e) => {
                                     e.target.onerror = null;
                                     e.target.src = getAssetPath("/jindungo_logo_v3.png");
                                 }}
-                                className="w-full h-full object-contain p-0 scale-[1.18] filter drop-shadow-[0_0_8px_rgba(212,175,55,0.4)] transition-transform duration-300 group-hover:scale-[1.23]" 
+                                className={`w-full h-full object-contain p-0 scale-[1.18] filter transition-transform duration-300 group-hover:scale-[1.23] ${isPharmacy ? 'drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]'}`} 
                                 alt="Jindungo" 
                             />
                         </div>
                     </div>
                     <div className="flex flex-col">
                         <span className="font-serif text-xl font-black text-white tracking-tighter leading-none">
-                            Menús <span className="text-[#D4AF37]">Jindungo</span>
+                            Menús <span className={isPharmacy ? 'text-emerald-400' : 'text-[#D4AF37]'}>Jindungo</span>
                         </span>
-                        <span className="text-[9px] font-black text-[#D4AF37]/60 uppercase tracking-[0.3em] mt-1">SISTEMA PREMIUM</span>
+                        <span className={`text-[9px] font-black uppercase tracking-[0.3em] mt-1 ${isPharmacy ? 'text-emerald-400/60' : 'text-[#D4AF37]/60'}`}>SISTEMA PREMIUM</span>
                     </div>
                 </div>
                 
@@ -81,22 +89,24 @@ const AdminSidebar = memo(({
             {/* Restaurant Quick Card (Shown when open) */}
             {(isSidebarOpen || isMobileMenuOpen) && (
                 <div className="px-6 py-4 border-b border-white/5 bg-gradient-to-b from-white/[0.02] to-transparent">
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col gap-3 group/card hover:bg-white/[0.08] transition-all">
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col gap-2.5 group/card hover:bg-white/[0.08] transition-all">
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <ShieldCheck size={12} className="text-[#D4AF37]" />
-                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Loja Ativa</span>
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded border flex items-center gap-1" style={{ backgroundColor: `${sectorTheme.primary || '#D4AF37'}15`, color: sectorTheme.primary || '#D4AF37', borderColor: `${sectorTheme.primary || '#D4AF37'}30` }}>
+                                    <span>{sectorDetails.icon}</span>
+                                    <span>{sectorDetails.badge}</span>
+                                </span>
                             </div>
                             <Link 
                                 to={restaurantSlug ? `/${restaurantSlug}` : '#'} 
                                 target="_blank"
-                                className="text-gray-500 hover:text-[#D4AF37] transition-colors"
+                                className="text-gray-500 hover:text-white transition-colors"
                             >
                                 <ExternalLink size={14} />
                             </Link>
                         </div>
-                        <h4 className="text-sm font-bold text-white truncate group-hover/card:text-[#D4AF37] transition-colors">
-                            {restaurantName || 'O seu Restaurante'}
+                        <h4 className={`text-sm font-bold text-white truncate transition-colors ${isPharmacy ? 'group-hover/card:text-emerald-400' : 'group-hover/card:text-[#D4AF37]'}`}>
+                            {restaurantName || sectorDetails.terms?.establishment || 'O seu Estabelecimento'}
                         </h4>
                     </div>
                 </div>
@@ -126,12 +136,15 @@ const AdminSidebar = memo(({
                                         to={item.path}
                                         onClick={() => setIsMobileMenuOpen(false)}
                                         className={`group relative flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 ${active
-                                            ? 'bg-gradient-to-r from-[#D4AF37]/15 to-transparent text-[#D4AF37] border-l-4 border-[#D4AF37] shadow-[inset_4px_0_12px_rgba(212,175,55,0.05)]'
+                                            ? (isPharmacy 
+                                                ? 'bg-gradient-to-r from-emerald-500/20 to-transparent text-emerald-400 border-l-4 border-emerald-400 shadow-[inset_4px_0_12px_rgba(16,185,129,0.1)]'
+                                                : 'bg-gradient-to-r from-[#D4AF37]/15 to-transparent text-[#D4AF37] border-l-4 border-[#D4AF37] shadow-[inset_4px_0_12px_rgba(212,175,55,0.05)]'
+                                              )
                                             : 'text-gray-500 hover:bg-white/5 hover:text-white'
                                             }`}
                                     >
                                         {active && (
-                                            <div className="absolute inset-0 bg-[#D4AF37]/5 blur-xl pointer-events-none"></div>
+                                            <div className={`absolute inset-0 blur-xl pointer-events-none ${isPharmacy ? 'bg-emerald-500/10' : 'bg-[#D4AF37]/5'}`}></div>
                                         )}
                                         <div className={`transition-transform duration-300 ${active ? 'scale-110' : 'group-hover:scale-110 group-hover:rotate-6'}`}>
                                             <item.icon size={active ? 18 : 16} />
@@ -153,17 +166,19 @@ const AdminSidebar = memo(({
                 })}
             </nav>
 
-            {/* Quick Launch Monitor KDS (Special Action) */}
-            <div className="px-4 py-2 shrink-0">
-                <Link
-                    to="/admin/orders"
-                    className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-[#D4AF37]/10 to-transparent border border-[#D4AF37]/20 hover:border-[#D4AF37]/50 text-[#D4AF37] transition-all hover:scale-[1.02] shadow-[0_4px_20px_rgba(212,175,55,0.05)] ${(!isSidebarOpen && !isMobileMenuOpen) && 'justify-center'}`}
-                    title="Monitor de Cozinha (KDS)"
-                >
-                    <Tv size={18} className="animate-pulse shrink-0" />
-                    <span className={`text-xs font-black uppercase tracking-wider ${(isSidebarOpen || isMobileMenuOpen) ? 'block' : 'hidden'}`}>Monitor KDS</span>
-                </Link>
-            </div>
+            {/* Quick Launch Monitor KDS (Special Action - Apenas para Módulos com KDS/Cozinha) */}
+            {moduleFeatures?.hasKDS && (
+                <div className="px-4 py-2 shrink-0">
+                    <Link
+                        to="/admin/orders"
+                        className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all hover:scale-[1.02] ${isPharmacy ? 'bg-gradient-to-r from-emerald-500/10 to-transparent border border-emerald-500/20 hover:border-emerald-500/50 text-emerald-400 shadow-[0_4px_20px_rgba(16,185,129,0.05)]' : 'bg-gradient-to-r from-[#D4AF37]/10 to-transparent border border-[#D4AF37]/20 hover:border-[#D4AF37]/50 text-[#D4AF37] shadow-[0_4px_20px_rgba(212,175,55,0.05)]'} ${(!isSidebarOpen && !isMobileMenuOpen) && 'justify-center'}`}
+                        title="Monitor de Operações"
+                    >
+                        <Tv size={18} className="animate-pulse shrink-0" />
+                        <span className={`text-xs font-black uppercase tracking-wider ${(isSidebarOpen || isMobileMenuOpen) ? 'block' : 'hidden'}`}>Monitor KDS</span>
+                    </Link>
+                </div>
+            )}
 
             {/* Footer / Logout */}
             <div className="p-6 border-t border-white/5 shrink-0 bg-gradient-to-t from-black/20 to-transparent">

@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabaseClient';
 import { toast } from 'react-hot-toast';
 import { db } from '../lib/localDb';
 
-const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Lounge & Grill' }) => {
+const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Farmácia Jindungo', businessSector }) => {
     const [viewMode, setViewMode] = useState('receipt'); // 'receipt' (80mm) vs 'invoice' (A4)
     const [localOrder, setLocalOrder] = useState(order);
     const [dbRestaurant, setDbRestaurant] = useState(null);
@@ -231,30 +231,49 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
     const vatRate = typeof invoiceConfig.vat_rate === 'number' ? invoiceConfig.vat_rate : 14;
     const isExempt = vatRate === 0;
 
-    // Informações da Empresa / Restaurante
+    // Determinação do setor
+    const currentSector = businessSector || dbRestaurant?.business_sector || localOrder?.restaurant?.business_sector || 'pharmacy';
+    const isPharmacyModal = currentSector === 'pharmacy' || currentSector === 'health_medical' || (restaurantName || '').toLowerCase().includes('farma') || (dbRestaurant?.name || '').toLowerCase().includes('farma');
+
+    // Informações da Empresa
     const companyInfo = {
-        name: dbRestaurant?.name || restaurantName || 'Comidas da Terra',
+        name: dbRestaurant?.name || restaurantName || (isPharmacyModal ? 'Farmácia Jindungo' : 'Empresa Jindungo'),
         nif: invoiceConfig.nif || dbRestaurant?.nif || localOrder?.restaurant?.nif || '5417289301',
-        address: invoiceConfig.address || dbRestaurant?.address || localOrder?.restaurant?.address || 'Av. Talatona, Edifício Jindungo, Luanda',
+        address: invoiceConfig.address || dbRestaurant?.address || localOrder?.restaurant?.address || (isPharmacyModal ? 'Av. Talatona, Edifício Jindungo Saúde, Luanda' : 'Av. Talatona, Edifício Jindungo, Luanda'),
         phone: dbRestaurant?.phone || localOrder?.restaurant?.phone || '+244 923 456 789',
         email: dbRestaurant?.admin_email || localOrder?.restaurant?.admin_email || 'contato@jindungo.ao',
         certification_number: invoiceConfig.certification_number || 'FE/305/AGT/2026',
         software_version: invoiceConfig.software_version || 'v3.1',
-        layout_color: invoiceConfig.layout_color || '#D4AF37',
+        layout_color: invoiceConfig.layout_color || (isPharmacyModal ? '#10B981' : '#D4AF37'),
         show_logo: invoiceConfig.show_logo !== false,
-        invoice_footer_note: invoiceConfig.invoice_footer_note || (isExempt ? `Isento nos termos do Código do IVA (${invoiceConfig.exemption_code || 'M10'})` : 'Regime Geral de Faturação')
+        invoice_footer_note: invoiceConfig.invoice_footer_note || (isExempt ? `Isento nos termos do Código do IVA (${invoiceConfig.exemption_code || (isPharmacyModal ? 'M02' : 'M10')})` : 'Regime Geral de Faturação')
     };
+
+    // Extração resiliente de NIF, dados de Seguradora e Receita ORMED
+    const extractedNif = localOrder?.customer_nif || localOrder?.table_number?.match(/NIF:\s*([^\s|]+)/)?.[1] || (localOrder?.customer_name?.match(/\(NIF:\s*([^\)]+)\)/)?.[1]) || '999999999';
+    const extractedInsurance = localOrder?.health_insurance_name || localOrder?.table_number?.match(/Seguro:\s*([^(\n|]+)/)?.[1]?.trim();
+    const extractedPolicy = localOrder?.health_insurance_policy || localOrder?.table_number?.match(/Apólice:\s*([^\s|]+)/)?.[1]?.trim();
+    const extractedCoverage = localOrder?.insurance_coverage_percent || parseInt(localOrder?.table_number?.match(/(\d+)%\)/)?.[1]) || 80;
+
+    const extractedDoctor = localOrder?.doctor_name || localOrder?.table_number?.match(/Dr\(a\)\.\s*([^(\n|]+)/)?.[1]?.trim();
+    const extractedOrmed = localOrder?.doctor_ormed || localOrder?.table_number?.match(/Carteira:\s*([^|\n]+)/)?.[1]?.trim();
+    const extractedPrescriptionNum = localOrder?.prescription_number || localOrder?.table_number?.match(/Rec N\.º:\s*([^\s|]+)/)?.[1]?.trim();
+
+    const hasHealthExemption = localOrder?.items?.some(i => i.health_iva_exemption || i.translations?.sector_data?.health_iva_exemption) || (isExempt && isPharmacyModal);
+
+    const rawTotal = localOrder?.total || 0;
+    const insuranceAmountCalculated = localOrder?.insurance_amount || (extractedInsurance ? Math.round(rawTotal * (extractedCoverage / 100)) : 0);
+    const patientCopayCalculated = localOrder?.patient_copay_amount || (extractedInsurance ? (rawTotal - insuranceAmountCalculated) : rawTotal);
 
     // Informações do Cliente
     const customerInfo = {
-        name: localOrder?.customer_name || 'Consumidor Final',
+        name: localOrder?.customer_name ? localOrder.customer_name.replace(/\s*\(NIF:.*?\)/, '') : 'Consumidor Final',
         phone: localOrder?.customer_phone || 'Não informado',
-        nif: localOrder?.customer_nif || '999999999',
+        nif: extractedNif,
         address: isDelivery ? (localOrder?.delivery_address || displayTable) : displayTable
     };
 
     // Cálculo Financeiro Discriminado (IVA / Impostos / Descontos)
-    const rawTotal = localOrder?.total || 12450;
     const discount = localOrder?.coupon_discount || 0;
     const subtotal = rawTotal + discount;
     const taxRate = vatRate / 100;
@@ -262,12 +281,12 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
     const netSubtotal = rawTotal - taxAmount;
 
     const handleWhatsAppShare = () => {
-        let msg = `🧾 *${companyInfo.name}* - Resumo da Conta\n\n`;
+        let msg = `🧾 *${companyInfo.name}* - Resumo do Pedido / Fatura\n\n`;
         msg += `Pedido N.º: #${localOrder?.id ? localOrder.id.slice(0, 6) : '1042'}\n`;
         msg += `Data: ${formattedDate} às ${formattedTime}\n`;
-        msg += `Cliente: ${customerInfo.name}\n`;
+        msg += `Cliente / Utente: ${customerInfo.name}\n`;
         msg += `Local: ${displayTable}\n\n`;
-        msg += `*ITENS CONSUMIDOS:*\n`;
+        msg += `*ARTIGOS / MEDICAMENTOS:*\n`;
         localOrder?.items?.forEach(item => {
             msg += `• ${item.quantity}x ${item.name} - ${formatCurr(item.price * item.quantity)}\n`;
         });
@@ -275,7 +294,7 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
             msg += `\nDesconto: -${formatCurr(discount)}`;
         }
         msg += `\n\n*TOTAL GERAL: ${formatCurr(rawTotal)}* 💰\n\n`;
-        msg += `Obrigado pela preferência! Verifique a ementa digital e novidades em https://jindungo.ao`;
+        msg += `Obrigado pela preferência! Verifique o nosso catálogo digital e novidades em https://jindungo.ao`;
 
         const phone = (customerInfo.phone !== 'Não informado' ? customerInfo.phone : '').replace(/\D/g, '');
         const targetUrl = phone ? `https://wa.me/244${phone}?text=${encodeURIComponent(msg)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
@@ -283,64 +302,64 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
     };
 
     return (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in font-sans">
-            <div className="bg-[#121212] border border-[#2A2A2A] rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-[0_20px_70px_rgba(0,0,0,0.9)] overflow-hidden">
+        <div className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-md p-2 sm:p-4 overflow-y-auto flex items-start sm:items-center justify-center animate-fade-in font-sans">
+            <div className="bg-[#121212] border border-[#2A2A2A] rounded-2xl sm:rounded-3xl w-full max-w-3xl max-h-[96vh] sm:max-h-[92vh] my-auto flex flex-col shadow-[0_20px_70px_rgba(0,0,0,0.9)] overflow-hidden shrink-0">
                 
                 {/* CABEÇALHO DO MODAL E SELETOR DE MODO */}
-                <div className="bg-[#181818] p-4 sm:px-6 sm:py-4 border-b border-[#2A2A2A] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="flex items-center justify-between w-full sm:w-auto">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#D4AF37] to-amber-500 flex items-center justify-center text-black shadow-lg shadow-[#D4AF37]/20 shrink-0">
-                                <Sparkles size={20} />
-                            </div>
-                            <div>
-                                <h3 className="text-base sm:text-lg font-serif font-bold text-white flex items-center gap-2 truncate">
-                                    Faturação
-                                    <span className="text-[10px] font-sans font-black tracking-widest text-[#D4AF37] bg-[#D4AF37]/10 px-2 py-0.5 rounded-full border border-[#D4AF37]/30 uppercase shrink-0">Premium</span>
-                                </h3>
-                                <p className="text-xs text-gray-400 hidden sm:block">Escolha o formato ideal para impressão ou envio digital</p>
-                            </div>
+                <div className="bg-[#181818] px-3 py-2.5 sm:px-5 sm:py-3 border-b border-[#2A2A2A] flex items-center justify-between gap-2 shrink-0">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-black shadow-md shrink-0 ${
+                            isPharmacyModal 
+                                ? 'bg-gradient-to-tr from-emerald-500 to-teal-400 shadow-emerald-500/20' 
+                                : 'bg-gradient-to-tr from-[#D4AF37] to-amber-500 shadow-[#D4AF37]/20'
+                        }`}>
+                            <Sparkles size={16} />
                         </div>
-
-                        <button
-                            onClick={onClose}
-                            className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-gray-200 hover:text-white flex sm:hidden items-center justify-center border border-white/20 transition-all cursor-pointer active:scale-95 ml-2 shrink-0 shadow-lg"
-                            title="Fechar"
-                        >
-                            <X size={18} />
-                        </button>
+                        <div className="min-w-0">
+                            <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5 truncate">
+                                <span className="truncate">{isPharmacyModal ? 'Faturação & Guia de Dispensação' : 'Faturação & Vendas'}</span>
+                                <span className={`text-[9px] font-sans font-black tracking-widest px-1.5 py-0.5 rounded-full border uppercase shrink-0 ${
+                                    isPharmacyModal
+                                        ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30'
+                                        : 'text-[#D4AF37] bg-[#D4AF37]/10 border-[#D4AF37]/30'
+                                }`}>
+                                    {isPharmacyModal ? 'FARMÁCIA' : 'PREMIUM'}
+                                </span>
+                            </h3>
+                            <p className="text-[10px] text-gray-400 hidden md:block truncate">Escolha o formato ideal para impressão ou envio digital</p>
+                        </div>
                     </div>
 
-                    <div className="flex items-center justify-between w-full sm:w-auto gap-3">
-                        <div className="bg-[#121212] p-1 rounded-2xl border border-white/10 flex gap-1 w-full sm:w-auto">
+                    <div className="flex items-center gap-2 shrink-0">
+                        <div className="bg-[#121212] p-0.5 rounded-xl border border-white/10 flex gap-0.5">
                             <button
                                 onClick={() => setViewMode('receipt')}
-                                className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                                     viewMode === 'receipt'
-                                        ? 'bg-[#D4AF37] text-black shadow-md font-black'
+                                        ? (isPharmacyModal ? 'bg-emerald-500 text-black shadow-md font-black' : 'bg-[#D4AF37] text-black shadow-md font-black')
                                         : 'text-gray-400 hover:text-white bg-white/5'
                                 }`}
                             >
-                                <FileText size={14} /> Talão 80mm
+                                <FileText size={13} /> <span className="hidden xs:inline">Talão</span> 80mm
                             </button>
                             <button
                                 onClick={() => setViewMode('invoice')}
-                                className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                                     viewMode === 'invoice'
-                                        ? 'bg-[#D4AF37] text-black shadow-md font-black'
+                                        ? (isPharmacyModal ? 'bg-emerald-500 text-black shadow-md font-black' : 'bg-[#D4AF37] text-black shadow-md font-black')
                                         : 'text-gray-400 hover:text-white bg-white/5'
                                 }`}
                             >
-                                <Building2 size={14} /> Fatura A4
+                                <Building2 size={13} /> Fatura A4
                             </button>
                         </div>
 
                         <button
                             onClick={onClose}
-                            className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-gray-200 hover:text-white hidden sm:flex items-center justify-center border border-white/20 transition-all cursor-pointer active:scale-95 shrink-0 shadow-lg"
+                            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-gray-200 hover:text-white flex items-center justify-center border border-white/20 transition-all cursor-pointer active:scale-95 shrink-0 shadow-md"
                             title="Fechar"
                         >
-                            <X size={18} />
+                            <X size={16} />
                         </button>
                     </div>
                 </div>
@@ -390,7 +409,9 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
 
                             {/* Cabeçalho do Talão */}
                             <div className="text-center pt-1.5 pb-2 border-b border-dashed border-gray-300">
-                                <div className="text-2xl font-serif text-[#C5A059] mb-0.5 font-bold">Ψ ϼ</div>
+                                <div className="text-2xl font-serif text-emerald-600 mb-0.5 font-bold flex items-center justify-center gap-1">
+                                    {isPharmacyModal ? '⚕️ 💊' : 'Ψ ϼ'}
+                                </div>
                                 <h1 className="text-base font-black font-sans tracking-tight text-black leading-tight uppercase">
                                     {companyInfo.name}
                                 </h1>
@@ -400,7 +421,7 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
                                 <div className="mt-3 inline-block bg-[#111] text-[#F5C542] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">
                                     {localOrder.invoice_status === 'validated' 
                                         ? (localOrder.invoice_number?.includes('FR') ? 'FATURA-RECIBO' : 'FATURA SIMPLIFICADA') 
-                                        : 'CONTA DE MESA / CONFERÊNCIA'}
+                                        : 'DOCUMENTO DE CONFERÊNCIA'}
                                 </div>
                                 {localOrder.invoice_status === 'validated' && (
                                     <div className="text-[10px] font-mono font-black mt-1.5 text-black tracking-tight">
@@ -412,7 +433,7 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
                             {/* Metadados do Pedido */}
                             <div className="py-2 border-b border-dashed border-gray-300 space-y-0.5 text-[10px] text-gray-800">
                                 <div className="flex justify-between">
-                                    <span>Mesa / Local:</span>
+                                    <span>{isPharmacyModal ? 'Local / Posto:' : 'Mesa / Local:'}</span>
                                     <strong className="text-black font-bold">{displayTable}</strong>
                                 </div>
                                 <div className="flex justify-between">
@@ -462,7 +483,7 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
                             {/* Seção de Totais e Descontos */}
                             <div className="py-2 border-b border-dashed border-gray-300 space-y-1 text-gray-800">
                                 <div className="flex justify-between text-xs font-bold text-black pt-1">
-                                    <span>SUBTOTAL CONSUMO:</span>
+                                    <span>{isPharmacyModal ? 'SUBTOTAL PRODUTOS:' : 'SUBTOTAL CONSUMO:'}</span>
                                     <span className="font-mono">{formatCurr(subtotal)}</span>
                                 </div>
 
@@ -478,15 +499,56 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
                                     <span className="font-mono">{formatCurr(taxAmount)}</span>
                                 </div>
 
+                                {localOrder?.health_insurance_name && (
+                                    <div className="my-1.5 p-2 bg-emerald-50 border border-emerald-200 rounded text-[9px] space-y-1">
+                                        <div className="flex justify-between font-bold text-emerald-900">
+                                            <span>🛡️ Seguradora: {localOrder.health_insurance_name}</span>
+                                            <span>{localOrder.insurance_coverage_percent || 80}%</span>
+                                        </div>
+                                        {localOrder.health_insurance_policy && (
+                                            <div className="text-[8px] text-emerald-700">Apólice / Cartão: {localOrder.health_insurance_policy}</div>
+                                        )}
+                                        <div className="flex justify-between text-emerald-800 border-t border-emerald-200/60 pt-1">
+                                            <span>Comparticipação Seguradora:</span>
+                                            <span className="font-bold">-{formatCurr(localOrder.insurance_amount || 0)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-emerald-950 font-bold">
+                                            <span>Copagamento Utente:</span>
+                                            <span>{formatCurr(localOrder.patient_copay_amount || rawTotal)}</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {(extractedDoctor || extractedOrmed || extractedPrescriptionNum) && (
+                                    <div className="my-1.5 p-2 bg-sky-50 border border-sky-200 rounded text-[9px] space-y-0.5 text-left">
+                                        <div className="font-bold text-sky-950 flex items-center justify-between">
+                                            <span>📋 Receita Médica ORMED</span>
+                                            {extractedOrmed && <span className="font-mono text-[8px] text-sky-800">{extractedOrmed}</span>}
+                                        </div>
+                                        {extractedDoctor && <div className="text-[8.5px] text-sky-900">Médico: <strong>Dr(a). {extractedDoctor}</strong></div>}
+                                        {extractedPrescriptionNum && <div className="text-[8.5px] text-sky-900">Guia/Receita N.º: <strong>{extractedPrescriptionNum}</strong></div>}
+                                    </div>
+                                )}
+
+                                {hasHealthExemption && (
+                                    <div className="my-1.5 p-1.5 bg-emerald-50 border border-emerald-200 text-emerald-950 rounded text-[8px] text-center font-bold">
+                                        Isento nos termos do Art. 12.º do Código do IVA - Alínea m) (Medicamentos Essenciais) - Cód. AGT M02
+                                    </div>
+                                )}
+
                                 <div className="my-1.5 border-t border-b border-black py-1.5 flex justify-between items-baseline bg-gray-50 p-1.5 rounded">
-                                    <span className="text-xs font-black text-black">TOTAL A PAGAR:</span>
-                                    <span className="text-base font-black font-mono text-black">{formatCurr(rawTotal)}</span>
+                                    <span className="text-xs font-black text-black">
+                                        {localOrder?.health_insurance_name ? 'COPAGAMENTO UTENTE:' : 'TOTAL A PAGAR:'}
+                                    </span>
+                                    <span className="text-base font-black font-mono text-black">
+                                        {formatCurr(localOrder?.health_insurance_name ? (localOrder.patient_copay_amount || rawTotal) : rawTotal)}
+                                    </span>
                                 </div>
 
                                 <div className="flex justify-between text-[9px] text-gray-600 pt-0.5">
                                     <span>Modo de Pagamento:</span>
                                     <span className="font-bold text-black uppercase">
-                                        {order?.payment_method === 'multicaixa' ? 'Multicaixa Express' : order?.payment_method === 'cash' ? 'Numerário' : (order?.payment_method || 'A Confirmar')}
+                                        {localOrder?.health_insurance_name ? `Seguradora (${localOrder.health_insurance_name})` : (order?.payment_method === 'multicaixa' ? 'Multicaixa Express' : order?.payment_method === 'cash' ? 'Numerário' : (order?.payment_method || 'A Confirmar'))}
                                     </span>
                                 </div>
                             </div>
@@ -539,12 +601,14 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
                             <div className="flex flex-col sm:flex-row justify-between items-start pb-8 border-b border-gray-200 mt-2 gap-6">
                                 <div>
                                     <div className="flex items-center gap-3 mb-2">
-                                        <span className="text-4xl font-serif text-[#D4AF37] font-bold">Ψ ϼ</span>
+                                        <span className="text-4xl font-serif text-[#D4AF37] font-bold">{isPharmacyModal ? '⚕ 💊' : 'Ψ ϼ'}</span>
                                         <div>
                                             <h1 className="text-2xl font-serif font-black tracking-tight text-gray-950 uppercase leading-none">
                                                 {companyInfo.name}
                                             </h1>
-                                            <p className="text-xs font-bold text-[#D4AF37] uppercase tracking-widest mt-1">Lounge & Fine Dining</p>
+                                            <p className="text-xs font-bold text-[#D4AF37] uppercase tracking-widest mt-1">
+                                                {isPharmacyModal ? 'Farmácia & Cuidados de Saúde' : 'Serviços Comerciais'}
+                                            </p>
                                         </div>
                                     </div>
                                     <div className="text-xs text-gray-600 space-y-0.5 mt-3 font-medium">
@@ -556,7 +620,7 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
 
                                 <div className="text-right">
                                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">
-                                        {localOrder.invoice_number?.includes('FR') ? 'Fatura-Recibo' : (localOrder.invoice_number?.includes('FS') ? 'Fatura Simplificada' : 'Consulta de Mesa')}
+                                        {localOrder.invoice_number?.includes('FR') ? 'Fatura-Recibo' : (localOrder.invoice_number?.includes('FS') ? 'Fatura Simplificada' : (isPharmacyModal ? 'Rascunho de Venda' : 'Consulta de Mesa'))}
                                     </span>
                                     <h2 className="text-xl font-mono font-black text-gray-900">
                                         {localOrder.invoice_number || 'Sem Série (Rascunho)'}
@@ -564,7 +628,7 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
                                     <div className="text-xs text-gray-600 space-y-0.5 mt-2 font-medium">
                                         <p>Data Emissão: <strong className="text-gray-900">{formattedDate}</strong></p>
                                         <p>Hora de Fecho: <strong className="text-gray-900">{formattedTime}</strong></p>
-                                        <p>Local de Consumo: <strong className="text-gray-900">{displayTable}</strong></p>
+                                        <p>{isPharmacyModal ? 'Local de Atendimento' : 'Local / Mesa'}: <strong className="text-gray-900">{displayTable}</strong></p>
                                     </div>
                                 </div>
                             </div>
@@ -598,11 +662,31 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
                                         </div>
                                         <div className="flex justify-between">
                                             <span>Regime Fiscal:</span>
-                                            <strong className="text-gray-950">Geral (IVA 14%)</strong>
+                                            <strong className="text-gray-950">{hasHealthExemption ? 'Isenção IVA (Art. 12.º al. m)' : 'Geral (IVA 14%)'}</strong>
                                         </div>
+                                        {(extractedDoctor || extractedOrmed || extractedPrescriptionNum) && (
+                                            <div className="border-t border-gray-200 pt-1.5 mt-1 text-[11px] text-sky-950 space-y-0.5">
+                                                <div className="font-bold flex justify-between">
+                                                    <span>Dr(a). Receitante:</span>
+                                                    <span>{extractedDoctor || 'Não Informado'}</span>
+                                                </div>
+                                                {extractedOrmed && (
+                                                    <div className="flex justify-between text-[10px]">
+                                                        <span>Carteira ORMED:</span>
+                                                        <span className="font-mono font-bold">{extractedOrmed}</span>
+                                                    </div>
+                                                )}
+                                                {extractedPrescriptionNum && (
+                                                    <div className="flex justify-between text-[10px]">
+                                                        <span>Receita N.º:</span>
+                                                        <span className="font-mono font-bold">{extractedPrescriptionNum}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                         <div className="flex justify-between">
-                                            <span>Estafeta / Garçom:</span>
-                                            <strong className="text-gray-950">{order?.courier_name || 'Serviço de Sala'}</strong>
+                                            <span>Operador / Atendente:</span>
+                                            <strong className="text-gray-950">{order?.courier_name || 'Atendimento Directo'}</strong>
                                         </div>
                                     </div>
                                 </div>
@@ -751,13 +835,17 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
                                 <button
                                     onClick={handleEmitirFatura}
                                     disabled={isSubmitting}
-                                    className="bg-[#D4AF37] hover:bg-[#C5A059] text-black px-5 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-lg shadow-[#D4AF37]/20 active:scale-95 cursor-pointer uppercase tracking-wider"
+                                    className={`px-5 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-lg active:scale-95 cursor-pointer uppercase tracking-wider ${
+                                        isPharmacyModal
+                                            ? 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-emerald-500/20'
+                                            : 'bg-[#D4AF37] hover:bg-[#C5A059] text-black shadow-[#D4AF37]/20'
+                                    }`}
                                 >
                                     <Sparkles size={15} /> {isSubmitting ? 'A comunicar...' : 'Emitir Fatura Eletrónica'}
                                 </button>
                                 <button
                                     onClick={viewMode === 'receipt' ? triggerPrintReceipt : triggerPrintInvoice}
-                                    className="bg-zinc-900 border border-zinc-850 hover:bg-zinc-850 text-zinc-300 hover:text-white px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 active:scale-95 cursor-pointer uppercase tracking-wider"
+                                    className="bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-zinc-200 hover:text-white px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 active:scale-95 cursor-pointer uppercase tracking-wider shadow-md"
                                     title="Imprimir Rascunho de Consulta"
                                 >
                                     <Printer size={15} /> Imprimir Rascunho
@@ -773,7 +861,11 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Jindungo Loung
                         ) : (
                             <button
                                 onClick={viewMode === 'receipt' ? triggerPrintReceipt : triggerPrintInvoice}
-                                className="bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:brightness-110 text-black px-5 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-lg shadow-[#D4AF37]/20 active:scale-95 cursor-pointer uppercase tracking-wider"
+                                className={`px-5 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-lg active:scale-95 cursor-pointer uppercase tracking-wider ${
+                                    isPharmacyModal
+                                        ? 'bg-gradient-to-r from-emerald-500 to-teal-400 hover:brightness-110 text-black shadow-emerald-500/20'
+                                        : 'bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:brightness-110 text-black shadow-[#D4AF37]/20'
+                                }`}
                             >
                                 <Printer size={15} /> {viewMode === 'receipt' ? 'Imprimir Talão Térmico' : 'Imprimir Fatura A4'}
                             </button>

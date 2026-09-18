@@ -1,11 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { Search, Calendar, FileText, TrendingUp, Download, Printer, RefreshCw, ShoppingBag, Eye, User, CreditCard, ChevronRight, CheckCircle2, XCircle, Clock, AlertTriangle, ShieldCheck, Coins, Plus, Minus, Receipt } from 'lucide-react';
+import { Search, Calendar, FileText, TrendingUp, Download, Printer, RefreshCw, ShoppingBag, Eye, User, CreditCard, ChevronRight, CheckCircle2, XCircle, Clock, AlertTriangle, ShieldCheck, Coins, Plus, Minus, Receipt, Pill, ShoppingCart, Coffee, ChefHat, Building, Wrench, BookOpen, Briefcase, Activity, Tag, ShieldAlert } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import ReceiptModal from './ReceiptModal';
 import { cashSessionService } from '../services/cashSessionService';
+import { orderService } from '../services/orderService';
+import { db } from '../lib/localDb';
+import { getSectorDetails } from '../utils/sectorConfig';
 
-const InvoicesManager = ({ restaurantId, restaurantName }) => {
+const InvoicesManager = ({ restaurantId, restaurantName, businessSector }) => {
+    const [sectorState, setSectorState] = useState(businessSector || 'restaurant');
+
+    useEffect(() => {
+        if (businessSector) setSectorState(businessSector);
+    }, [businessSector]);
+
+    const sectorDetails = getSectorDetails(sectorState);
+    const sectorTheme = sectorDetails.theme || {};
+    const sectorTerms = sectorDetails.terms || {};
+    const sectorFields = sectorDetails.fields || {};
+
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeSubTab, setActiveSubTab] = useState('invoices'); // 'invoices' or 'sold_items'
@@ -29,6 +43,130 @@ const InvoicesManager = ({ restaurantId, restaurantName }) => {
     const [showCloseModal, setShowCloseModal] = useState(false);
     const [showTxModal, setShowTxModal] = useState(false);
     const [cashLoading, setCashLoading] = useState(false);
+
+    // POS Terminal / Nova Venda State
+    const [showPosModal, setShowPosModal] = useState(false);
+    const [posSearch, setPosSearch] = useState('');
+    const [posCart, setPosCart] = useState([]);
+    const [posCustomerName, setPosCustomerName] = useState('Consumidor Final');
+    const [posCustomerNif, setPosCustomerNif] = useState('999999999');
+    const [posPaymentMethod, setPosPaymentMethod] = useState('cash'); // 'cash' | 'multicaixa' | 'transferencia' | 'insurance'
+    const [posInsuranceName, setPosInsuranceName] = useState('ENSA Seguros');
+    const [posInsurancePolicy, setPosInsurancePolicy] = useState('');
+    const [posInsuranceCoverage, setPosInsuranceCoverage] = useState(80);
+    const [posDoctorName, setPosDoctorName] = useState('');
+    const [posDoctorOrmed, setPosDoctorOrmed] = useState('');
+    const [posPrescriptionNum, setPosPrescriptionNum] = useState('');
+    const [posSubmitting, setPosSubmitting] = useState(false);
+    const [catalogItems, setCatalogItems] = useState([]);
+
+    const loadCatalogForPos = async () => {
+        try {
+            const { data, error } = await supabase.from('menu_items').select('*, categories(*)').eq('restaurant_id', restaurantId);
+            if (!error && data && data.length > 0) {
+                setCatalogItems(data);
+            } else {
+                const local = await db.menu_items.where('restaurant_id').equals(restaurantId).toArray();
+                setCatalogItems(local || []);
+            }
+        } catch (e) {
+            console.error("Error loading catalog for POS:", e);
+        }
+    };
+
+    const handleOpenPosModal = () => {
+        loadCatalogForPos();
+        setShowPosModal(true);
+    };
+
+    const addToPosCart = (item) => {
+        setPosCart(prev => {
+            const existing = prev.find(i => i.id === item.id);
+            if (existing) {
+                return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
+            }
+            return [...prev, { ...item, quantity: 1 }];
+        });
+    };
+
+    const updatePosCartQty = (id, delta) => {
+        setPosCart(prev => prev.map(i => {
+            if (i.id === id) {
+                const newQty = i.quantity + delta;
+                return newQty > 0 ? { ...i, quantity: newQty } : null;
+            }
+            return i;
+        }).filter(Boolean));
+    };
+
+    const handleCompletePosSale = async () => {
+        if (posCart.length === 0) {
+            toast.error("Adicione pelo menos um produto ao carrinho do POS.");
+            return;
+        }
+
+        setPosSubmitting(true);
+        try {
+            const totalAmount = posCart.reduce((sum, i) => sum + (parseFloat(i.price) || 0) * i.quantity, 0);
+            const insAmount = posPaymentMethod === 'insurance' ? Math.round(totalAmount * (posInsuranceCoverage / 100)) : 0;
+            const copayAmount = totalAmount - insAmount;
+
+            const customerNameWithNif = posCustomerNif && posCustomerNif !== '999999999'
+                ? `${posCustomerName || 'Consumidor Final'} (NIF: ${posCustomerNif})`
+                : (posCustomerName || 'Consumidor Final');
+
+            const hasPrescriptionItem = posCart.some(i => i.requires_prescription || i.translations?.sector_data?.requires_prescription);
+            const ormedInfo = (hasPrescriptionItem || posDoctorName || posDoctorOrmed)
+                ? ` | Receita ORMED: Dr(a). ${posDoctorName || 'Não Informado'} (Carteira: ${posDoctorOrmed || 'N/A'}) | Rec N.º: ${posPrescriptionNum || 'N/A'}`
+                : '';
+
+            const tableInfo = (posPaymentMethod === 'insurance'
+                ? `Balcão POS | Pgto: Seguradora (${posInsuranceName}) | NIF: ${posCustomerNif || '999999999'} | Seguro: ${posInsuranceName} (${posInsuranceCoverage}%) | Apólice: ${posInsurancePolicy || 'N/A'}`
+                : `Balcão POS | Pgto: ${posPaymentMethod === 'cash' ? 'Numerário' : posPaymentMethod === 'multicaixa' ? 'Multicaixa' : posPaymentMethod === 'transferencia' ? 'IBAN' : posPaymentMethod} | NIF: ${posCustomerNif || '999999999'}`) + ormedInfo;
+
+            const orderData = {
+                restaurant_id: restaurantId,
+                total: totalAmount,
+                status: 'completed',
+                customer_name: customerNameWithNif,
+                table_number: tableInfo,
+                items: posCart.map(i => ({
+                    id: i.id,
+                    name: i.name,
+                    price: parseFloat(i.price) || 0,
+                    quantity: i.quantity,
+                    dosage: i.dosage || i.translations?.sector_data?.dosage || '',
+                    active_ingredient: i.active_ingredient || i.translations?.sector_data?.active_ingredient || '',
+                    batch_number: i.batch_number || i.translations?.sector_data?.batch_number || ''
+                }))
+            };
+
+            let finalOrder = null;
+            const { data, error } = await orderService.createOrder(orderData);
+            if (!error && data) {
+                finalOrder = data;
+            } else {
+                console.warn("Supabase insert notification (usando fallback local):", error);
+                finalOrder = {
+                    id: `POS-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+                    created_at: new Date().toISOString(),
+                    invoice_status: 'draft',
+                    ...orderData
+                };
+            }
+
+            toast.success("Venda concluída com sucesso! Fatura emitida.");
+            setShowPosModal(false);
+            setPosCart([]);
+            fetchOrders();
+            setSelectedOrder(finalOrder);
+        } catch (err) {
+            console.error("Erro ao emitir venda POS:", err);
+            toast.error("Erro ao registar venda POS: " + (err.message || ''));
+        } finally {
+            setPosSubmitting(false);
+        }
+    };
 
     const pendingInvoices = orders.filter(o => o.invoice_status === 'pending_agt');
     const pendingCount = pendingInvoices.length;
@@ -84,7 +222,7 @@ const InvoicesManager = ({ restaurantId, restaurantName }) => {
 
             let query = supabase
                 .from('orders')
-                .select('*, restaurant:restaurants(name, business_info, slug, invoice_config)')
+                .select('*, restaurant:restaurants(name, business_info, slug, invoice_config, business_sector)')
                 .eq('restaurant_id', restaurantId);
 
             if (start) {
@@ -97,6 +235,9 @@ const InvoicesManager = ({ restaurantId, restaurantName }) => {
             const { data, error } = await query.order('created_at', { ascending: false });
 
             if (error) throw error;
+            if (data && data.length > 0 && data[0].restaurant?.business_sector) {
+                setSectorState(data[0].restaurant.business_sector);
+            }
             setOrders(data || []);
         } catch (err) {
             console.error("Error fetching invoices:", err);
@@ -544,9 +685,13 @@ const InvoicesManager = ({ restaurantId, restaurantName }) => {
                         <XCircle size={28} />
                     </div>
                     <div>
-                        <h3 className="text-xl font-serif font-black text-white">Turno de Caixa Fechado</h3>
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-mono border mb-3" style={{ backgroundColor: `${sectorTheme.primary || '#D4AF37'}15`, color: sectorTheme.primary || '#D4AF37', borderColor: `${sectorTheme.primary || '#D4AF37'}30` }}>
+                            <span>{sectorDetails.icon || '🏪'}</span>
+                            <span>{sectorDetails.badge || 'Loja Ativa'}</span>
+                        </div>
+                        <h3 className="text-xl font-serif font-black text-white">{sectorTerms.cashClosedTitle || "Turno de Caixa Fechado"}</h3>
                         <p className="text-gray-400 text-xs mt-1.5 max-w-sm mx-auto">
-                            Abra o turno de caixa para começar a faturar pedidos no salão e registar movimentações financeiras.
+                            {sectorTerms.cashClosedSubtitle || "Abra o turno de caixa para começar a faturar e registar movimentações financeiras."}
                         </p>
                     </div>
 
@@ -583,7 +728,11 @@ const InvoicesManager = ({ restaurantId, restaurantName }) => {
                         </div>
                         <button
                             type="submit"
-                            className="w-full py-4.5 bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-amber-400 hover:to-yellow-500 text-black font-black py-4 rounded-full text-xs uppercase tracking-wider shadow-lg shadow-[#D4AF37]/10 transition-all cursor-pointer text-center flex items-center justify-center gap-2"
+                            style={{
+                                background: `linear-gradient(to right, ${sectorTheme.primary || '#D4AF37'}, ${sectorTheme.secondary || sectorTheme.primary || '#E2B755'})`,
+                                color: ['#D4AF37', '#F59E0B', '#10B981', '#84CC16'].includes(sectorTheme.primary) ? '#000' : '#fff'
+                            }}
+                            className="w-full py-4.5 font-black py-4 rounded-full text-xs uppercase tracking-wider shadow-lg transition-all cursor-pointer text-center flex items-center justify-center gap-2 hover:brightness-110"
                         >
                             <Coins size={14} /> Abrir Caixa (Iniciar Turno)
                         </button>
@@ -766,15 +915,22 @@ const InvoicesManager = ({ restaurantId, restaurantName }) => {
         <div className="space-y-6 animate-fade-in-up">
             
             {/* Header */}
-            <div className="bg-gradient-to-r from-[#181818]/95 via-[#141414]/95 to-[#101010]/95 backdrop-blur-xl p-6 sm:p-8 rounded-[2.5rem] border border-[#D4AF37]/20 shadow-[0_0_50px_rgba(212,175,55,0.05)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-72 h-72 bg-[#D4AF37]/5 blur-[90px] rounded-full pointer-events-none" />
+            <div className="bg-gradient-to-r from-[#181818]/95 via-[#141414]/95 to-[#101010]/95 backdrop-blur-xl p-6 sm:p-8 rounded-[2.5rem] border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.4)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden" style={{ borderColor: `${sectorTheme.primary || '#D4AF37'}30` }}>
+                <div className="absolute top-0 right-0 w-72 h-72 blur-[90px] rounded-full pointer-events-none opacity-20" style={{ backgroundColor: sectorTheme.primary || '#D4AF37' }} />
                 <div>
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold font-mono border flex items-center gap-1.5" style={{ backgroundColor: `${sectorTheme.primary || '#D4AF37'}15`, color: sectorTheme.primary || '#D4AF37', borderColor: `${sectorTheme.primary || '#D4AF37'}30` }}>
+                            <span>{sectorDetails.icon || '🏪'}</span>
+                            <span>{sectorDetails.badge || 'Retalho'}</span>
+                        </span>
+                        <span className="text-[10px] text-gray-500 font-mono uppercase tracking-widest">{sectorTerms.establishment || 'Módulo AGT'}</span>
+                    </div>
                     <h1 className="text-2xl sm:text-3xl font-serif font-black text-white tracking-tight flex items-center gap-3">
-                        <FileText className="text-[#D4AF37]" size={28} />
-                        Faturação & Vendas
+                        <FileText style={{ color: sectorTheme.primary || '#D4AF37' }} size={28} />
+                        {sectorTerms.sales || "Faturação & Vendas"}
                     </h1>
                     <p className="text-gray-400 text-sm mt-1">
-                        Gerir faturas homologadas na AGT e analisar a listagem de artigos vendidos no restaurante.
+                        Gerir faturas eletrónicas certificadas na AGT e analisar a listagem de {sectorTerms.items?.toLowerCase() || "artigos vendidos"} no seu estabelecimento.
                     </p>
                 </div>
 
@@ -782,19 +938,22 @@ const InvoicesManager = ({ restaurantId, restaurantName }) => {
                     <div className="bg-black/40 border border-white/10 rounded-2xl p-1 flex gap-1">
                         <button
                             onClick={() => setActiveSubTab('invoices')}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeSubTab === 'invoices' ? 'bg-[#D4AF37] text-black font-black' : 'text-gray-400 hover:text-white bg-transparent'}`}
+                            style={activeSubTab === 'invoices' ? { backgroundColor: sectorTheme.primary || '#D4AF37', color: ['#D4AF37', '#F59E0B', '#10B981', '#84CC16'].includes(sectorTheme.primary) ? '#000' : '#fff' } : {}}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeSubTab === 'invoices' ? 'font-black shadow-md' : 'text-gray-400 hover:text-white bg-transparent'}`}
                         >
                             Faturas Emitidas
                         </button>
                         <button
                             onClick={() => setActiveSubTab('sold_items')}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeSubTab === 'sold_items' ? 'bg-[#D4AF37] text-black font-black' : 'text-gray-400 hover:text-white bg-transparent'}`}
+                            style={activeSubTab === 'sold_items' ? { backgroundColor: sectorTheme.primary || '#D4AF37', color: ['#D4AF37', '#F59E0B', '#10B981', '#84CC16'].includes(sectorTheme.primary) ? '#000' : '#fff' } : {}}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeSubTab === 'sold_items' ? 'font-black shadow-md' : 'text-gray-400 hover:text-white bg-transparent'}`}
                         >
                             Itens Vendidos
                         </button>
                         <button
                             onClick={() => setActiveSubTab('offline_queue')}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all relative ${activeSubTab === 'offline_queue' ? 'bg-[#D4AF37] text-black font-black' : 'text-gray-400 hover:text-white bg-transparent'}`}
+                            style={activeSubTab === 'offline_queue' ? { backgroundColor: sectorTheme.primary || '#D4AF37', color: ['#D4AF37', '#F59E0B', '#10B981', '#84CC16'].includes(sectorTheme.primary) ? '#000' : '#fff' } : {}}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all relative ${activeSubTab === 'offline_queue' ? 'font-black shadow-md' : 'text-gray-400 hover:text-white bg-transparent'}`}
                         >
                             Fila de Contingência
                             {pendingCount > 0 && (
@@ -805,7 +964,8 @@ const InvoicesManager = ({ restaurantId, restaurantName }) => {
                         </button>
                         <button
                             onClick={() => setActiveSubTab('cash_control')}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all relative ${activeSubTab === 'cash_control' ? 'bg-[#D4AF37] text-black font-black' : 'text-gray-400 hover:text-white bg-transparent'}`}
+                            style={activeSubTab === 'cash_control' ? { backgroundColor: sectorTheme.primary || '#D4AF37', color: ['#D4AF37', '#F59E0B', '#10B981', '#84CC16'].includes(sectorTheme.primary) ? '#000' : '#fff' } : {}}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all relative ${activeSubTab === 'cash_control' ? 'font-black shadow-md' : 'text-gray-400 hover:text-white bg-transparent'}`}
                         >
                             Turnos & Caixa
                             {activeSession && (
@@ -813,6 +973,13 @@ const InvoicesManager = ({ restaurantId, restaurantName }) => {
                             )}
                         </button>
                     </div>
+
+                    <button 
+                        onClick={handleOpenPosModal}
+                        className="bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-black px-5 py-3 rounded-2xl transition-all flex items-center gap-2 hover:scale-[1.03] active:scale-[0.97] cursor-pointer text-xs uppercase shadow-[0_0_20px_rgba(16,185,129,0.35)]"
+                    >
+                        <ShoppingCart size={16} /> Nova Venda (POS Balcão)
+                    </button>
 
                     <button 
                         onClick={activeSubTab === 'invoices' ? exportSalesCSV : exportItemsCSV}
@@ -1288,6 +1455,263 @@ const InvoicesManager = ({ restaurantId, restaurantName }) => {
                     </div>
                 </div>
             )}
+            {/* MODAL POS BALCÃO DE VENDA RÁPIDA & DISPENSAÇÃO (FARMÁCIA / RETALHO) */}
+            {showPosModal && (
+                <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-300">
+                    <div className="bg-[#06171E] border border-[#143E4E] rounded-3xl w-full max-w-6xl h-[92vh] flex flex-col shadow-2xl overflow-hidden font-sans text-white">
+                        
+                        {/* HEADER POS */}
+                        <div className="bg-[#0B2530] p-4 sm:px-6 border-b border-[#143E4E] flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-2xl border border-emerald-500/20 text-xl">
+                                    💊
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-serif font-bold text-white flex items-center gap-2">
+                                        Terminal POS Balcão
+                                        <span className="text-[10px] font-mono font-black uppercase text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">AGT Ultrafast</span>
+                                    </h2>
+                                    <p className="text-xs text-gray-400">Dispensação rápida com código de barras, pesquisa DCI e seguradoras</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowPosModal(false)} className="p-2 bg-[#071922] hover:bg-[#143E4E] rounded-full text-gray-400 hover:text-white border border-[#143E4E] transition-all">
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* CORPO DO POS (GRID DE PRODUTOS + CARRINHO) */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 flex-1 overflow-hidden p-4 sm:p-6 gap-6">
+                            
+                            {/* COLUNA ESQUERDA (60%): PESQUISA E CATALOGO DE MEDICAMENTOS */}
+                            <div className="lg:col-span-7 flex flex-col gap-4 overflow-hidden">
+                                <div className="relative">
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-400" size={18} />
+                                    <input 
+                                        type="text"
+                                        autoFocus
+                                        placeholder="Pesquisar por Medicamento, DCI (Princípio Ativo) ou Barcode..."
+                                        value={posSearch}
+                                        onChange={e => setPosSearch(e.target.value)}
+                                        className="w-full pl-11 pr-4 py-3 bg-[#071922] border border-[#143E4E] focus:border-emerald-400 rounded-2xl text-white text-sm outline-none transition-all shadow-inner font-medium"
+                                    />
+                                </div>
+
+                                <div className="flex-1 overflow-y-auto pr-1 grid grid-cols-1 sm:grid-cols-2 gap-3 no-scrollbar">
+                                    {catalogItems
+                                        .filter(item => {
+                                            if (!posSearch) return true;
+                                            const query = posSearch.toLowerCase();
+                                            const nameMatch = item.name.toLowerCase().includes(query);
+                                            const dciMatch = (item.active_ingredient || item.translations?.sector_data?.active_ingredient || '').toLowerCase().includes(query);
+                                            const barcodeMatch = (item.barcode || item.translations?.sector_data?.barcode || '').includes(query);
+                                            return nameMatch || dciMatch || barcodeMatch;
+                                        })
+                                        .map(item => {
+                                            const activeIng = item.active_ingredient || item.translations?.sector_data?.active_ingredient;
+                                            const batch = item.batch_number || item.translations?.sector_data?.batch_number;
+                                            const dosage = item.dosage || item.translations?.sector_data?.dosage;
+
+                                            return (
+                                                <div key={item.id} className="p-3 bg-[#0B2530]/80 border border-[#143E4E] hover:border-emerald-500/40 rounded-2xl flex items-center justify-between gap-3 transition-all hover:bg-[#0E3240]">
+                                                    <div className="min-w-0 flex-1">
+                                                        <h4 className="font-bold text-xs text-white truncate">{item.name}</h4>
+                                                        {activeIng && <p className="text-[10px] italic text-emerald-400 truncate">DCI: {activeIng}</p>}
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className="text-xs font-bold font-mono text-emerald-300">{item.price} Kz</span>
+                                                            {dosage && <span className="text-[9px] text-gray-400 bg-black/40 px-1.5 py-0.5 rounded">{dosage}</span>}
+                                                            {batch && <span className="text-[9px] text-cyan-300 font-mono">LT: {batch}</span>}
+                                                        </div>
+                                                    </div>
+
+                                                    <button 
+                                                        onClick={() => addToPosCart(item)}
+                                                        className="px-3 py-2 bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black font-black text-xs rounded-xl border border-emerald-500/40 transition-all flex items-center gap-1 shrink-0"
+                                                    >
+                                                        <Plus size={14} /> Add
+                                                    </button>
+                                                </div>
+                                            );
+                                        })
+                                    }
+                                </div>
+                            </div>
+
+                            {/* COLUNA DIREITA (40%): RESUMO DA VENDA, SEGURADORA E CONCLUSÃO */}
+                            <div className="lg:col-span-5 bg-[#0B2530] border border-[#143E4E] rounded-3xl p-4 sm:p-5 flex flex-col gap-4 overflow-y-auto">
+                                <h3 className="font-serif font-bold text-base text-white border-b border-[#143E4E] pb-2 flex items-center justify-between">
+                                    <span>Carrinho de Balcão</span>
+                                    <span className="text-xs font-mono font-normal text-emerald-400">{posCart.length} itens</span>
+                                </h3>
+
+                                {/* LISTA DE ITENS SELECIONADOS */}
+                                <div className="flex-1 overflow-y-auto space-y-2 max-h-48">
+                                    {posCart.length === 0 ? (
+                                        <div className="py-8 text-center text-xs text-gray-400 opacity-60">
+                                            Selecione medicamentos da lista ao lado para adicionar à venda.
+                                        </div>
+                                    ) : (
+                                        posCart.map(item => (
+                                            <div key={item.id} className="p-2.5 bg-[#071922] border border-[#143E4E] rounded-xl flex items-center justify-between gap-2 text-xs">
+                                                <div className="min-w-0 flex-1">
+                                                    <h5 className="font-bold text-white truncate">{item.name}</h5>
+                                                    <span className="text-[10px] text-emerald-400 font-mono">{item.price} Kz x {item.quantity}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5 shrink-0">
+                                                    <button onClick={() => updatePosCartQty(item.id, -1)} className="p-1 bg-[#143E4E] text-white rounded-lg hover:bg-red-500/20 hover:text-red-400">
+                                                        <Minus size={12} />
+                                                    </button>
+                                                    <span className="font-mono font-bold px-1">{item.quantity}</span>
+                                                    <button onClick={() => updatePosCartQty(item.id, 1)} className="p-1 bg-[#143E4E] text-white rounded-lg hover:bg-emerald-500/20 hover:text-emerald-400">
+                                                        <Plus size={12} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                {/* DADOS DO CLIENTE */}
+                                <div className="space-y-2 pt-2 border-t border-[#143E4E]">
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label className="text-[9px] text-gray-400 uppercase tracking-widest font-black block mb-1">Utente / Nome</label>
+                                            <input className="w-full px-3 py-2 bg-[#071922] border border-[#143E4E] rounded-xl text-xs text-white outline-none focus:border-emerald-400" value={posCustomerName} onChange={e => setPosCustomerName(e.target.value)} />
+                                        </div>
+                                        <div>
+                                            <label className="text-[9px] text-gray-400 uppercase tracking-widest font-black block mb-1">NIF Utente</label>
+                                            <input className="w-full px-3 py-2 bg-[#071922] border border-[#143E4E] rounded-xl text-xs text-white outline-none focus:border-emerald-400 font-mono" value={posCustomerNif} onChange={e => setPosCustomerNif(e.target.value)} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* REGISTO DE RECEITA MÉDICA ORMED (MSR / PSICOTRÓPICOS) */}
+                                {(() => {
+                                    const hasPrescriptionItem = posCart.some(i => i.requires_prescription || i.translations?.sector_data?.requires_prescription);
+                                    return (
+                                        <div className="space-y-2 pt-2 border-t border-[#143E4E]">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-[9px] text-gray-400 uppercase tracking-widest font-black flex items-center gap-1.5">
+                                                    <span>📋 Receita Médica ORMED</span>
+                                                    {hasPrescriptionItem && (
+                                                        <span className="text-[9px] font-bold text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/30">
+                                                            Obrigatória (MSR)
+                                                        </span>
+                                                    )}
+                                                </label>
+                                            </div>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                <div>
+                                                    <label className="text-[8px] text-gray-400 block mb-0.5">Médico Receitante</label>
+                                                    <input 
+                                                        className="w-full px-2.5 py-1.5 bg-[#071922] border border-[#143E4E] rounded-xl text-xs text-white outline-none focus:border-emerald-400" 
+                                                        placeholder="Dr(a). Nome"
+                                                        value={posDoctorName} 
+                                                        onChange={e => setPosDoctorName(e.target.value)} 
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[8px] text-gray-400 block mb-0.5">Carteira ORMED</label>
+                                                    <input 
+                                                        className="w-full px-2.5 py-1.5 bg-[#071922] border border-[#143E4E] rounded-xl text-xs text-white outline-none focus:border-emerald-400 font-mono" 
+                                                        placeholder="ORMED-AO-..."
+                                                        value={posDoctorOrmed} 
+                                                        onChange={e => setPosDoctorOrmed(e.target.value)} 
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[8px] text-gray-400 block mb-0.5">N.º Receita/Guia</label>
+                                                    <input 
+                                                        className="w-full px-2.5 py-1.5 bg-[#071922] border border-[#143E4E] rounded-xl text-xs text-white outline-none focus:border-emerald-400 font-mono" 
+                                                        placeholder="REC-00123"
+                                                        value={posPrescriptionNum} 
+                                                        onChange={e => setPosPrescriptionNum(e.target.value)} 
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+
+                                {/* MEIO DE PAGAMENTO */}
+                                <div className="space-y-2">
+                                    <label className="text-[9px] text-gray-400 uppercase tracking-widest font-black block">Meio de Pagamento</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button onClick={() => setPosPaymentMethod('cash')} className={`p-2 rounded-xl text-xs font-bold border transition-all ${posPaymentMethod === 'cash' ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300' : 'bg-[#071922] border-[#143E4E] text-gray-400'}`}>💵 Dinheiro</button>
+                                        <button onClick={() => setPosPaymentMethod('multicaixa')} className={`p-2 rounded-xl text-xs font-bold border transition-all ${posPaymentMethod === 'multicaixa' ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300' : 'bg-[#071922] border-[#143E4E] text-gray-400'}`}>📱 Multicaixa</button>
+                                        <button onClick={() => setPosPaymentMethod('transferencia')} className={`p-2 rounded-xl text-xs font-bold border transition-all ${posPaymentMethod === 'transferencia' ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300' : 'bg-[#071922] border-[#143E4E] text-gray-400'}`}>💳 IBAN</button>
+                                        <button onClick={() => setPosPaymentMethod('insurance')} className={`p-2 rounded-xl text-xs font-bold border transition-all ${posPaymentMethod === 'insurance' ? 'bg-emerald-500/30 border-emerald-400 text-emerald-300 font-black' : 'bg-[#071922] border-[#143E4E] text-gray-400'}`}>🛡️ Seguradora</button>
+                                    </div>
+
+                                    {posPaymentMethod === 'insurance' && (
+                                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl space-y-2 mt-2 text-xs">
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label className="text-[8px] text-emerald-300 block mb-1">Seguradora</label>
+                                                    <select value={posInsuranceName} onChange={e => setPosInsuranceName(e.target.value)} className="w-full bg-[#071922] border border-emerald-500/40 text-white rounded-lg p-1.5 text-xs outline-none">
+                                                        <option value="ENSA Seguros">ENSA Seguros</option>
+                                                        <option value="AdvanceCare Angola">AdvanceCare Angola</option>
+                                                        <option value="Nossa Seguros">Nossa Seguros</option>
+                                                        <option value="Fidelidade Angola">Fidelidade Angola</option>
+                                                        <option value="Sáham Assurance">Sáham Assurance</option>
+                                                        <option value="Universal Seguros">Universal Seguros</option>
+                                                        <option value="BIC Seguros">BIC Seguros</option>
+                                                        <option value="Outro Plano Privado">Outra Seguradora</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="text-[8px] text-emerald-300 block mb-1">N.º Cartão/Apólice</label>
+                                                    <input className="w-full bg-[#071922] border border-emerald-500/40 text-white rounded-lg p-1.5 text-xs outline-none font-mono" placeholder="Ex: ENSA-901" value={posInsurancePolicy} onChange={e => setPosInsurancePolicy(e.target.value)} />
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <div className="flex justify-between text-[9px] text-emerald-300 mb-1">
+                                                    <span>Cobertura Seguradora: {posInsuranceCoverage}%</span>
+                                                    <span>Utente: {100 - posInsuranceCoverage}%</span>
+                                                </div>
+                                                <input type="range" min="10" max="100" step="5" value={posInsuranceCoverage} onChange={e => setPosInsuranceCoverage(parseInt(e.target.value))} className="w-full accent-emerald-400 cursor-pointer" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* TOTAL E BOTAO CONCLUIR */}
+                                {(() => {
+                                    const total = posCart.reduce((sum, i) => sum + (parseFloat(i.price) || 0) * i.quantity, 0);
+                                    const insAmt = posPaymentMethod === 'insurance' ? Math.round(total * (posInsuranceCoverage / 100)) : 0;
+                                    const copayAmt = total - insAmt;
+
+                                    return (
+                                        <div className="pt-3 border-t border-[#143E4E] space-y-3 mt-auto">
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-xs text-gray-400 font-bold uppercase">Total Venda:</span>
+                                                <span className="text-xl font-serif font-black text-emerald-400 font-mono">{total.toLocaleString('pt-AO')} Kz</span>
+                                            </div>
+
+                                            {posPaymentMethod === 'insurance' && (
+                                                <div className="flex justify-between text-[10px] text-emerald-300 bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20">
+                                                    <span>Seguradora: -{insAmt.toLocaleString('pt-AO')} Kz</span>
+                                                    <span className="font-bold text-white">Copagamento Utente: {copayAmt.toLocaleString('pt-AO')} Kz</span>
+                                                </div>
+                                            )}
+
+                                            <button 
+                                                onClick={handleCompletePosSale}
+                                                disabled={posSubmitting || posCart.length === 0}
+                                                className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black font-black rounded-2xl text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 cursor-pointer"
+                                            >
+                                                {posSubmitting ? 'A processar venda...' : '⚡ Concluir Venda & Emitir Fatura AGT'}
+                                            </button>
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Modal de Detalhes Fiscais / Impressão */}
             {selectedOrder && (
                 <ReceiptModal
@@ -1298,6 +1722,7 @@ const InvoicesManager = ({ restaurantId, restaurantName }) => {
                     }}
                     order={selectedOrder}
                     restaurantName={restaurantName}
+                    businessSector={sectorState}
                 />
             )}
         </div>

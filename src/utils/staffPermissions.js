@@ -16,10 +16,11 @@ export const checkStaffPermission = (role, path) => {
     if (role === 'admin') return true;
 
     switch (role) {
-        case 'waiter': // Empregado de Mesa / Atendente
-            // Garçons podem gerir pedidos (ver KDS/Histórico), ver reservas, chat IA e gerar QR Codes de mesa
+        case 'waiter': // Empregado de Mesa / Atendente / Operador
+            // Garçons e operadores podem gerir pedidos, faturação/vendas, reservas, chat IA e QR Codes
             return [
                 '/admin/orders',
+                '/admin/invoices',
                 '/admin/reservations',
                 '/admin/chat',
                 '/admin/qrcode'
@@ -32,10 +33,11 @@ export const checkStaffPermission = (role, path) => {
                 '/admin/inventory'
             ].includes(cleanPath);
 
-        case 'reception': // Receção / Salão
-            // Receção gere reservas, vê pedidos, chat com clientes, avaliações, CRM e QR Codes
+        case 'reception': // Receção / Salão / Operador POS
+            // Receção e operadores de caixa podem gerir faturação/vendas, reservas, pedidos, chat, avaliações, CRM e QR Codes
             return [
                 '/admin/orders',
+                '/admin/invoices',
                 '/admin/reservations',
                 '/admin/chat',
                 '/admin/feedbacks',

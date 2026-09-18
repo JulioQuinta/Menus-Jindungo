@@ -20,7 +20,9 @@ class ComponentErrorBoundary extends React.Component {
     }
 
     handleRetry = () => {
+        window.localStorage.removeItem('jindungo_page_reloaded');
         this.setState({ hasError: false, error: null });
+        window.location.reload();
     };
 
     render() {

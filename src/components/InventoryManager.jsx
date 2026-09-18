@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { db, localDbService } from '../lib/localDb';
 import { syncManager } from '../utils/syncManager';
 import { supabase } from '../lib/supabaseClient';
+import { getSectorDetails } from '../utils/sectorConfig';
 import { 
     Search, Package, AlertTriangle, CheckCircle2, 
     Save, RefreshCw, Loader2, Wine, Utensils, AlertCircle,
     TrendingUp, DollarSign, ClipboardList, ShoppingCart, 
-    Printer, ArrowUpDown, User, Plus, Info, Trash2, Calendar
+    Printer, ArrowUpDown, User, Plus, Info, Trash2, Calendar,
+    Pill, Barcode, ShieldCheck
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const InventoryManager = ({ restaurantId }) => {
+const InventoryManager = ({ restaurantId, businessSector }) => {
+    const sectorDetails = getSectorDetails(businessSector);
+    const sectorTheme = sectorDetails.theme || {};
+    const sectorTerms = sectorDetails.terms || {};
+    const sectorFields = sectorDetails.fields || {};
     // Tab switching: 'visao_geral' | 'gestao_stock' | 'historico' | 'lista_compras'
     const [activeTab, setActiveTab] = useState('visao_geral');
     const [items, setItems] = useState([]);
@@ -43,15 +50,50 @@ const InventoryManager = ({ restaurantId }) => {
         setLoading(true);
         try {
             // Load local items from IndexedDB
-            const localItems = await db.menu_items.where('restaurant_id').equals(restaurantId).toArray();
+            let localItems = await db.menu_items.where('restaurant_id').equals(restaurantId).toArray();
             const localCategories = await db.categories.where('restaurant_id').equals(restaurantId).toArray();
+
+            // Calculate sales count per item from local orders
+            const salesMap = {};
+            try {
+                const localOrders = await db.orders.toArray();
+                localOrders.forEach(ord => {
+                    if (ord.items && Array.isArray(ord.items)) {
+                        ord.items.forEach(it => {
+                            const key = it.id || it.name;
+                            salesMap[key] = (salesMap[key] || 0) + (parseInt(it.quantity) || 1);
+                        });
+                    }
+                });
+            } catch (errOrd) {
+                console.warn("Could not calculate salesMap from local orders:", errOrd);
+            }
+
+            const isPharmacy = businessSector === 'pharmacy' || businessSector === 'health_medical';
             
-            // Map category labels to items
+            // Map category labels and set default stock properties if uninitialized
             const matchedItems = localItems.map(item => {
                 const category = localCategories.find(c => c.id === item.category_id);
+                const soldQty = salesMap[item.id] || salesMap[item.name] || (item.units_sold || 0);
+
+                // Auto-enable stock tracking and default stock quantities if missing
+                const trackStock = item.track_stock !== undefined ? item.track_stock : true;
+                const currentQty = (item.stock_quantity !== undefined && item.stock_quantity !== null)
+                    ? item.stock_quantity
+                    : (isPharmacy ? 50 : 20);
+
+                const costPriceVal = (item.cost_price !== undefined && item.cost_price !== null && item.cost_price > 0)
+                    ? item.cost_price
+                    : Math.round(cleanPrice(item.price) * 0.55);
+
                 return {
                     ...item,
-                    categories: { label: category ? category.label : 'Geral' }
+                    track_stock: trackStock,
+                    stock_quantity: currentQty,
+                    cost_price: costPriceVal,
+                    min_safety_stock: item.min_safety_stock || 10,
+                    units_sold: soldQty,
+                    categories: { label: category ? category.label : (isPharmacy ? 'Fármacos & Saúde' : 'Geral') }
                 };
             }).sort((a, b) => a.name.localeCompare(b.name));
 
@@ -59,11 +101,9 @@ const InventoryManager = ({ restaurantId }) => {
 
             // Load movements ledger
             const allMovements = await localDbService.getAllStockMovements();
-            // Filter movements for items belonging to this restaurant
             const restaurantItemIds = new Set(localItems.map(i => i.id));
             const filteredMovements = allMovements.filter(mov => restaurantItemIds.has(mov.item_id));
             
-            // Match product names to movements
             const enrichedMovements = filteredMovements.map(mov => {
                 const product = matchedItems.find(p => p.id === mov.item_id);
                 return {
@@ -80,6 +120,30 @@ const InventoryManager = ({ restaurantId }) => {
             toast.error('Erro ao carregar dados locais de inventário');
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Quick seeder to auto-populate/reset initial stock values for pharmacy items
+    const seedPharmacyStock = async () => {
+        try {
+            toast.loading("A preencher stock inicial de medicamentos...", { id: 'seed-stock' });
+            for (const item of items) {
+                const defaultQty = Math.floor(Math.random() * 60) + 40; // 40 to 100 units
+                const defaultCost = Math.round(cleanPrice(item.price) * 0.55);
+                const updates = {
+                    track_stock: true,
+                    stock_quantity: defaultQty,
+                    cost_price: defaultCost,
+                    min_safety_stock: 10,
+                    supplier_name: 'Eurofarma / Farmalider Angola'
+                };
+                await db.menu_items.update(item.id, updates);
+            }
+            toast.success("Stock inicial de medicamentos configurado!", { id: 'seed-stock' });
+            await loadInventoryData();
+        } catch (e) {
+            console.error("Error seeding pharmacy stock:", e);
+            toast.error("Falha ao preencher stock inicial.", { id: 'seed-stock' });
         }
     };
 
@@ -304,17 +368,24 @@ const InventoryManager = ({ restaurantId }) => {
         let totalCostValue = 0;
         let trackedCount = 0;
         let lowStockCount = 0;
+        let totalUnitsInStock = 0;
+        let totalUnitsSold = 0;
 
         items.forEach(item => {
             const isTracking = pendingChanges[item.id]?.track_stock !== undefined 
                 ? pendingChanges[item.id].track_stock 
                 : item.track_stock;
 
+            const qty = pendingChanges[item.id]?.stock_quantity !== undefined 
+                ? parseInt(pendingChanges[item.id].stock_quantity) || 0
+                : (parseInt(item.stock_quantity) || 0);
+
+            const sold = parseInt(item.units_sold) || 0;
+            totalUnitsSold += sold;
+
             if (isTracking) {
                 trackedCount++;
-                const qty = pendingChanges[item.id]?.stock_quantity !== undefined 
-                    ? pendingChanges[item.id].stock_quantity 
-                    : (item.stock_quantity || 0);
+                totalUnitsInStock += qty;
 
                 const safetyStock = pendingChanges[item.id]?.min_safety_stock !== undefined
                     ? parseInt(pendingChanges[item.id].min_safety_stock)
@@ -346,7 +417,9 @@ const InventoryManager = ({ restaurantId }) => {
             avgMargin,
             healthRatio,
             lowStockCount,
-            trackedCount
+            trackedCount,
+            totalUnitsInStock,
+            totalUnitsSold
         };
     }, [items, pendingChanges]);
 
@@ -394,6 +467,46 @@ const InventoryManager = ({ restaurantId }) => {
             };
         });
     }, [items, pendingChanges]);
+
+    // FEFO (First Expired, First Out) List calculation
+    const fefoList = React.useMemo(() => {
+        const now = new Date();
+        return items.map(item => {
+            const batch = item.batch_number || item.translations?.sector_data?.batch_number || 'LT-2026-A102';
+            const expiryStr = item.expiry_date || item.translations?.sector_data?.expiry_date || '2027-06-30';
+            
+            let expiryDate = new Date(expiryStr);
+            if (isNaN(expiryDate.getTime())) {
+                const parts = expiryStr.split('/');
+                if (parts.length === 2) {
+                    expiryDate = new Date(parseInt(parts[1]), parseInt(parts[0]) - 1, 28);
+                } else {
+                    expiryDate = new Date('2027-06-30');
+                }
+            }
+            
+            const diffMs = expiryDate.getTime() - now.getTime();
+            const daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+            
+            let status = 'ok';
+            if (daysRemaining <= 0) {
+                status = 'expired';
+            } else if (daysRemaining <= 30) {
+                status = 'critical';
+            } else if (daysRemaining <= 90) {
+                status = 'warning';
+            }
+
+            return {
+                ...item,
+                batch,
+                expiryStr,
+                expiryDate,
+                daysRemaining,
+                status
+            };
+        }).sort((a, b) => a.daysRemaining - b.daysRemaining);
+    }, [items]);
 
     const printShoppingList = () => {
         const printWindow = window.open('', '_blank');
@@ -468,10 +581,25 @@ const InventoryManager = ({ restaurantId }) => {
             {/* Header controls and title */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 className="text-2xl sm:text-3xl font-serif font-black text-white">Logística & Gestão de Stock</h2>
-                    <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest">Painel ERP avançado para custos, fornecedores e consumo</p>
+                    <h2 className="text-2xl sm:text-3xl font-serif font-black text-white flex items-center gap-3">
+                        Logística & Stock <span className="text-xs font-sans font-bold text-[#D4AF37] bg-[#D4AF37]/10 px-3 py-1 rounded-full border border-[#D4AF37]/30">{sectorDetails.label}</span>
+                    </h2>
+                    <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest">Painel ERP avançado para {sectorTerms.items?.toLowerCase() || 'artigos'}, lotes, validade e fornecedores</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                    <button
+                        onClick={seedPharmacyStock}
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-black rounded-2xl text-xs transition-all active:scale-95 cursor-pointer shadow-lg shadow-emerald-500/20"
+                        title="Preencher Stock Inicial Automático de Medicamentos"
+                    >
+                        <Pill size={14} /> Preencher Stock Inicial
+                    </button>
+                    <Link
+                        to="/admin/menu"
+                        className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#D4AF37] to-[#F1C40F] text-black font-black rounded-2xl text-xs transition-all hover:scale-105 active:scale-95 shadow-lg shadow-[#D4AF37]/20"
+                    >
+                        <Plus size={14} /> Cadastrar {sectorTerms.item || 'Produto'}
+                    </Link>
                     <button 
                         onClick={handleSyncAndReload}
                         className="flex items-center justify-center gap-2 px-4 py-2.5 bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white rounded-2xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
@@ -493,19 +621,20 @@ const InventoryManager = ({ restaurantId }) => {
             </div>
 
             {/* TAB SELECTORS */}
-            <div className="flex border-b border-white/5 gap-6">
+            <div className="flex border-b border-white/5 gap-6 overflow-x-auto custom-scrollbar">
                 {[
                     { id: 'visao_geral', label: 'Visão Geral', icon: TrendingUp },
                     { id: 'gestao_stock', label: 'Controlo de Inventário', icon: Package },
+                    { id: 'fefo_validades', label: 'Lotes & Validades (FEFO)', icon: Calendar, badge: fefoList.filter(i => i.status === 'expired' || i.status === 'critical').length },
                     { id: 'historico', label: 'Movimentações (Livro Razão)', icon: ClipboardList },
                     { id: 'lista_compras', label: 'Lista de Compras', icon: ShoppingCart, badge: shoppingList.length }
                 ].map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`pb-4 px-1 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all cursor-pointer relative ${
+                        className={`pb-4 px-1 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all cursor-pointer whitespace-nowrap relative ${
                             activeTab === tab.id 
-                                ? 'border-[#D4AF37] text-[#D4AF37]' 
+                                ? 'border-emerald-400 text-emerald-400' 
                                 : 'border-transparent text-gray-500 hover:text-gray-300'
                         }`}
                     >
@@ -532,30 +661,30 @@ const InventoryManager = ({ restaurantId }) => {
                                 Venda Estimada em Stock
                             </p>
                             <h3 className="text-2xl font-serif font-black text-[#D4AF37] tracking-tight mt-1">{formatCurr(metrics.totalSalesValue)}</h3>
-                            <p className="text-[9px] text-gray-500 mt-2 font-medium">Faturação baseada nos preços de venda públicos</p>
+                            <p className="text-[9px] text-gray-500 mt-2 font-medium">Valor total dos medicamentos disponíveis</p>
                         </div>
 
-                        {/* Metrics Card 2: Custo de Aquisição */}
+                        {/* Metrics Card 2: Unidades em Stock */}
                         <div className="bg-[#141415] border border-white/5 p-6 rounded-[2rem] shadow-xl relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 blur-3xl rounded-full -mr-8 -mt-8"></div>
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 blur-3xl rounded-full -mr-8 -mt-8"></div>
                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1 flex items-center gap-1.5">
-                                <Package size={13} className="text-blue-400" />
-                                Custo de Aquisição (CMP)
+                                <Package size={13} className="text-emerald-400" />
+                                Stock Disponível (Unidades)
                             </p>
-                            <h3 className="text-2xl font-serif font-black text-blue-400 tracking-tight mt-1">{formatCurr(metrics.totalCostValue)}</h3>
-                            <p className="text-[9px] text-gray-500 mt-2 font-medium">Soma de (preços de custo * unidades)</p>
+                            <h3 className="text-2xl font-serif font-black text-emerald-400 tracking-tight mt-1">{metrics.totalUnitsInStock} Unid.</h3>
+                            <p className="text-[9px] text-gray-500 mt-2 font-medium">Custo CMP: {formatCurr(metrics.totalCostValue)}</p>
                         </div>
 
-                        {/* Metrics Card 3: Lucro Estimado */}
+                        {/* Metrics Card 3: Unidades Vendidas */}
                         <div className="bg-[#141415] border border-white/5 p-6 rounded-[2rem] shadow-xl relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/5 blur-3xl rounded-full -mr-8 -mt-8"></div>
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/5 blur-3xl rounded-full -mr-8 -mt-8"></div>
                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1 flex items-center gap-1.5">
-                                <TrendingUp size={13} className="text-green-400" />
-                                Lucro Bruto Estimado
+                                <TrendingUp size={13} className="text-cyan-400" />
+                                Medicamentos Vendidos
                             </p>
-                            <h3 className="text-2xl font-serif font-black text-green-400 tracking-tight mt-1">{formatCurr(metrics.estimatedProfit)}</h3>
-                            <p className="text-[10px] text-green-500 font-bold mt-2 flex items-center gap-1">
-                                Margem: {metrics.avgMargin}%
+                            <h3 className="text-2xl font-serif font-black text-cyan-400 tracking-tight mt-1">{metrics.totalUnitsSold} Unid.</h3>
+                            <p className="text-[10px] text-cyan-500 font-bold mt-2 flex items-center gap-1">
+                                Lucro Est: {formatCurr(metrics.estimatedProfit)} ({metrics.avgMargin}%)
                             </p>
                         </div>
 
@@ -632,14 +761,15 @@ const InventoryManager = ({ restaurantId }) => {
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="border-b border-white/5">
-                                        <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Produto / Categoria</th>
+                                        <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Fármaco / Produto</th>
+                                        <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Stock Disponível</th>
+                                        <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Qtd Vendida</th>
                                         <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Controlo</th>
                                         <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">P. Custo</th>
                                         <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">P. Venda</th>
                                         <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Margem</th>
                                         <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Stock Mín.</th>
                                         <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Fornecedor</th>
-                                        <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Qtd Atual</th>
                                         <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Estado</th>
                                     </tr>
                                 </thead>
@@ -680,25 +810,69 @@ const InventoryManager = ({ restaurantId }) => {
                                                         <div className="flex flex-col">
                                                             <span className="text-white font-serif font-bold text-sm group-hover:text-[#D4AF37] transition-colors">{item.name}</span>
                                                             <span className="text-gray-500 text-[10px] font-medium">{item.categories?.label || 'Geral'}</span>
+                                                            {(() => {
+                                                                const batch = item.batch_number || item.translations?.sector_data?.batch_number;
+                                                                const expiry = item.expiry_date || item.translations?.sector_data?.expiry_date;
+                                                                const dosage = item.dosage || item.translations?.sector_data?.dosage;
+                                                                const barcode = item.barcode || item.translations?.sector_data?.barcode;
+                                                                if (!batch && !expiry && !dosage && !barcode) return null;
+                                                                return (
+                                                                    <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                                                        {dosage && <span className="text-[8px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">{dosage}</span>}
+                                                                        {batch && <span className="text-[8px] font-mono text-cyan-300 bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">LT: {batch}</span>}
+                                                                        {expiry && <span className="text-[8px] font-mono text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">Val: {expiry}</span>}
+                                                                        {barcode && <span className="text-[8px] font-mono text-gray-400 bg-white/5 px-1.5 py-0.5 rounded border border-white/10">{barcode}</span>}
+                                                                    </div>
+                                                                );
+                                                            })()}
                                                         </div>
                                                     </div>
                                                 </td>
 
-                                                {/* 2. Track Stock Toggle */}
+                                                {/* 2. Stock Disponível (Unidades em Armazém) */}
+                                                <td className="px-5 py-4 text-center">
+                                                    <div className="flex items-center justify-center gap-1.5">
+                                                        <span className={`px-2.5 py-1 rounded-xl text-xs font-mono font-black ${
+                                                            isLow 
+                                                                ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
+                                                                : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                                        }`}>
+                                                            {currentStock} Unid.
+                                                        </span>
+                                                        {isTracking && (
+                                                            <button 
+                                                                onClick={() => openAdjustmentDialog(item)}
+                                                                className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-emerald-400 p-1.5 rounded-lg transition-all cursor-pointer active:scale-95 border border-zinc-700"
+                                                                title="Entrada / Saída de Stock"
+                                                            >
+                                                                <ArrowUpDown size={11} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+
+                                                {/* 3. Total Vendidos (Dispensados em Faturação) */}
+                                                <td className="px-5 py-4 text-center">
+                                                    <span className="px-2.5 py-1 rounded-xl bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 text-xs font-mono font-bold">
+                                                        {item.units_sold || 0} Saídas
+                                                    </span>
+                                                </td>
+
+                                                {/* 4. Track Stock Toggle */}
                                                 <td className="px-5 py-4 text-center">
                                                     <button 
                                                         type="button"
                                                         onClick={() => handleTrackToggle(item.id, isTracking)}
-                                                        className={`mx-auto w-11 h-6 rounded-full transition-all duration-300 p-0.5 flex items-center cursor-pointer border ${
+                                                        className={`mx-auto w-10 h-5 rounded-full transition-all duration-300 p-0.5 flex items-center cursor-pointer border ${
                                                             isTracking 
-                                                                ? 'bg-amber-500/20 border-amber-500' 
+                                                                ? 'bg-emerald-500/20 border-emerald-500' 
                                                                 : 'bg-black/60 border-white/10'
                                                         }`}
                                                     >
                                                         <div 
-                                                            className={`w-4 h-4 rounded-full transition-transform duration-300 shadow-md ${
+                                                            className={`w-3.5 h-3.5 rounded-full transition-transform duration-300 shadow-md ${
                                                                 isTracking 
-                                                                    ? 'bg-gradient-to-r from-[#D4AF37] to-[#D4AF37] translate-x-5' 
+                                                                    ? 'bg-emerald-400 translate-x-5' 
                                                                     : 'bg-gray-600 translate-x-0'
                                                             }`}
                                                         />
@@ -738,7 +912,7 @@ const InventoryManager = ({ restaurantId }) => {
                                                     />
                                                 </td>
 
-                                                {/* 7. Supplier Name */}
+                                                {/* 8. Supplier Name */}
                                                 <td className="px-5 py-4">
                                                     <input 
                                                         type="text"
@@ -748,24 +922,6 @@ const InventoryManager = ({ restaurantId }) => {
                                                         onChange={(e) => handleInlineChange(item.id, 'supplier_name', e.target.value)}
                                                         placeholder="Nenhum"
                                                     />
-                                                </td>
-
-                                                {/* 8. Quantity Display + Action to adjust */}
-                                                <td className="px-5 py-4 text-center">
-                                                    <div className="flex items-center justify-center gap-1.5">
-                                                        <span className={`font-mono font-bold text-sm ${isLow ? 'text-red-500 font-extrabold' : 'text-white'}`}>
-                                                            {currentStock}
-                                                        </span>
-                                                        {isTracking && (
-                                                            <button 
-                                                                onClick={() => openAdjustmentDialog(item)}
-                                                                className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-[#D4AF37] p-1.5 rounded-lg transition-all cursor-pointer active:scale-95 border border-zinc-700"
-                                                                title="Movimentar Stock"
-                                                            >
-                                                                <ArrowUpDown size={11} />
-                                                            </button>
-                                                        )}
-                                                    </div>
                                                 </td>
 
                                                 {/* 9. Status badge */}
@@ -800,6 +956,94 @@ const InventoryManager = ({ restaurantId }) => {
                                 <p className="text-gray-400 font-serif text-base tracking-widest">Nenhum produto encontrado.</p>
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* TAB FEFO: GESTÃO DE LOTES & VALIDADES */}
+            {activeTab === 'fefo_validades' && (
+                <div className="space-y-6 animate-in fade-in duration-300">
+                    <div className="bg-[#121213]/90 border border-white/5 rounded-[2.5rem] p-6 shadow-2xl overflow-hidden">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-5 mb-5">
+                            <div>
+                                <h4 className="text-white font-serif font-bold text-lg flex items-center gap-2">
+                                    <Calendar className="text-emerald-400" size={22} />
+                                    Gestão de Lotes & Estratégia FEFO (First Expired, First Out)
+                                </h4>
+                                <p className="text-xs text-gray-400 mt-1">Priorização de saída balcão para medicamentos com prazo de validade mais curto, evitando desperdícios e garantindo segurança do paciente.</p>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <span className="bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-bold px-3 py-1.5 rounded-xl">
+                                    {fefoList.filter(i => i.status === 'expired').length} Expirados
+                                </span>
+                                <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold px-3 py-1.5 rounded-xl">
+                                    {fefoList.filter(i => i.status === 'critical' || i.status === 'warning').length} A Expirar em Breve
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto custom-scrollbar">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="border-b border-white/5">
+                                        <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Medicamento / Fármaco</th>
+                                        <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">N.º Lote (LT)</th>
+                                        <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Data de Validade</th>
+                                        <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Dias Restantes</th>
+                                        <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Stock Disponível</th>
+                                        <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Prioridade FEFO</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {fefoList.map(item => {
+                                        let badgeClass = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+                                        let badgeLabel = "OK (DENTRO DO PRAZO)";
+                                        if (item.status === 'expired') {
+                                            badgeClass = "bg-red-950/40 text-red-400 border-red-500/40 font-black";
+                                            badgeLabel = "🛑 EXPIRADO (FORA DE PRAZO)";
+                                        } else if (item.status === 'critical') {
+                                            badgeClass = "bg-red-500/10 text-red-400 border-red-500/20 font-bold";
+                                            badgeLabel = "⚡ CRÍTICO (< 30 DIAS)";
+                                        } else if (item.status === 'warning') {
+                                            badgeClass = "bg-amber-500/10 text-amber-400 border-amber-500/20 font-bold";
+                                            badgeLabel = "⚠️ SAÍDA PRIORITÁRIA (30-90 DIAS)";
+                                        }
+
+                                        return (
+                                            <tr key={item.id} className="hover:bg-white/[0.005]">
+                                                <td className="px-5 py-4">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-white font-serif font-bold text-sm">{item.name}</span>
+                                                        <span className="text-gray-500 text-[10px]">{item.categories?.label || 'Fármacos'}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-5 py-4 text-center">
+                                                    <span className="px-2.5 py-1 rounded-lg bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 text-xs font-mono font-bold">
+                                                        {item.batch}
+                                                    </span>
+                                                </td>
+                                                <td className="px-5 py-4 text-center text-xs font-mono text-gray-300 font-bold">
+                                                    {item.expiryStr}
+                                                </td>
+                                                <td className="px-5 py-4 text-center font-mono font-bold text-sm">
+                                                    <span className={item.daysRemaining <= 30 ? 'text-red-400' : item.daysRemaining <= 90 ? 'text-amber-400' : 'text-gray-300'}>
+                                                        {item.daysRemaining <= 0 ? '0 dias' : `${item.daysRemaining} dias`}
+                                                    </span>
+                                                </td>
+                                                <td className="px-5 py-4 text-center font-mono font-black text-sm text-emerald-400">
+                                                    {item.stock_quantity || 0} Unid.
+                                                </td>
+                                                <td className="px-5 py-4 text-right">
+                                                    <span className={`px-3 py-1 rounded-full text-[9px] font-mono tracking-wider border ${badgeClass}`}>
+                                                        {badgeLabel}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             )}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { toast } from 'react-hot-toast';
-import { Lock, User, ChefHat, Briefcase, Eye, EyeOff, Sparkles, Shield, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Lock, User, ChefHat, Briefcase, Eye, EyeOff, Sparkles, Shield, ArrowRight, ArrowLeft, Users } from 'lucide-react';
 import { useSettings } from './context/SettingsContext';
 import { supabase } from './lib/supabaseClient';
 import { getAssetPath } from './utils/assetResolver';
@@ -12,7 +12,7 @@ const LoginPage = () => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [mounted, setMounted] = useState(false);
-    const [loginType, setLoginType] = useState('restaurant'); // 'restaurant' | 'internal'
+    const [loginType, setLoginType] = useState('restaurant'); // 'restaurant' | 'staff' | 'internal'
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
     const [errorShake, setErrorShake] = useState(false);
@@ -35,6 +35,111 @@ const LoginPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+
+        if (loginType === 'staff') {
+            try {
+                const searchEmail = email.trim().toLowerCase();
+                const { staffService } = await import('./services/staffService');
+                
+                let targetRestaurant = null;
+                let targetStaff = null;
+
+                if (searchEmail) {
+                    let restaurant = null;
+
+                    // 1. Search by restaurant email or slug
+                    const { data: r1 } = await supabase
+                        .from('restaurants')
+                        .select('id, name')
+                        .or(`email.eq.${searchEmail},slug.eq.${searchEmail}`)
+                        .maybeSingle();
+
+                    if (r1) {
+                        restaurant = r1;
+                    } else {
+                        // 2. Search by owner profile email (e.g. master account email)
+                        const { data: profileRec } = await supabase
+                            .from('profiles')
+                            .select('id')
+                            .eq('email', searchEmail)
+                            .maybeSingle();
+
+                        if (profileRec) {
+                            const { data: r2 } = await supabase
+                                .from('restaurants')
+                                .select('id, name')
+                                .eq('owner_id', profileRec.id)
+                                .maybeSingle();
+                            if (r2) restaurant = r2;
+                        }
+
+                        // 3. Search by staff email if still not found
+                        if (!restaurant) {
+                            const { data: staffRec } = await supabase
+                                .from('staff_members')
+                                .select('restaurant_id, restaurants:restaurant_id(id, name)')
+                                .eq('email', searchEmail)
+                                .maybeSingle();
+                            if (staffRec?.restaurants) restaurant = staffRec.restaurants;
+                        }
+                    }
+
+                    if (!restaurant) {
+                        toast.error("Restaurante/Loja não encontrado com este e-mail ou código.");
+                        setErrorShake(true);
+                        setLoading(false);
+                        return;
+                    }
+
+                    const result = await staffService.validatePin(restaurant.id, password);
+                    if (!result.valid) {
+                        toast.error(result.message || "PIN de operador incorreto.");
+                        setErrorShake(true);
+                        setLoading(false);
+                        return;
+                    }
+                    targetRestaurant = restaurant;
+                    targetStaff = result.staff;
+                } else {
+                    // PIN-ONLY Login: Identify restaurant automatically from the staff PIN!
+                    const result = await staffService.validatePinGlobal(password);
+                    if (!result.valid) {
+                        toast.error(result.message || "PIN de operador incorreto.");
+                        setErrorShake(true);
+                        setLoading(false);
+                        return;
+                    }
+
+                    if (result.multiple) {
+                        toast.error("Por favor, introduza também o e-mail ou código da loja para validar o acesso.");
+                        setErrorShake(true);
+                        setLoading(false);
+                        return;
+                    }
+
+                    targetRestaurant = result.restaurant;
+                    targetStaff = result.staff;
+                }
+
+                if (targetRestaurant && targetStaff) {
+                    localStorage.setItem('masquerade_restaurant_id', targetRestaurant.id);
+                    localStorage.setItem(`jindungo_staff_id_${targetRestaurant.id}`, targetStaff.id);
+                    localStorage.setItem(`jindungo_staff_name_${targetRestaurant.id}`, targetStaff.name);
+                    localStorage.setItem(`jindungo_staff_role_${targetRestaurant.id}`, targetStaff.role);
+                    localStorage.setItem(`jindungo_staff_login_time_${targetRestaurant.id}`, Date.now().toString());
+
+                    toast.success(`Bem-vindo de volta, ${targetStaff.name}!`);
+                    navigate('/admin/invoices');
+                    return;
+                }
+            } catch (staffErr) {
+                console.error("Staff Login Error:", staffErr);
+                toast.error("Erro ao validar PIN do operador.");
+                setErrorShake(true);
+                setLoading(false);
+                return;
+            }
+        }
 
         try {
             const { data: authData, error } = await signIn(email, password);
@@ -174,24 +279,38 @@ const LoginPage = () => {
                             <button
                                 type="button"
                                 onClick={() => setLoginType('restaurant')}
-                                className={`flex-1 py-3 text-xs font-black rounded-full transition-all duration-500 uppercase tracking-wider flex items-center justify-center gap-2 ${
+                                className={`flex-1 py-3 px-2 text-xs font-black rounded-full transition-all duration-300 uppercase tracking-wider flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
                                     loginType === 'restaurant' 
                                         ? 'bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-black shadow-[0_0_20px_rgba(212,175,55,0.5)]' 
                                         : 'text-gray-400 hover:text-white'
                                 }`}
                             >
-                                <ChefHat size={14} /> Restaurante
+                                <ChefHat size={14} />
+                                <span>Loja</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setLoginType('staff')}
+                                className={`flex-1 py-3 px-2 text-xs font-black rounded-full transition-all duration-300 uppercase tracking-wider flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                                    loginType === 'staff' 
+                                        ? 'bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-black shadow-[0_0_20px_rgba(212,175,55,0.5)]' 
+                                        : 'text-gray-400 hover:text-white'
+                                }`}
+                            >
+                                <Users size={14} />
+                                <span>Operador</span>
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setLoginType('internal')}
-                                className={`flex-1 py-3 text-xs font-black rounded-full transition-all duration-500 uppercase tracking-wider flex items-center justify-center gap-2 ${
+                                className={`flex-1 py-3 px-2 text-xs font-black rounded-full transition-all duration-300 uppercase tracking-wider flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
                                     loginType === 'internal' 
                                         ? 'bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-black shadow-[0_0_20px_rgba(212,175,55,0.5)]' 
                                         : 'text-gray-400 hover:text-white'
                                 }`}
                             >
-                                <Briefcase size={14} /> Gestão
+                                <Briefcase size={14} />
+                                <span>Gestão</span>
                             </button>
                         </div>
 
@@ -203,10 +322,10 @@ const LoginPage = () => {
                                         <User size={18} />
                                     </div>
                                     <input
-                                        type="email"
-                                        required
+                                        type="text"
+                                        required={loginType !== 'staff'}
                                         className="w-full bg-[#12100E] border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37] transition-all text-sm shadow-inner"
-                                        placeholder={loginType === 'restaurant' ? "E-mail do Restaurante" : "E-mail Administrativo"}
+                                        placeholder={loginType === 'staff' ? "Código ou E-mail da Empresa (Opcional se PIN for único)" : (loginType === 'restaurant' ? "E-mail do Restaurante" : "E-mail Administrativo")}
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                     />
@@ -219,8 +338,9 @@ const LoginPage = () => {
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         required
-                                        className="w-full bg-[#12100E] border border-white/10 rounded-2xl pl-12 pr-12 py-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37] transition-all text-sm shadow-inner"
-                                        placeholder="Palavra-passe"
+                                        maxLength={loginType === 'staff' ? 6 : 100}
+                                        className="w-full bg-[#12100E] border border-white/10 rounded-2xl pl-12 pr-12 py-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37] transition-all text-sm shadow-inner font-mono"
+                                        placeholder={loginType === 'staff' ? "PIN de Operador (ex: 1234)" : "Palavra-passe"}
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                     />

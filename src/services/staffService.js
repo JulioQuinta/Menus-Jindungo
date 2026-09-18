@@ -76,5 +76,30 @@ export const staffService = {
             console.error('Staff validation error:', error);
             return { valid: false, message: 'Erro ao validar o PIN' };
         }
+    },
+
+    async validatePinGlobal(pinCode) {
+        if (!pinCode) return { valid: false, message: 'Insira o PIN de operador' };
+
+        try {
+            const { data, error } = await supabase
+                .from('staff_members')
+                .select('*, restaurants:restaurant_id(id, name, slug, business_sector)')
+                .eq('pin_code', pinCode.toString())
+                .eq('active', true);
+
+            if (error || !data || data.length === 0) {
+                return { valid: false, message: 'PIN de operador incorreto ou não encontrado.' };
+            }
+
+            if (data.length === 1) {
+                return { valid: true, staff: data[0], restaurant: data[0].restaurants };
+            }
+
+            return { valid: true, matches: data, multiple: true };
+        } catch (error) {
+            console.error('Global staff PIN validation error:', error);
+            return { valid: false, message: 'Erro ao validar o PIN' };
+        }
     }
 };

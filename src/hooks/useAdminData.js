@@ -20,14 +20,17 @@ export const useAdminData = (user) => {
     });
 
     const fetchRestaurantData = useCallback(async () => {
-        if (!user) return;
+        const masqueradeId = localStorage.getItem('masquerade_restaurant_id');
+        if (!user && !masqueradeId) {
+            setLoading(false);
+            return;
+        }
         try {
             setLoading(true);
-            const masqueradeId = localStorage.getItem('masquerade_restaurant_id');
             let query = supabase.from('restaurants').select('*');
             if (masqueradeId) {
                 query = query.eq('id', masqueradeId);
-            } else {
+            } else if (user) {
                 query = query.eq('owner_id', user.id);
             }
 

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { populateDemoData } from '../utils/populateDemoData';
+import { SECTOR_PRESETS } from '../utils/sectorConfig';
 import { 
   LayoutDashboard, Users, ShieldAlert, CreditCard, 
   Megaphone, Sliders, Plus, LogOut, Search, 
@@ -43,7 +44,7 @@ const SuperAdminDashboard = () => {
     const [invoiceConfigModal, setInvoiceConfigModal] = useState({ isOpen: false, restaurant: null });
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [newRest, setNewRest] = useState({ name: '', slug: '', owner_id: '' });
+    const [newRest, setNewRest] = useState({ name: '', slug: '', owner_id: '', module_type: 'full_suite', business_sector: 'retail' });
     const [isCreating, setIsCreating] = useState(false);
 
     // Renew Modal State
@@ -90,7 +91,7 @@ const SuperAdminDashboard = () => {
             // 2. Fetch Restaurants
             const { data: restData, error: restError } = await supabase
                 .from('restaurants')
-                .select('*, profiles:owner_id(email)')
+                .select('*, profiles:owner_id(id, email, status, full_name, phone)')
                 .order('created_at', { ascending: false });
             if (restError) throw restError;
             setRestaurants(restData || []);
@@ -143,6 +144,8 @@ const SuperAdminDashboard = () => {
                         name: newRest.name,
                         slug: newRest.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
                         owner_id: newRest.owner_id,
+                        module_type: newRest.module_type || 'full_suite',
+                        business_sector: newRest.business_sector || 'retail',
                         status: 'active',
                         plan: 'Start', // Default plan
                         valid_until: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString() // 15 days free trial
@@ -153,10 +156,10 @@ const SuperAdminDashboard = () => {
 
             if (error) throw error;
 
-            toast.success("Restaurante (Cliente) criado com sucesso!");
+            toast.success("Negócio (Cliente) criado com sucesso!");
             setRestaurants([data, ...restaurants]);
             setIsAddModalOpen(false);
-            setNewRest({ name: '', slug: '', owner_id: '' });
+            setNewRest({ name: '', slug: '', owner_id: '', module_type: 'full_suite', business_sector: 'retail' });
 
             setStats(prev => ({
                 ...prev,
@@ -226,26 +229,38 @@ const SuperAdminDashboard = () => {
         }
     };
 
+    const [isRenewing, setIsRenewing] = useState(false);
+
     // --- SaaS: Extend Subscription ---
-    const handleConfirmRenewal = async () => {
+    const handleConfirmRenewal = async (e) => {
+        if (e && typeof e.preventDefault === 'function') {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        if (isRenewing) return;
+
         if (!renewModal.restaurant || !renewModal.selectedPlan || !renewModal.selectedTier) {
             toast.error("Por favor, selecione tanto o Plano (Nível) como o Ciclo de Faturação.");
             return;
         }
 
-        const { id: restId, valid_until: currentValidUntil } = renewModal.restaurant;
-        let daysToAdd = renewModal.selectedPlan.days;
-        let planName = renewModal.selectedTier.name;
-
-        if (renewModal.selectedPlan.id === 'manual') {
-            daysToAdd = parseInt(renewModal.customDays) || 0;
-            if (daysToAdd === 0) {
-                toast.error("Insira um número válido de dias (ex: -30 ou 15).");
-                return;
-            }
-        }
+        setIsRenewing(true);
 
         try {
+            const { id: restId, valid_until: currentValidUntil } = renewModal.restaurant;
+            let daysToAdd = renewModal.selectedPlan.days;
+            let planName = renewModal.selectedTier.name;
+
+            if (renewModal.selectedPlan.id === 'manual') {
+                daysToAdd = parseInt(renewModal.customDays) || 0;
+                if (daysToAdd === 0) {
+                    setIsRenewing(false);
+                    toast.error("Insira um número válido de dias (ex: -30 ou 15).");
+                    return;
+                }
+            }
+
             let baseDate;
             if (renewModal.selectedPlan.id === 'manual') {
                 baseDate = currentValidUntil ? new Date(currentValidUntil) : new Date();
@@ -258,20 +273,53 @@ const SuperAdminDashboard = () => {
             baseDate.setDate(baseDate.getDate() + daysToAdd);
             const newDateStr = baseDate.toISOString();
 
-            const { error } = await supabase
+            const targetModule = renewModal.selectedModule || renewModal.restaurant.module_type || 'full_suite';
+            const targetSector = renewModal.selectedSector || renewModal.restaurant.business_sector || 'retail';
+
+            // Tentar atualização completa com Módulo e Setor
+            let updatePayload = { 
+                valid_until: newDateStr, 
+                plan: planName,
+                module_type: targetModule,
+                business_sector: targetSector
+            };
+
+            let { error } = await supabase
                 .from('restaurants')
-                .update({ valid_until: newDateStr, plan: planName })
+                .update(updatePayload)
                 .eq('id', restId);
 
-            if (error) throw error;
+            // Fallback se as colunas module_type ou business_sector ainda não existirem na BD remota
+            if (error) {
+                console.warn("⚠️ Atualização completa falhou (colunas podem faltar na BD). Executando fallback:", error.message);
+                const fallbackRes = await supabase
+                    .from('restaurants')
+                    .update({ 
+                        valid_until: newDateStr, 
+                        plan: planName 
+                    })
+                    .eq('id', restId);
 
-            setRestaurants(restaurants.map(r => r.id === restId ? { ...r, valid_until: newDateStr, plan: planName } : r));
-            toast.success(`Plano ${planName} aplicado com sucesso! Validade atualizada.`);
-            setRenewModal({ isOpen: false, restaurant: null, selectedPlan: null, selectedTier: null, customDays: 0 });
+                if (fallbackRes.error) {
+                    throw fallbackRes.error;
+                }
+                toast.warn("Plano renovado! Execute o script SQL no Supabase para guardar módulos/setores.", { duration: 6000 });
+            } else {
+                toast.success(`Plano ${planName}, Módulo e Setor atualizados com sucesso!`);
+            }
+
+            setRestaurants(restaurants.map(r => r.id === restId ? { ...r, valid_until: newDateStr, plan: planName, module_type: targetModule, business_sector: targetSector } : r));
+            setRenewModal({ isOpen: false, restaurant: null, selectedPlan: null, selectedTier: null, selectedModule: 'full_suite', selectedSector: 'retail', customDays: 0 });
 
         } catch (error) {
             console.error("Erro ao renovar:", error);
-            toast.error("Erro ao renovar plano. Tente novamente.");
+            if (error.name === 'AbortError' || error.message?.includes('aborted')) {
+                console.warn("Pedido HTTP suspenso temporariamente pela rede/navegador.");
+            } else {
+                toast.error("Erro ao renovar plano: " + (error.message || "Verifique a ligação."));
+            }
+        } finally {
+            setIsRenewing(false);
         }
     };
 
@@ -307,9 +355,9 @@ const SuperAdminDashboard = () => {
 
     // --- SaaS: Populate Demo Data ---
     const handlePopulateDemo = async (restId, restName) => {
-        if (!window.confirm(`Deseja carregar o MENU DE TESTE (10 categorias e 25 pratos) para o restaurante "${restName}"?`)) return;
+        if (!window.confirm(`Deseja carregar os DADOS DE TESTE (10 categorias e 25 artigos/produtos) para o estabelecimento "${restName}"?`)) return;
         
-        const loadingToast = toast.loading("Gerando menu completo de demonstração...");
+        const loadingToast = toast.loading("Gerando catálogo completo de demonstração...");
         try {
             const result = await populateDemoData(restId);
             if (result.success) {
@@ -363,14 +411,39 @@ const SuperAdminDashboard = () => {
         }
 
         try {
-            const { error } = await supabase.rpc('approve_client', { client_id: userId });
-            if (error) {
-                if (waWindow) waWindow.close();
-                throw error;
+            let rpcError = null;
+            try {
+                const { error } = await supabase.rpc('approve_client', { client_id: userId });
+                rpcError = error;
+            } catch (e) {
+                rpcError = e;
             }
 
-            setUsersList(usersList.map(u => u.id === userId ? { ...u, status: 'active' } : u));
-            toast.success("Cliente aprovado com sucesso! Já pode fazer login.");
+            if (rpcError) {
+                console.warn("RPC approve_client não executou com sucesso, fallback para atualização direta:", rpcError);
+                const { error: pErr } = await supabase
+                    .from('profiles')
+                    .update({ status: 'active' })
+                    .eq('id', userId);
+                if (pErr) {
+                    if (waWindow) waWindow.close();
+                    throw pErr;
+                }
+
+                await supabase
+                    .from('restaurants')
+                    .update({ status: 'active' })
+                    .eq('owner_id', userId);
+            }
+
+            setUsersList(prev => prev.map(u => u.id === userId ? { ...u, status: 'active' } : u));
+            setRestaurants(prev => prev.map(r => r.owner_id === userId ? {
+                ...r,
+                status: 'active',
+                profiles: r.profiles ? { ...r.profiles, status: 'active' } : r.profiles
+            } : r));
+
+            toast.success("Cliente e conta de acesso aprovados com sucesso! Já pode fazer login.");
             
             const firstName = userName ? userName.split(' ')[0] : 'Cliente';
             const message = `Olá ${firstName}! A sua conta Jindungo foi ativada com sucesso. Já pode aceder ao seu Painel de Gestão: https://jindungo.ao/login`;
@@ -395,7 +468,7 @@ const SuperAdminDashboard = () => {
     };
 
     // --- Restaurant Management ---
-    const toggleRestaurantStatus = async (restId, currentStatus) => {
+    const toggleRestaurantStatus = async (restId, currentStatus, ownerId) => {
         const newStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
         try {
             const { error } = await supabase
@@ -403,7 +476,20 @@ const SuperAdminDashboard = () => {
                 .update({ status: newStatus })
                 .eq('id', restId);
             if (error) throw error;
-            setRestaurants(restaurants.map(r => r.id === restId ? { ...r, status: newStatus } : r));
+
+            if (newStatus === 'active' && ownerId) {
+                await supabase
+                    .from('profiles')
+                    .update({ status: 'active' })
+                    .eq('id', ownerId);
+                setUsersList(prev => prev.map(u => u.id === ownerId ? { ...u, status: 'active' } : u));
+            }
+
+            setRestaurants(prev => prev.map(r => r.id === restId ? { 
+                ...r, 
+                status: newStatus,
+                profiles: r.owner_id === ownerId && newStatus === 'active' ? { ...r.profiles, status: 'active' } : r.profiles
+            } : r));
 
             setStats(prev => ({
                 ...prev,
@@ -774,13 +860,32 @@ const SuperAdminDashboard = () => {
                                                     {/* RESPONSÁVEL */}
                                                     <td className="p-4 whitespace-nowrap">
                                                         <div className="text-sm font-semibold text-zinc-200">{client.profiles?.email || 'Nenhum Dono'}</div>
-                                                        <div className="text-[10px] font-mono bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-md w-fit mt-1">ID: {client.owner_id?.substring(0, 8) || 'N/A'}</div>
+                                                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                            <span className="text-[10px] font-mono bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-md w-fit">ID: {client.owner_id?.substring(0, 8) || 'N/A'}</span>
+                                                            {client.profiles?.status === 'pending' && (
+                                                                <button
+                                                                    onClick={() => approveUser(client.owner_id, client.profiles?.email, client.profiles?.phone, client.profiles?.full_name)}
+                                                                    className="px-2.5 py-0.5 rounded-md bg-gradient-to-r from-amber-500 to-orange-500 text-black font-black text-[10px] uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all shadow-[0_0_10px_rgba(245,158,11,0.3)] animate-pulse hover:animate-none cursor-pointer"
+                                                                    title="Aprovar conta de utilizador para permitir login"
+                                                                >
+                                                                    ⚡ Aprovar Acesso
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </td>
 
-                                                    {/* FATURAÇÃO */}
+                                                    {/* FATURAÇÃO & MÓDULO */}
                                                     <td className="p-4 whitespace-nowrap">
-                                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-zinc-800 border border-zinc-700 text-[#E2B755] rounded-lg text-xs font-bold tracking-wider font-mono">
-                                                            {client.plan || 'Start'}
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-zinc-800 border border-zinc-700 text-[#E2B755] rounded-lg text-xs font-bold tracking-wider font-mono">
+                                                                {client.plan || 'Start'}
+                                                            </div>
+                                                            <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">
+                                                                {client.module_type === 'billing_only' ? '🧾 Faturação' : client.module_type === 'qr_only' ? '📱 Menu QR' : '🚀 Completo'}
+                                                            </span>
+                                                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
+                                                                {SECTOR_PRESETS.find(s => s.id === client.business_sector)?.icon || '🏪'} {SECTOR_PRESETS.find(s => s.id === client.business_sector)?.badge || 'Retalho'}
+                                                            </span>
                                                         </div>
                                                         <div className={`text-xs mt-1.5 font-medium ${expired ? 'text-red-400' : 'text-emerald-400'}`}>
                                                             {expired ? 'Expirou: ' : 'Vence: '} {formatDate(client.valid_until)}
@@ -789,30 +894,37 @@ const SuperAdminDashboard = () => {
 
                                                     {/* STATUS SISTEMA */}
                                                     <td className="p-4 whitespace-nowrap">
-                                                        <button 
-                                                            onClick={() => toggleRestaurantStatus(client.id, client.status)}
-                                                            className="cursor-pointer hover:scale-105 active:scale-95 transition-transform"
-                                                        >
-                                                            {client.status === 'active' ? (
-                                                                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-950/60 border border-emerald-800/80 text-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.15)] font-mono">
-                                                                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34D399]" />
-                                                                    Ativo
-                                                                </span>
-                                                            ) : (
-                                                                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-red-950/60 border border-red-800/80 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.15)] font-mono">
-                                                                    <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_#EF4444]" />
-                                                                    Bloqueado
+                                                        <div className="flex flex-col gap-1">
+                                                            <button 
+                                                                onClick={() => toggleRestaurantStatus(client.id, client.status, client.owner_id)}
+                                                                className="cursor-pointer hover:scale-105 active:scale-95 transition-transform w-fit"
+                                                            >
+                                                                {client.status === 'active' ? (
+                                                                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-950/60 border border-emerald-800/80 text-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.15)] font-mono">
+                                                                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34D399]" />
+                                                                        Ativo
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-red-950/60 border border-red-800/80 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.15)] font-mono">
+                                                                        <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_#EF4444]" />
+                                                                        Bloqueado
+                                                                    </span>
+                                                                )}
+                                                            </button>
+                                                            {client.profiles?.status === 'pending' && (
+                                                                <span className="text-[10px] font-bold text-amber-400 font-mono flex items-center gap-1 animate-pulse">
+                                                                    ⚠️ Login Pendente
                                                                 </span>
                                                             )}
-                                                        </button>
+                                                        </div>
                                                     </td>
 
                                                     {/* AÇÕES SAAS */}
                                                     <td className="p-4 pr-6 text-right whitespace-nowrap">
                                                         <div className="flex items-center justify-end gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
                                                             <button 
-                                                                onClick={() => setRenewModal({ isOpen: true, restaurant: client, selectedPlan: PLANS[1], selectedTier: { id: 'start', name: 'Start' }, customDays: 0 })}
-                                                                title="Renovar ou Alterar Plano SaaS" 
+                                                                onClick={() => setRenewModal({ isOpen: true, restaurant: client, selectedPlan: PLANS[1], selectedTier: { id: client.plan || 'start', name: client.plan || 'Start' }, selectedModule: client.module_type || 'full_suite', selectedSector: client.business_sector || 'retail', customDays: 0 })}
+                                                                title="Renovar ou Alterar Plano / Módulo / Setor SaaS" 
                                                                 className="p-2.5 rounded-xl bg-zinc-800 hover:bg-[#E2B755] text-zinc-300 hover:text-black transition-all cursor-pointer shadow-sm hover:scale-110"
                                                             >
                                                                 <CreditCard size={16} />
@@ -1422,6 +1534,38 @@ const SuperAdminDashboard = () => {
                                 </select>
                             </div>
 
+                            {/* Setor de Atividade AGT */}
+                            <div>
+                                <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 font-mono">Setor de Atividade / Serviço</label>
+                                <select
+                                    required
+                                    className="w-full bg-black/80 border border-zinc-800 rounded-2xl px-4 py-3.5 text-white focus:outline-none focus:border-[#E2B755] transition-all text-sm font-medium"
+                                    value={newRest.business_sector}
+                                    onChange={(e) => setNewRest({ ...newRest, business_sector: e.target.value })}
+                                >
+                                    {SECTOR_PRESETS.map(s => (
+                                        <option key={s.id} value={s.id} className="bg-[#0A0A0B]">
+                                            {s.icon} {s.name} ({s.badge})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Módulo de Licenciamento */}
+                            <div>
+                                <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 font-mono font-bold">Módulo da Plataforma</label>
+                                <select
+                                    required
+                                    className="w-full bg-black/80 border border-zinc-800 rounded-2xl px-4 py-3.5 text-white focus:outline-none focus:border-[#E2B755] transition-all text-sm font-medium"
+                                    value={newRest.module_type}
+                                    onChange={(e) => setNewRest({ ...newRest, module_type: e.target.value })}
+                                >
+                                    <option value="billing_only" className="bg-[#0A0A0B]">🧾 Faturação Simples (Lojas & Serviços)</option>
+                                    <option value="qr_only" className="bg-[#0A0A0B]">📱 Menu QR & Pedidos (Possui Software)</option>
+                                    <option value="full_suite" className="bg-[#0A0A0B]">🚀 Solução Completa 360º (Faturação + QR + Stock)</option>
+                                </select>
+                            </div>
+
                             <div className="pt-6 border-t border-zinc-800 flex gap-3">
                                 <button
                                     type="button"
@@ -1527,7 +1671,47 @@ const SuperAdminDashboard = () => {
                             </div>
 
                             <div className="pt-4 border-t border-zinc-800">
-                                <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3 font-mono">2. Escolha o Ciclo / Duração:</label>
+                                <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3 font-mono">2. Escolha o Módulo de Plataforma:</label>
+                                <div className="grid grid-cols-3 gap-2 text-xs font-sans">
+                                    {[
+                                        { id: 'billing_only', label: '🧾 Faturação Simples' },
+                                        { id: 'qr_only', label: '📱 Menu QR' },
+                                        { id: 'full_suite', label: '🚀 Completo 360º' }
+                                    ].map(mod => (
+                                        <button
+                                            key={mod.id}
+                                            type="button"
+                                            onClick={() => setRenewModal({ ...renewModal, selectedModule: mod.id })}
+                                            className={`p-3 rounded-xl border text-[11px] font-bold transition-all text-center cursor-pointer ${
+                                                (renewModal.selectedModule || 'full_suite') === mod.id
+                                                    ? 'bg-[#E2B755]/20 text-[#E2B755] border-[#E2B755] shadow-md'
+                                                    : 'bg-black/60 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-white'
+                                            }`}
+                                        >
+                                            {mod.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* NOVO: SELEÇÃO DO SETOR DE ATIVIDADE AGT */}
+                            <div className="pt-4 border-t border-zinc-800">
+                                <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3 font-mono">3. Escolha o Setor de Atividade (AGT):</label>
+                                <select
+                                    value={renewModal.selectedSector || renewModal.restaurant?.business_sector || 'retail'}
+                                    onChange={(e) => setRenewModal({ ...renewModal, selectedSector: e.target.value })}
+                                    className="w-full bg-black/80 border border-zinc-800 rounded-2xl px-4 py-3.5 text-white focus:outline-none focus:border-[#E2B755] transition-all text-xs font-bold font-mono cursor-pointer"
+                                >
+                                    {SECTOR_PRESETS.map(s => (
+                                        <option key={s.id} value={s.id} className="bg-[#0A0A0B] text-white">
+                                            {s.icon} {s.name} ({s.badge})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="pt-4 border-t border-zinc-800">
+                                <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3 font-mono">4. Escolha o Ciclo / Duração:</label>
                                 <div className="grid grid-cols-2 gap-3">
                                     {PLANS.map(plan => (
                                         <button
@@ -1588,16 +1772,19 @@ const SuperAdminDashboard = () => {
 
                         <div className="pt-6 border-t border-zinc-800 flex gap-3 relative z-10 font-mono">
                             <button
+                                type="button"
                                 onClick={() => setRenewModal({ isOpen: false, restaurant: null, selectedPlan: null, selectedTier: null, customDays: 0 })}
                                 className="flex-1 py-3.5 bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white rounded-2xl font-bold text-xs uppercase transition-colors cursor-pointer"
                             >
                                 Cancelar
                             </button>
                             <button
-                                onClick={handleConfirmRenewal}
-                                className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-black font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-600/30 active:scale-95 transition-all cursor-pointer"
+                                type="button"
+                                disabled={isRenewing}
+                                onClick={(e) => handleConfirmRenewal(e)}
+                                className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-black font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-600/30 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
                             >
-                                Confirmar Faturação
+                                {isRenewing ? 'A Guardar...' : 'Confirmar Faturação'}
                             </button>
                         </div>
                     </div>
@@ -1817,7 +2004,7 @@ const SuperAdminDashboard = () => {
                         </div>
 
                         <p className="text-zinc-300 text-xs text-center mb-6 leading-relaxed relative z-10 font-sans">
-                            Atenção! Esta ação é <b className="text-white">IRREVERSÍVEL</b>. O restaurante <b className="text-[#E2B755]">"{deleteModal.restaurant?.name}"</b> será apagado, juntamente com todos os pratos, categorias e histórico.
+                            Atenção! Esta ação é <b className="text-white">IRREVERSÍVEL</b>. O estabelecimento <b className="text-[#E2B755]">"{deleteModal.restaurant?.name}"</b> será apagado, juntamente com todos os artigos, categorias e histórico.
                         </p>
 
                         <div className="space-y-4 relative z-10 font-sans">

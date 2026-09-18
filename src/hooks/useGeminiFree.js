@@ -51,9 +51,9 @@ export const useGeminiFree = () => {
         if (!apiKey) {
             console.warn("⚠️ VITE_GEMINI_API_KEY não configurada. A usar sugestão mágica de fallback local.");
             const fallbacks = [
-                `Um delicioso prato de ${item.name} preparado cuidadosamente com os ingredientes mais frescos. Irresistível a cada dentada!`,
-                `A nossa especialidade! O ${item.name} tem um sabor autêntico e único, perfeito para tornar a sua refeição inesquecível.`,
-                `Sabor excecional. Peça o seu ${item.name} agora e deixe-se surpreender pela combinação perfeita de aromas.`
+                `Um excelente ${item.name} com elevados padrões de qualidade e certificação. Escolha perfeita!`,
+                `A nossa especialidade! O ${item.name} tem um padrão autêntico e excelente desempenho para a sua escolha.`,
+                `Qualidade excecional. Adquira o seu ${item.name} agora e desfrute de um produto de topo.`
             ];
             const fallbackText = fallbacks[Math.floor(Math.random() * fallbacks.length)];
             sessionStorage.setItem(cacheKey, fallbackText);
@@ -63,7 +63,7 @@ export const useGeminiFree = () => {
         setIsLoading(true);
 
         try {
-            const promptText = customPrompt || `Atua como um copywriter de culinária de elite para um restaurante premium. Escreve uma descrição irresistível, curta (máximo 2 frases) e altamente sedutora para o prato "${item.name}". Não uses aspas na resposta nem formatação markdown.`;
+            const promptText = customPrompt || `Atua como um copywriter comercial de elite para uma empresa de topo. Escreve uma descrição atraente, curta (máximo 2 frases) e altamente persuasiva para o produto/artigo "${item.name}". Não uses aspas na resposta nem formatação markdown.`;
 
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                 method: 'POST',
@@ -92,56 +92,41 @@ export const useGeminiFree = () => {
             const generatedText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
 
             if (generatedText) {
-                // Limpar eventuais aspas extras
-                const cleanText = generatedText.replace(/^["']|["']$/g, '').trim();
-                sessionStorage.setItem(cacheKey, cleanText);
-                return cleanText;
+                sessionStorage.setItem(cacheKey, generatedText);
+                return generatedText;
             }
 
-            throw new Error("Resposta da IA vazia.");
-        } catch (error) {
-            console.error("❌ [Gemini Error]:", error);
-            if (error.message?.includes('processar muitos dados')) {
-                throw error;
-            }
-            throw new Error("Não foi possível conectar à IA mágica neste momento.");
+            throw new Error("Não foi possível gerar a descrição.");
+        } catch (err) {
+            console.error("Gemini API Error:", err);
+            return `Excelente opção de ${item.name} com máxima qualidade e garantia de satisfação.`;
         } finally {
             setIsLoading(false);
         }
     }, [startRateLimitCooldown]);
 
     const sendChatMessage = useCallback(async (userMessage, chatHistory = [], contextData = {}) => {
-        if (isCooldownActive.current) {
-            const msg = "O assistente está a processar. Aguarde 15 segundos.";
-            toast.error(msg);
-            throw new Error(msg);
-        }
-
         const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
         if (!apiKey) {
-            console.warn("⚠️ API Key do Gemini em falta. A simular resposta local.");
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    resolve(simulateLocalResponse(userMessage, contextData));
-                }, 800);
-            });
+            console.warn("⚠️ VITE_GEMINI_API_KEY não configurada. A responder localmente.");
+            return simulateLocalResponse(userMessage, contextData);
         }
 
         setIsLoading(true);
 
         try {
             const systemInstruction = `
-            Tu és o Assistente de Inteligência Artificial do "Menús Jindungo", um sistema de gestão e faturação premium para restaurantes em Angola.
-            O teu papel é ajudar o administrador/gerente do restaurante com análises de vendas, sugestões de marketing, melhorias no menu, sugestão de descrições e gestão de stock.
+            Tu és o Assistente de Inteligência Artificial do "Menús Jindungo", um sistema de gestão ERP e faturação certificada em Angola.
+            O teu papel é ajudar o administrador/gerente da empresa com análises de vendas, sugestões de marketing, otimização do catálogo de produtos, descrições e gestão de stock.
             Responde sempre em português com um tom profissional, amigável, entusiasmado e executivo.
             Usa termos locais como "Kwanzas" ou "Kz" para preços.
             
-            Informações sobre o Restaurante Atual (Comidas da Terra):
-            - Pratos no Menu: ${JSON.stringify(contextData.itemsSummary || [])}
+            Informações sobre a Atividade Atual:
+            - Produtos no Catálogo: ${JSON.stringify(contextData.itemsSummary || [])}
             - Stock Crítico (Baixo): ${JSON.stringify(contextData.lowStockNames || 'Nenhum')}
             - Métricas de Stock: Valor de venda total em stock de ${contextData.totalSalesValue || 0} Kz, saúde do inventário de ${contextData.healthRatio || 100}%.
             
-            Regra Importante: Responde de forma curta, estruturada (máximo 4-5 linhas ou pequenos tópicos). Se te pedirem para criar uma descrição de prato, sê muito criativo e sedutor.
+            Regra Importante: Responde de forma curta, estruturada (máximo 4-5 linhas ou pequenos tópicos). Se te pedirem para criar uma descrição de produto/artigo, sê muito criativo e persuasivo.
             `;
 
             const contents = [
@@ -211,16 +196,16 @@ const simulateLocalResponse = (message, context) => {
     const text = message.toLowerCase();
     
     if (text.includes('preço') || text.includes('valor') || text.includes('venda') || text.includes('faturação') || text.includes('lucro')) {
-        return `📊 Análise de Faturação: O Comidas da Terra faturou um total estimado de ${localFormatCurr(context.totalSalesValue)} Kz com base no stock atual. Margem de lucro média de ${context.avgMargin || 0}%. Gostaria de ajustar algum preço para otimizar a margem?`;
+        return `📊 Análise de Faturação: A sua atividade registou um total estimado em stock de ${localFormatCurr(context.totalSalesValue)} Kz. Margem de lucro média de ${context.avgMargin || 0}%. Gostaria de ajustar algum preço para otimizar a margem?`;
     }
     if (text.includes('stock') || text.includes('inventário') || text.includes('compras') || text.includes('alerta') || text.includes('crítico')) {
         return `📦 Alerta de Stock: Existem ${context.lowStockCount || 0} itens em estado crítico (abaixo do stock mínimo). Recomendo abastecer os seguintes itens: ${context.lowStockNames || 'Nenhum item em alerta'}. Posso abrir a Lista de Compras para si!`;
     }
     if (text.includes('descrição') || text.includes('sugere') || text.includes('criar') || text.includes('escrever')) {
-        return `✨ Sugestão Mágica IA: "Uma combinação divina de sabores tradicionais preparados com os ingredientes mais frescos do nosso mercado local. Uma iguaria feita para surpreender e deliciar a sua mesa!" Gostaria de aplicar este texto ao seu prato em destaque?`;
+        return `✨ Sugestão Mágica IA: "Um produto de qualidade superior, selecionado rigorosamente para oferecer a melhor experiência aos nossos clientes!" Gostaria de aplicar este texto ao seu produto?`;
     }
     if (text.includes('olá') || text.includes('bom dia') || text.includes('boa tarde') || text.includes('ajuda') || text.includes('queres') || text.includes('quem és')) {
-        return `👋 Olá! Sou o seu Assistente IA Jindungo. Estou aqui para ajudar a gerir o restaurante. Posso calcular faturamentos (${localFormatCurr(context.totalSalesValue)} Kz em stock), listar produtos abaixo do stock de segurança (${context.lowStockCount || 0} alertas), ou sugerir descrições premium para o menu digital. O que deseja fazer?`;
+        return `👋 Olá! Sou o seu Assistente IA Jindungo. Estou aqui para ajudar a gerir o seu negócio. Posso calcular faturamentos (${localFormatCurr(context.totalSalesValue)} Kz em stock), listar produtos abaixo do stock de segurança (${context.lowStockCount || 0} alertas), ou sugerir descrições para o catálogo. O que deseja fazer?`;
     }
     return `🤖 Recebi a sua mensagem: "${message}". Como o seu assistente de gestão, recomendo verificar a Saúde do Inventário (${context.healthRatio || 100}%) ou o Livro de Movimentações para auditoria de stock. Há algo mais que possa fazer?`;
 };

@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabaseClient';
 
 export const orderService = {
-    // Create a new order
+    // Create a new order (with auto-retry on schema column mismatch)
     async createOrder(orderData) {
         try {
             const { data, error } = await supabase
@@ -13,7 +13,35 @@ export const orderService = {
             if (error) throw error;
             return { data, error: null };
         } catch (error) {
-            console.error('Error creating order:', error);
+            console.error('Error creating order (first attempt):', error);
+
+            // If remote DB missing custom columns (e.g. payment_method, health_insurance_name, etc.), retry with core columns
+            if (error && (error.code === 'PGRST204' || (error.message && error.message.toLowerCase().includes('schema cache')))) {
+                try {
+                    const coreOrderData = {
+                        restaurant_id: orderData.restaurant_id,
+                        total: orderData.total,
+                        status: orderData.status || 'pending',
+                        customer_name: orderData.customer_name,
+                        customer_phone: orderData.customer_phone || null,
+                        table_number: orderData.table_number,
+                        items: orderData.items
+                    };
+                    const { data: retryData, error: retryError } = await supabase
+                        .from('orders')
+                        .insert([coreOrderData])
+                        .select()
+                        .single();
+
+                    if (!retryError && retryData) {
+                        return { data: retryData, error: null };
+                    }
+                    console.error('Retry with core columns also failed:', retryError);
+                } catch (retryErr) {
+                    console.error('Exception during retry order insert:', retryErr);
+                }
+            }
+
             return { data: null, error };
         }
     },
@@ -231,7 +259,7 @@ export const orderService = {
                         id: String(o.id).slice(0, 4).toUpperCase(),
                         customer: o.customer_name || 'Consumidor Final',
                         status: o.status === 'pending' ? 'Novo' : 
-                                (o.status === 'preparing' ? 'Na Cozinha' : 
+                                (o.status === 'preparing' ? 'Em Processamento' : 
                                 (o.status === 'ready' ? 'Pronto' : 
                                 (o.status === 'cancelled' ? 'Cancelado' : 'Concluído'))),
                         table: new Date(o.created_at).toLocaleDateString('pt-PT'),
@@ -254,7 +282,7 @@ export const orderService = {
                         const catName = item.category_name || 'Sem Categoria';
                         const itemPrice = item.price_value || parseInt(String(item.price).replace(/[^0-9]/g, ''), 10) || 0;
                         const itemQty = item.quantity ? parseInt(item.quantity, 10) : 1;
-                        const itemName = item.name || 'Prato Sem Nome';
+                        const itemName = item.name || 'Artigo Sem Nome';
 
                         // Revenue by category
                         if (!analytics.revenueByCategory[catName]) {

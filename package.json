@@ -2,18 +2,15 @@
   "name": "menus-jindungos",
   "private": true,
   "version": "1.0.0",
-  "description": "Menús Jindungo Desktop POS application",
-  "author": "Menús Jindungo Team",
-  "main": "electron-main.js",
   "type": "module",
+  "main": "electron/main.js",
   "scripts": {
     "dev": "vite --host",
-    "build": "node -e \"require('fs').rmSync('dist', {recursive: true, force: true})\" && vite build",
+    "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview --host --port 5178",
-    "electron:dev": "concurrently \"npm run dev\" \"electron .\"",
-    "electron:build": "npm run build && electron-builder",
-    "electron:package": "npm run build && electron-packager . MenusJindungo --platform=win32 --arch=x64 --out=dist-packaged --overwrite --ignore=dist-electron --ignore=dist-packaged --ignore=scratch --ignore=src --icon=public/jindungo_logo.png"
+    "electron:start": "electron .",
+    "build:exe": "vite build && electron-builder"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -25,7 +22,7 @@
     "autoprefixer": "^10.4.23",
     "browser-image-compression": "^2.0.2",
     "clsx": "^2.1.1",
-    "dexie": "^4.4.4",
+    "dexie": "^4.4.6",
     "dotenv": "^17.2.4",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.563.0",
@@ -50,44 +47,36 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
     "autoprefixer": "^10.4.23",
-    "concurrently": "^10.0.3",
-    "electron": "^42.5.0",
-    "electron-builder": "^26.15.3",
-    "electron-packager": "^17.1.2",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
-    "vite-plugin-pwa": "^1.3.0"
+    "vite-plugin-pwa": "^1.3.0",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
   },
   "build": {
-    "appId": "com.menusjindungo.desktop",
-    "productName": "Menús Jindungo Desktop",
+    "appId": "com.menusjindungo.pos",
+    "productName": "Menús Jindungo POS",
     "directories": {
-      "output": "dist-electron"
+      "output": "dist_electron"
     },
     "files": [
       "dist/**/*",
-      "electron-main.js",
+      "electron/**/*",
       "package.json"
     ],
     "win": {
       "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "icon": "public/jindungo_logo.png"
+        "nsis",
+        "portable"
+      ]
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Menús Jindungo"
+      "createStartMenuShortcut": true
     }
   }
 }

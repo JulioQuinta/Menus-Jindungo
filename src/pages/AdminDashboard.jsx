@@ -6,11 +6,10 @@ import { useAdminData } from '../hooks/useAdminData';
 import { useAdminAlerts } from '../hooks/useAdminAlerts';
 import { useDashboardStats } from '../hooks/useDashboardStats';
 import toast, { Toaster } from 'react-hot-toast';
-import { QrCode, ClipboardList, TrendingUp, Settings, LogOut, ChevronRight, Menu, Bell, LinkIcon, MapPin, Search, Star, Utensils, MonitorSmartphone, Mail, Smartphone, Eye, Calendar, Tag, Info, UserX, MessageSquare, Volume2, Shield, LayoutDashboard, UtensilsCrossed, User, Award, Ticket, Users, ExternalLink, X, Package, FileText } from 'lucide-react';
+import { QrCode, ClipboardList, TrendingUp, Settings, LogOut, ChevronRight, Menu, Bell, LinkIcon, MapPin, Search, Star, Utensils, MonitorSmartphone, Mail, Smartphone, Eye, Calendar, Tag, Info, UserX, MessageSquare, Volume2, Shield, LayoutDashboard, UtensilsCrossed, User, Award, Ticket, Users, ExternalLink, X, Package } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
-import { getPlanFeatures, getModuleFeatures } from '../utils/planLimits';
-import { getSectorDetails } from '../utils/sectorConfig';
+import { getPlanFeatures } from '../utils/planLimits';
 import { Suspense } from 'react';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
 import DashboardStatsGrid from '../components/dashboard/DashboardStatsGrid';
@@ -43,7 +42,6 @@ const CouponManager = lazyWithRetry(() => import('../components/CouponManager'))
 const UpgradePrompt = lazyWithRetry(() => import('../components/UpgradePrompt'));
 const InventoryManager = lazyWithRetry(() => import('../components/InventoryManager'));
 const SettingsManager = lazyWithRetry(() => import('../components/SettingsManager'));
-const InvoicesManager = lazyWithRetry(() => import('../components/InvoicesManager'));
 
 // Refactored Sub-components
 import AdminSidebar from '../components/dashboard/AdminSidebar';
@@ -56,15 +54,14 @@ import PaymentSaaSModal from '../components/PaymentSaaSModal';
 import CommandPalette from '../components/dashboard/CommandPalette';
 import HypnoticStats from '../components/dashboard/HypnoticStats';
 import ComponentErrorBoundary from '../components/ComponentErrorBoundary'; // [NEW] QA & Performance
-import { checkStaffPermission } from '../utils/staffPermissions';
-import AccessDenied from '../components/AccessDenied';
+import SyncStatusBanner from '../components/SyncStatusBanner'; // [NEW] Offline 30-Day Persistence Banner
 
 const AdminDashboard = () => {
     const { user, role, signOut } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const { logoUrl: globalLogoUrl } = useSettings();
-    const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 1280);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     
     // [NEW] Hooks for Data & Alerts (Performance & Cleanliness)
@@ -86,17 +83,6 @@ const AdminDashboard = () => {
     const [dismissedNotifIds, setDismissedNotifIds] = useState(() => JSON.parse(localStorage.getItem('jindungo_dismissed_notifications') || '[]'));
     const [isExpirationDismissed, setIsExpirationDismissed] = useState(() => localStorage.getItem('jindungo_expiration_dismissed') === 'true');
     const [settingsTab, setSettingsTab] = useState('visual'); // 'visual' | 'delivery'
-
-    // Auto-collapse sidebar on tablet screens
-    useEffect(() => {
-        const handleResize = () => {
-            setIsSidebarOpen(window.innerWidth >= 1280);
-        };
-        // Run once on load to be sure
-        handleResize();
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
     // [NEW] Fetch Global Admin Notifications (Filtered by audience)
     useEffect(() => {
@@ -142,18 +128,16 @@ const AdminDashboard = () => {
             const STAFF_EXPIRY_MS = 8 * 60 * 60 * 1000; // 8 Hours
             const savedName = localStorage.getItem(`jindungo_staff_name_${restaurant.id}`);
             const savedId = localStorage.getItem(`jindungo_staff_id_${restaurant.id}`);
-            const savedRole = localStorage.getItem(`jindungo_staff_role_${restaurant.id}`);
             const loginTime = localStorage.getItem(`jindungo_staff_login_time_${restaurant.id}`);
 
             if (savedName && savedId && loginTime) {
                 const elapsed = Date.now() - parseInt(loginTime);
                 if (elapsed < STAFF_EXPIRY_MS) {
-                    setActiveStaff({ id: savedId, name: savedName, role: savedRole });
+                    setActiveStaff({ id: savedId, name: savedName });
                 } else {
                     // Session Expired
                     localStorage.removeItem(`jindungo_staff_id_${restaurant.id}`);
                     localStorage.removeItem(`jindungo_staff_name_${restaurant.id}`);
-                    localStorage.removeItem(`jindungo_staff_role_${restaurant.id}`);
                     localStorage.removeItem(`jindungo_staff_login_time_${restaurant.id}`);
                     toast.error("Sessão de staff expirada (Turno de 8h). Por favor, entre novamente.");
                     setActiveStaff(null);
@@ -182,92 +166,6 @@ const AdminDashboard = () => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
-
-    // [SECURE OUTBOX DISPATCHER] OWASP A01:2021
-    useEffect(() => {
-        if (!restaurant?.id) return;
-
-        let activeConfig = null;
-        let activeChannel = null;
-
-        const setupOutboxDispatcher = async () => {
-            const { data: configData } = await supabase
-                .from('private_gateway_configs')
-                .select('*')
-                .eq('restaurant_id', restaurant.id)
-                .maybeSingle();
-
-            if (!configData || !configData.api_url || !configData.token) return;
-            activeConfig = configData;
-
-            await processPendingMessages(activeConfig);
-
-            activeChannel = supabase.channel(`outbox-dispatch-${restaurant.id}`)
-                .on('postgres_changes', {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'whatsapp_outbox_messages',
-                    filter: `restaurant_id=eq.${restaurant.id}`
-                }, async (payload) => {
-                    if (payload.new && payload.new.status === 'pending') {
-                        await processPendingMessages(activeConfig);
-                    }
-                })
-                .subscribe();
-        };
-
-        const processPendingMessages = async (configData) => {
-            const { data: pendingMsgs } = await supabase
-                .from('whatsapp_outbox_messages')
-                .select('*')
-                .eq('restaurant_id', restaurant.id)
-                .eq('status', 'pending')
-                .order('created_at', { ascending: true });
-            
-            if (!pendingMsgs || pendingMsgs.length === 0) return;
-            
-            const { whatsappService } = await import('../services/whatsappService');
-            
-            for (const msg of pendingMsgs) {
-                try {
-                    // Bloqueio otimista para evitar disparos duplicados se houver abas múltiplas abertas
-                    const { data: checkData, error: lockErr } = await supabase.from('whatsapp_outbox_messages')
-                        .update({ status: 'sent', updated_at: new Date().toISOString() })
-                        .eq('id', msg.id)
-                        .eq('status', 'pending')
-                        .select();
-                    
-                    if (lockErr || !checkData || checkData.length === 0) {
-                        continue; // Já processado ou falha de lock, salta para o próximo
-                    }
-
-                    await whatsappService.sendWhatsAppMessage({
-                        apiUrl: configData.api_url,
-                        token: configData.token,
-                        instanceName: configData.instance_name,
-                        gatewayType: configData.gateway_type
-                    }, msg.phone, msg.message);
-                } catch (err) {
-                    console.error("Failed to dispatch outbox message:", err);
-                    await supabase.from('whatsapp_outbox_messages')
-                        .update({ 
-                            status: 'failed', 
-                            error_message: err.message || 'Erro desconhecido',
-                            updated_at: new Date().toISOString() 
-                        })
-                        .eq('id', msg.id);
-                }
-            }
-        };
-
-        setupOutboxDispatcher();
-
-        return () => {
-            if (activeChannel) {
-                supabase.removeChannel(activeChannel);
-            }
-        };
-    }, [restaurant?.id]);
 
     // Explicit logout
     const handleLogout = async () => {
@@ -333,40 +231,29 @@ const AdminDashboard = () => {
         fetchRestaurantData(); // Refresh data
     };
 
-    const moduleFeatures = getModuleFeatures(restaurant?.module_type);
-    const sectorDetails = getSectorDetails(restaurant?.business_sector);
-
-    const rawMenuItems = [
+    const menuItems = [
         { icon: LayoutDashboard, label: 'Visão Geral', path: '/admin' },
         { icon: MessageSquare, label: 'Assistente IA', path: '/admin/chat' },
-        { icon: Package, label: sectorDetails.terms?.items ? `Gestão de ${sectorDetails.terms.items}` : 'Catálogo de Produtos', path: '/admin/menu', moduleKey: 'hasProductsMenu' },
-        { icon: ClipboardList, label: 'Pedidos (Cozinha)', path: '/admin/orders', moduleKey: 'hasKDS' },
-        { icon: FileText, label: 'Faturação & Vendas', path: '/admin/invoices', moduleKey: 'hasBilling' },
-        { icon: Package, label: 'Gestão de Stock', path: '/admin/inventory', moduleKey: 'hasInventory' },
-        { icon: Calendar, label: 'Reservas', path: '/admin/reservations', moduleKey: 'hasReservations' },
+        { icon: UtensilsCrossed, label: 'Menu Digital', path: '/admin/menu' },
+        { icon: ClipboardList, label: 'Pedidos (Cozinha)', path: '/admin/orders' },
+        { icon: Package, label: 'Gestão de Stock', path: '/admin/inventory' },
+        { icon: Calendar, label: 'Reservas', path: '/admin/reservations' },
         { icon: User, label: 'CRM Clientes', path: '/admin/crm', feature: 'canCollectClientData' },
-        { icon: MessageSquare, label: 'Avaliações', path: '/admin/feedbacks', feature: 'canCollectClientData', moduleKey: 'hasQRMenu' },
-        { icon: Award, label: 'Fidelização', path: '/admin/loyalty', feature: 'canCollectClientData', moduleKey: 'hasLoyalty' },
+        { icon: MessageSquare, label: 'Avaliações', path: '/admin/feedbacks', feature: 'canCollectClientData' },
+        { icon: Award, label: 'Fidelização', path: '/admin/loyalty', feature: 'canCollectClientData' },
         { icon: Info, label: 'Horários & Info', path: '/admin/info' },
         { icon: Ticket, label: 'Marketing', path: '/admin/marketing' },
-        { icon: Users, label: (restaurant?.business_sector === 'farmacia' || restaurant?.business_sector === 'health_medical') ? 'Operadores & Equipa' : 'Equipa & Staff', path: '/admin/staff' },
-        { icon: QrCode, label: 'QR Code', path: '/admin/qrcode', moduleKey: 'hasQRMenu' },
+        { icon: Users, label: 'Equipa / Staff', path: '/admin/staff', feature: 'canManageStaff' },
+        { icon: QrCode, label: 'QR Code', path: '/admin/qrcode' },
         { icon: Settings, label: 'Configurações', path: '/admin/settings' },
     ];
-
-    const features = getPlanFeatures(restaurant?.plan);
-
-    const menuItems = rawMenuItems.filter(item => {
-        if (item.moduleKey && !moduleFeatures[item.moduleKey]) return false;
-        if (item.feature && !features[item.feature]) return false;
-        return true;
-    });
 
     const isExpired = restaurant?.valid_until ? new Date(restaurant.valid_until) < new Date() : false;
     const daysUntilExpiration = restaurant?.valid_until 
         ? Math.ceil((new Date(restaurant.valid_until) - new Date()) / (1000 * 60 * 60 * 24)) 
         : null;
     const isExpiringSoon = daysUntilExpiration !== null && daysUntilExpiration <= 7 && daysUntilExpiration > 0;
+    const features = getPlanFeatures(restaurant?.plan);
 
     if (dataLoading) return (
         <div className="flex bg-[#121212] flex-col h-screen items-center justify-center">
@@ -450,15 +337,13 @@ const AdminDashboard = () => {
         );
     }
 
-    const isPharmacy = restaurant?.business_sector === 'pharmacy';
-
     return (
-        <div className={`flex h-screen text-gray-100 overflow-hidden max-w-[100vw] font-sans relative transition-colors duration-500 ${isPharmacy ? 'bg-[#06171E]' : 'bg-[#121212]'}`}>
-            {/* Ambient Background Incandescente */}
+        <div className="flex h-screen bg-[#121212] text-gray-100 overflow-hidden max-w-[100vw] font-sans relative">
+            {/* Ambient Background Incandescente Dourado Suave */}
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-                <div className={`absolute top-[-10%] left-[10%] w-[70vw] h-[70vh] rounded-full blur-[200px] ${isPharmacy ? 'bg-emerald-500/15' : 'bg-[#F5C542]/15'}`}></div>
-                <div className={`absolute top-[25%] right-[-5%] w-[60vw] h-[60vh] rounded-full blur-[180px] ${isPharmacy ? 'bg-teal-500/10' : 'bg-[#EAC775]/10'}`}></div>
-                <div className={`absolute bottom-[-10%] left-[15%] w-[65vw] h-[65vh] rounded-full blur-[220px] ${isPharmacy ? 'bg-cyan-500/15' : 'bg-[#D4AF37]/15'}`}></div>
+                <div className="absolute top-[-10%] left-[10%] w-[70vw] h-[70vh] rounded-full bg-[#F5C542]/15 blur-[200px]"></div>
+                <div className="absolute top-[25%] right-[-5%] w-[60vw] h-[60vh] rounded-full bg-[#EAC775]/10 blur-[180px]"></div>
+                <div className="absolute bottom-[-10%] left-[15%] w-[65vw] h-[65vh] rounded-full bg-[#D4AF37]/15 blur-[220px]"></div>
             </div>
 
             {/* Sidebar Overlay (Mobile only) */}
@@ -477,16 +362,14 @@ const AdminDashboard = () => {
                 menuItems={menuItems}
                 location={location}
                 globalLogoUrl={globalLogoUrl}
-                restaurantLogoUrl={config?.logoUrl}
                 signOut={handleLogout}
                 restaurantName={restaurant?.name}
                 restaurantSlug={restaurant?.slug}
-                moduleFeatures={moduleFeatures}
-                businessSector={restaurant?.business_sector}
             />
 
             {/* Main Content */}
             <main className="flex-1 overflow-y-auto custom-scrollbar relative z-10 bg-transparent">
+                <SyncStatusBanner restaurantId={restaurant?.id} />
 
                 <DashboardAlertSystem 
                     activeAlerts={activeAlerts}
@@ -513,12 +396,7 @@ const AdminDashboard = () => {
                     isOpen={showStaffModal} 
                     onClose={() => setShowStaffModal(false)}
                     restaurantId={restaurant?.id}
-                    onLogin={(staff) => {
-                        setActiveStaff(staff);
-                        if (staff && !checkStaffPermission(staff.role, location.pathname)) {
-                            navigate('/admin/invoices');
-                        }
-                    }}
+                    onLogin={(staff) => setActiveStaff(staff)}
                 />
 
                 <PaymentSaaSModal 
@@ -551,201 +429,142 @@ const AdminDashboard = () => {
                         <ComponentErrorBoundary componentName="Admin Main Area">
                             <Routes>
                                 <Route path="/" element={
-                                    checkStaffPermission(activeStaff?.role, '/admin') ? (
-                                        <div className="animate-fade-in-up">
-                                            <DashboardStats restaurantId={restaurant?.id} features={features} restaurantInfo={restaurant} businessSector={restaurant?.business_sector} />
-                                        </div>
-                                    ) : (
-                                        <AccessDenied role={activeStaff?.role} />
-                                    )
+                                    <div className="animate-fade-in-up">
+                                        <DashboardStats restaurantId={restaurant?.id} features={features} />
+                                    </div>
                                 } />
-                                <Route path="/menu" element={
-                                    checkStaffPermission(activeStaff?.role, '/admin/menu') ? (
-                                        <MenuManager categories={categories} restaurantId={restaurant?.id} onUpdate={handleMenuUpdate} businessSector={restaurant?.business_sector} />
-                                    ) : (
-                                        <AccessDenied role={activeStaff?.role} />
-                                    )
-                                } />
+                                <Route path="/menu" element={<MenuManager categories={categories} restaurantId={restaurant?.id} restaurant={restaurant} onUpdate={handleMenuUpdate} />} />
 
-                                <Route path="/orders" element={
-                                    checkStaffPermission(activeStaff?.role, '/admin/orders') ? (
-                                        features.canUseKDS ? (
-                                            <KitchenBoard restaurantId={restaurant?.id} config={config} restaurantName={restaurant?.name} />
-                                        ) : (
-                                            <OrderHistory restaurantId={restaurant?.id} />
-                                        )
-                                    ) : (
-                                        <AccessDenied role={activeStaff?.role} />
-                                    )
-                                } />
-                                <Route path="/invoices" element={
-                                    checkStaffPermission(activeStaff?.role, '/admin/invoices') ? (
-                                        <InvoicesManager restaurantId={restaurant?.id} restaurantName={restaurant?.name} businessSector={restaurant?.business_sector} />
-                                    ) : (
-                                        <AccessDenied role={activeStaff?.role} />
-                                    )
-                                } />
-                                <Route path="/inventory" element={
-                                    checkStaffPermission(activeStaff?.role, '/admin/inventory') ? (
-                                        <InventoryManager restaurantId={restaurant?.id} businessSector={restaurant?.business_sector} />
-                                    ) : (
-                                        <AccessDenied role={activeStaff?.role} />
-                                    )
-                                } />
+                        <Route path="/orders" element={
+                            features.canUseKDS ? (
+                                <KitchenBoard restaurantId={restaurant?.id} config={config} restaurantName={restaurant?.name} />
+                            ) : (
+                                <OrderHistory restaurantId={restaurant?.id} />
+                            )
+                        } />
+                        <Route path="/inventory" element={<InventoryManager restaurantId={restaurant?.id} />} />
 
-                                <Route path="/staff" element={
-                                    checkStaffPermission(activeStaff?.role, '/admin/staff') ? (
-                                        <StaffManager restaurantId={restaurant?.id} businessSector={restaurant?.business_sector} />
-                                    ) : (
-                                        <AccessDenied role={activeStaff?.role} />
-                                    )
-                                } />
+                        <Route path="/staff" element={
+                            features.canManageStaff ? (
+                                <StaffManager restaurantId={restaurant?.id} />
+                            ) : (
+                                <UpgradePrompt
+                                    title="Gestão de Staff & Garçons"
+                                    requiredPlan="Business"
+                                    features={[
+                                        "Criar sub-contas para a sua equipa",
+                                        "Atribuir funções (Cozinha, Receção, etc.)",
+                                        "Acesso rápido via PIN para tablets",
+                                        "Segurança e controlo de permissões"
+                                    ]}
+                                />
+                            )
+                        } />
 
-                                <Route path="/crm" element={
-                                    checkStaffPermission(activeStaff?.role, '/admin/crm') ? (
-                                        features.canCollectClientData ? (
-                                            <CustomerManager restaurantId={restaurant?.id} />
-                                        ) : (
-                                            <UpgradePrompt
-                                                title="CRM & Base de Dados de Clientes"
-                                                requiredPlan="Corporate"
-                                                features={[
-                                                    "Guardar automaticamente contactos de WhatsApp",
-                                                    "Ver quem são os seus clientes mais fiéis",
-                                                    "Exportar lista para campanhas de marketing",
-                                                    "Análise de Ticket Médio por cliente"
-                                                ]}
-                                            />
-                                        )
-                                    ) : (
-                                        <AccessDenied role={activeStaff?.role} />
-                                    )
-                                } />
+                        <Route path="/crm" element={
+                            features.canCollectClientData ? (
+                                <CustomerManager restaurantId={restaurant?.id} />
+                            ) : (
+                                <UpgradePrompt
+                                    title="CRM & Base de Dados de Clientes"
+                                    requiredPlan="Corporate"
+                                    features={[
+                                        "Guardar automaticamente contactos de WhatsApp",
+                                        "Ver quem são os seus clientes mais fiéis",
+                                        "Exportar lista para campanhas de marketing",
+                                        "Análise de Ticket Médio por cliente"
+                                    ]}
+                                />
+                            )
+                        } />
 
-                                <Route path="/feedbacks" element={
-                                    checkStaffPermission(activeStaff?.role, '/admin/feedbacks') ? (
-                                        features.canCollectClientData ? (
-                                            <FeedbackManager restaurantId={restaurant?.id} />
-                                        ) : (
-                                            <UpgradePrompt
-                                                title="Avaliações e Feedback"
-                                                requiredPlan="Corporate"
-                                                features={[
-                                                    "Receber avaliações diretas dos clientes (1 a 5 estrelas)",
-                                                    "Ver comentários privados sobre o serviço",
-                                                    "Melhorar a qualidade baseada em opiniões reais"
-                                                ]}
-                                            />
-                                        )
-                                    ) : (
-                                        <AccessDenied role={activeStaff?.role} />
-                                    )
-                                } />
+                        <Route path="/feedbacks" element={
+                            features.canCollectClientData ? (
+                                <FeedbackManager restaurantId={restaurant?.id} />
+                            ) : (
+                                <UpgradePrompt
+                                    title="Avaliações e Feedback"
+                                    requiredPlan="Corporate"
+                                    features={[
+                                        "Receber avaliações diretas dos clientes (1 a 5 estrelas)",
+                                        "Ver comentários privados sobre o serviço",
+                                        "Melhorar a qualidade baseada em opiniões reais"
+                                    ]}
+                                />
+                            )
+                        } />
 
-                                <Route path="/loyalty" element={
-                                    checkStaffPermission(activeStaff?.role, '/admin/loyalty') ? (
-                                        features.canCollectClientData ? (
-                                            <LoyaltyManager restaurantId={restaurant?.id} />
-                                        ) : (
-                                            <UpgradePrompt
-                                                title="Hub de Fidelização"
-                                                requiredPlan="Corporate"
-                                                features={[
-                                                    "Meta de pedidos personalizada",
-                                                    "Recompensas automáticas para clientes fiéis",
-                                                    "Cartão VIP digital no checkout",
-                                                    "Aumento de taxa de recorrência"
-                                                ]}
-                                            />
-                                        )
-                                    ) : (
-                                        <AccessDenied role={activeStaff?.role} />
-                                    )
-                                } />
+                        <Route path="/loyalty" element={
+                            features.canCollectClientData ? (
+                                <LoyaltyManager restaurantId={restaurant?.id} />
+                            ) : (
+                                <UpgradePrompt
+                                    title="Hub de Fidelização"
+                                    requiredPlan="Corporate"
+                                    features={[
+                                        "Meta de pedidos personalizada",
+                                        "Recompensas automáticas para clientes fiéis",
+                                        "Cartão VIP digital no checkout",
+                                        "Aumento de taxa de recorrência"
+                                    ]}
+                                />
+                            )
+                        } />
 
-                                <Route path="/reservations" element={
-                                    checkStaffPermission(activeStaff?.role, '/admin/reservations') ? (
-                                        <ReservationManager restaurantId={restaurant?.id} restaurantName={restaurant?.name} />
-                                    ) : (
-                                        <AccessDenied role={activeStaff?.role} />
-                                    )
-                                } />
+                        <Route path="/reservations" element={
+                            <ReservationManager restaurantId={restaurant?.id} />
+                        } />
 
-                                <Route path="/info" element={
-                                    checkStaffPermission(activeStaff?.role, '/admin/info') ? (
-                                        <BusinessInfoManager
-                                            info={businessInfo}
-                                            onSave={handleBusinessInfoSave}
-                                            isLoading={dataLoading}
-                                            features={features}
-                                            businessSector={restaurant?.business_sector}
-                                        />
-                                    ) : (
-                                        <AccessDenied role={activeStaff?.role} />
-                                    )
-                                } />
+                        <Route path="/info" element={
+                            <BusinessInfoManager
+                                info={businessInfo}
+                                onSave={handleBusinessInfoSave}
+                                isLoading={dataLoading}
+                                features={features}
+                            />
+                        } />
 
-                                <Route path="/marketing" element={
-                                    checkStaffPermission(activeStaff?.role, '/admin/marketing') ? (
-                                        features.canUseKDS ? (
-                                            <CouponManager restaurantId={restaurant?.id} />
-                                        ) : (
-                                            <UpgradePrompt
-                                                title="Marketing & Cupões"
-                                                requiredPlan="Business"
-                                                features={[
-                                                    "Criar códigos de desconto personalizados",
-                                                    "Limitar uso por data ou quantidade",
-                                                    "Atrair clientes via Redes Sociais",
-                                                    "Aumentar faturação em dias calmos"
-                                                ]}
-                                            />
-                                        )
-                                    ) : (
-                                        <AccessDenied role={activeStaff?.role} />
-                                    )
-                                } />
+                        <Route path="/marketing" element={
+                            features.canUseKDS ? (
+                                <CouponManager restaurantId={restaurant?.id} />
+                            ) : (
+                                <UpgradePrompt
+                                    title="Marketing & Cupões"
+                                    requiredPlan="Business"
+                                    features={[
+                                        "Criar códigos de desconto personalizados",
+                                        "Limitar uso por data ou quantidade",
+                                        "Atrair clientes via Redes Sociais",
+                                        "Aumentar faturação em dias calmos"
+                                    ]}
+                                />
+                            )
+                        } />
 
-                                <Route path="/chat" element={
-                                    checkStaffPermission(activeStaff?.role, '/admin/chat') ? (
-                                        <ChatAdminPanel categories={categories} onUpdate={handleMenuUpdate} restaurantId={restaurant?.id} />
-                                    ) : (
-                                        <AccessDenied role={activeStaff?.role} />
-                                    )
-                                } />
-                                <Route path="/qrcode" element={
-                                    checkStaffPermission(activeStaff?.role, '/admin/qrcode') ? (
-                                        <QRCodeGenerator url={`${window.location.origin}/r/${restaurant?.slug}`} restaurantName={restaurant?.name || restaurant?.slug} logoUrl={config?.logoUrl} />
-                                    ) : (
-                                        <AccessDenied role={activeStaff?.role} />
-                                    )
-                                } />
-                                <Route path="/settings" element={
-                                    checkStaffPermission(activeStaff?.role, '/admin/settings') ? (
-                                        <SettingsManager
-                                            restaurantId={restaurant?.id}
-                                            restaurantName={restaurant?.name}
-                                            slug={restaurant?.slug}
-                                            config={config}
-                                            setConfig={handleConfigChange}
-                                            onNameChange={handleNameUpdate}
-                                            onSlugChange={handleSlugUpdate}
-                                            onLogoUpload={handleLogoUpload}
-                                            onHeaderBgUpload={handleHeaderBgUpload}
-                                            categories={categories}
-                                            onCategoryUpdate={handleMenuUpdate}
-                                        />
-                                    ) : (
-                                        <AccessDenied role={activeStaff?.role} />
-                                    )
-                                } />
+                        <Route path="/chat" element={<ChatAdminPanel categories={categories} onUpdate={handleMenuUpdate} restaurantId={restaurant?.id} />} />
+                        <Route path="/qrcode" element={<QRCodeGenerator url={`${window.location.origin}/r/${restaurant?.slug}`} restaurantName={restaurant?.name || restaurant?.slug} logoUrl={config?.logoUrl} />} />
+                        <Route path="/settings" element={
+                            <SettingsManager
+                                restaurantId={restaurant?.id}
+                                restaurantName={restaurant?.name}
+                                slug={restaurant?.slug}
+                                config={config}
+                                setConfig={handleConfigChange}
+                                onNameChange={handleNameUpdate}
+                                onSlugChange={handleSlugUpdate}
+                                onLogoUpload={handleLogoUpload}
+                                onHeaderBgUpload={handleHeaderBgUpload}
+                                categories={categories}
+                                onCategoryUpdate={handleMenuUpdate}
+                            />
+                        } />
                             </Routes>
                         </ComponentErrorBoundary>
                     </Suspense>
                 </div>
 
-                {/* [NEW] Floating Action Button: View Menu (Only when QR Menu module is active) */}
-                {restaurant?.slug && moduleFeatures.hasQRMenu && (
+                {/* [NEW] Floating Action Button: View Menu (Hidden on Mobile to use Bottom Nav space) */}
+                {restaurant?.slug && (
                     <a
                         href={`/r/${restaurant.slug}`}
                         target="_blank"
@@ -776,17 +595,17 @@ const AdminDashboard = () => {
                                 </h2>
                                 
                                 <p className="text-gray-400 text-lg leading-relaxed mb-8">
-                                    Parabéns! A sua conta foi ativada com sucesso. Já pode começar a gerir a sua atividade e emitir faturas certificadas.
+                                    Parabéns! A sua conta foi ativada com sucesso. Já pode começar a configurar o seu menu digital e receber pedidos.
                                 </p>
 
                                 <div className="space-y-4 mb-8">
                                     <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
                                         <div className="w-10 h-10 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center border border-green-500/20">
-                                            <Package size={20} />
+                                            <Utensils size={20} />
                                         </div>
                                         <div className="text-left">
                                             <p className="text-xs text-gray-500 uppercase font-black tracking-widest">Passo 1</p>
-                                            <p className="text-sm font-bold text-white">Adicione as suas categorias e {sectorDetails.terms?.items?.toLowerCase() || 'produtos'}</p>
+                                            <p className="text-sm font-bold text-white">Adicione as suas categorias e pratos</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">

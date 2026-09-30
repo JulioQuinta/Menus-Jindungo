@@ -40,11 +40,20 @@ export const useNetworkStatus = () => {
             setIsOnline(true);
             setIsSlow(false);
             updateLowEndStatus(false);
-            if (toastId) {
-                toast.dismiss(toastId);
-                toastId = null;
-            }
-            toast.success("Ligação restaurada!", { id: 'network-status' });
+
+            // Dismiss the persistent offline toast
+            toast.dismiss('network-status');
+            
+            // Show restoration toast with explicit 3s duration and separate ID
+            toast.success("Ligação restaurada!", { 
+                id: 'network-status-restored',
+                duration: 3000 
+            });
+
+            // Hard safety timeout to guarantee it leaves the screen
+            setTimeout(() => {
+                toast.dismiss('network-status-restored');
+            }, 3200);
             
             // Sync any offline orders immediately when internet returns
             setTimeout(syncOfflineOrders, 1000);
@@ -53,7 +62,8 @@ export const useNetworkStatus = () => {
         const handleOffline = () => {
             setIsOnline(false);
             updateLowEndStatus(true);
-            toastId = toast.error("Sem ligação à internet. Modo offline ativo.", { 
+            toast.dismiss('network-status-restored');
+            toast.error("Sem ligação à internet. Modo offline ativo.", { 
                 id: 'network-status',
                 duration: Infinity 
             });

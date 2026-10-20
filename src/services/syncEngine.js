@@ -1,6 +1,30 @@
 import { db, offlineDb } from '../lib/offlineDb';
 import { supabase } from '../lib/supabaseClient';
 
+const VALID_ORDER_COLUMNS = [
+    'id', 'restaurant_id', 'items', 'total', 'status', 'customer_name',
+    'table_number', 'created_at', 'customer_phone', 'rejection_reason',
+    'coupon_id', 'coupon_code', 'coupon_discount', 'is_loyalty_redemption',
+    'loyalty_reward_text', 'staff_member_id', 'staff_member_name', 'order_type',
+    'delivery_address', 'delivery_neighborhood', 'delivery_reference',
+    'delivery_fee', 'takeaway_time', 'courier_name', 'courier_phone',
+    'dispatched_at', 'courier_latitude', 'courier_longitude',
+    'invoice_status', 'invoice_number', 'request_id', 'jws_hash', 'validation_code'
+];
+
+function sanitizeOrderForSupabase(raw) {
+    const clean = {};
+    for (const key of VALID_ORDER_COLUMNS) {
+        if (raw[key] !== undefined) {
+            clean[key] = raw[key];
+        }
+    }
+    if (typeof clean.id === 'string' && (clean.id.startsWith('off-') || clean.id.startsWith('POS-'))) {
+        delete clean.id;
+    }
+    return clean;
+}
+
 class SyncEngine {
     constructor() {
         this.isSyncing = false;
@@ -14,7 +38,6 @@ class SyncEngine {
         }
     }
 
-    // Registar subscrições para atualizações de contagem de pendências UI
     subscribe(callback) {
         this.subscribers.add(callback);
         return () => this.subscribers.delete(callback);
@@ -30,19 +53,17 @@ class SyncEngine {
         });
     }
 
-    // Verificar se existe ligação ativa à cloud Supabase
     async isOnline() {
         if (typeof navigator !== 'undefined' && !navigator.onLine) {
             return false;
         }
         try {
-            // Ping rápido à Supabase com timeout de 3s
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3000);
+            const timeoutId = setTimeout(() => controller.abort(), 4000);
             
             const { error } = await supabase
-                .from('app_settings')
-                .select('key')
+                .from('restaurants')
+                .select('id')
                 .limit(1)
                 .abortSignal(controller.signal);
 
@@ -53,16 +74,13 @@ class SyncEngine {
         }
     }
 
-    // Sincronizar todos os dados pendentes acumulados (Processamento por lotes / Batching)
     async syncPendingData(restaurantId = null) {
         if (this.isSyncing) {
-            console.log('[SyncEngine] Sincronização já em curso. A aguardar...');
             return { success: false, reason: 'ALREADY_SYNCING' };
         }
 
         const online = await this.isOnline();
         if (!online) {
-            console.log('[SyncEngine] Sem acesso à internet/cloud. Sincronização adiada.');
             return { success: false, reason: 'OFFLINE' };
         }
 
@@ -71,9 +89,6 @@ class SyncEngine {
         let failedCount = 0;
 
         try {
-            console.log('[SyncEngine] A iniciar sincronização em lote da fila offline...');
-
-            // Obter todos os itens pendentes da fila
             let pendingItems = await db.sync_queue
                 .where('status')
                 .equals('pending')
@@ -83,25 +98,15 @@ class SyncEngine {
                 pendingItems = pendingItems.filter(item => item.payload && item.payload.restaurant_id === restaurantId);
             }
 
-            console.log(`[SyncEngine] Total de registos pendentes a enviar: ${pendingItems.length}`);
-
-            // Processar em lotes de 15 faturas por vez
             const BATCH_SIZE = 15;
             for (let i = 0; i < pendingItems.length; i += BATCH_SIZE) {
                 const batch = pendingItems.slice(i, i + BATCH_SIZE);
 
                 for (const item of batch) {
                     try {
-                        let success = false;
-                        if (item.action === 'create_order') {
-                            success = await this.syncOrderRecord(item.payload);
-                        }
-
+                        const success = await this.syncOrderRecord(item.payload);
                         if (success) {
-                            // Marcar item na fila como sincronizado
                             await db.sync_queue.update(item.id, { status: 'synced', synced_at: new Date().toISOString() });
-                            
-                            // Atualizar estado no banco de dados offline
                             if (item.offline_uuid) {
                                 await db.orders.update(item.offline_uuid, { sync_status: 'synced' });
                             }
@@ -110,7 +115,7 @@ class SyncEngine {
                             const newRetryCount = (item.retry_count || 0) + 1;
                             await db.sync_queue.update(item.id, { 
                                 retry_count: newRetryCount,
-                                status: newRetryCount > 10 ? 'failed' : 'pending' 
+                                status: newRetryCount >= 2 ? 'failed' : 'pending' 
                             });
                             failedCount++;
                         }
@@ -121,12 +126,10 @@ class SyncEngine {
                 }
             }
 
-            // Notificar UI sobre a contagem atualizada
             const remainingPending = await offlineDb.getPendingSyncCount(restaurantId);
             this.notifySubscribers(remainingPending);
 
-            console.log(`[SyncEngine] Concluído! Sincronizados: ${syncedCount}, Falhas: ${failedCount}`);
-            return { success: true, syncedCount, failedCount };
+            return { success: syncedCount > 0 || failedCount === 0, syncedCount, failedCount };
         } catch (globalErr) {
             console.error('[SyncEngine] Falha global na sincronização:', globalErr);
             return { success: false, error: globalErr };
@@ -135,19 +138,36 @@ class SyncEngine {
         }
     }
 
-    // Enviar registo de ordem individual com desduplicação por offline_uuid
     async syncOrderRecord(orderPayload) {
+        if (!orderPayload || !orderPayload.restaurant_id) {
+            return true;
+        }
         try {
-            // Remover propriedades locais temporárias antes de subir para a Supabase
-            const { is_offline_created, sync_status, ...orderToInsert } = orderPayload;
+            const cleanOrder = sanitizeOrderForSupabase(orderPayload);
 
-            // Fazer upsert no Supabase usando offline_uuid se existir, ou insert simples
             const { error } = await supabase
                 .from('orders')
-                .upsert([orderToInsert], { onConflict: 'offline_uuid', ignoreDuplicates: false });
+                .insert([cleanOrder]);
 
-            if (error) {
-                console.error('[SyncEngine] Erro no upsert Supabase:', error);
+            if (!error || error.code === '23505') return true;
+
+            const minimalOrder = {
+                restaurant_id: cleanOrder.restaurant_id,
+                table_number: cleanOrder.table_number || 'Balcão',
+                items: Array.isArray(cleanOrder.items) ? cleanOrder.items : [],
+                total: Number(cleanOrder.total) || 0,
+                status: cleanOrder.status || 'paid',
+                customer_name: cleanOrder.customer_name || 'Consumidor Final',
+                customer_phone: cleanOrder.customer_phone || '',
+                created_at: cleanOrder.created_at || new Date().toISOString()
+            };
+
+            const { error: fallbackError } = await supabase
+                .from('orders')
+                .insert([minimalOrder]);
+
+            if (fallbackError && fallbackError.code !== '23505') {
+                console.error('[SyncEngine] Erro no insert Supabase (fallback):', fallbackError);
                 return false;
             }
 

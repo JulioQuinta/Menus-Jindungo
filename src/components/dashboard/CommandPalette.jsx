@@ -10,7 +10,7 @@ const CommandPalette = ({ isOpen, onClose, menuItems = [] }) => {
 
     // Filtered results based on search
     const filteredItems = menuItems.filter(item => 
-        item.label.toLowerCase().includes(search.toLowerCase())
+        (item.label || '').toLowerCase().includes(search.toLowerCase())
     );
 
     // Common Quick Actions

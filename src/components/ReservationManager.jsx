@@ -1215,7 +1215,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
 
                             <div className="flex-1 overflow-y-auto custom-scrollbar grid grid-cols-2 gap-3 pr-1">
                                 {productsList
-                                    .filter(p => !quickSearchQuery || p.name.toLowerCase().includes(quickSearchQuery.toLowerCase()))
+                                    .filter(p => !quickSearchQuery || (p.name || '').toLowerCase().includes(quickSearchQuery.toLowerCase()))
                                     .map((product) => {
                                         const productImg = product.img || product.img_url || product.image_url;
                                         return (
@@ -1382,7 +1382,7 @@ const ReservationManager = ({ restaurantId, restaurantName }) => {
 
                             <div className="flex-1 overflow-y-auto custom-scrollbar grid grid-cols-2 gap-3 pr-1">
                                 {productsList
-                                    .filter(p => !quickSearchQuery || p.name.toLowerCase().includes(quickSearchQuery.toLowerCase()))
+                                    .filter(p => !quickSearchQuery || (p.name || '').toLowerCase().includes(quickSearchQuery.toLowerCase()))
                                     .map((product) => {
                                         const productImg = product.img || product.img_url || product.image_url;
                                         return (

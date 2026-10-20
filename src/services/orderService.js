@@ -1,6 +1,30 @@
 import { supabase } from '../lib/supabaseClient';
 import { offlineDb, db } from '../lib/offlineDb';
 
+const VALID_ORDER_COLUMNS = [
+    'id', 'restaurant_id', 'items', 'total', 'status', 'customer_name',
+    'table_number', 'created_at', 'customer_phone', 'rejection_reason',
+    'coupon_id', 'coupon_code', 'coupon_discount', 'is_loyalty_redemption',
+    'loyalty_reward_text', 'staff_member_id', 'staff_member_name', 'order_type',
+    'delivery_address', 'delivery_neighborhood', 'delivery_reference',
+    'delivery_fee', 'takeaway_time', 'courier_name', 'courier_phone',
+    'dispatched_at', 'courier_latitude', 'courier_longitude',
+    'invoice_status', 'invoice_number', 'request_id', 'jws_hash', 'validation_code'
+];
+
+function sanitizeOrderForSupabase(raw) {
+    const clean = {};
+    for (const key of VALID_ORDER_COLUMNS) {
+        if (raw[key] !== undefined) {
+            clean[key] = raw[key];
+        }
+    }
+    if (typeof clean.id === 'string' && (clean.id.startsWith('off-') || clean.id.startsWith('POS-'))) {
+        delete clean.id;
+    }
+    return clean;
+}
+
 export const orderService = {
     // Create a new order (Com Fallback Transparente Offline)
     async createOrder(orderData) {
@@ -19,7 +43,7 @@ export const orderService = {
         try {
             const { data, error } = await supabase
                 .from('orders')
-                .insert([orderData])
+                .insert([sanitizeOrderForSupabase(orderData)])
                 .select()
                 .single();
 

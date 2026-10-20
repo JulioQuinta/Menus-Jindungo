@@ -12,7 +12,7 @@ import {
 import { toast } from 'react-hot-toast';
 
 const StaffManager = ({ restaurantId, businessSector }) => {
-    const isPharm = businessSector === 'farmacia' || businessSector === 'pharmacy' || businessSector === 'health_medical';
+    const isPharm = false;
     const isSuper = businessSector === 'supermercado';
 
     const [staff, setStaff] = useState([]);
@@ -123,10 +123,10 @@ const StaffManager = ({ restaurantId, businessSector }) => {
             return;
         }
 
-        // Unicidade de PIN no mesmo negócio (Alerta discreto segundo boas práticas de segurança)
-        const duplicatePin = staff.find(s => s.pin_code === newStaff.pin_code.trim());
+        // Unicidade de PIN e Nome no mesmo restaurante
+        const duplicatePin = staff.find(s => String(s.pin_code || '').trim() === newStaff.pin_code.trim());
         if (duplicatePin) {
-            toast.error("Este PIN não se encontra disponível. Por favor, escolha uma combinação diferente.");
+            toast.error(`⚠️ O PIN ${newStaff.pin_code} já está atribuído a "${duplicatePin.name}". Cada membro da equipa tem de ter um PIN único!`);
             return;
         }
 
@@ -140,7 +140,10 @@ const StaffManager = ({ restaurantId, businessSector }) => {
                 email: newStaff.email.trim() || null
             });
 
-            if (error) throw error;
+            if (error) {
+                toast.error(error.message || "Este PIN ou E-mail já está em uso por outro colega.");
+                return;
+            }
 
             toast.success(isPharm ? "Operador / Farmacêutico adicionado à escala!" : "Membro da equipa adicionado com sucesso!");
             fetchStaff();
@@ -166,7 +169,7 @@ const StaffManager = ({ restaurantId, businessSector }) => {
         }
 
         try {
-            await staffService.deleteStaff(id);
+            await staffService.deleteStaff(id, restaurantId);
             setStaff(prev => prev.filter(s => s.id !== id));
             toast.success("Membro removido.");
         } catch (error) {
@@ -176,8 +179,8 @@ const StaffManager = ({ restaurantId, businessSector }) => {
     };
 
     const filteredStaff = staff.filter(s =>
-        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (s.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (s.role || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (s.roleLabel && s.roleLabel.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
@@ -652,7 +655,25 @@ const StaffManager = ({ restaurantId, businessSector }) => {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="relative">
-                                    <label className={labelClasses}>PIN (4 DÍGITOS)</label>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">PIN PESSOAL ÚNICO</label>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const usedPins = new Set(staff.map(s => String(s.pin_code || '').trim()));
+                                                let candidate = '';
+                                                do {
+                                                    candidate = String(Math.floor(1000 + Math.random() * 9000));
+                                                } while (usedPins.has(candidate));
+                                                setNewStaff(prev => ({ ...prev, pin_code: candidate }));
+                                                setShowPin(true);
+                                                toast.success(`PIN único gerado: ${candidate}`);
+                                            }}
+                                            className="text-[9px] font-black text-[#D4AF37] hover:underline uppercase tracking-wider cursor-pointer"
+                                        >
+                                            🎲 Gerar PIN Único
+                                        </button>
+                                    </div>
                                     <div className="relative">
                                         <input
                                             type={showPin ? "text" : "password"}

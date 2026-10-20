@@ -38,7 +38,7 @@ const DEFAULT_ITEM = {
     translations: { pt: {}, en: {}, fr: {} }
 };
 
-const MenuManager = ({ categories: initialCategories = [], restaurantId, restaurant, sectorId = 'farmacia', onUpdate }) => {
+const MenuManager = ({ categories: initialCategories = [], restaurantId, restaurant, sectorId = 'restaurant', onUpdate }) => {
     const [categories, setCategories] = useState([]);
     const [editingItem, setEditingItem] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
@@ -48,16 +48,19 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
     const [activeCategoryFilter, setActiveCategoryFilter] = useState('all');
     const [aiGenerating, setAiGenerating] = useState(false);
 
-    const activeSectorId = restaurant?.business_type || restaurant?.business_sector || restaurant?.sector || sectorId || 'farmacia';
+    const activeSectorId = restaurant?.business_type || restaurant?.business_sector || restaurant?.sector || sectorId || 'restaurant';
     const terms = getSectorTerminology(activeSectorId);
 
     const handleResetStock = async () => {
         if (!window.confirm(terms.stockResetPrompt)) return;
-
-        const qty = window.prompt("Defina a nova quantidade padrão para todos os itens (ou deixe 0):", "50");
-        if (qty === null) return;
-        
-        const newQty = parseInt(qty) || 0;
+        let qty = "50";
+        try {
+            const prompted = window.prompt("Defina a nova quantidade padrão para todos os itens (ou deixe 50):", "50");
+            if (prompted !== null && prompted !== undefined) qty = prompted;
+        } catch {
+            qty = "50";
+        }
+        const newQty = parseInt(qty, 10) || 50;
 
         try {
             toast.loading("A repor stock...", { id: 'reset-stock' });
@@ -216,8 +219,27 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
             if (onUpdate) onUpdate();
             toast.success(isNew ? terms.createdToast : terms.updatedToast);
         } catch (err) {
-            console.error("Error saving item:", err);
-            toast.error("Erro ao salvar item.");
+            console.warn("A guardar item localmente (Modo Offline):", err);
+            const isNew = !editingItem.id;
+            const localItem = {
+                ...editingItem,
+                id: editingItem.id || ('local-item-' + Date.now()),
+                restaurant_id: restaurantId
+            };
+            setCategories(prev => {
+                const updated = prev.map(cat => {
+                    if (cat.id !== localItem.category_id) return cat;
+                    const existingItems = cat.items || [];
+                    const newItems = isNew
+                        ? [...existingItems, localItem]
+                        : existingItems.map(i => i.id === localItem.id ? localItem : i);
+                    return { ...cat, items: newItems };
+                });
+                localStorage.setItem('jindungo_cached_categories', JSON.stringify(updated));
+                return updated;
+            });
+            setEditingItem(null);
+            toast.success(isNew ? terms.createdToast : terms.updatedToast);
         } finally {
             setIsSaving(false);
         }
@@ -236,13 +258,23 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
         }
     };
 
-    const triggerAIAssistant = (categoryName) => {
+    const triggerAIAssistant = (categoryName, categoryId) => {
         setAiGenerating(true);
-        toast.loading(`Gerando sugestões premium de ${terms.itemPlural} para ${categoryName}...`, { id: 'ai-gen' });
+        toast.loading(`Gerando sugestão inteligente de ${terms.itemSingle} para ${categoryName}...`, { id: 'ai-gen' });
         setTimeout(() => {
-            toast.success("Sugestões geradas com sucesso! Verifique na lista.", { id: 'ai-gen' });
+            const targetCat = categories.find(c => c.id === categoryId) || categories[0];
+            const suggestedName = `Especialidade ${categoryName || terms.itemSingle}`;
+            const suggestedDesc = `Sugestão premium de ${categoryName || terms.itemSingle}, preparada com ingredientes selecionados e padrão de qualidade superior.`;
+            setEditingItem({
+                ...DEFAULT_ITEM,
+                category_id: targetCat?.id || '',
+                name: suggestedName,
+                price: '3500 Kz',
+                desc_text: suggestedDesc
+            });
+            toast.success("Sugestão IA criada! Confirme os detalhes e clique em Guardar.", { id: 'ai-gen' });
             setAiGenerating(false);
-        }, 2000);
+        }, 800);
     };
 
     if (editingItem) {
@@ -296,7 +328,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
                                                 if (!editingItem.name) return toast.error("Digite o nome primeiro!");
                                                 const templates = [
                                                     `${editingItem.name} formulado sob rigorosos padrões de qualidade, indicado para reposição e cuidados diários.`,
-                                                    `Produto de alta eficácia ${editingItem.name}, recomendado para conformidade e excelente aceitação clínica.`
+                                                    `Especialidade gastronómica ${editingItem.name}, preparada com ingredientes selecionados e sabor autêntico.`
                                                 ];
                                                 setEditingItem({ ...editingItem, desc_text: templates[Math.floor(Math.random() * templates.length)] });
                                             }}
@@ -432,7 +464,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                         <input 
                             type="text" 
-                            placeholder={`Procurar ${terms.itemPlural.toLowerCase()}...`} 
+                            placeholder={`Procurar ${(terms?.itemPlural || 'itens').toLowerCase()}...`} 
                             value={adminSearch} 
                             onChange={(e) => setAdminSearch(e.target.value)} 
                             className="w-full pl-10 pr-4 py-3 bg-[#111111] border border-[#2E2E2E] focus:border-[#F5C542] rounded-2xl text-white text-xs outline-none transition-all shadow-inner" 
@@ -492,7 +524,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
                 ))}
             </div>
 
-            {/* MAIN TWO-COLUMN WORKSPACE MATCHING TOP WORLDWIDE PHARMACY & ERP SOFTWARE */}
+            {/* MAIN TWO-COLUMN WORKSPACE FOR RESTAURANT & MENU MANAGEMENT */}
             <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 
                 {/* LEFT COLUMN: TALL ILLUSTRATED CATEGORY CARDS WITH DYNAMIC SECTOR BADGES */}
@@ -576,7 +608,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
                                                         </div>
 
                                                         <button 
-                                                            onClick={() => triggerAIAssistant(cat.label || cat.name)}
+                                                            onClick={() => triggerAIAssistant(cat.label || cat.name, cat.id)}
                                                             disabled={aiGenerating}
                                                             className="px-4 py-2 bg-gradient-to-r from-[#F5C542]/10 to-amber-500/10 text-[#F5C542] rounded-xl border border-[#F5C542]/30 hover:bg-[#F5C542] hover:text-black transition-all font-black uppercase text-[10px] tracking-widest flex items-center gap-1.5 shadow-md"
                                                         >

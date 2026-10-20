@@ -6,7 +6,7 @@ import { useAdminData } from '../hooks/useAdminData';
 import { useAdminAlerts } from '../hooks/useAdminAlerts';
 import { useDashboardStats } from '../hooks/useDashboardStats';
 import toast, { Toaster } from 'react-hot-toast';
-import { QrCode, ClipboardList, TrendingUp, Settings, LogOut, ChevronRight, Menu, Bell, LinkIcon, MapPin, Search, Star, Utensils, MonitorSmartphone, Mail, Smartphone, Eye, Calendar, Tag, Info, UserX, MessageSquare, Volume2, Shield, LayoutDashboard, UtensilsCrossed, User, Award, Ticket, Users, ExternalLink, X, Package } from 'lucide-react';
+import { QrCode, ClipboardList, FileText, TrendingUp, Settings, LogOut, ChevronRight, Menu, Bell, LinkIcon, MapPin, Search, Star, Utensils, MonitorSmartphone, Mail, Smartphone, Eye, Calendar, Tag, Info, UserX, MessageSquare, Volume2, Shield, LayoutDashboard, UtensilsCrossed, User, Award, Ticket, Users, ExternalLink, X, Package } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 import { getPlanFeatures } from '../utils/planLimits';
@@ -41,6 +41,7 @@ const FeedbackManager = lazyWithRetry(() => import('../components/FeedbackManage
 const CouponManager = lazyWithRetry(() => import('../components/CouponManager'));
 const UpgradePrompt = lazyWithRetry(() => import('../components/UpgradePrompt'));
 const InventoryManager = lazyWithRetry(() => import('../components/InventoryManager'));
+const InvoicesManager = lazyWithRetry(() => import('../components/InvoicesManager'));
 const SettingsManager = lazyWithRetry(() => import('../components/SettingsManager'));
 
 // Refactored Sub-components
@@ -50,6 +51,7 @@ import AdminAlerts from '../components/dashboard/AdminAlerts';
 import MasqueradeBanner from '../components/dashboard/MasqueradeBanner';
 import AdminMobileNav from '../components/dashboard/AdminMobileNav';
 import StaffPinModal from '../components/StaffPinModal';
+import StaffTerminalView, { normalizeStaffRole } from '../components/StaffTerminalView';
 import PaymentSaaSModal from '../components/PaymentSaaSModal';
 import CommandPalette from '../components/dashboard/CommandPalette';
 import HypnoticStats from '../components/dashboard/HypnoticStats';
@@ -128,16 +130,19 @@ const AdminDashboard = () => {
             const STAFF_EXPIRY_MS = 8 * 60 * 60 * 1000; // 8 Hours
             const savedName = localStorage.getItem(`jindungo_staff_name_${restaurant.id}`);
             const savedId = localStorage.getItem(`jindungo_staff_id_${restaurant.id}`);
+            const savedRole = localStorage.getItem(`jindungo_staff_role_${restaurant.id}`) || 'waiter';
             const loginTime = localStorage.getItem(`jindungo_staff_login_time_${restaurant.id}`);
 
             if (savedName && savedId && loginTime) {
                 const elapsed = Date.now() - parseInt(loginTime);
                 if (elapsed < STAFF_EXPIRY_MS) {
-                    setActiveStaff({ id: savedId, name: savedName });
+                    const normalized = normalizeStaffRole(savedRole);
+                    setActiveStaff({ id: savedId, name: savedName, role: normalized });
                 } else {
                     // Session Expired
                     localStorage.removeItem(`jindungo_staff_id_${restaurant.id}`);
                     localStorage.removeItem(`jindungo_staff_name_${restaurant.id}`);
+                    localStorage.removeItem(`jindungo_staff_role_${restaurant.id}`);
                     localStorage.removeItem(`jindungo_staff_login_time_${restaurant.id}`);
                     toast.error("Sessão de staff expirada (Turno de 8h). Por favor, entre novamente.");
                     setActiveStaff(null);
@@ -231,11 +236,12 @@ const AdminDashboard = () => {
         fetchRestaurantData(); // Refresh data
     };
 
-    const menuItems = [
+    const allMenuItems = [
         { icon: LayoutDashboard, label: 'Visão Geral', path: '/admin' },
         { icon: MessageSquare, label: 'Assistente IA', path: '/admin/chat' },
         { icon: UtensilsCrossed, label: 'Menu Digital', path: '/admin/menu' },
-        { icon: ClipboardList, label: 'Pedidos (Cozinha)', path: '/admin/orders' },
+        { icon: ClipboardList, label: 'Pedidos & Cozinha (KDS)', path: '/admin/orders' },
+        { icon: FileText, label: 'Vendas & POS (AGT)', path: '/admin/invoices' },
         { icon: Package, label: 'Gestão de Stock', path: '/admin/inventory' },
         { icon: Calendar, label: 'Reservas', path: '/admin/reservations' },
         { icon: User, label: 'CRM Clientes', path: '/admin/crm', feature: 'canCollectClientData' },
@@ -247,6 +253,29 @@ const AdminDashboard = () => {
         { icon: QrCode, label: 'QR Code', path: '/admin/qrcode' },
         { icon: Settings, label: 'Configurações', path: '/admin/settings' },
     ];
+
+    // Separação visual por função (Padrão Mundial Toast POS / Square / Lightspeed):
+    // - kitchen (Cozinha): Vê APENAS o Terminal KDS dedicado da Cozinha
+    // - waiter (Garçom / Sala): Vê APENAS o Terminal de Mesas, Passe da Cozinha e Anotar Pedido
+    // - reception (Caixa POS): Vê APENAS o Terminal de Caixa POS (AGT)
+    // - admin (ou Dono sem staff restrito): Vê o Backoffice completo de Gestão
+    const staffRole = activeStaff ? normalizeStaffRole(activeStaff.role) : null;
+    const isRestrictedKitchen = staffRole === 'kitchen';
+    const isRestrictedSeller = staffRole === 'waiter' || staffRole === 'reception';
+    const isDedicatedStaffTerminal = Boolean(activeStaff && staffRole !== 'admin');
+
+    const menuItems = allMenuItems;
+
+    const handleExitStaffMode = () => {
+        if (restaurant?.id) {
+            localStorage.removeItem(`jindungo_staff_id_${restaurant.id}`);
+            localStorage.removeItem(`jindungo_staff_name_${restaurant.id}`);
+            localStorage.removeItem(`jindungo_staff_role_${restaurant.id}`);
+            localStorage.removeItem(`jindungo_staff_login_time_${restaurant.id}`);
+        }
+        setActiveStaff(null);
+        toast.success('Modo Gerente / Administrador restaurado.');
+    };
 
     const isExpired = restaurant?.valid_until ? new Date(restaurant.valid_until) < new Date() : false;
     const daysUntilExpiration = restaurant?.valid_until 
@@ -337,6 +366,34 @@ const AdminDashboard = () => {
         );
     }
 
+    if (isDedicatedStaffTerminal) {
+        return (
+            <div className="min-h-screen bg-[#0D0D0F] text-white font-sans relative">
+                <SyncStatusBanner restaurantId={restaurant?.id} />
+                <StaffTerminalView
+                    restaurant={restaurant}
+                    activeStaff={activeStaff}
+                    categories={categories}
+                    onSwitchOperator={() => setShowStaffModal(true)}
+                    onExitStaffMode={handleExitStaffMode}
+                />
+                <StaffPinModal
+                    isOpen={showStaffModal}
+                    onClose={() => setShowStaffModal(false)}
+                    restaurantId={restaurant?.id}
+                    onLogin={(staff) => {
+                        if (!staff) {
+                            setActiveStaff(null);
+                            return;
+                        }
+                        setActiveStaff({ ...staff, role: normalizeStaffRole(staff.role) });
+                    }}
+                />
+                <Toaster position="top-right" />
+            </div>
+        );
+    }
+
     return (
         <div className="flex h-screen bg-[#121212] text-gray-100 overflow-hidden max-w-[100vw] font-sans relative">
             {/* Ambient Background Incandescente Dourado Suave */}
@@ -365,6 +422,10 @@ const AdminDashboard = () => {
                 signOut={handleLogout}
                 restaurantName={restaurant?.name}
                 restaurantSlug={restaurant?.slug}
+                restaurantLogoUrl={config?.logoUrl}
+                businessSector={restaurant?.business_sector}
+                activeStaff={activeStaff}
+                onOpenStaffModal={() => setShowStaffModal(true)}
             />
 
             {/* Main Content */}
@@ -396,7 +457,13 @@ const AdminDashboard = () => {
                     isOpen={showStaffModal} 
                     onClose={() => setShowStaffModal(false)}
                     restaurantId={restaurant?.id}
-                    onLogin={(staff) => setActiveStaff(staff)}
+                    onLogin={(staff) => {
+                        if (!staff) {
+                            setActiveStaff(null);
+                            return;
+                        }
+                        setActiveStaff({ ...staff, role: normalizeStaffRole(staff.role) });
+                    }}
                 />
 
                 <PaymentSaaSModal 
@@ -437,12 +504,13 @@ const AdminDashboard = () => {
 
                         <Route path="/orders" element={
                             features.canUseKDS ? (
-                                <KitchenBoard restaurantId={restaurant?.id} config={config} restaurantName={restaurant?.name} />
+                                <KitchenBoard restaurantId={restaurant?.id} config={config} restaurantName={restaurant?.name} activeStaff={activeStaff} />
                             ) : (
                                 <OrderHistory restaurantId={restaurant?.id} />
                             )
                         } />
-                        <Route path="/inventory" element={<InventoryManager restaurantId={restaurant?.id} />} />
+                        <Route path="/invoices" element={<InvoicesManager restaurantId={restaurant?.id} restaurantName={restaurant?.name} businessSector={restaurant?.business_sector} activeStaff={activeStaff} />} />
+                        <Route path="/inventory" element={<InventoryManager restaurantId={restaurant?.id} businessSector={restaurant?.business_sector} />} />
 
                         <Route path="/staff" element={
                             features.canManageStaff ? (

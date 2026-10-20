@@ -15,7 +15,7 @@ const DAYS = [
 ];
 
 const BusinessInfoManager = ({ info, onSave, isLoading, features = {}, businessSector }) => {
-    const isPharmacy = businessSector === 'pharmacy' || businessSector === 'health_medical';
+    const isPharmacy = false;
 
     const [localInfo, setLocalInfo] = useState(() => {
         const defaultHours = DAYS.map(day => ({

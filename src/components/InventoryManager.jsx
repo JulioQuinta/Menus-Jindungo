@@ -69,7 +69,7 @@ const InventoryManager = ({ restaurantId, businessSector }) => {
                 console.warn("Could not calculate salesMap from local orders:", errOrd);
             }
 
-            const isPharmacy = businessSector === 'pharmacy' || businessSector === 'health_medical';
+            const isPharmacy = false;
             
             // Map category labels and set default stock properties if uninitialized
             const matchedItems = localItems.map(item => {
@@ -126,7 +126,7 @@ const InventoryManager = ({ restaurantId, businessSector }) => {
     // Quick seeder to auto-populate/reset initial stock values for pharmacy items
     const seedPharmacyStock = async () => {
         try {
-            toast.loading("A preencher stock inicial de medicamentos...", { id: 'seed-stock' });
+            toast.loading("A preencher stock padrão de artigos e bebidas...", { id: 'seed-stock' });
             for (const item of items) {
                 const defaultQty = Math.floor(Math.random() * 60) + 40; // 40 to 100 units
                 const defaultCost = Math.round(cleanPrice(item.price) * 0.55);
@@ -139,7 +139,7 @@ const InventoryManager = ({ restaurantId, businessSector }) => {
                 };
                 await db.menu_items.update(item.id, updates);
             }
-            toast.success("Stock inicial de medicamentos configurado!", { id: 'seed-stock' });
+            toast.success("Stock padrão de artigos configurado!", { id: 'seed-stock' });
             await loadInventoryData();
         } catch (e) {
             console.error("Error seeding pharmacy stock:", e);
@@ -338,7 +338,7 @@ const InventoryManager = ({ restaurantId, businessSector }) => {
 
     // Filters matching
     const filteredItems = items.filter(item => {
-        const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        const matchesSearch = (item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             (item.supplier_name || '').toLowerCase().includes(searchTerm.toLowerCase());
         
         const isTracking = pendingChanges[item.id]?.track_stock !== undefined 
@@ -590,9 +590,9 @@ const InventoryManager = ({ restaurantId, businessSector }) => {
                     <button
                         onClick={seedPharmacyStock}
                         className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-black rounded-2xl text-xs transition-all active:scale-95 cursor-pointer shadow-lg shadow-emerald-500/20"
-                        title="Preencher Stock Inicial Automático de Medicamentos"
+                        title="Repor Stock Inicial Padrão"
                     >
-                        <Pill size={14} /> Preencher Stock Inicial
+                        <Package size={14} /> Repor Stock Padrão
                     </button>
                     <Link
                         to="/admin/menu"
@@ -661,7 +661,7 @@ const InventoryManager = ({ restaurantId, businessSector }) => {
                                 Venda Estimada em Stock
                             </p>
                             <h3 className="text-2xl font-serif font-black text-[#D4AF37] tracking-tight mt-1">{formatCurr(metrics.totalSalesValue)}</h3>
-                            <p className="text-[9px] text-gray-500 mt-2 font-medium">Valor total dos medicamentos disponíveis</p>
+                            <p className="text-[9px] text-gray-500 mt-2 font-medium">Valor total dos artigos e bebidas disponíveis</p>
                         </div>
 
                         {/* Metrics Card 2: Unidades em Stock */}
@@ -680,7 +680,7 @@ const InventoryManager = ({ restaurantId, businessSector }) => {
                             <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/5 blur-3xl rounded-full -mr-8 -mt-8"></div>
                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1 flex items-center gap-1.5">
                                 <TrendingUp size={13} className="text-cyan-400" />
-                                Medicamentos Vendidos
+                                Artigos Vendidos
                             </p>
                             <h3 className="text-2xl font-serif font-black text-cyan-400 tracking-tight mt-1">{metrics.totalUnitsSold} Unid.</h3>
                             <p className="text-[10px] text-cyan-500 font-bold mt-2 flex items-center gap-1">
@@ -761,7 +761,7 @@ const InventoryManager = ({ restaurantId, businessSector }) => {
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="border-b border-white/5">
-                                        <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Fármaco / Produto</th>
+                                        <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Prato / Artigo</th>
                                         <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Stock Disponível</th>
                                         <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Qtd Vendida</th>
                                         <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Controlo</th>
@@ -970,7 +970,7 @@ const InventoryManager = ({ restaurantId, businessSector }) => {
                                     <Calendar className="text-emerald-400" size={22} />
                                     Gestão de Lotes & Estratégia FEFO (First Expired, First Out)
                                 </h4>
-                                <p className="text-xs text-gray-400 mt-1">Priorização de saída balcão para medicamentos com prazo de validade mais curto, evitando desperdícios e garantindo segurança do paciente.</p>
+                                <p className="text-xs text-gray-400 mt-1">Priorização de saída para ingredientes, bebidas e lotes com prazo de validade mais curto, evitando desperdícios na cozinha e no bar.</p>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                                 <span className="bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-bold px-3 py-1.5 rounded-xl">
@@ -986,7 +986,7 @@ const InventoryManager = ({ restaurantId, businessSector }) => {
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="border-b border-white/5">
-                                        <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Medicamento / Fármaco</th>
+                                        <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Artigo / Ingrediente</th>
                                         <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">N.º Lote (LT)</th>
                                         <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Data de Validade</th>
                                         <th className="px-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Dias Restantes</th>
@@ -1014,7 +1014,7 @@ const InventoryManager = ({ restaurantId, businessSector }) => {
                                                 <td className="px-5 py-4">
                                                     <div className="flex flex-col">
                                                         <span className="text-white font-serif font-bold text-sm">{item.name}</span>
-                                                        <span className="text-gray-500 text-[10px]">{item.categories?.label || 'Fármacos'}</span>
+                                                        <span className="text-gray-500 text-[10px]">{item.categories?.label || 'Restauração'}</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-5 py-4 text-center">

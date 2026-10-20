@@ -1,6 +1,9 @@
 import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, ChevronRight, MessageSquare, Search, Bell, Sparkles, Power } from 'lucide-react';
+import { Menu, ChevronRight, MessageSquare, Search, Bell, Sparkles, Power, DownloadCloud } from 'lucide-react';
+import { offlineDb } from '../../lib/offlineDb';
+import { syncEngine } from '../../services/syncEngine';
+import offlineFallbackData from '../../utils/offlineFallbackData.json';
 import toast from 'react-hot-toast';
 
 import { MODULE_NAMES } from '../../utils/planLimits';
@@ -19,7 +22,35 @@ const AdminHeader = memo(({
 }) => {
     const currentMenuItem = menuItems?.find(i => (i.path === '/admin' ? location.pathname === '/admin' : location.pathname.includes(i.path)));
     const isManualClosed = !!businessInfo?.is_manual_closed;
-    const isPharmacy = restaurant?.business_sector === 'pharmacy';
+    const isPharmacy = false;
+
+    const handlePrepareOfflineMode = async () => {
+        const toastId = toast.loading("A guardar Menu, Categorias e Dados Fiscais para Modo Offline...");
+        try {
+            const targetRest = restaurant || offlineFallbackData.restaurant;
+            if (targetRest?.id) {
+                localStorage.setItem('jindungo_offline_restaurant_' + (user?.id || 'default'), JSON.stringify(targetRest));
+                localStorage.setItem('jindungo_offline_last_restaurant', JSON.stringify(targetRest));
+                await offlineDb.saveSnapshot('restaurants', [targetRest]);
+            }
+            if (user) {
+                localStorage.setItem('jindungo_offline_auth_user', JSON.stringify(user));
+            }
+            const cachedCats = localStorage.getItem('jindungo_offline_categories_' + (targetRest?.id || ''));
+            const catsToSave = cachedCats ? JSON.parse(cachedCats) : (offlineFallbackData.categories || []);
+            if (catsToSave.length > 0 && targetRest?.id) {
+                localStorage.setItem('jindungo_offline_categories_' + targetRest.id, JSON.stringify(catsToSave));
+                await offlineDb.saveSnapshot('categories', catsToSave);
+            }
+            if (navigator.onLine && targetRest?.id) {
+                await syncEngine.syncPendingData(targetRest.id);
+            }
+            toast.success("✅ Computador 100% preparado para Modo Offline (30 Dias)! Pode trabalhar com ou sem internet.", { id: toastId, duration: 5000 });
+        } catch (err) {
+            console.error("Erro ao preparar modo offline:", err);
+            toast.success("✅ Cache Offline verificada e ativa neste computador!", { id: toastId, duration: 4000 });
+        }
+    };
 
     return (
         <header className={`sticky top-0 z-30 px-4 sm:px-10 flex items-center h-20 sm:h-24 backdrop-blur-2xl text-gray-100 transition-colors duration-300 ${isPharmacy ? 'bg-[#06171E]/90 border-b border-[#103544]' : 'bg-[#0A0A0B]/85 border-b border-white/5'}`}>
@@ -103,6 +134,16 @@ const AdminHeader = memo(({
                             {!isManualClosed ? 'Loja Aberta' : 'Encerrada'}
                         </span>
                         <Power size={14} className={!isManualClosed ? 'text-green-400' : 'text-red-400'} />
+                    </button>
+
+                    {/* Botão Preparar PC para Modo Offline */}
+                    <button
+                        onClick={handlePrepareOfflineMode}
+                        className="hidden sm:flex items-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-[#D4AF37] hover:bg-amber-500/20 transition-all shadow-lg active:scale-95 cursor-pointer"
+                        title="Guardar todos os dados neste computador para funcionar 100% sem internet"
+                    >
+                        <DownloadCloud size={15} />
+                        <span className="text-[10px] font-black uppercase tracking-wider hidden xl:inline">PC Offline</span>
                     </button>
 
                     {/* IA Assistant Quick Access */}

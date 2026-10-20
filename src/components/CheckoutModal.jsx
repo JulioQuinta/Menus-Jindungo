@@ -404,8 +404,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
             paymentInfo = t('cash') + (changeFor ? ` (Troco para: ${changeFor})` : '');
         } else if (paymentMethod === 'express') {
             paymentInfo = 'Express';
-        } else if (paymentMethod === 'insurance') {
-            paymentInfo = `Seguradora (${healthInsurance}) | Seguro: ${healthInsurance} (${insuranceCoveragePercent}%) | Apólice: ${healthPolicy || 'N/A'}`;
+
         } else {
             paymentInfo = paymentMethod;
         }
@@ -427,12 +426,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
             status: initialStatus,
             customer_name: customerName || 'Cliente',
             customer_phone: customerPhone,
-            payment_method: paymentMethod === 'insurance' ? `Seguradora (${healthInsurance})` : paymentMethod,
-            health_insurance_name: paymentMethod === 'insurance' ? healthInsurance : null,
-            health_insurance_policy: paymentMethod === 'insurance' ? healthPolicy : null,
-            insurance_coverage_percent: paymentMethod === 'insurance' ? insuranceCoveragePercent : 0,
-            insurance_amount: paymentMethod === 'insurance' ? Math.round(total * (insuranceCoveragePercent / 100)) : 0,
-            patient_copay_amount: paymentMethod === 'insurance' ? (total - Math.round(total * (insuranceCoveragePercent / 100))) : total,
+            payment_method: paymentMethod,
             table_number: `${baseTableOrAddress} | Pgto: ${paymentInfo}`,
             coupon_id: appliedCoupon?.id || null,
             coupon_code: appliedCoupon?.code || null,
@@ -1326,85 +1320,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                                             <CreditCard size={16} />
                                             <span>Transferência</span>
                                         </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setPaymentMethod('insurance')}
-                                            className={`flex items-center justify-center gap-1.5 py-3 px-3 rounded-xl border-2 transition-all font-bold text-xs ${paymentMethod === 'insurance' ? 'bg-emerald-50 border-emerald-500 text-emerald-800 shadow-sm' : 'bg-white border-gray-100 text-gray-400 hover:border-gray-300'}`}
-                                        >
-                                            <span className="text-base">🛡️</span>
-                                            <span>Seguradora</span>
-                                        </button>
                                     </div>
-
-                                    {paymentMethod === 'insurance' && (
-                                        <div className="mt-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl animate-in slide-in-from-right duration-300 space-y-4">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xl">🏥</span>
-                                                <div>
-                                                    <h4 className="text-xs font-black text-emerald-950 uppercase tracking-widest">Seguro de Saúde & Copagamento (Angola)</h4>
-                                                    <p className="text-[10px] text-emerald-700">Faturação direta à seguradora com copagamento do utente</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                <div>
-                                                    <label className="block text-[10px] font-bold text-emerald-900 uppercase tracking-wider mb-1">Seguradora de Saúde</label>
-                                                    <select 
-                                                        value={healthInsurance} 
-                                                        onChange={e => setHealthInsurance(e.target.value)}
-                                                        className="w-full px-3 py-2 bg-white border border-emerald-300 rounded-xl text-xs font-bold text-gray-900 outline-none focus:ring-2 focus:ring-emerald-400"
-                                                    >
-                                                        <option value="ENSA Seguros">ENSA Seguros</option>
-                                                        <option value="AdvanceCare Angola">AdvanceCare Angola</option>
-                                                        <option value="Nossa Seguros">Nossa Seguros</option>
-                                                        <option value="Fidelidade Angola">Fidelidade Angola</option>
-                                                        <option value="Sáham Assurance">Sáham Assurance</option>
-                                                        <option value="Universal Seguros">Universal Seguros</option>
-                                                        <option value="BIC Seguros">BIC Seguros</option>
-                                                        <option value="Outro Plano Privado">Outra Seguradora / Plano Privado</option>
-                                                    </select>
-                                                </div>
-
-                                                <div>
-                                                    <label className="block text-[10px] font-bold text-emerald-900 uppercase tracking-wider mb-1">N.º do Cartão / Apólice</label>
-                                                    <input 
-                                                        type="text" 
-                                                        value={healthPolicy} 
-                                                        onChange={e => setHealthPolicy(e.target.value)}
-                                                        placeholder="Ex: ENSA-99201-X"
-                                                        className="w-full px-3 py-2 bg-white border border-emerald-300 rounded-xl text-xs font-bold text-gray-900 outline-none focus:ring-2 focus:ring-emerald-400"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <label className="text-[10px] font-bold text-emerald-900 uppercase tracking-wider">Cobertura da Seguradora ({insuranceCoveragePercent}%)</label>
-                                                    <span className="text-[10px] font-mono font-bold text-emerald-800">Utente paga {100 - insuranceCoveragePercent}%</span>
-                                                </div>
-                                                <input 
-                                                    type="range" 
-                                                    min="10" 
-                                                    max="100" 
-                                                    step="5" 
-                                                    value={insuranceCoveragePercent} 
-                                                    onChange={e => setInsuranceCoveragePercent(parseInt(e.target.value))}
-                                                    className="w-full accent-emerald-600 cursor-pointer"
-                                                />
-                                            </div>
-
-                                            <div className="p-3 bg-white rounded-xl border border-emerald-200 flex justify-between items-center text-xs">
-                                                <div>
-                                                    <span className="text-gray-500 block text-[10px]">Suportado pela Seguradora ({insuranceCoveragePercent}%):</span>
-                                                    <strong className="text-emerald-700 font-mono text-sm">{Math.round(total * (insuranceCoveragePercent / 100)).toLocaleString('pt-AO')} Kz</strong>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span className="text-gray-500 block text-[10px]">Copagamento a pagar pelo Utente:</span>
-                                                    <strong className="text-gray-900 font-mono text-sm">{(total - Math.round(total * (insuranceCoveragePercent / 100))).toLocaleString('pt-AO')} Kz</strong>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
 
                                     {paymentMethod === 'cash' && (
                                         <div className="mt-2 animate-in slide-in-from-right duration-300">

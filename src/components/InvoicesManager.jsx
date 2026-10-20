@@ -6,9 +6,10 @@ import ReceiptModal from './ReceiptModal';
 import { cashSessionService } from '../services/cashSessionService';
 import { orderService } from '../services/orderService';
 import { db } from '../lib/localDb';
+import { db as offlineDexie } from '../lib/offlineDb';
 import { getSectorDetails } from '../utils/sectorConfig';
 
-const InvoicesManager = ({ restaurantId, restaurantName, businessSector }) => {
+const InvoicesManager = ({ restaurantId, restaurantName, businessSector, activeStaff }) => {
     const [sectorState, setSectorState] = useState(businessSector || 'restaurant');
 
     useEffect(() => {
@@ -50,6 +51,8 @@ const InvoicesManager = ({ restaurantId, restaurantName, businessSector }) => {
     const [posCart, setPosCart] = useState([]);
     const [posCustomerName, setPosCustomerName] = useState('Consumidor Final');
     const [posCustomerNif, setPosCustomerNif] = useState('999999999');
+    const [posTableOrDest, setPosTableOrDest] = useState('Balcão / Sala');
+    const [posSendToKitchen, setPosSendToKitchen] = useState(true);
     const [posPaymentMethod, setPosPaymentMethod] = useState('cash'); // 'cash' | 'multicaixa' | 'transferencia' | 'insurance'
     const [posInsuranceName, setPosInsuranceName] = useState('ENSA Seguros');
     const [posInsurancePolicy, setPosInsurancePolicy] = useState('');
@@ -70,7 +73,9 @@ const InvoicesManager = ({ restaurantId, restaurantName, businessSector }) => {
                 setCatalogItems(local || []);
             }
         } catch (e) {
-            console.error("Error loading catalog for POS:", e);
+            console.warn("Offline POS catalog fallback:", e);
+            const local = await db.menu_items.where('restaurant_id').equals(restaurantId).toArray();
+            setCatalogItems(local || []);
         }
     };
 
@@ -108,36 +113,36 @@ const InvoicesManager = ({ restaurantId, restaurantName, businessSector }) => {
         setPosSubmitting(true);
         try {
             const totalAmount = posCart.reduce((sum, i) => sum + (parseFloat(i.price) || 0) * i.quantity, 0);
-            const insAmount = posPaymentMethod === 'insurance' ? Math.round(totalAmount * (posInsuranceCoverage / 100)) : 0;
-            const copayAmount = totalAmount - insAmount;
 
             const customerNameWithNif = posCustomerNif && posCustomerNif !== '999999999'
                 ? `${posCustomerName || 'Consumidor Final'} (NIF: ${posCustomerNif})`
                 : (posCustomerName || 'Consumidor Final');
 
-            const hasPrescriptionItem = posCart.some(i => i.requires_prescription || i.translations?.sector_data?.requires_prescription);
-            const ormedInfo = (hasPrescriptionItem || posDoctorName || posDoctorOrmed)
-                ? ` | Receita ORMED: Dr(a). ${posDoctorName || 'Não Informado'} (Carteira: ${posDoctorOrmed || 'N/A'}) | Rec N.º: ${posPrescriptionNum || 'N/A'}`
-                : '';
+            const paymentLabel = posPaymentMethod === 'cash'
+                ? 'Numerário'
+                : posPaymentMethod === 'multicaixa'
+                    ? 'Multicaixa (TPA)'
+                    : posPaymentMethod === 'express'
+                        ? 'MCX Express'
+                        : posPaymentMethod === 'transferencia'
+                            ? 'Transferência IBAN'
+                            : posPaymentMethod;
 
-            const tableInfo = (posPaymentMethod === 'insurance'
-                ? `Balcão POS | Pgto: Seguradora (${posInsuranceName}) | NIF: ${posCustomerNif || '999999999'} | Seguro: ${posInsuranceName} (${posInsuranceCoverage}%) | Apólice: ${posInsurancePolicy || 'N/A'}`
-                : `Balcão POS | Pgto: ${posPaymentMethod === 'cash' ? 'Numerário' : posPaymentMethod === 'multicaixa' ? 'Multicaixa' : posPaymentMethod === 'transferencia' ? 'IBAN' : posPaymentMethod} | NIF: ${posCustomerNif || '999999999'}`) + ormedInfo;
+            const tableInfo = `${posTableOrDest || 'Balcão POS'} | Pgto: ${paymentLabel} | NIF: ${posCustomerNif || '999999999'}`;
 
             const orderData = {
                 restaurant_id: restaurantId,
                 total: totalAmount,
-                status: 'completed',
+                status: posSendToKitchen ? 'pending' : 'completed',
                 customer_name: customerNameWithNif,
                 table_number: tableInfo,
+                staff_member_id: activeStaff?.id && !String(activeStaff.id).startsWith('demo-') && !String(activeStaff.id).startsWith('local-') ? activeStaff.id : null,
+                staff_member_name: activeStaff?.name || null,
                 items: posCart.map(i => ({
                     id: i.id,
                     name: i.name,
                     price: parseFloat(i.price) || 0,
-                    quantity: i.quantity,
-                    dosage: i.dosage || i.translations?.sector_data?.dosage || '',
-                    active_ingredient: i.active_ingredient || i.translations?.sector_data?.active_ingredient || '',
-                    batch_number: i.batch_number || i.translations?.sector_data?.batch_number || ''
+                    quantity: i.quantity
                 }))
             };
 
@@ -155,7 +160,7 @@ const InvoicesManager = ({ restaurantId, restaurantName, businessSector }) => {
                 };
             }
 
-            toast.success("Venda concluída com sucesso! Fatura emitida.");
+            toast.success(posSendToKitchen ? "✅ Venda registada e Pedido enviado para a Cozinha (KDS)!" : "✅ Venda de balcão concluída e Fatura emitida!");
             setShowPosModal(false);
             setPosCart([]);
             fetchOrders();
@@ -238,10 +243,17 @@ const InvoicesManager = ({ restaurantId, restaurantName, businessSector }) => {
             if (data && data.length > 0 && data[0].restaurant?.business_sector) {
                 setSectorState(data[0].restaurant.business_sector);
             }
-            setOrders(data || []);
+            const offlineOrders = await offlineDexie.orders.where('restaurant_id').equals(restaurantId).toArray().catch(() => []);
+            const pendingOffline = offlineOrders.filter(o => o.sync_status === 'pending');
+            const merged = [...pendingOffline, ...(data || [])];
+            setOrders(merged);
+            localStorage.setItem(`jindungo_cached_orders_${restaurantId}`, JSON.stringify(data || []));
         } catch (err) {
-            console.error("Error fetching invoices:", err);
-            toast.error("Erro ao carregar faturas.");
+            console.warn("A carregar faturas em modo offline:", err);
+            const offlineOrders = await offlineDexie.orders.where('restaurant_id').equals(restaurantId).toArray().catch(() => []);
+            const cachedRaw = localStorage.getItem(`jindungo_cached_orders_${restaurantId}`);
+            const cachedOrders = cachedRaw ? JSON.parse(cachedRaw) : [];
+            setOrders([...offlineOrders, ...cachedOrders]);
         } finally {
             setLoading(false);
         }
@@ -554,7 +566,7 @@ const InvoicesManager = ({ restaurantId, restaurantName, businessSector }) => {
             const query = searchQuery.toLowerCase();
             const clientName = (o.customer_name || '').toLowerCase();
             const clientNif = (o.customer_nif || '').toLowerCase();
-            const id = o.id.toLowerCase();
+            const id = String(o.id || '').toLowerCase();
             const invoiceNum = (o.invoice_number || '').toLowerCase();
             
             return clientName.includes(query) || clientNif.includes(query) || id.includes(query) || invoiceNum.includes(query);
@@ -686,7 +698,7 @@ const InvoicesManager = ({ restaurantId, restaurantName, businessSector }) => {
                     </div>
                     <div>
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-mono border mb-3" style={{ backgroundColor: `${sectorTheme.primary || '#D4AF37'}15`, color: sectorTheme.primary || '#D4AF37', borderColor: `${sectorTheme.primary || '#D4AF37'}30` }}>
-                            <span>{sectorDetails.icon || '🏪'}</span>
+                            <span>{sectorDetails.icon || '🍽️'}</span>
                             <span>{sectorDetails.badge || 'Loja Ativa'}</span>
                         </div>
                         <h3 className="text-xl font-serif font-black text-white">{sectorTerms.cashClosedTitle || "Turno de Caixa Fechado"}</h3>
@@ -921,7 +933,7 @@ const InvoicesManager = ({ restaurantId, restaurantName, businessSector }) => {
                     <div className="flex items-center gap-2 mb-2">
                         <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold font-mono border flex items-center gap-1.5" style={{ backgroundColor: `${sectorTheme.primary || '#D4AF37'}15`, color: sectorTheme.primary || '#D4AF37', borderColor: `${sectorTheme.primary || '#D4AF37'}30` }}>
                             <span>{sectorDetails.icon || '🏪'}</span>
-                            <span>{sectorDetails.badge || 'Retalho'}</span>
+                            <span>{sectorDetails.badge || 'Restaurante'}</span>
                         </span>
                         <span className="text-[10px] text-gray-500 font-mono uppercase tracking-widest">{sectorTerms.establishment || 'Módulo AGT'}</span>
                     </div>
@@ -976,7 +988,7 @@ const InvoicesManager = ({ restaurantId, restaurantName, businessSector }) => {
 
                     <button 
                         onClick={handleOpenPosModal}
-                        className="bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-black px-5 py-3 rounded-2xl transition-all flex items-center gap-2 hover:scale-[1.03] active:scale-[0.97] cursor-pointer text-xs uppercase shadow-[0_0_20px_rgba(16,185,129,0.35)]"
+                        className="bg-gradient-to-r from-[#D4AF37] to-amber-500 text-black font-black px-5 py-3 rounded-2xl transition-all flex items-center gap-2 hover:scale-[1.03] active:scale-[0.97] cursor-pointer text-xs uppercase shadow-[0_0_20px_rgba(212,175,55,0.35)]"
                     >
                         <ShoppingCart size={16} /> Nova Venda (POS Balcão)
                     </button>
@@ -990,6 +1002,122 @@ const InvoicesManager = ({ restaurantId, restaurantName, businessSector }) => {
                     </button>
                 </div>
             </div>
+
+            {/* PAINEL EM TEMPO REAL: PROCESSAMENTO DE PEDIDOS NA COZINHA (FLUXO VENDA <-> COZINHA <-> GARÇOM) */}
+            {(() => {
+                const pendingKitchen = orders.filter(o => ['pending', 'pendente', 'waiting_payment'].includes((o.status || '').toLowerCase()));
+                const preparingKitchen = orders.filter(o => ['preparing', 'preparando'].includes((o.status || '').toLowerCase()));
+                const readyKitchen = orders.filter(o => ['ready', 'pronto'].includes((o.status || '').toLowerCase()));
+
+                const handleMarkDeliveredFromPos = async (ord) => {
+                    try {
+                        await orderService.updateOrderStatus(ord.id, 'completed');
+                        toast.success(`🍽️ Pedido de ${ord.customer_name || 'Cliente'} marcado como Entregue!`);
+                        fetchOrders();
+                    } catch (e) {
+                        toast.error("Erro ao atualizar estado do pedido.");
+                    }
+                };
+
+                return (
+                    <div className="bg-[#141416] border border-[#D4AF37]/25 rounded-[2rem] p-5 shadow-xl">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-white/5">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-[#D4AF37]/15 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37]">
+                                    <ChefHat size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-serif font-black text-white flex items-center gap-2">
+                                        <span>Fluxo da Cozinha em Tempo Real (KDS ↔ Balcão / Sala)</span>
+                                        <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Ao Vivo</span>
+                                    </h3>
+                                    <p className="text-xs text-gray-400">Acompanhe os pratos enviados à cozinha e veja quais já estão prontos para entregar ao cliente</p>
+                                </div>
+                            </div>
+                            <a
+                                href="/admin/orders"
+                                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-[#D4AF37] hover:text-black text-[#D4AF37] border border-[#D4AF37]/30 text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 self-start sm:self-auto"
+                            >
+                                <span>🍳 Abrir Quadro da Cozinha (KDS)</span>
+                                <ChevronRight size={14} />
+                            </a>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {/* Coluna 1: Enviados / Pendentes na Cozinha */}
+                            <div className="bg-black/40 border border-amber-500/20 rounded-2xl p-3.5">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 flex items-center gap-1.5">
+                                        <Clock size={13} /> 1. Enviados à Cozinha (Pendentes)
+                                    </span>
+                                    <span className="px-2 py-0.5 rounded-full text-xs font-mono font-black bg-amber-500/20 text-amber-300">{pendingKitchen.length}</span>
+                                </div>
+                                {pendingKitchen.length === 0 ? (
+                                    <p className="text-[11px] text-gray-500 py-2">Sem pedidos em fila de espera.</p>
+                                ) : (
+                                    <div className="space-y-1.5 max-h-28 overflow-y-auto pr-1">
+                                        {pendingKitchen.slice(0, 5).map(o => (
+                                            <div key={o.id} className="text-xs bg-white/5 px-2.5 py-1.5 rounded-xl flex items-center justify-between">
+                                                <span className="font-bold text-white truncate">{(o.table_number || 'Balcão').split('|')[0]} • {o.customer_name}</span>
+                                                <span className="text-[10px] font-mono text-amber-400 shrink-0">A aguardar Chef</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Coluna 2: Em Preparação pelo Chef */}
+                            <div className="bg-black/40 border border-blue-500/20 rounded-2xl p-3.5">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-400 flex items-center gap-1.5">
+                                        <RefreshCw size={13} className="animate-spin" /> 2. Em Preparo na Cozinha
+                                    </span>
+                                    <span className="px-2 py-0.5 rounded-full text-xs font-mono font-black bg-blue-500/20 text-blue-300">{preparingKitchen.length}</span>
+                                </div>
+                                {preparingKitchen.length === 0 ? (
+                                    <p className="text-[11px] text-gray-500 py-2">Nenhum prato no fogo neste momento.</p>
+                                ) : (
+                                    <div className="space-y-1.5 max-h-28 overflow-y-auto pr-1">
+                                        {preparingKitchen.slice(0, 5).map(o => (
+                                            <div key={o.id} className="text-xs bg-white/5 px-2.5 py-1.5 rounded-xl flex items-center justify-between">
+                                                <span className="font-bold text-white truncate">{(o.table_number || 'Balcão').split('|')[0]} • {o.customer_name}</span>
+                                                <span className="text-[10px] font-mono text-blue-400 shrink-0">🔥 A cozinhar</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Coluna 3: Prontos para Servir / Entregar */}
+                            <div className="bg-emerald-950/20 border border-emerald-500/30 rounded-2xl p-3.5">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-1.5">
+                                        <CheckCircle2 size={13} /> 3. Prontos p/ Levantar na Cozinha!
+                                    </span>
+                                    <span className="px-2 py-0.5 rounded-full text-xs font-mono font-black bg-emerald-500 text-black">{readyKitchen.length}</span>
+                                </div>
+                                {readyKitchen.length === 0 ? (
+                                    <p className="text-[11px] text-gray-500 py-2">Nenhum pedido pronto para recolha.</p>
+                                ) : (
+                                    <div className="space-y-1.5 max-h-28 overflow-y-auto pr-1">
+                                        {readyKitchen.map(o => (
+                                            <div key={o.id} className="text-xs bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1.5 rounded-xl flex items-center justify-between gap-2">
+                                                <span className="font-bold text-white truncate">{(o.table_number || 'Balcão').split('|')[0]} • {o.customer_name}</span>
+                                                <button
+                                                    onClick={() => handleMarkDeliveredFromPos(o)}
+                                                    className="px-2 py-0.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-black text-[10px] shrink-0 cursor-pointer"
+                                                >
+                                                    ✓ Entregue
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
 
             {/* Quick Metrics */}
             {activeSubTab !== 'cash_control' && (
@@ -1175,7 +1303,7 @@ const InvoicesManager = ({ restaurantId, restaurantName, businessSector }) => {
                                                 </thead>
                                                 <tbody className="divide-y divide-white/5 text-xs">
                                                     {soldItems
-                                                        .filter(item => searchQuery === '' || item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                                                        .filter(item => searchQuery === '' || (item.name || '').toLowerCase().includes(searchQuery.toLowerCase()))
                                                         .map((item, index) => (
                                                             <tr key={index} className="hover:bg-white/[0.02] transition-all group">
                                                                 <td className="py-4 px-6 text-center font-mono font-bold">
@@ -1455,26 +1583,26 @@ const InvoicesManager = ({ restaurantId, restaurantName, businessSector }) => {
                     </div>
                 </div>
             )}
-            {/* MODAL POS BALCÃO DE VENDA RÁPIDA & DISPENSAÇÃO (FARMÁCIA / RETALHO) */}
+            {/* MODAL POS BALCÃO DE VENDA RÁPIDA (RESTAURAÇÃO & BALCÃO) */}
             {showPosModal && (
                 <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-300">
-                    <div className="bg-[#06171E] border border-[#143E4E] rounded-3xl w-full max-w-6xl h-[92vh] flex flex-col shadow-2xl overflow-hidden font-sans text-white">
+                    <div className="bg-[#121214] border border-[#D4AF37]/30 rounded-3xl w-full max-w-6xl h-[92vh] flex flex-col shadow-2xl overflow-hidden font-sans text-white">
                         
                         {/* HEADER POS */}
-                        <div className="bg-[#0B2530] p-4 sm:px-6 border-b border-[#143E4E] flex items-center justify-between">
+                        <div className="bg-[#18181B] p-4 sm:px-6 border-b border-white/10 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-2xl border border-emerald-500/20 text-xl">
-                                    💊
+                                <div className="p-2.5 bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl border border-[#D4AF37]/20 text-xl">
+                                    🍽️
                                 </div>
                                 <div>
                                     <h2 className="text-lg font-serif font-bold text-white flex items-center gap-2">
-                                        Terminal POS Balcão
-                                        <span className="text-[10px] font-mono font-black uppercase text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">AGT Ultrafast</span>
+                                        Terminal POS Rápido — Restauração &amp; Balcão
+                                        <span className="text-[10px] font-mono font-black uppercase text-[#D4AF37] bg-[#D4AF37]/10 px-2 py-0.5 rounded-full border border-[#D4AF37]/20">AGT Ultrafast</span>
                                     </h2>
-                                    <p className="text-xs text-gray-400">Dispensação rápida com código de barras, pesquisa DCI e seguradoras</p>
+                                    <p className="text-xs text-gray-400">Faturação rápida de balcão, mesas, take-away e entregas certificada AGT</p>
                                 </div>
                             </div>
-                            <button onClick={() => setShowPosModal(false)} className="p-2 bg-[#071922] hover:bg-[#143E4E] rounded-full text-gray-400 hover:text-white border border-[#143E4E] transition-all">
+                            <button onClick={() => setShowPosModal(false)} className="p-2 bg-white/5 hover:bg-white/15 rounded-full text-gray-400 hover:text-white border border-white/10 transition-all cursor-pointer">
                                 ✕
                             </button>
                         </div>
@@ -1482,17 +1610,17 @@ const InvoicesManager = ({ restaurantId, restaurantName, businessSector }) => {
                         {/* CORPO DO POS (GRID DE PRODUTOS + CARRINHO) */}
                         <div className="grid grid-cols-1 lg:grid-cols-12 flex-1 overflow-hidden p-4 sm:p-6 gap-6">
                             
-                            {/* COLUNA ESQUERDA (60%): PESQUISA E CATALOGO DE MEDICAMENTOS */}
+                            {/* COLUNA ESQUERDA (60%): PESQUISA E CATÁLOGO DO MENU */}
                             <div className="lg:col-span-7 flex flex-col gap-4 overflow-hidden">
                                 <div className="relative">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-400" size={18} />
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#D4AF37]" size={18} />
                                     <input 
                                         type="text"
                                         autoFocus
-                                        placeholder="Pesquisar por Medicamento, DCI (Princípio Ativo) ou Barcode..."
+                                        placeholder="Pesquisar prato, bebida, petisco ou código..."
                                         value={posSearch}
                                         onChange={e => setPosSearch(e.target.value)}
-                                        className="w-full pl-11 pr-4 py-3 bg-[#071922] border border-[#143E4E] focus:border-emerald-400 rounded-2xl text-white text-sm outline-none transition-all shadow-inner font-medium"
+                                        className="w-full pl-11 pr-4 py-3 bg-[#18181B] border border-white/10 focus:border-[#D4AF37] rounded-2xl text-white text-sm outline-none transition-all shadow-inner font-medium"
                                     />
                                 </div>
 
@@ -1501,67 +1629,59 @@ const InvoicesManager = ({ restaurantId, restaurantName, businessSector }) => {
                                         .filter(item => {
                                             if (!posSearch) return true;
                                             const query = posSearch.toLowerCase();
-                                            const nameMatch = item.name.toLowerCase().includes(query);
-                                            const dciMatch = (item.active_ingredient || item.translations?.sector_data?.active_ingredient || '').toLowerCase().includes(query);
+                                            const nameMatch = (item.name || '').toLowerCase().includes(query);
+                                            const descMatch = (item.description || '').toLowerCase().includes(query);
                                             const barcodeMatch = (item.barcode || item.translations?.sector_data?.barcode || '').includes(query);
-                                            return nameMatch || dciMatch || barcodeMatch;
+                                            return nameMatch || descMatch || barcodeMatch;
                                         })
-                                        .map(item => {
-                                            const activeIng = item.active_ingredient || item.translations?.sector_data?.active_ingredient;
-                                            const batch = item.batch_number || item.translations?.sector_data?.batch_number;
-                                            const dosage = item.dosage || item.translations?.sector_data?.dosage;
-
-                                            return (
-                                                <div key={item.id} className="p-3 bg-[#0B2530]/80 border border-[#143E4E] hover:border-emerald-500/40 rounded-2xl flex items-center justify-between gap-3 transition-all hover:bg-[#0E3240]">
-                                                    <div className="min-w-0 flex-1">
-                                                        <h4 className="font-bold text-xs text-white truncate">{item.name}</h4>
-                                                        {activeIng && <p className="text-[10px] italic text-emerald-400 truncate">DCI: {activeIng}</p>}
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <span className="text-xs font-bold font-mono text-emerald-300">{item.price} Kz</span>
-                                                            {dosage && <span className="text-[9px] text-gray-400 bg-black/40 px-1.5 py-0.5 rounded">{dosage}</span>}
-                                                            {batch && <span className="text-[9px] text-cyan-300 font-mono">LT: {batch}</span>}
-                                                        </div>
+                                        .map(item => (
+                                            <div key={item.id} className="p-3 bg-[#18181B] border border-white/10 hover:border-[#D4AF37]/40 rounded-2xl flex items-center justify-between gap-3 transition-all hover:bg-[#202024]">
+                                                <div className="min-w-0 flex-1">
+                                                    <h4 className="font-bold text-xs text-white truncate">{item.name}</h4>
+                                                    {item.description && <p className="text-[10px] text-gray-400 truncate mt-0.5">{item.description}</p>}
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className="text-xs font-bold font-mono text-[#D4AF37]">{Number(item.price || 0).toLocaleString('pt-AO')} Kz</span>
                                                     </div>
-
-                                                    <button 
-                                                        onClick={() => addToPosCart(item)}
-                                                        className="px-3 py-2 bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black font-black text-xs rounded-xl border border-emerald-500/40 transition-all flex items-center gap-1 shrink-0"
-                                                    >
-                                                        <Plus size={14} /> Add
-                                                    </button>
                                                 </div>
-                                            );
-                                        })
+
+                                                <button 
+                                                    onClick={() => addToPosCart(item)}
+                                                    className="px-3 py-2 bg-[#D4AF37]/15 hover:bg-[#D4AF37] text-[#D4AF37] hover:text-black font-black text-xs rounded-xl border border-[#D4AF37]/40 transition-all flex items-center gap-1 shrink-0 cursor-pointer"
+                                                >
+                                                    <Plus size={14} /> Add
+                                                </button>
+                                            </div>
+                                        ))
                                     }
                                 </div>
                             </div>
 
-                            {/* COLUNA DIREITA (40%): RESUMO DA VENDA, SEGURADORA E CONCLUSÃO */}
-                            <div className="lg:col-span-5 bg-[#0B2530] border border-[#143E4E] rounded-3xl p-4 sm:p-5 flex flex-col gap-4 overflow-y-auto">
-                                <h3 className="font-serif font-bold text-base text-white border-b border-[#143E4E] pb-2 flex items-center justify-between">
-                                    <span>Carrinho de Balcão</span>
-                                    <span className="text-xs font-mono font-normal text-emerald-400">{posCart.length} itens</span>
+                            {/* COLUNA DIREITA (40%): RESUMO DO PEDIDO E CONCLUSÃO */}
+                            <div className="lg:col-span-5 bg-[#18181B] border border-white/10 rounded-3xl p-4 sm:p-5 flex flex-col gap-4 overflow-y-auto">
+                                <h3 className="font-serif font-bold text-base text-white border-b border-white/10 pb-2 flex items-center justify-between">
+                                    <span>Comanda / Carrinho POS</span>
+                                    <span className="text-xs font-mono font-normal text-[#D4AF37]">{posCart.length} itens</span>
                                 </h3>
 
                                 {/* LISTA DE ITENS SELECIONADOS */}
-                                <div className="flex-1 overflow-y-auto space-y-2 max-h-48">
+                                <div className="flex-1 overflow-y-auto space-y-2 max-h-56">
                                     {posCart.length === 0 ? (
                                         <div className="py-8 text-center text-xs text-gray-400 opacity-60">
-                                            Selecione medicamentos da lista ao lado para adicionar à venda.
+                                            Selecione pratos ou bebidas da lista ao lado para adicionar ao pedido.
                                         </div>
                                     ) : (
                                         posCart.map(item => (
-                                            <div key={item.id} className="p-2.5 bg-[#071922] border border-[#143E4E] rounded-xl flex items-center justify-between gap-2 text-xs">
+                                            <div key={item.id} className="p-2.5 bg-[#121214] border border-white/10 rounded-xl flex items-center justify-between gap-2 text-xs">
                                                 <div className="min-w-0 flex-1">
                                                     <h5 className="font-bold text-white truncate">{item.name}</h5>
-                                                    <span className="text-[10px] text-emerald-400 font-mono">{item.price} Kz x {item.quantity}</span>
+                                                    <span className="text-[10px] text-[#D4AF37] font-mono">{Number(item.price || 0).toLocaleString('pt-AO')} Kz x {item.quantity}</span>
                                                 </div>
                                                 <div className="flex items-center gap-1.5 shrink-0">
-                                                    <button onClick={() => updatePosCartQty(item.id, -1)} className="p-1 bg-[#143E4E] text-white rounded-lg hover:bg-red-500/20 hover:text-red-400">
+                                                    <button onClick={() => updatePosCartQty(item.id, -1)} className="p-1 bg-white/10 text-white rounded-lg hover:bg-red-500/20 hover:text-red-400 cursor-pointer">
                                                         <Minus size={12} />
                                                     </button>
                                                     <span className="font-mono font-bold px-1">{item.quantity}</span>
-                                                    <button onClick={() => updatePosCartQty(item.id, 1)} className="p-1 bg-[#143E4E] text-white rounded-lg hover:bg-emerald-500/20 hover:text-emerald-400">
+                                                    <button onClick={() => updatePosCartQty(item.id, 1)} className="p-1 bg-white/10 text-white rounded-lg hover:bg-[#D4AF37]/20 hover:text-[#D4AF37] cursor-pointer">
                                                         <Plus size={12} />
                                                     </button>
                                                 </div>
@@ -1570,135 +1690,81 @@ const InvoicesManager = ({ restaurantId, restaurantName, businessSector }) => {
                                     )}
                                 </div>
 
-                                {/* DADOS DO CLIENTE */}
-                                <div className="space-y-2 pt-2 border-t border-[#143E4E]">
+                                {/* MESA / DESTINO E ENVIO PARA A COZINHA */}
+                                <div className="space-y-2 pt-2 border-t border-white/10">
                                     <div className="grid grid-cols-2 gap-2">
                                         <div>
-                                            <label className="text-[9px] text-gray-400 uppercase tracking-widest font-black block mb-1">Utente / Nome</label>
-                                            <input className="w-full px-3 py-2 bg-[#071922] border border-[#143E4E] rounded-xl text-xs text-white outline-none focus:border-emerald-400" value={posCustomerName} onChange={e => setPosCustomerName(e.target.value)} />
+                                            <label className="text-[9px] text-gray-400 uppercase tracking-widest font-black block mb-1">Mesa / Local do Pedido</label>
+                                            <select
+                                                value={posTableOrDest}
+                                                onChange={e => setPosTableOrDest(e.target.value)}
+                                                className="w-full px-3 py-2 bg-[#121214] border border-white/10 rounded-xl text-xs text-white outline-none focus:border-[#D4AF37] font-bold"
+                                            >
+                                                <option value="Balcão POS">⚡ Balcão POS</option>
+                                                <option value="Mesa 1">🍽️ Mesa 1</option>
+                                                <option value="Mesa 2">🍽️ Mesa 2</option>
+                                                <option value="Mesa 3">🍽️ Mesa 3</option>
+                                                <option value="Mesa 4">🍽️ Mesa 4</option>
+                                                <option value="Mesa 5">🍽️ Mesa 5</option>
+                                                <option value="Mesa 6">🍽️ Mesa 6</option>
+                                                <option value="Esplanada">🌴 Esplanada</option>
+                                                <option value="VIP 1">👑 Sala VIP</option>
+                                                <option value="Take-Away">🛍️ Take-Away (Para Levar)</option>
+                                            </select>
                                         </div>
                                         <div>
-                                            <label className="text-[9px] text-gray-400 uppercase tracking-widest font-black block mb-1">NIF Utente</label>
-                                            <input className="w-full px-3 py-2 bg-[#071922] border border-[#143E4E] rounded-xl text-xs text-white outline-none focus:border-emerald-400 font-mono" value={posCustomerNif} onChange={e => setPosCustomerNif(e.target.value)} />
+                                            <label className="text-[9px] text-gray-400 uppercase tracking-widest font-black block mb-1">Fluxo de Cozinha (KDS)</label>
+                                            <button
+                                                type="button"
+                                                onClick={() => setPosSendToKitchen(!posSendToKitchen)}
+                                                className={`w-full px-3 py-2 rounded-xl text-xs font-black border transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                                                    posSendToKitchen
+                                                        ? 'bg-amber-500/20 border-amber-400 text-amber-300'
+                                                        : 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
+                                                }`}
+                                            >
+                                                <span>{posSendToKitchen ? '🍳 Enviar p/ Cozinha' : '✅ Entrega Imediata'}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label className="text-[9px] text-gray-400 uppercase tracking-widest font-black block mb-1">Nome do Cliente</label>
+                                            <input className="w-full px-3 py-2 bg-[#121214] border border-white/10 rounded-xl text-xs text-white outline-none focus:border-[#D4AF37]" value={posCustomerName} onChange={e => setPosCustomerName(e.target.value)} placeholder="Consumidor Final" />
+                                        </div>
+                                        <div>
+                                            <label className="text-[9px] text-gray-400 uppercase tracking-widest font-black block mb-1">NIF do Cliente</label>
+                                            <input className="w-full px-3 py-2 bg-[#121214] border border-white/10 rounded-xl text-xs text-white outline-none focus:border-[#D4AF37] font-mono" value={posCustomerNif} onChange={e => setPosCustomerNif(e.target.value)} placeholder="999999999" />
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* REGISTO DE RECEITA MÉDICA ORMED (MSR / PSICOTRÓPICOS) */}
-                                {(() => {
-                                    const hasPrescriptionItem = posCart.some(i => i.requires_prescription || i.translations?.sector_data?.requires_prescription);
-                                    return (
-                                        <div className="space-y-2 pt-2 border-t border-[#143E4E]">
-                                            <div className="flex items-center justify-between">
-                                                <label className="text-[9px] text-gray-400 uppercase tracking-widest font-black flex items-center gap-1.5">
-                                                    <span>📋 Receita Médica ORMED</span>
-                                                    {hasPrescriptionItem && (
-                                                        <span className="text-[9px] font-bold text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/30">
-                                                            Obrigatória (MSR)
-                                                        </span>
-                                                    )}
-                                                </label>
-                                            </div>
-                                            <div className="grid grid-cols-3 gap-2">
-                                                <div>
-                                                    <label className="text-[8px] text-gray-400 block mb-0.5">Médico Receitante</label>
-                                                    <input 
-                                                        className="w-full px-2.5 py-1.5 bg-[#071922] border border-[#143E4E] rounded-xl text-xs text-white outline-none focus:border-emerald-400" 
-                                                        placeholder="Dr(a). Nome"
-                                                        value={posDoctorName} 
-                                                        onChange={e => setPosDoctorName(e.target.value)} 
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="text-[8px] text-gray-400 block mb-0.5">Carteira ORMED</label>
-                                                    <input 
-                                                        className="w-full px-2.5 py-1.5 bg-[#071922] border border-[#143E4E] rounded-xl text-xs text-white outline-none focus:border-emerald-400 font-mono" 
-                                                        placeholder="ORMED-AO-..."
-                                                        value={posDoctorOrmed} 
-                                                        onChange={e => setPosDoctorOrmed(e.target.value)} 
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="text-[8px] text-gray-400 block mb-0.5">N.º Receita/Guia</label>
-                                                    <input 
-                                                        className="w-full px-2.5 py-1.5 bg-[#071922] border border-[#143E4E] rounded-xl text-xs text-white outline-none focus:border-emerald-400 font-mono" 
-                                                        placeholder="REC-00123"
-                                                        value={posPrescriptionNum} 
-                                                        onChange={e => setPosPrescriptionNum(e.target.value)} 
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })()}
 
                                 {/* MEIO DE PAGAMENTO */}
                                 <div className="space-y-2">
                                     <label className="text-[9px] text-gray-400 uppercase tracking-widest font-black block">Meio de Pagamento</label>
                                     <div className="grid grid-cols-2 gap-2">
-                                        <button onClick={() => setPosPaymentMethod('cash')} className={`p-2 rounded-xl text-xs font-bold border transition-all ${posPaymentMethod === 'cash' ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300' : 'bg-[#071922] border-[#143E4E] text-gray-400'}`}>💵 Dinheiro</button>
-                                        <button onClick={() => setPosPaymentMethod('multicaixa')} className={`p-2 rounded-xl text-xs font-bold border transition-all ${posPaymentMethod === 'multicaixa' ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300' : 'bg-[#071922] border-[#143E4E] text-gray-400'}`}>📱 Multicaixa</button>
-                                        <button onClick={() => setPosPaymentMethod('transferencia')} className={`p-2 rounded-xl text-xs font-bold border transition-all ${posPaymentMethod === 'transferencia' ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300' : 'bg-[#071922] border-[#143E4E] text-gray-400'}`}>💳 IBAN</button>
-                                        <button onClick={() => setPosPaymentMethod('insurance')} className={`p-2 rounded-xl text-xs font-bold border transition-all ${posPaymentMethod === 'insurance' ? 'bg-emerald-500/30 border-emerald-400 text-emerald-300 font-black' : 'bg-[#071922] border-[#143E4E] text-gray-400'}`}>🛡️ Seguradora</button>
+                                        <button onClick={() => setPosPaymentMethod('cash')} className={`p-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${posPaymentMethod === 'cash' ? 'bg-[#D4AF37]/20 border-[#D4AF37] text-[#D4AF37]' : 'bg-[#121214] border-white/10 text-gray-400'}`}>💵 Numerário</button>
+                                        <button onClick={() => setPosPaymentMethod('multicaixa')} className={`p-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${posPaymentMethod === 'multicaixa' ? 'bg-[#D4AF37]/20 border-[#D4AF37] text-[#D4AF37]' : 'bg-[#121214] border-white/10 text-gray-400'}`}>💳 Multicaixa (TPA)</button>
+                                        <button onClick={() => setPosPaymentMethod('express')} className={`p-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${posPaymentMethod === 'express' ? 'bg-[#D4AF37]/20 border-[#D4AF37] text-[#D4AF37]' : 'bg-[#121214] border-white/10 text-gray-400'}`}>📱 MCX Express</button>
+                                        <button onClick={() => setPosPaymentMethod('transferencia')} className={`p-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${posPaymentMethod === 'transferencia' ? 'bg-[#D4AF37]/20 border-[#D4AF37] text-[#D4AF37]' : 'bg-[#121214] border-white/10 text-gray-400'}`}>🏦 Transferência IBAN</button>
                                     </div>
-
-                                    {posPaymentMethod === 'insurance' && (
-                                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl space-y-2 mt-2 text-xs">
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div>
-                                                    <label className="text-[8px] text-emerald-300 block mb-1">Seguradora</label>
-                                                    <select value={posInsuranceName} onChange={e => setPosInsuranceName(e.target.value)} className="w-full bg-[#071922] border border-emerald-500/40 text-white rounded-lg p-1.5 text-xs outline-none">
-                                                        <option value="ENSA Seguros">ENSA Seguros</option>
-                                                        <option value="AdvanceCare Angola">AdvanceCare Angola</option>
-                                                        <option value="Nossa Seguros">Nossa Seguros</option>
-                                                        <option value="Fidelidade Angola">Fidelidade Angola</option>
-                                                        <option value="Sáham Assurance">Sáham Assurance</option>
-                                                        <option value="Universal Seguros">Universal Seguros</option>
-                                                        <option value="BIC Seguros">BIC Seguros</option>
-                                                        <option value="Outro Plano Privado">Outra Seguradora</option>
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <label className="text-[8px] text-emerald-300 block mb-1">N.º Cartão/Apólice</label>
-                                                    <input className="w-full bg-[#071922] border border-emerald-500/40 text-white rounded-lg p-1.5 text-xs outline-none font-mono" placeholder="Ex: ENSA-901" value={posInsurancePolicy} onChange={e => setPosInsurancePolicy(e.target.value)} />
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <div className="flex justify-between text-[9px] text-emerald-300 mb-1">
-                                                    <span>Cobertura Seguradora: {posInsuranceCoverage}%</span>
-                                                    <span>Utente: {100 - posInsuranceCoverage}%</span>
-                                                </div>
-                                                <input type="range" min="10" max="100" step="5" value={posInsuranceCoverage} onChange={e => setPosInsuranceCoverage(parseInt(e.target.value))} className="w-full accent-emerald-400 cursor-pointer" />
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
 
                                 {/* TOTAL E BOTAO CONCLUIR */}
                                 {(() => {
                                     const total = posCart.reduce((sum, i) => sum + (parseFloat(i.price) || 0) * i.quantity, 0);
-                                    const insAmt = posPaymentMethod === 'insurance' ? Math.round(total * (posInsuranceCoverage / 100)) : 0;
-                                    const copayAmt = total - insAmt;
 
                                     return (
-                                        <div className="pt-3 border-t border-[#143E4E] space-y-3 mt-auto">
+                                        <div className="pt-3 border-t border-white/10 space-y-3 mt-auto">
                                             <div className="flex justify-between items-baseline">
-                                                <span className="text-xs text-gray-400 font-bold uppercase">Total Venda:</span>
-                                                <span className="text-xl font-serif font-black text-emerald-400 font-mono">{total.toLocaleString('pt-AO')} Kz</span>
+                                                <span className="text-xs text-gray-400 font-bold uppercase">Total a Pagar:</span>
+                                                <span className="text-xl font-serif font-black text-[#D4AF37] font-mono">{total.toLocaleString('pt-AO')} Kz</span>
                                             </div>
-
-                                            {posPaymentMethod === 'insurance' && (
-                                                <div className="flex justify-between text-[10px] text-emerald-300 bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20">
-                                                    <span>Seguradora: -{insAmt.toLocaleString('pt-AO')} Kz</span>
-                                                    <span className="font-bold text-white">Copagamento Utente: {copayAmt.toLocaleString('pt-AO')} Kz</span>
-                                                </div>
-                                            )}
 
                                             <button 
                                                 onClick={handleCompletePosSale}
                                                 disabled={posSubmitting || posCart.length === 0}
-                                                className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black font-black rounded-2xl text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 cursor-pointer"
+                                                className="w-full py-4 bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:brightness-110 text-black font-black rounded-2xl text-xs uppercase tracking-wider shadow-lg shadow-[#D4AF37]/20 transition-all disabled:opacity-50 cursor-pointer"
                                             >
                                                 {posSubmitting ? 'A processar venda...' : '⚡ Concluir Venda & Emitir Fatura AGT'}
                                             </button>

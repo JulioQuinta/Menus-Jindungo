@@ -147,7 +147,7 @@ const DashboardStats = ({ restaurantId, businessSector, restaurantInfo: initialR
 
     // Sector & Theme Determination
     const activeSector = businessSector || restaurantInfo?.business_sector;
-    const isPharmacy = activeSector === 'pharmacy' || activeSector === 'health_medical';
+    const isPharmacy = false;
     const sectorDetails = getSectorDetails(activeSector);
     const sectorTerms = sectorDetails?.terms || {};
 
@@ -781,7 +781,7 @@ const DashboardStats = ({ restaurantId, businessSector, restaurantInfo: initialR
                 {/* Card 4: Custo Médio p/ Artigo */}
                 <div className={`rounded-3xl p-6 flex flex-col justify-between h-44 relative transition-all ${isPharmacy ? 'bg-[#0B2530]/90 border border-[#143E4E] hover:border-emerald-500/40 shadow-xl' : 'bg-[#161616]/90 border border-[#282828] hover:border-[#F5C542]/40 shadow-xl'}`}>
                     <div className="flex justify-between items-start">
-                        <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest block">Custo Médio p/ {sectorTerms.item || 'Medicamento'}</span>
+                        <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest block">Custo Médio p/ {sectorTerms.item || 'Prato'}</span>
                         <span className={`font-black px-3 py-1 rounded-full text-[10px] border shadow-lg ${isPharmacy ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/40' : 'bg-[#F5C542]/10 text-[#F5C542] border-[#F5C542]/40'}`}>Kz 2.500</span>
                     </div>
                     <div className="space-y-3 my-auto">
@@ -813,7 +813,7 @@ const DashboardStats = ({ restaurantId, businessSector, restaurantInfo: initialR
                         </ResponsiveContainer>
                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                             <span className="text-xs font-black text-white drop-shadow">Pico 14:00</span>
-                            <span className="text-[10px] text-gray-400 font-light">{sectorTerms.items || 'Medicamentos'}: 955</span>
+                            <span className="text-[10px] text-gray-400 font-light">{sectorTerms.items || 'Pratos & Bebidas'}: 955</span>
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#262626] text-[10px] text-gray-300 font-medium">
@@ -826,7 +826,7 @@ const DashboardStats = ({ restaurantId, businessSector, restaurantInfo: initialR
 
                 {/* 2. TOP 5 ARTIGOS */}
                 <div className={`lg:col-span-3 rounded-3xl p-6 flex flex-col justify-between h-80 transition-all ${isPharmacy ? 'bg-[#0B2530]/90 border border-[#143E4E] hover:border-emerald-500/40 shadow-2xl' : 'bg-[#161616]/90 border border-[#282828] hover:border-[#F5C542]/40 shadow-2xl'}`}>
-                    <h3 className="font-serif font-bold text-base text-white mb-4">Top 5 {sectorTerms.items || 'Medicamentos'}</h3>
+                    <h3 className="font-serif font-bold text-base text-white mb-4">Top 5 {sectorTerms.items || 'Pratos & Bebidas'}</h3>
                     <div className="h-56 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={salesStats.topDishes} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>

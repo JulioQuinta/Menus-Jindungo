@@ -64,12 +64,22 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, sta
         }
     }
 
+    const [isEditingTotal, setIsEditingTotal] = useState(false);
+    const [tempTotalInput, setTempTotalInput] = useState(order.total || 0);
+    const [customChefNameInput, setCustomChefNameInput] = useState('');
+
     const handleEditTotal = async () => {
-        const newTotal = window.prompt(`Total Atual: ${order.total} Kz\nIntroduza o NOVO total (incluindo a taxa de entrega ajustada):`, order.total);
-        if (newTotal && !isNaN(newTotal)) {
+        if (!isEditingTotal) {
+            setTempTotalInput(order.total || 0);
+            setIsEditingTotal(true);
+            return;
+        }
+        const parsed = parseFloat(tempTotalInput);
+        if (!isNaN(parsed) && parsed >= 0) {
             try {
-                await orderService.updateOrder(order.id, { total: parseFloat(newTotal) });
+                await orderService.updateOrder(order.id, { total: parsed });
                 toast.success('Valor do pedido atualizado!');
+                setIsEditingTotal(false);
             } catch (err) {
                 console.error(err);
                 toast.error('Erro ao atualizar valor.');
@@ -239,13 +249,37 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, sta
                         </span>
                     )}
                     {(isDelivery || isTakeaway) && (
-                        <button 
-                            onClick={handleEditTotal}
-                            className="bg-[#D4AF37]/15 hover:bg-[#D4AF37]/30 text-[#D4AF37] px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border border-[#D4AF37]/30 transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
-                            title="Ajustar taxa ou desconto"
-                        >
-                            ✨ Ajustar
-                        </button>
+                        isEditingTotal ? (
+                            <div className="flex items-center gap-1">
+                                <input
+                                    type="number"
+                                    value={tempTotalInput}
+                                    onChange={e => setTempTotalInput(e.target.value)}
+                                    className="w-20 px-2 py-1 bg-black border border-[#D4AF37] rounded-lg text-xs text-white font-mono outline-none"
+                                />
+                                <button
+                                    onClick={handleEditTotal}
+                                    className="bg-emerald-500 text-black px-2 py-1 rounded-lg text-[10px] font-black cursor-pointer"
+                                    title="Guardar novo total"
+                                >
+                                    ✓
+                                </button>
+                                <button
+                                    onClick={() => setIsEditingTotal(false)}
+                                    className="bg-white/10 text-gray-300 px-1.5 py-1 rounded-lg text-[10px] font-bold cursor-pointer"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        ) : (
+                            <button 
+                                onClick={handleEditTotal}
+                                className="bg-[#D4AF37]/15 hover:bg-[#D4AF37]/30 text-[#D4AF37] px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border border-[#D4AF37]/30 transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
+                                title="Ajustar taxa ou desconto"
+                            >
+                                ✨ Ajustar
+                            </button>
+                        )
                     )}
                 </div>
             </div>
@@ -355,19 +389,28 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, sta
                                                 )}
                                             </div>
                                             <div className="border-t border-white/5 mt-1 pt-1 space-y-0.5">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        const name = window.prompt("Digite o nome do Chef para atribuir:");
-                                                        if (name && name.trim() !== '') {
-                                                            handleAssignChef(null, name.trim());
-                                                        }
-                                                        setShowChefDropdown(false);
-                                                    }}
-                                                    className="w-full text-center py-1 rounded-lg text-[10px] text-[#D4AF37] hover:bg-[#D4AF37]/10 font-bold block transition-all"
-                                                >
-                                                    + Digitar Nome
-                                                </button>
+                                                <div className="flex items-center gap-1 px-1 py-1">
+                                                    <input
+                                                        type="text"
+                                                        value={customChefNameInput}
+                                                        onChange={e => setCustomChefNameInput(e.target.value)}
+                                                        placeholder="Nome do Chef..."
+                                                        className="w-full bg-black/60 border border-white/15 rounded-lg px-2 py-1 text-[10px] text-white outline-none focus:border-[#D4AF37]"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (customChefNameInput.trim()) {
+                                                                handleAssignChef(null, customChefNameInput.trim());
+                                                                setCustomChefNameInput('');
+                                                                setShowChefDropdown(false);
+                                                            }
+                                                        }}
+                                                        className="px-2 py-1 rounded-lg text-[10px] bg-[#D4AF37] text-black font-black shrink-0 cursor-pointer"
+                                                    >
+                                                        OK
+                                                    </button>
+                                                </div>
                                                 {order.staff_member_name && (
                                                     <button
                                                         type="button"
@@ -689,11 +732,18 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
                 setIsBluetoothReady(false);
                 toast('Impressora de Rede Desconectada', { icon: '🔌' });
             } else {
-                const ip = window.prompt("Insira o endereço IP da impressora de rede (ex: 192.168.1.100):", "192.168.1.100");
-                if (!ip) return;
-                
-                const portInput = window.prompt("Insira a porta da impressora (geralmente 9100):", "9100");
-                if (!portInput) return;
+                let ip = localStorage.getItem('jindungo_printer_ip') || "192.168.1.100";
+                let portInput = localStorage.getItem('jindungo_printer_port') || "9100";
+                try {
+                    const promptedIp = window.prompt("Insira o endereço IP da impressora de rede (ex: 192.168.1.100):", ip);
+                    if (promptedIp) ip = promptedIp;
+                    const promptedPort = window.prompt("Insira a porta da impressora (geralmente 9100):", portInput);
+                    if (promptedPort) portInput = promptedPort;
+                } catch (e) {
+                    // Fallback automático no executável Desktop Electron
+                }
+                localStorage.setItem('jindungo_printer_ip', ip);
+                localStorage.setItem('jindungo_printer_port', portInput);
                 
                 const port = parseInt(portInput, 10);
                 if (isNaN(port)) {

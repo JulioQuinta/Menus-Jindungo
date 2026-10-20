@@ -13,6 +13,12 @@ export default function SyncStatusBanner({ restaurantId }) {
         if (!restaurantId) return;
         const count = await offlineDb.getPendingSyncCount(restaurantId);
         setPendingCount(count);
+        if (count > 0 && navigator.onLine && !isSyncing) {
+            // autoSyncOnMount
+            syncEngine.syncPendingData(restaurantId).then(() => {
+                offlineDb.getPendingSyncCount(restaurantId).then(setPendingCount);
+            });
+        }
     };
 
     useEffect(() => {

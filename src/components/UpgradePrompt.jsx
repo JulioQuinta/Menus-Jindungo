@@ -5,12 +5,12 @@ import { generateWhatsAppLink } from '../utils/whatsappGenerator';
 /**
  * Premium Upgrade Prompt to persuade users to subscribe to higher tiers.
  */
-const UpgradePrompt = ({ title, requiredPlan = "Business", features = [], businessSector = 'pharmacy' }) => {
+const UpgradePrompt = ({ title, requiredPlan = "Business", features = [], businessSector = 'restaurant' }) => {
 
     // Support/Sales number
     const supportNumber = "244923000000";
 
-    const isPharm = businessSector === 'farmacia' || businessSector === 'pharmacy' || businessSector === 'health_medical';
+    const isPharm = false;
     const businessTerm = isPharm ? 'da sua farmácia' : 'do seu estabelecimento';
 
     const handleUpgradeClick = () => {

@@ -27,7 +27,7 @@ const Register = () => {
     const [fullName, setFullName] = useState('');
     const [phone, setPhone] = useState('');
     const [restaurantName, setRestaurantName] = useState('');
-    const [businessSector, setBusinessSector] = useState('retail'); // 'retail' | 'wholesale' | 'bakery' | 'restaurant' | 'pharmacy' | 'education' | 'hotel' | 'services'
+    const [businessSector, setBusinessSector] = useState('restaurant'); // 'retail' | 'wholesale' | 'bakery' | 'restaurant' | 'pharmacy' | 'education' | 'hotel' | 'services'
     const [moduleType, setModuleType] = useState('full_suite'); // 'billing_only' | 'qr_only' | 'full_suite'
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);

@@ -521,9 +521,67 @@ export const SECTOR_PRESETS = [
     }
 ];
 
+const SECTOR_ALIASES = {
+    farmacia: SECTORS.RESTAURANT,
+    pharma: SECTORS.RESTAURANT,
+    saude: SECTORS.RESTAURANT,
+    clinica: SECTORS.RESTAURANT,
+    pharmacy: SECTORS.RESTAURANT,
+    health_medical: SECTORS.RESTAURANT,
+    padaria: SECTORS.BAKERY,
+    pastelaria: SECTORS.BAKERY,
+    supermercado: SECTORS.SUPERMARKET,
+    mercearia: SECTORS.SUPERMARKET,
+    loja: SECTORS.RETAIL,
+    retalho: SECTORS.RETAIL,
+    armazem: SECTORS.WHOLESALE,
+    grossista: SECTORS.WHOLESALE,
+    oficina: SECTORS.AUTOMOTIVE,
+    automovel: SECTORS.AUTOMOTIVE,
+    salao: SECTORS.BEAUTY_SPA,
+    beleza: SECTORS.BEAUTY_SPA,
+    barbearia: SECTORS.BEAUTY_SPA,
+    escola: SECTORS.EDUCATION,
+    colegio: SECTORS.EDUCATION,
+    hotel: SECTORS.HOTEL,
+    alojamento: SECTORS.HOTEL,
+    construcao: SECTORS.CONSTRUCTION_REALESTATE,
+    obras: SECTORS.CONSTRUCTION_REALESTATE,
+    servicos: SECTORS.SERVICES,
+    restaurante: SECTORS.RESTAURANT,
+    bar: SECTORS.RESTAURANT
+};
+
 export const getSectorDetails = (sectorId) => {
-    const found = SECTOR_PRESETS.find(s => s.id === sectorId);
-    return found || SECTOR_PRESETS.find(s => s.id === SECTORS.RESTAURANT) || SECTOR_PRESETS[0];
+    // Plataforma 100% dedicada à Restauração, Bares, Cafetarias, Pastelarias & Catering
+    const base = SECTOR_PRESETS.find(s => s.id === SECTORS.RESTAURANT) || SECTOR_PRESETS[0];
+
+    const itemSingle = base.terms?.item || 'Prato / Bebida';
+    const itemPlural = base.terms?.items || 'Ementa / Cardápio';
+
+    return {
+        ...base,
+        label: base.badge || 'Restaurante',
+        sectorName: base.name || 'Restauração, Bares & Catering',
+        sectorBadge: `GESTÃO DE ${itemPlural.toUpperCase()}`,
+        itemSingle,
+        itemPlural,
+        categorySingle: 'Categoria',
+        categoryPlural: 'Categorias',
+        addItemButton: `NOVO ${itemSingle.toUpperCase()}`,
+        itemPlaceholderName: `Ex: Nome de ${itemSingle}`,
+        itemPlaceholderDesc: 'Descrição, ingredientes, acompanhamento ou ficha técnica...',
+        stockResetPrompt: `Deseja repor o stock de TODOS os itens (${itemPlural.toLowerCase()}) com controlo ativo?`,
+        deleteConfirm: `Tem certeza que deseja apagar este registo (${itemSingle.toLowerCase()})?`,
+        activatedToast: `${itemSingle} ativado no menu!`,
+        deactivatedToast: `${itemSingle} suspenso do menu.`,
+        createdToast: `${itemSingle} criado com sucesso!`,
+        updatedToast: `${itemSingle} atualizado com sucesso!`,
+        deletedToast: `${itemSingle} removido do menu.`,
+        iconEmoji: base.icon || '🍽️',
+        bgGlowColor: base.theme?.glow || 'rgba(212, 175, 55, 0.25)',
+        themeAccent: base.theme?.primary || '#D4AF37'
+    };
 };
 
 export const getSectorTerminology = getSectorDetails;
@@ -534,7 +592,9 @@ export const getSectorTheme = (sectorId) => {
 };
 
 export const getSectorCategoryIllustration = (label = '', sectorId = '') => {
-    const l = String(label).toLowerCase();
+    const l = String(label || '').toLowerCase();
+    const rawSector = String(sectorId || '').toLowerCase().trim();
+    sectorId = SECTOR_ALIASES[rawSector] || rawSector;
     
     if (sectorId === SECTORS.PHARMACY || l.includes('medicamento') || l.includes('fármaco') || l.includes('receita') || l.includes('xarope') || l.includes('comprimido') || l.includes('vacina') || l.includes('farmácia')) {
         if (l.includes('receita') || l.includes('sujeito')) return 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&q=80';
@@ -603,5 +663,5 @@ export const getSectorCategoryIllustration = (label = '', sectorId = '') => {
     if (l.includes('sobremesa') || l.includes('doce')) return 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=500&q=80';
     if (l.includes('bebida') || l.includes('sumo')) return 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=500&q=80';
 
-    return 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&q=80';
+    return 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500&q=80';
 };

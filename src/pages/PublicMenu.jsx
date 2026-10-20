@@ -707,12 +707,18 @@ const PublicMenuInner = ({
                                                 tableId = urlParams.get('mesa');
                                             }
                                             if (!tableId) {
-                                                const userInput = window.prompt("Por favor, digite o número/nome ou letra da sua mesa para o empregado de mesa saber onde ir:");
-                                                if (!userInput || userInput.trim() === '') {
-                                                    toast.error("A identificação da mesa é necessária para chamar o atendimento.");
-                                                    return;
+                                                let userInput = 'Mesa / Balcão';
+                                                try {
+                                                    const prompted = window.prompt("Por favor, digite o número/nome ou letra da sua mesa para o empregado de mesa saber onde ir:");
+                                                    if (!prompted || prompted.trim() === '') {
+                                                        toast.error("A identificação da mesa é necessária para chamar o atendimento.");
+                                                        return;
+                                                    }
+                                                    userInput = prompted.trim();
+                                                } catch (e) {
+                                                    userInput = 'Balcão Principal';
                                                 }
-                                                tableId = userInput.trim();
+                                                tableId = userInput;
                                             }
                                             const btn = document.getElementById('waiter-btn');
                                             if (btn) btn.classList.add('animate-ping');

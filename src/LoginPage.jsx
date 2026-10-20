@@ -9,7 +9,11 @@ import { getAssetPath } from './utils/assetResolver';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
+    const [operatorId, setOperatorId] = useState('');
     const [password, setPassword] = useState('');
+    const [staffRestaurant, setStaffRestaurant] = useState(null);
+    const [staffListForLogin, setStaffListForLogin] = useState([]);
+    const [loadingStaffList, setLoadingStaffList] = useState(false);
     const [loading, setLoading] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [loginType, setLoginType] = useState('restaurant'); // 'restaurant' | 'staff' | 'internal'
@@ -23,6 +27,44 @@ const LoginPage = () => {
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // Carregar automaticamente o Restaurante e a Lista de Funcionários ao abrir a aba "Operador"
+    useEffect(() => {
+        if (loginType !== 'staff') return;
+        let isCancelled = false;
+        const loadStaffForRestaurant = async () => {
+            setLoadingStaffList(true);
+            try {
+                const { staffService } = await import('./services/staffService');
+                const cachedRestRaw = localStorage.getItem('jindungo_offline_last_restaurant');
+                let rest = cachedRestRaw ? JSON.parse(cachedRestRaw) : { id: 'def7479a-6c90-45e4-9d69-cae1aace983b', name: 'Comidas da Terra', slug: 'comidas-da-terra' };
+
+                if (navigator.onLine && email.trim()) {
+                    const q = email.trim().toLowerCase();
+                    const { data: foundRest } = await supabase
+                        .from('restaurants')
+                        .select('id, name, slug')
+                        .or(`email.eq.${q},slug.eq.${q},name.ilike.%${q}%`)
+                        .maybeSingle();
+                    if (foundRest) rest = foundRest;
+                }
+
+                if (!isCancelled && rest?.id) {
+                    setStaffRestaurant(rest);
+                    const members = await staffService.getStaff(rest.id);
+                    if (!isCancelled) {
+                        setStaffListForLogin(members || []);
+                    }
+                }
+            } catch (e) {
+                console.warn('Erro ao carregar equipa no Login:', e);
+            } finally {
+                if (!isCancelled) setLoadingStaffList(false);
+            }
+        };
+        loadStaffForRestaurant();
+        return () => { isCancelled = true; };
+    }, [loginType, email]);
 
     useEffect(() => {
         if (!loading && user && role) {
@@ -39,15 +81,35 @@ const LoginPage = () => {
         if (loginType === 'staff') {
             try {
                 const searchEmail = email.trim().toLowerCase();
+                const searchOperator = operatorId.trim();
                 const { staffService } = await import('./services/staffService');
-                
+
+                if (!searchOperator && !searchEmail) {
+                    toast.error("Indique o seu Nome/E-mail de Operador para identificar o seu turno.");
+                    setErrorShake(true);
+                    setLoading(false);
+                    return;
+                }
+
                 let targetRestaurant = null;
                 let targetStaff = null;
 
-                if (searchEmail) {
+                // Se estiver offline, validar usando o restaurante e equipa guardados neste computador
+                if (!navigator.onLine) {
+                    const cachedRestRaw = localStorage.getItem('jindungo_offline_last_restaurant');
+                    const cachedRest = cachedRestRaw ? JSON.parse(cachedRestRaw) : { id: 'def7479a-6c90-45e4-9d69-cae1aace983b', name: 'Comidas da Terra' };
+                    const res = await staffService.validatePin(cachedRest.id, password, searchOperator || searchEmail);
+                    if (!res.valid) {
+                        toast.error(res.message || "Credenciais de operador incorretas.");
+                        setErrorShake(true);
+                        setLoading(false);
+                        return;
+                    }
+                    targetRestaurant = cachedRest;
+                    targetStaff = res.staff;
+                } else if (searchEmail) {
                     let restaurant = null;
 
-                    // 1. Search by restaurant email or slug
                     const { data: r1 } = await supabase
                         .from('restaurants')
                         .select('id, name')
@@ -57,7 +119,6 @@ const LoginPage = () => {
                     if (r1) {
                         restaurant = r1;
                     } else {
-                        // 2. Search by owner profile email (e.g. master account email)
                         const { data: profileRec } = await supabase
                             .from('profiles')
                             .select('id')
@@ -73,7 +134,6 @@ const LoginPage = () => {
                             if (r2) restaurant = r2;
                         }
 
-                        // 3. Search by staff email if still not found
                         if (!restaurant) {
                             const { data: staffRec } = await supabase
                                 .from('staff_members')
@@ -85,15 +145,15 @@ const LoginPage = () => {
                     }
 
                     if (!restaurant) {
-                        toast.error("Restaurante/Loja não encontrado com este e-mail ou código.");
+                        toast.error("Restaurante não encontrado com este e-mail ou código.");
                         setErrorShake(true);
                         setLoading(false);
                         return;
                     }
 
-                    const result = await staffService.validatePin(restaurant.id, password);
+                    const result = await staffService.validatePin(restaurant.id, password, searchOperator || null);
                     if (!result.valid) {
-                        toast.error(result.message || "PIN de operador incorreto.");
+                        toast.error(result.message || "Nome de operador ou PIN incorreto.");
                         setErrorShake(true);
                         setLoading(false);
                         return;
@@ -101,17 +161,16 @@ const LoginPage = () => {
                     targetRestaurant = restaurant;
                     targetStaff = result.staff;
                 } else {
-                    // PIN-ONLY Login: Identify restaurant automatically from the staff PIN!
-                    const result = await staffService.validatePinGlobal(password);
+                    const result = await staffService.validatePinGlobal(password, searchOperator);
                     if (!result.valid) {
-                        toast.error(result.message || "PIN de operador incorreto.");
+                        toast.error(result.message || "Operador ou PIN incorreto.");
                         setErrorShake(true);
                         setLoading(false);
                         return;
                     }
 
                     if (result.multiple) {
-                        toast.error("Por favor, introduza também o e-mail ou código da loja para validar o acesso.");
+                        toast.error("Introduza também o E-mail ou Código do Restaurante para confirmar a unidade.");
                         setErrorShake(true);
                         setLoading(false);
                         return;
@@ -128,13 +187,17 @@ const LoginPage = () => {
                     localStorage.setItem(`jindungo_staff_role_${targetRestaurant.id}`, targetStaff.role);
                     localStorage.setItem(`jindungo_staff_login_time_${targetRestaurant.id}`, Date.now().toString());
 
-                    toast.success(`Bem-vindo de volta, ${targetStaff.name}!`);
-                    navigate('/admin/invoices');
+                    toast.success(`Turno iniciado: Bem-vindo(a), ${targetStaff.name}!`);
+                    if (targetStaff.role === 'kitchen') {
+                        navigate('/admin/orders');
+                    } else {
+                        navigate('/admin/invoices');
+                    }
                     return;
                 }
             } catch (staffErr) {
                 console.error("Staff Login Error:", staffErr);
-                toast.error("Erro ao validar PIN do operador.");
+                toast.error("Erro ao validar credenciais do operador.");
                 setErrorShake(true);
                 setLoading(false);
                 return;
@@ -316,43 +379,141 @@ const LoginPage = () => {
 
                         {/* Form Area matching screenshot */}
                         <form className={`space-y-6 relative z-10 ${errorShake ? 'animate-shake' : ''}`} onSubmit={handleSubmit}>
-                            <div className="space-y-4">
-                                <div className="relative group/field">
-                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within/field:text-[#D4AF37] transition-colors">
-                                        <User size={18} />
+                            {loginType === 'staff' ? (
+                                <div className="space-y-4">
+                                    {/* 1. Identificação do Restaurante */}
+                                    <div className="bg-[#12100E] border border-[#D4AF37]/30 rounded-2xl p-3.5">
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37]">
+                                                🍽️ 1. Restaurante / Unidade
+                                            </span>
+                                            <span className="text-[10px] font-mono text-emerald-400 font-bold">
+                                                {staffRestaurant?.name || 'Comidas da Terra'}
+                                            </span>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#D4AF37]"
+                                            placeholder={`Restaurante ativo: ${staffRestaurant?.name || 'Comidas da Terra'} (ou digite outro slug/e-mail)`}
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                        />
                                     </div>
-                                    <input
-                                        type="text"
-                                        required={loginType !== 'staff'}
-                                        className="w-full bg-[#12100E] border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37] transition-all text-sm shadow-inner"
-                                        placeholder={loginType === 'staff' ? "Código ou E-mail da Empresa (Opcional se PIN for único)" : (loginType === 'restaurant' ? "E-mail do Restaurante" : "E-mail Administrativo")}
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                    />
-                                </div>
 
-                                <div className="relative group/field">
-                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within/field:text-[#D4AF37] transition-colors">
-                                        <Lock size={18} />
+                                    {/* 2. Seleção Visual do Funcionário (Clica no seu próprio nome!) */}
+                                    <div className="bg-[#12100E] border border-white/10 rounded-2xl p-3.5">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-300 block mb-2">
+                                            👤 2. Clique no seu Nome (Equipa)
+                                        </label>
+                                        {loadingStaffList ? (
+                                            <div className="text-center py-4 text-xs text-gray-500">A carregar equipa...</div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 gap-2 max-h-44 overflow-y-auto pr-1 custom-scrollbar">
+                                                {staffListForLogin.map((member) => {
+                                                    const isSelected = operatorId === member.name;
+                                                    const roleLabel = member.role === 'kitchen'
+                                                        ? '👨‍🍳 Cozinha (Ecrã KDS)'
+                                                        : member.role === 'admin'
+                                                            ? '👑 Gerente / Admin'
+                                                            : member.role === 'reception'
+                                                                ? '💵 Caixa POS (Vendas)'
+                                                                : '🤵 Garçom / Sala (Vendas & Pedidos)';
+                                                    return (
+                                                        <button
+                                                            key={member.id}
+                                                            type="button"
+                                                            onClick={() => setOperatorId(member.name)}
+                                                            className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${
+                                                                isSelected
+                                                                    ? 'bg-[#D4AF37]/20 border-[#D4AF37] text-white shadow-[0_0_15px_rgba(212,175,55,0.25)]'
+                                                                    : 'bg-black/40 border-white/10 text-gray-300 hover:border-white/30'
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-serif font-black text-xs shrink-0 ${
+                                                                    isSelected ? 'bg-[#D4AF37] text-black' : 'bg-white/10 text-[#D4AF37]'
+                                                                }`}>
+                                                                    {(member.name || 'O').charAt(0).toUpperCase()}
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <p className="text-xs font-bold truncate">{member.name}</p>
+                                                                    <p className="text-[10px] text-gray-400 truncate">{roleLabel}</p>
+                                                                </div>
+                                                            </div>
+                                                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${
+                                                                isSelected ? 'bg-[#D4AF37] text-black' : 'text-gray-500'
+                                                            }`}>
+                                                                {isSelected ? '✓ Selecionado' : 'Escolher'}
+                                                            </span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
                                     </div>
-                                    <input
-                                        type={showPassword ? "text" : "password"}
-                                        required
-                                        maxLength={loginType === 'staff' ? 6 : 100}
-                                        className="w-full bg-[#12100E] border border-white/10 rounded-2xl pl-12 pr-12 py-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37] transition-all text-sm shadow-inner font-mono"
-                                        placeholder={loginType === 'staff' ? "PIN de Operador (ex: 1234)" : "Palavra-passe"}
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
-                                    >
-                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                    </button>
+
+                                    {/* 3. PIN Pessoal do Funcionário Selecionado */}
+                                    <div className="relative group/field">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within/field:text-[#D4AF37] transition-colors">
+                                            <Lock size={18} />
+                                        </div>
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            required
+                                            maxLength={6}
+                                            className="w-full bg-[#12100E] border border-white/10 rounded-2xl pl-12 pr-12 py-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37] transition-all text-sm shadow-inner font-mono tracking-widest"
+                                            placeholder={operatorId ? `PIN Pessoal de ${operatorId}` : "3. Insira o seu PIN Pessoal (4 a 6 dígitos)"}
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value.replace(/\D/g, ''))}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                                        >
+                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    <div className="relative group/field">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within/field:text-[#D4AF37] transition-colors">
+                                            <User size={18} />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            required
+                                            className="w-full bg-[#12100E] border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37] transition-all text-sm shadow-inner"
+                                            placeholder={loginType === 'restaurant' ? "E-mail do Restaurante" : "E-mail Administrativo"}
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div className="relative group/field">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within/field:text-[#D4AF37] transition-colors">
+                                            <Lock size={18} />
+                                        </div>
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            required
+                                            maxLength={100}
+                                            className="w-full bg-[#12100E] border border-white/10 rounded-2xl pl-12 pr-12 py-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/20 focus:border-[#D4AF37] transition-all text-sm shadow-inner font-mono"
+                                            placeholder="Palavra-passe"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                                        >
+                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Toggle Switch Remember me & Forgot Password matching screenshot */}
                             <div className="flex items-center justify-between px-1 text-xs pt-1 select-none">

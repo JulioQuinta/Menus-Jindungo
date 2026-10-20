@@ -138,7 +138,7 @@ const InteractiveDashboardAnalyticsPreview = () => {
                     <span className="text-xs font-bold text-gray-300 block mb-2">🏆 Artigos / Produtos Mais Vendidos e Margem de Lucro</span>
                     {[
                         { name: 'Prato do Dia / Restauração', qty: '482 vendas', total: '2.890.000 Kz', pct: '85%' },
-                        { name: 'Medicamentos & Saúde (FEFO)', qty: '640 vendas', total: '3.200.000 Kz', pct: '95%' },
+                        { name: 'Grelhados & Pratos Típicos', qty: '640 vendas', total: '3.200.000 Kz', pct: '95%' },
                         { name: 'Artigos Eletrónicos & Acessórios', qty: '310 vendas', total: '2.170.000 Kz', pct: '78%' },
                         { name: 'Fornadas de Pão & Pastelaria', qty: '1.250 vendas', total: '1.250.000 Kz', pct: '60%' }
                     ].map((item, idx) => (
@@ -622,16 +622,13 @@ const LandingPage = () => {
                 </h1>
                 
                 <p className="max-w-3xl mx-auto text-gray-300 text-base sm:text-lg md:text-xl mb-10 leading-relaxed font-light">
-                    Solução de <strong className="text-white font-semibold">Faturação Eletrónica Certificada AGT</strong> com Dashboard Inteligente para Acompanhar o Fluxo Financeiro e Tomada de Decisão em Restaurantes, Farmácias, Padarias, Eletrónica, Boutiques, Oficinas, Salões de Beleza, Distribuidoras e Serviços.
+                    Solução completa de <strong className="text-white font-semibold">Menu Digital QR &amp; Faturação Eletrónica Certificada AGT</strong> com Dashboard Inteligente para Restaurantes, Bares, Cafés, Pastelarias, Pizzarias e Serviços de Catering em Angola.
                 </p>
 
                 {/* Extended Sector Badges */}
                 <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-3 mb-10 text-xs font-bold font-mono max-w-4xl mx-auto">
                     <span className="px-3.5 py-1.5 bg-[#D4AF37]/20 border border-[#D4AF37] text-[#D4AF37] rounded-full flex items-center gap-1.5 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
                         🍽️ Restauração &amp; Bares
-                    </span>
-                    <span className="px-3.5 py-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full flex items-center gap-1.5 shadow-md">
-                        💊 Farmácia &amp; Saúde
                     </span>
                     <span className="px-3.5 py-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-full flex items-center gap-1.5 shadow-md">
                         🥖 Padaria &amp; Pastelaria
@@ -748,8 +745,7 @@ const LandingPage = () => {
                         <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3.5 p-4 sm:p-6 rounded-3xl bg-[#121214]/90 border border-[#D4AF37]/30 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
                             {[
                                 { id: 'restaurante', label: '🍽️ Restauração' },
-                                { id: 'farmacia', label: '💊 Farmácia' },
-                                { id: 'padaria', label: '🥖 Padaria' },
+                                                                { id: 'padaria', label: '🥖 Padaria' },
                                 { id: 'supermercado', label: '🛒 Supermercado' },
                                 { id: 'eletronicos', label: '📱 Eletrónicos' },
                                 { id: 'boutique', label: '👕 Boutiques & Moda' },
@@ -1121,7 +1117,7 @@ const LandingPage = () => {
                         </div>
                     </div>
 
-                    {/* SECTION B: Faturação Geral AGT (Para Farmácias, Padarias, Supermercados & Comércio Geral - 35.000 Kz) */}
+                    {/* SECTION B: Faturação POS Balcão AGT (Para Pastelarias, Cafetarias, Take-Away & Bares Rápidos - 35.000 Kz) */}
                     <div className="mb-20 text-left bg-gradient-to-br from-[#0B1A20] via-[#121214] to-black border-2 border-emerald-500/40 rounded-[2.5rem] p-8 sm:p-12 shadow-[0_0_50px_rgba(16,185,129,0.15)] relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 blur-[100px] pointer-events-none" />
 
@@ -1131,7 +1127,7 @@ const LandingPage = () => {
                                     <span className="px-3.5 py-1.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-black uppercase tracking-widest">
                                         Módulo Geral de Faturação
                                     </span>
-                                    <span className="text-xs text-gray-400 font-mono">Farmácias • Padarias • Supermercados • Lojas</span>
+                                    <span className="text-xs text-gray-400 font-mono">Cafetarias • Pastelarias • Bares • Take-Away</span>
                                 </div>
 
                                 <h3 className="text-3xl sm:text-4xl font-serif font-black text-white">
@@ -1139,7 +1135,7 @@ const LandingPage = () => {
                                 </h3>
 
                                 <p className="text-gray-300 text-sm leading-relaxed font-light">
-                                    Sistema universal de faturação eletrónica certificada pela AGT para estabelecimentos comerciais gerais. Inclui Ponto de Venda POS, emissão de faturas de 80mm e A4, controlo de caixas por operador e gestão de stock (Lotes/FEFO para farmácias e fornadas para padarias).
+                                    Sistema rápido de faturação eletrónica certificada pela AGT para balcões de restauração, cafetarias, pastelarias e take-away. Inclui Ponto de Venda POS, emissão de faturas de 80mm e A4, controlo de turnos de caixa por operador e gestão de stock e bebidas.
                                 </p>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs text-gray-200 font-medium">

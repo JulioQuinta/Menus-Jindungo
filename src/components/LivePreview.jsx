@@ -228,7 +228,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
         return categories.map(cat => {
             const filteredItems = cat.items.filter(item => {
                 return (
-                    item.name.toLowerCase().includes(searchLower) ||
+                    (item.name || '').toLowerCase().includes(searchLower) ||
                     (item.desc && item.desc.toLowerCase().includes(searchLower))
                 );
             });

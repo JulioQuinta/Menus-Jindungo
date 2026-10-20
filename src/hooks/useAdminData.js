@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { compressImage } from '../lib/imageUtils';
+import { db as localDexie } from '../lib/localDb';
+import offlineFallbackData from '../utils/offlineFallbackData.json';
 import toast from 'react-hot-toast';
 
 export const useAdminData = (user) => {
@@ -15,9 +17,53 @@ export const useAdminData = (user) => {
         darkMode: false,
         whatsappNumber: '',
         logoUrl: '',
-        qrMenuPrepaid: false, // default post-paid for saloon QR menus
-        onlineDeliveryPrepaid: true // default pre-paid for delivery/takeaway
+        qrMenuPrepaid: false,
+        onlineDeliveryPrepaid: true
     });
+
+    const syncToLocalDexie = async (rest, cats) => {
+        try {
+            if (rest) {
+                await localDexie.restaurants.put(rest);
+            }
+            if (Array.isArray(cats)) {
+                const catsOnly = cats.map(({ items, ...c }) => c);
+                await localDexie.categories.bulkPut(catsOnly);
+                const allItems = cats.flatMap(c => Array.isArray(c.items) ? c.items : []);
+                if (allItems.length > 0) {
+                    await localDexie.menu_items.bulkPut(allItems);
+                }
+            }
+        } catch (e) {
+            console.warn('[useAdminData] Aviso ao guardar cache no IndexedDB:', e);
+        }
+    };
+
+    const loadOfflineFallback = useCallback(async () => {
+        try {
+            const cachedRestRaw = localStorage.getItem('jindungo_cached_restaurant');
+            const cachedCatsRaw = localStorage.getItem('jindungo_cached_categories');
+
+            const fallbackRest = cachedRestRaw ? JSON.parse(cachedRestRaw) : offlineFallbackData.restaurant;
+            const fallbackCats = cachedCatsRaw ? JSON.parse(cachedCatsRaw) : offlineFallbackData.categories;
+
+            if (fallbackRest) {
+                setRestaurant(fallbackRest);
+                if (fallbackRest.theme_config) {
+                    setConfig(prev => ({ ...prev, ...fallbackRest.theme_config }));
+                }
+                if (fallbackRest.business_info) {
+                    setBusinessInfo(fallbackRest.business_info);
+                }
+            }
+            if (fallbackCats) {
+                setCategories(fallbackCats);
+            }
+            await syncToLocalDexie(fallbackRest, fallbackCats);
+        } catch (err) {
+            console.error('[useAdminData] Erro ao carregar fallback offline:', err);
+        }
+    }, []);
 
     const fetchRestaurantData = useCallback(async () => {
         const masqueradeId = localStorage.getItem('masquerade_restaurant_id');
@@ -25,6 +71,13 @@ export const useAdminData = (user) => {
             setLoading(false);
             return;
         }
+
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            await loadOfflineFallback();
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
             let query = supabase.from('restaurants').select('*');
@@ -40,6 +93,8 @@ export const useAdminData = (user) => {
             let currentRestaurant = restaurants?.[0];
             if (currentRestaurant) {
                 setRestaurant(currentRestaurant);
+                localStorage.setItem('jindungo_cached_restaurant', JSON.stringify(currentRestaurant));
+
                 if (currentRestaurant.theme_config) {
                     setConfig(prev => ({ ...prev, ...currentRestaurant.theme_config }));
                 }
@@ -54,22 +109,32 @@ export const useAdminData = (user) => {
                     .order('sort_order');
 
                 if (cError) throw cError;
-                setCategories(cats || []);
+                const safeCats = cats || [];
+                setCategories(safeCats);
+                localStorage.setItem('jindungo_cached_categories', JSON.stringify(safeCats));
+                await syncToLocalDexie(currentRestaurant, safeCats);
+            } else {
+                await loadOfflineFallback();
             }
         } catch (error) {
-            console.error("Error fetching dashboard data:", error);
-            toast.error("Erro ao carregar dados do restaurante");
+            console.warn("Sem ligação ao Supabase — a carregar dados locais offline:", error);
+            await loadOfflineFallback();
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, [user, loadOfflineFallback]);
 
     const handleConfigChange = async (newConfig) => {
         const updated = typeof newConfig === 'function' ? newConfig(config) : newConfig;
         setConfig(updated);
         if (restaurant) {
+            const updatedRest = { ...restaurant, theme_config: updated };
+            setRestaurant(updatedRest);
+            localStorage.setItem('jindungo_cached_restaurant', JSON.stringify(updatedRest));
             try {
-                await supabase.from('restaurants').update({ theme_config: updated }).eq('id', restaurant.id);
+                if (navigator.onLine) {
+                    await supabase.from('restaurants').update({ theme_config: updated }).eq('id', restaurant.id);
+                }
             } catch (err) {
                 console.error("Erro ao salvar config:", err);
             }
@@ -79,11 +144,16 @@ export const useAdminData = (user) => {
     const handleBusinessInfoSave = async (newInfo) => {
         setBusinessInfo(newInfo);
         if (restaurant) {
+            const updatedRest = { ...restaurant, business_info: newInfo };
+            setRestaurant(updatedRest);
+            localStorage.setItem('jindungo_cached_restaurant', JSON.stringify(updatedRest));
             try {
-                await supabase.from('restaurants').update({ business_info: newInfo }).eq('id', restaurant.id);
+                if (navigator.onLine) {
+                    await supabase.from('restaurants').update({ business_info: newInfo }).eq('id', restaurant.id);
+                }
                 toast.success("Informações atualizadas!");
-            } catch (err) {
-                toast.error("Erro ao salvar informações");
+            } catch {
+                toast.success("Informações guardadas localmente (Modo Offline)!");
             }
         }
     };
@@ -101,7 +171,7 @@ export const useAdminData = (user) => {
             const { data: { publicUrl } } = supabase.storage.from('menus').getPublicUrl(fileName);
             await handleConfigChange(prev => ({ ...prev, logoUrl: publicUrl }));
             toast.success("Logotipo atualizado!", { id: 'logo-upload' });
-        } catch (error) {
+        } catch {
             toast.error("Erro ao salvar logotipo", { id: 'logo-upload' });
         }
     };
@@ -119,7 +189,7 @@ export const useAdminData = (user) => {
             const { data: { publicUrl } } = supabase.storage.from('menus').getPublicUrl(fileName);
             await handleConfigChange(prev => ({ ...prev, headerBgUrl: publicUrl }));
             toast.success("Capa atualizada!", { id: 'capa-upload' });
-        } catch (error) {
+        } catch {
             toast.error("Erro ao carregar a capa", { id: 'capa-upload' });
         }
     };

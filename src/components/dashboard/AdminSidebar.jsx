@@ -17,12 +17,14 @@ const AdminSidebar = memo(({
     restaurantName,
     restaurantSlug,
     moduleFeatures,
-    businessSector
+    businessSector,
+    activeStaff,
+    onOpenStaffModal
 }) => {
     const sectorDetails = getSectorDetails(businessSector);
     const sectorTheme = sectorDetails?.theme || {};
 
-    const isPharmacy = businessSector === 'pharmacy';
+    const isPharmacy = false;
 
     const isActive = (path) => {
         if (path === '/admin') return location.pathname === '/admin';
@@ -108,6 +110,38 @@ const AdminSidebar = memo(({
                         <h4 className={`text-sm font-bold text-white truncate transition-colors ${isPharmacy ? 'group-hover/card:text-emerald-400' : 'group-hover/card:text-[#D4AF37]'}`}>
                             {restaurantName || sectorDetails.terms?.establishment || 'O seu Estabelecimento'}
                         </h4>
+
+                        {/* Botão de Acesso Equipa / PIN logo abaixo do nome do Restaurante */}
+                        <div className="pt-2.5 mt-1 border-t border-white/10">
+                            <button
+                                type="button"
+                                onClick={() => onOpenStaffModal && onOpenStaffModal()}
+                                className={`w-full py-2 px-3 rounded-xl border text-left transition-all flex items-center justify-between gap-2 cursor-pointer ${
+                                    activeStaff
+                                        ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25'
+                                        : 'bg-[#D4AF37]/10 border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/20'
+                                }`}
+                            >
+                                <div className="min-w-0">
+                                    <span className="text-[9px] font-black uppercase tracking-widest block opacity-80">
+                                        {activeStaff ? '🟢 Turno de Equipa Ativo' : '🔐 Acesso Equipa / PIN'}
+                                    </span>
+                                    <span className="text-xs font-bold text-white truncate block">
+                                        {activeStaff
+                                            ? `${activeStaff.name} (${({
+        admin: 'Gerente / Admin Total',
+        waiter: 'Garçom • Vendas & Sala',
+        reception: 'Caixa POS • Vendas',
+        kitchen: 'Chef • Cozinha (KDS)'
+    })[activeStaff.role] || 'Operador'})`
+                                            : 'Selecionar Funcionário'}
+                                    </span>
+                                </div>
+                                <span className="text-[10px] font-black px-2 py-1 rounded-lg bg-black/40 border border-white/10 shrink-0">
+                                    {activeStaff ? 'Trocar' : 'PIN →'}
+                                </span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

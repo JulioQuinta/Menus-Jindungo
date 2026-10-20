@@ -6,7 +6,7 @@ import {
     Clock, ChefHat, CheckCircle2, Truck, XCircle, Award, 
     Phone, MessageSquare, ChevronLeft, MapPin, Share2, 
     FileText, HelpCircle, UtensilsCrossed, Star, Check,
-    CreditCard, Smartphone
+    CreditCard, Smartphone, ShoppingBag
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
@@ -218,10 +218,19 @@ const OrderTrackerPage = () => {
                 fontFamily: 'serif'
             };
 
+            const isOrderTakeaway = order?.order_type === 'takeaway' || String(order?.table_number || '').toLowerCase().includes('takeaway');
+            const isOrderDelivery = order?.order_type === 'delivery' || String(order?.table_number || '').includes('Entrega:');
             if (currentStatus === 'preparing') {
-                toast("👨‍🍳 O Chef na cozinha já começou a preparar o seu pedido!", { icon: '🔥', style: toastStyle });
+                toast(isOrderTakeaway ? "👨‍🍳 O Chef já está a preparar e embalar o seu Take-Away!" : "👨‍🍳 O Chef na cozinha já começou a preparar o seu pedido!", { icon: '🔥', style: toastStyle });
             } else if (currentStatus === 'ready') {
-                toast("🛎️ O seu pedido está pronto! A sair quentinho da cozinha.", { icon: '🍽️', style: toastStyle });
+                toast(
+                    isOrderTakeaway
+                        ? "🛍️ O seu Take-Away está PRONTO no balcão! Apresente a sua senha para levantar."
+                        : isOrderDelivery
+                            ? "📦 Encomenda pronta e embalada! A aguardar saída do estafeta."
+                            : "🛎️ O seu prato está pronto no Passe! O Garçom já vai servir na sua mesa.",
+                    { icon: isOrderTakeaway ? '🛍️' : '🍽️', style: toastStyle }
+                );
             } else if (currentStatus === 'out_for_delivery') {
                 toast("🛵 A sua encomenda acabou de sair para entrega ao domicílio!", { icon: '💨', style: toastStyle });
             } else if (currentStatus === 'arrived') {
@@ -239,8 +248,9 @@ const OrderTrackerPage = () => {
         if (!order?.created_at) return;
 
         const updateEta = () => {
-            const isDelivery = order.order_type === 'delivery';
-            const targetMins = isDelivery ? 45 : 20;
+            const isDelivery = order.order_type === 'delivery' || String(order.table_number || '').includes('Entrega:');
+            const isTakeaway = order.order_type === 'takeaway' || String(order.table_number || '').toLowerCase().includes('takeaway');
+            const targetMins = isDelivery ? 45 : isTakeaway ? 25 : 20;
             const diffMs = Date.now() - new Date(order.created_at).getTime();
             const elapsedMins = Math.floor(diffMs / 60000);
             const remaining = targetMins - elapsedMins;
@@ -256,11 +266,12 @@ const OrderTrackerPage = () => {
             } else if (order.status === 'arrived') {
                 setEtaText('À SUA PORTA!');
             } else if (order.status === 'ready') {
-                setEtaText(isDelivery ? 'A aguardar Estafeta' : 'Pronto para servir/levantar!');
+                setEtaText(isDelivery ? 'Embalado • A aguardar Estafeta' : isTakeaway ? 'PRONTO NO BALCÃO!' : 'No Passe • Garçom a servir!');
             } else if (order.status === 'cancelled') {
                 setEtaText('Cancelado');
             } else {
-                setEtaText(remaining > 0 ? `Entrega prevista em ${remaining} min` : 'Quase pronto!');
+                const prefix = isDelivery ? 'Entrega em' : isTakeaway ? 'Pronto p/ levantar em' : 'Pronto na mesa em';
+                setEtaText(remaining > 0 ? `${prefix} ~${remaining} min` : 'Quase pronto!');
             }
         };
 
@@ -331,27 +342,47 @@ const OrderTrackerPage = () => {
         );
     }
 
-    const isDelivery = order?.order_type === 'delivery';
+    const isDelivery = order?.order_type === 'delivery' || String(order?.table_number || '').includes('Entrega:');
+    const isTakeaway = !isDelivery && (order?.order_type === 'takeaway' || String(order?.table_number || '').toLowerCase().includes('takeaway') || String(order?.table_number || '').toLowerCase().includes('recolha'));
+    const isDineIn = !isDelivery && !isTakeaway;
+    const pickupPin = String(order?.id || '').slice(0, 4).toUpperCase();
+    const cleanTableLabel = String(order?.table_number || 'Mesa').split('|')[0].trim();
 
-    // Status Timeline Mappings
-    const stages = [
-        { key: 'pending', label: 'Recebido', desc: 'A aguardar confirmação', icon: Clock },
-        { key: 'preparing', label: 'Na Cozinha', desc: 'Em preparação pelo Chef', icon: ChefHat },
-        { key: 'ready', label: 'Pronto', desc: isDelivery ? 'Encomenda embalada' : 'Pronto para servir', icon: CheckCircle2 },
-        { key: 'out_for_delivery', label: 'A Caminho', desc: 'Estafeta saiu com o pedido', icon: Truck },
-        { key: 'delivered', label: 'Entregue', desc: 'Refeição concluída', icon: Award }
-    ];
+    // Status Timeline Mappings adaptados às 3 Modalidades (Mesa no Salão, Take-Away e Delivery GPS)
+    const stages = isDelivery
+        ? [
+            { key: 'pending', label: 'Recebido', desc: 'A aguardar confirmação', icon: Clock },
+            { key: 'preparing', label: 'Na Cozinha', desc: 'Em preparação pelo Chef', icon: ChefHat },
+            { key: 'ready', label: 'Embalado', desc: 'Pronto p/ Estafeta', icon: CheckCircle2 },
+            { key: 'out_for_delivery', label: 'A Caminho', desc: 'Estafeta em rota GPS', icon: Truck },
+            { key: 'delivered', label: 'Entregue', desc: 'Entregue na morada', icon: Award }
+        ]
+        : isTakeaway
+            ? [
+                { key: 'pending', label: 'Recebido', desc: 'Take-Away confirmado', icon: Clock },
+                { key: 'preparing', label: 'A Preparar', desc: 'Cozinha a preparar e embalar', icon: ChefHat },
+                { key: 'ready', label: 'Pronto no Balcão!', desc: `Levantar c/ Senha #${pickupPin}`, icon: ShoppingBag },
+                { key: 'delivered', label: 'Levantado', desc: 'Retirado no balcão', icon: Award }
+            ]
+            : [
+                { key: 'pending', label: 'Recebido', desc: 'Enviado para a cozinha', icon: Clock },
+                { key: 'preparing', label: 'No Fogo', desc: 'Chef a preparar o prato', icon: ChefHat },
+                { key: 'ready', label: 'No Passe!', desc: 'Garçom a levar à mesa', icon: UtensilsCrossed },
+                { key: 'delivered', label: 'Servido na Mesa', desc: 'Bom apetite!', icon: Award }
+            ];
 
     // Status progression helper
     const getStageIndex = (currentStatus) => {
         const normalized = String(currentStatus).toLowerCase().trim();
-        if (normalized === 'waiting_payment') return 0;
-        if (normalized === 'pending') return 0;
-        if (normalized === 'preparing') return 1;
-        if (normalized === 'ready') return 2;
-        if (normalized === 'out_for_delivery') return 3;
-        if (normalized === 'arrived') return 3;
-        if (normalized === 'delivered' || normalized === 'paid' || normalized === 'pago') return 4;
+        if (normalized === 'waiting_payment' || normalized === 'pending' || normalized === 'pendente') return 0;
+        if (normalized === 'preparing' || normalized === 'preparando') return 1;
+        if (normalized === 'ready' || normalized === 'pronto') return 2;
+        if (isDelivery) {
+            if (normalized === 'out_for_delivery' || normalized === 'arrived') return 3;
+            if (normalized === 'delivered' || normalized === 'entregue' || normalized === 'paid' || normalized === 'pago') return 4;
+        } else {
+            if (normalized === 'out_for_delivery' || normalized === 'arrived' || normalized === 'delivered' || normalized === 'entregue' || normalized === 'paid' || normalized === 'pago') return 3;
+        }
         return 0;
     };
 
@@ -536,6 +567,77 @@ const OrderTrackerPage = () => {
                         </div>
                     )}
                 </div>
+
+                {/* CARTÃO DE MODALIDADE: TAKE-AWAY (SENHA DE RECOLHA ONLINE) OU MESA NO SALÃO */}
+                {isTakeaway && !isCancelled && (
+                    <div className="bg-gradient-to-br from-purple-950/40 via-[#0E0E12] to-[#0A0A0B] border-2 border-purple-500/40 rounded-[32px] p-6 shadow-2xl relative overflow-hidden">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+                            <div className="flex items-center gap-3.5">
+                                <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-500/40 text-purple-300 flex items-center justify-center shadow-lg">
+                                    <ShoppingBag size={24} />
+                                </div>
+                                <div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-purple-500 text-white">
+                                        🛍️ TAKE-AWAY • RECOLHA NO RESTAURANTE
+                                    </span>
+                                    <h3 className="text-base sm:text-lg font-serif font-black text-white mt-1">
+                                        {order?.status === 'ready'
+                                            ? '🔔 A sua encomenda já está PRONTA no Balcão!'
+                                            : ['delivered', 'paid', 'pago'].includes(String(order?.status).toLowerCase())
+                                                ? '✅ Encomenda Take-Away levantada com sucesso!'
+                                                : '👨‍🍳 A sua encomenda está a ser preparada para viagem'}
+                                    </h3>
+                                </div>
+                            </div>
+                            <div className="bg-black/60 border-2 border-[#D4AF37] rounded-2xl px-5 py-3 text-center shrink-0">
+                                <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 block">Senha de Levantamento</span>
+                                <span className="text-2xl font-mono font-black text-[#D4AF37] tracking-wider">#{pickupPin}</span>
+                            </div>
+                        </div>
+                        <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-gray-300">
+                            <p>
+                                {order?.status === 'ready'
+                                    ? 'Dirija-se ao balcão de recolha do restaurante e apresente a Senha acima ao operador.'
+                                    : 'Acompanhe o estado em tempo real nesta página. Receberá um alerta sonoro assim que o saco estiver pronto no balcão!'}
+                            </p>
+                            {restaurantCoords && (
+                                <a
+                                    href={`https://www.google.com/maps/dir/?api=1&destination=${restaurantCoords.lat},${restaurantCoords.lng}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-4 py-2.5 rounded-xl bg-[#D4AF37] text-black font-black uppercase tracking-wider text-[11px] flex items-center gap-1.5 shrink-0 hover:brightness-110 transition-all"
+                                >
+                                    <MapPin size={14} /> Ver Mapa até ao Restaurante
+                                </a>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {isDineIn && !isCancelled && (
+                    <div className="bg-gradient-to-br from-amber-950/30 via-[#0E0E12] to-[#0A0A0B] border border-[#D4AF37]/30 rounded-[28px] p-5 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3.5">
+                            <div className="w-11 h-11 rounded-2xl bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] flex items-center justify-center shrink-0">
+                                <UtensilsCrossed size={22} />
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37]">
+                                    🍽️ ATENDIMENTO DENTRO DO RESTAURANTE ({cleanTableLabel})
+                                </span>
+                                <p className="text-xs text-gray-300 mt-0.5">
+                                    {order?.status === 'ready'
+                                        ? '🔔 O seu prato acabou de sair para o Passe! O Garçom está a levá-lo à sua mesa.'
+                                        : ['delivered', 'paid', 'pago'].includes(String(order?.status).toLowerCase())
+                                            ? '✅ Pedido servido na sua mesa. Bom apetite!'
+                                            : 'O seu pedido está ligado em tempo real ao ecrã KDS do Chef na Cozinha e ao terminal do seu Garçom.'}
+                                </p>
+                            </div>
+                        </div>
+                        <span className="px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-mono font-black text-[#D4AF37] shrink-0">
+                            {cleanTableLabel}
+                        </span>
+                    </div>
+                )}
 
                 {/* PAYMENT PENDING DETAILS (waiting_payment) */}
                 {order?.status === 'waiting_payment' && (

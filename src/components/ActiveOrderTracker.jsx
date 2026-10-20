@@ -13,12 +13,16 @@ const ActiveOrderTracker = ({ restaurantId, restaurantName, primaryColor = '#D4A
     const [isVisible, setIsVisible] = useState(true);
     const [showReceiptModal, setShowReceiptModal] = useState(false);
 
-    // Format the subtext to hide technical data
+    // Format the subtext to hide technical data & detect 3 modalities
     let displaySubtext = activeOrder?.table_number || '';
-    const isDelivery = displaySubtext.includes('Entrega:');
+    const isDelivery = activeOrder?.order_type === 'delivery' || displaySubtext.includes('Entrega:');
+    const isTakeaway = !isDelivery && (activeOrder?.order_type === 'takeaway' || displaySubtext.toLowerCase().includes('takeaway') || displaySubtext.toLowerCase().includes('recolha'));
+    const pickupPin = String(activeOrder?.id || '').slice(0, 4).toUpperCase();
     if (isDelivery) {
-        displaySubtext = "Ao domicílio";
-    } else if (displaySubtext.includes('| Pgto')) {
+        displaySubtext = "Entrega ao Domicílio (GPS)";
+    } else if (isTakeaway) {
+        displaySubtext = `Take-Away • Senha #${pickupPin}`;
+    } else if (displaySubtext.includes('|')) {
         displaySubtext = displaySubtext.split('|')[0].trim();
     }
 
@@ -127,7 +131,7 @@ const ActiveOrderTracker = ({ restaurantId, restaurantName, primaryColor = '#D4A
 
             const { data } = await supabase
                 .from('orders')
-                .select('id, status, table_number, total, rejection_reason, created_at, courier_name, courier_phone')
+                .select('id, status, order_type, table_number, total, items, rejection_reason, created_at, courier_name, courier_phone')
                 .eq('id', id)
                 .single();
 
@@ -179,7 +183,7 @@ const ActiveOrderTracker = ({ restaurantId, restaurantName, primaryColor = '#D4A
         'waiting_payment': { label: 'A Aguardar Pgto MCX', color: 'text-orange-400', bg: 'bg-orange-500/10', icon: Clock, border: 'border-orange-500/20' },
         'pending': { label: 'Recebido / Pendente', color: 'text-yellow-500', bg: 'bg-yellow-500/10', icon: Clock, border: 'border-yellow-500/20' },
         'preparing': { label: 'Na Cozinha', color: 'text-orange-500', bg: 'bg-orange-500/10', icon: ChefHat, border: 'border-orange-500/20' },
-        'ready': { label: 'Pronto a Servir', color: 'text-green-500', bg: 'bg-green-500/10', icon: CheckCircle, border: 'border-green-500/20' },
+        'ready': { label: isTakeaway ? 'Pronto no Balcão p/ Levantar!' : isDelivery ? 'Embalado p/ Estafeta' : 'No Passe • A Caminho da Mesa!', color: 'text-green-500', bg: 'bg-green-500/10', icon: CheckCircle, border: 'border-green-500/20' },
         'out_for_delivery': { label: 'A Caminho da sua Morada', color: 'text-cyan-400', bg: 'bg-cyan-500/10', icon: Truck, border: 'border-cyan-500/20' },
         'arrived': { label: 'O Motoboy Chegou! 🛵💨', color: 'text-green-400', bg: 'bg-green-500/20', icon: CheckCircle, border: 'border-green-500/50' },
         'delivered': { label: 'Pedido Entregue / Pago', color: 'text-blue-500', bg: 'bg-blue-500/10', icon: Truck, border: 'border-blue-500/20' },

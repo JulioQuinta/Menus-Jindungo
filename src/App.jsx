@@ -18,7 +18,7 @@ function App() {
   return (
     <ErrorBoundary>
       <>
-        {!isOnline && (
+        {!isOnline && !window.location.href.includes('/admin') && (
           <div className="fixed top-0 left-0 w-full bg-red-600 text-white text-center py-1.5 z-[9999] text-xs font-bold uppercase tracking-widest animate-pulse shadow-md flex items-center justify-center gap-2">
             <span>⚠️ SEM LIGAÇÃO À INTERNET - MODO OFFLINE ATIVO</span>
           </div>

@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabaseClient';
 import { toast } from 'react-hot-toast';
 import { db } from '../lib/localDb';
 
-const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Farmácia Jindungo', businessSector }) => {
+const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Restaurante Jindungo', businessSector }) => {
     const [viewMode, setViewMode] = useState('receipt'); // 'receipt' (80mm) vs 'invoice' (A4)
     const [localOrder, setLocalOrder] = useState(order);
     const [dbRestaurant, setDbRestaurant] = useState(null);
@@ -232,8 +232,8 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Farmácia Jind
     const isExempt = vatRate === 0;
 
     // Determinação do setor
-    const currentSector = businessSector || dbRestaurant?.business_sector || localOrder?.restaurant?.business_sector || 'pharmacy';
-    const isPharmacyModal = currentSector === 'pharmacy' || currentSector === 'health_medical' || (restaurantName || '').toLowerCase().includes('farma') || (dbRestaurant?.name || '').toLowerCase().includes('farma');
+    const currentSector = 'restaurant';
+    const isPharmacyModal = false;
 
     // Informações da Empresa
     const companyInfo = {
@@ -259,7 +259,7 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Farmácia Jind
     const extractedOrmed = localOrder?.doctor_ormed || localOrder?.table_number?.match(/Carteira:\s*([^|\n]+)/)?.[1]?.trim();
     const extractedPrescriptionNum = localOrder?.prescription_number || localOrder?.table_number?.match(/Rec N\.º:\s*([^\s|]+)/)?.[1]?.trim();
 
-    const hasHealthExemption = localOrder?.items?.some(i => i.health_iva_exemption || i.translations?.sector_data?.health_iva_exemption) || (isExempt && isPharmacyModal);
+    const hasHealthExemption = false;
 
     const rawTotal = localOrder?.total || 0;
     const insuranceAmountCalculated = localOrder?.insurance_amount || (extractedInsurance ? Math.round(rawTotal * (extractedCoverage / 100)) : 0);
@@ -284,9 +284,9 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Farmácia Jind
         let msg = `🧾 *${companyInfo.name}* - Resumo do Pedido / Fatura\n\n`;
         msg += `Pedido N.º: #${localOrder?.id ? localOrder.id.slice(0, 6) : '1042'}\n`;
         msg += `Data: ${formattedDate} às ${formattedTime}\n`;
-        msg += `Cliente / Utente: ${customerInfo.name}\n`;
+        msg += `Cliente: ${customerInfo.name}\n`;
         msg += `Local: ${displayTable}\n\n`;
-        msg += `*ARTIGOS / MEDICAMENTOS:*\n`;
+        msg += `*ITENS DO PEDIDO:*\n`;
         localOrder?.items?.forEach(item => {
             msg += `• ${item.quantity}x ${item.name} - ${formatCurr(item.price * item.quantity)}\n`;
         });
@@ -499,46 +499,9 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Farmácia Jind
                                     <span className="font-mono">{formatCurr(taxAmount)}</span>
                                 </div>
 
-                                {localOrder?.health_insurance_name && (
-                                    <div className="my-1.5 p-2 bg-emerald-50 border border-emerald-200 rounded text-[9px] space-y-1">
-                                        <div className="flex justify-between font-bold text-emerald-900">
-                                            <span>🛡️ Seguradora: {localOrder.health_insurance_name}</span>
-                                            <span>{localOrder.insurance_coverage_percent || 80}%</span>
-                                        </div>
-                                        {localOrder.health_insurance_policy && (
-                                            <div className="text-[8px] text-emerald-700">Apólice / Cartão: {localOrder.health_insurance_policy}</div>
-                                        )}
-                                        <div className="flex justify-between text-emerald-800 border-t border-emerald-200/60 pt-1">
-                                            <span>Comparticipação Seguradora:</span>
-                                            <span className="font-bold">-{formatCurr(localOrder.insurance_amount || 0)}</span>
-                                        </div>
-                                        <div className="flex justify-between text-emerald-950 font-bold">
-                                            <span>Copagamento Utente:</span>
-                                            <span>{formatCurr(localOrder.patient_copay_amount || rawTotal)}</span>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {(extractedDoctor || extractedOrmed || extractedPrescriptionNum) && (
-                                    <div className="my-1.5 p-2 bg-sky-50 border border-sky-200 rounded text-[9px] space-y-0.5 text-left">
-                                        <div className="font-bold text-sky-950 flex items-center justify-between">
-                                            <span>📋 Receita Médica ORMED</span>
-                                            {extractedOrmed && <span className="font-mono text-[8px] text-sky-800">{extractedOrmed}</span>}
-                                        </div>
-                                        {extractedDoctor && <div className="text-[8.5px] text-sky-900">Médico: <strong>Dr(a). {extractedDoctor}</strong></div>}
-                                        {extractedPrescriptionNum && <div className="text-[8.5px] text-sky-900">Guia/Receita N.º: <strong>{extractedPrescriptionNum}</strong></div>}
-                                    </div>
-                                )}
-
-                                {hasHealthExemption && (
-                                    <div className="my-1.5 p-1.5 bg-emerald-50 border border-emerald-200 text-emerald-950 rounded text-[8px] text-center font-bold">
-                                        Isento nos termos do Art. 12.º do Código do IVA - Alínea m) (Medicamentos Essenciais) - Cód. AGT M02
-                                    </div>
-                                )}
-
                                 <div className="my-1.5 border-t border-b border-black py-1.5 flex justify-between items-baseline bg-gray-50 p-1.5 rounded">
                                     <span className="text-xs font-black text-black">
-                                        {localOrder?.health_insurance_name ? 'COPAGAMENTO UTENTE:' : 'TOTAL A PAGAR:'}
+                                        'TOTAL A PAGAR:'
                                     </span>
                                     <span className="text-base font-black font-mono text-black">
                                         {formatCurr(localOrder?.health_insurance_name ? (localOrder.patient_copay_amount || rawTotal) : rawTotal)}
@@ -548,7 +511,7 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Farmácia Jind
                                 <div className="flex justify-between text-[9px] text-gray-600 pt-0.5">
                                     <span>Modo de Pagamento:</span>
                                     <span className="font-bold text-black uppercase">
-                                        {localOrder?.health_insurance_name ? `Seguradora (${localOrder.health_insurance_name})` : (order?.payment_method === 'multicaixa' ? 'Multicaixa Express' : order?.payment_method === 'cash' ? 'Numerário' : (order?.payment_method || 'A Confirmar'))}
+                                        (order?.payment_method === 'multicaixa' ? 'Multicaixa Express' : order?.payment_method === 'cash' ? 'Numerário' : (order?.payment_method || 'Pronto Pagamento'))
                                     </span>
                                 </div>
                             </div>
@@ -664,26 +627,6 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Farmácia Jind
                                             <span>Regime Fiscal:</span>
                                             <strong className="text-gray-950">{hasHealthExemption ? 'Isenção IVA (Art. 12.º al. m)' : 'Geral (IVA 14%)'}</strong>
                                         </div>
-                                        {(extractedDoctor || extractedOrmed || extractedPrescriptionNum) && (
-                                            <div className="border-t border-gray-200 pt-1.5 mt-1 text-[11px] text-sky-950 space-y-0.5">
-                                                <div className="font-bold flex justify-between">
-                                                    <span>Dr(a). Receitante:</span>
-                                                    <span>{extractedDoctor || 'Não Informado'}</span>
-                                                </div>
-                                                {extractedOrmed && (
-                                                    <div className="flex justify-between text-[10px]">
-                                                        <span>Carteira ORMED:</span>
-                                                        <span className="font-mono font-bold">{extractedOrmed}</span>
-                                                    </div>
-                                                )}
-                                                {extractedPrescriptionNum && (
-                                                    <div className="flex justify-between text-[10px]">
-                                                        <span>Receita N.º:</span>
-                                                        <span className="font-mono font-bold">{extractedPrescriptionNum}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
                                         <div className="flex justify-between">
                                             <span>Operador / Atendente:</span>
                                             <strong className="text-gray-950">{order?.courier_name || 'Atendimento Directo'}</strong>

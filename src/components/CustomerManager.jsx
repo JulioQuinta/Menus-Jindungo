@@ -252,8 +252,8 @@ const CustomerManager = ({ restaurantId }) => {
     };
 
     const filteredCustomers = customers.filter(c => {
-        const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                              c.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        const matchesSearch = (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                              (c.phone || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                               (c.favoriteItem || '').toLowerCase().includes(searchTerm.toLowerCase());
         if (activeFilter === 'all') return matchesSearch;
         if (activeFilter === 'vip') return matchesSearch && (c.tag === 'VIP' || c.tag === 'ILIMITADO');
@@ -840,7 +840,7 @@ const CustomerManager = ({ restaurantId }) => {
                         {gatewayConfig.apiUrl && gatewayConfig.token ? (
                             <div className="bg-green-500/10 border border-green-500/30 p-4 rounded-2xl mb-6 shadow-inner">
                                 <p className="text-[10px] text-green-400 font-bold uppercase tracking-widest flex items-center gap-1.5 mb-1">
-                                    <Phone size={12} /> Gateway Ativo: {gatewayConfig.gatewayType.toUpperCase()}
+                                    <Phone size={12} /> Gateway Ativo: {(gatewayConfig?.gatewayType || '').toUpperCase()}
                                 </p>
                                 <p className="text-xs text-green-200/80 leading-relaxed font-medium">
                                     Foi detetada uma ligação ao gateway de WhatsApp. Pode enviar de forma 100% automática em segundo plano com pausas seguras.

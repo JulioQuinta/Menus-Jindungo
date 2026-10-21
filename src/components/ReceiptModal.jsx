@@ -522,7 +522,7 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Restaurante Ji
                                     <div className="p-1.5 bg-white border border-gray-200 rounded-lg inline-block shadow-sm">
                                         <QRCodeSVG value={localOrder.invoice_status === 'validated'
                                             ? `https://agt.minfin.gov.ao/valida/fatura?nif=${companyInfo.nif}&num=${localOrder.invoice_number}`
-                                            : `https://jindungo.ao/valida/${order?.id || '1042'}`} size={64} />
+                                            : `https://menusjindungo.ao/track/${localOrder?.id || order?.id || '1042'}`} size={64} />
                                     </div>
                                 </div>
                                 <p className="text-[10px] font-bold text-black mb-0.5">Avalie a sua experiência</p>
@@ -687,7 +687,7 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Restaurante Ji
                                             <QRCodeSVG 
                                                 value={localOrder.invoice_status === 'validated' 
                                                     ? `https://agt.minfin.gov.ao/valida/fatura?nif=${companyInfo.nif}&num=${localOrder.invoice_number}`
-                                                    : `https://jindungo.ao/fatura/rascunho/${localOrder.id}`
+                                                    : `https://menusjindungo.ao/track/${localOrder.id}`
                                                 } 
                                                 size={56} 
                                             />

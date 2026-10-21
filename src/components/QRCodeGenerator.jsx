@@ -3,7 +3,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { 
     QrCode, Download, AlertTriangle, Printer, TrendingUp, Sparkles, 
     Maximize2, Check, ChevronRight, ChevronLeft, Sliders, Table, 
-    Layers, Info, ExternalLink, Share2, Copy, BarChart2, Sparkle
+    Layers, Info, ExternalLink, Share2, Copy, BarChart2, Sparkle, Globe
 } from 'lucide-react';
 import { 
     ResponsiveContainer, AreaChart, Area, BarChart, Bar, 
@@ -11,7 +11,9 @@ import {
 } from 'recharts';
 import { toast } from 'react-hot-toast';
 
-const QRCodeGenerator = ({ url = "https://menusjindungo.com/menu/demo", restaurantName = "Restaurante Jindungo", logoUrl }) => {
+const PRODUCTION_ORIGIN = 'https://menusjindungo.ao';
+
+const QRCodeGenerator = ({ url = "https://menusjindungo.ao/r/demo", slug, restaurantName = "Restaurante Jindungo", logoUrl }) => {
     const qrRef = useRef();
     const acrylicQrRef = useRef();
     const stickerQrRef = useRef();
@@ -20,11 +22,65 @@ const QRCodeGenerator = ({ url = "https://menusjindungo.com/menu/demo", restaura
     const [showMetrics, setShowMetrics] = useState(true);
     const [activeMockup, setActiveMockup] = useState('acrylic'); // 'acrylic' | 'sticker'
     const [activeAiTip, setActiveAiTip] = useState(0);
+    const [safeLogoSrc, setSafeLogoSrc] = useState('/jindungo_logo_v3.png');
+    const [showLogoInQr, setShowLogoInQr] = useState(true);
+
+    // Extract slug from prop or fallback from url
+    const resolvedSlug = slug || (() => {
+        try {
+            const parts = url.split('/r/');
+            if (parts[1]) return parts[1].split('?')[0].replace(/^\/+|\/+$/g, '');
+            const u = new URL(url);
+            return u.pathname.replace(/^\/r\//, '').replace(/^\/+|\/+$/g, '') || 'demo';
+        } catch {
+            return 'demo';
+        }
+    })();
+
+    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : PRODUCTION_ORIGIN;
+    const isBrowserLocal = currentOrigin.includes('localhost') || currentOrigin.includes('127.0.0.1') || currentOrigin.startsWith('file:');
+
+    // Default to official production cloud domain if running on localhost/Desktop EXE so printed QR codes work on phones!
+    const [domainMode, setDomainMode] = useState(isBrowserLocal ? 'cloud' : 'current');
+
+    const baseMenuUrl = domainMode === 'cloud'
+        ? `${PRODUCTION_ORIGIN}/r/${resolvedSlug}`
+        : `${currentOrigin}/r/${resolvedSlug}`;
 
     // Generate URL with optional table parameter
-    const finalUrl = tableNumber ? `${url}?mesa=${tableNumber}` : url;
-    const isLocalhost = url.includes('localhost') || url.includes('127.0.0.1');
-    const qrLogoSrc = logoUrl || '/jindungo_icon.png';
+    const finalUrl = tableNumber ? `${baseMenuUrl}?mesa=${encodeURIComponent(tableNumber.trim())}` : baseMenuUrl;
+    const isLocalhost = finalUrl.includes('localhost') || finalUrl.includes('127.0.0.1');
+
+    // Safely preload logo to dataURL so external Supabase URLs never taint the HTML5 Canvas on download
+    useEffect(() => {
+        if (!logoUrl) {
+            setSafeLogoSrc('/jindungo_logo_v3.png');
+            return;
+        }
+        let isMounted = true;
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            if (!isMounted) return;
+            try {
+                const c = document.createElement('canvas');
+                c.width = img.naturalWidth || 128;
+                c.height = img.naturalHeight || 128;
+                const ctx = c.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                const dataUrl = c.toDataURL('image/png');
+                setSafeLogoSrc(dataUrl);
+            } catch {
+                // If CORS blocks canvas export, fallback to local icon so QR download never fails
+                setSafeLogoSrc('/jindungo_logo_v3.png');
+            }
+        };
+        img.onerror = () => {
+            if (isMounted) setSafeLogoSrc('/jindungo_logo_v3.png');
+        };
+        img.src = logoUrl;
+        return () => { isMounted = false; };
+    }, [logoUrl]);
 
     const downloadQRCode = (specificRef = qrRef, filenameSuffix = '') => {
         try {
@@ -36,7 +92,7 @@ const QRCodeGenerator = ({ url = "https://menusjindungo.com/menu/demo", restaura
             const image = canvas.toDataURL("image/png");
             const link = document.createElement('a');
             link.href = image;
-            link.download = `${restaurantName.replace(/\s+/g, '_')}_${tableNumber ? `Mesa_${tableNumber}` : 'Geral'}${filenameSuffix}_QR.png`;
+            link.download = `${(restaurantName || 'Restaurante').replace(/\s+/g, '_')}_${tableNumber ? `Mesa_${tableNumber}` : 'Geral'}${filenameSuffix}_QR.png`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -129,12 +185,51 @@ const QRCodeGenerator = ({ url = "https://menusjindungo.com/menu/demo", restaura
                         {/* Radial Neon Glow behind QR */}
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-600/20 blur-[100px] rounded-full pointer-events-none z-0" />
 
-                        {/* Dark Amber Localhost Banner replacing ugly warning */}
+                        {/* Domain Mode Switcher when running locally or on Desktop EXE */}
+                        {isBrowserLocal && (
+                            <div className="relative z-10 mb-6 bg-black/50 border border-[#D4AF37]/30 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <Globe size={20} className="text-[#D4AF37] shrink-0" />
+                                    <div>
+                                        <span className="text-xs font-black text-white uppercase tracking-wider block">Destino do QR Code para Telemóveis</span>
+                                        <span className="text-[11px] text-gray-400">
+                                            Use o <strong>Domínio Oficial Cloud</strong> para impressão nas mesas (funciona em 4G/Unitel/Africell).
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1.5 bg-white/5 p-1 rounded-xl border border-white/10 shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => setDomainMode('cloud')}
+                                        className={`px-3 py-1.5 rounded-lg text-[11px] font-black transition-all cursor-pointer ${
+                                            domainMode === 'cloud'
+                                                ? 'bg-[#D4AF37] text-black shadow'
+                                                : 'text-gray-400 hover:text-white'
+                                        }`}
+                                    >
+                                        🌐 Cloud Oficial (menusjindungo.ao)
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setDomainMode('current')}
+                                        className={`px-3 py-1.5 rounded-lg text-[11px] font-black transition-all cursor-pointer ${
+                                            domainMode === 'current'
+                                                ? 'bg-[#D4AF37] text-black shadow'
+                                                : 'text-gray-400 hover:text-white'
+                                        }`}
+                                    >
+                                        💻 Teste Local
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Dark Amber Localhost Banner when user explicitly selects localhost */}
                         {isLocalhost && (
-                            <div className="relative z-10 mb-8 bg-gradient-to-r from-amber-950/80 via-amber-900/60 to-amber-950/80 border border-amber-500/40 rounded-2xl p-4 text-amber-200 text-xs font-medium shadow-lg flex items-center gap-3 backdrop-blur-md animate-pulse">
+                            <div className="relative z-10 mb-8 bg-gradient-to-r from-amber-950/80 via-amber-900/60 to-amber-950/80 border border-amber-500/40 rounded-2xl p-4 text-amber-200 text-xs font-medium shadow-lg flex items-center gap-3 backdrop-blur-md">
                                 <AlertTriangle size={20} className="text-amber-400 shrink-0" />
                                 <div>
-                                    <span className="font-bold text-amber-300 uppercase tracking-wide">Aviso de Teste Local:</span> O link gerado aponta para o endereço <code className="bg-black/50 px-1.5 py-0.5 rounded text-amber-400 font-mono">localhost</code>. Para leitura via telemóvel na rede, configure o IP da máquina ou utilize o domínio de produção.
+                                    <span className="font-bold text-amber-300 uppercase tracking-wide">Modo Teste Local Activo:</span> O link aponta para <code className="bg-black/50 px-1.5 py-0.5 rounded text-amber-400 font-mono">localhost</code>. Para imprimir para clientes, mude acima para <strong>Cloud Oficial (menusjindungo.ao)</strong>.
                                 </div>
                             </div>
                         )}
@@ -150,29 +245,38 @@ const QRCodeGenerator = ({ url = "https://menusjindungo.com/menu/demo", restaura
                                             size={240}
                                             level={"H"}
                                             includeMargin={true}
-                                            imageSettings={{
-                                                src: qrLogoSrc,
-                                                height: logoUrl ? 50 : 38,
-                                                width: logoUrl ? 50 : 38,
+                                            imageSettings={showLogoInQr ? {
+                                                src: safeLogoSrc,
+                                                height: 40,
+                                                width: 40,
                                                 excavate: true,
-                                            }}
+                                            } : undefined}
                                         />
                                     </div>
                                 </div>
-                                <span className="text-[11px] font-mono text-amber-400 font-bold uppercase tracking-widest flex items-center gap-1">
-                                    <QrCode size={12} /> {tableNumber ? `MESA ${tableNumber}` : 'GERAL ULTRA HD'}
-                                </span>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-[11px] font-mono text-amber-400 font-bold uppercase tracking-widest flex items-center gap-1">
+                                        <QrCode size={12} /> {tableNumber ? `MESA ${tableNumber}` : 'GERAL ULTRA HD'}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowLogoInQr(!showLogoInQr)}
+                                        className="text-[10px] font-mono text-gray-400 hover:text-white underline cursor-pointer"
+                                    >
+                                        {showLogoInQr ? 'Ocultar Logótipo Central' : 'Mostrar Logótipo Central'}
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Right Side of Card: Configuration & Actions */}
                             <div className="flex-1 w-full space-y-6">
                                 <div>
-                                    <span className="text-xs font-mono text-[#D4AF37] uppercase tracking-widest font-black">Personalização Direta</span>
+                                    <span className="text-xs font-mono text-[#D4AF37] uppercase tracking-widest font-black">Personalização Directa</span>
                                     <h3 className="text-2xl font-serif font-black text-white tracking-tight mt-1">
                                         {tableNumber ? `QR Code da Mesa ${tableNumber}` : 'QR Code Geral de Acesso'}
                                     </h3>
                                     <p className="text-xs text-gray-400 mt-1 leading-relaxed">
-                                        Os clientes que escanearem este código acederão imediatamente à ementa digital otimizada.
+                                        Os clientes que lerem este código acederão imediatamente à ementa digital interactiva.
                                     </p>
                                 </div>
 
@@ -196,7 +300,7 @@ const QRCodeGenerator = ({ url = "https://menusjindungo.com/menu/demo", restaura
                                     </div>
                                 </div>
 
-                                {/* Link Output & Copy */}
+                                {/* Link Output, Copy & Direct Test Button */}
                                 <div className="flex items-center gap-2 bg-black/50 border border-white/10 p-3 rounded-2xl text-xs font-mono text-gray-300 shadow-inner">
                                     <span className="truncate flex-1 text-[#EAB308] pl-1">{finalUrl}</span>
                                     <button
@@ -207,6 +311,16 @@ const QRCodeGenerator = ({ url = "https://menusjindungo.com/menu/demo", restaura
                                         {isCopied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
                                         <span>{isCopied ? 'Copiado!' : 'Copiar'}</span>
                                     </button>
+                                    <a
+                                        href={`/r/${resolvedSlug}${tableNumber ? `?mesa=${encodeURIComponent(tableNumber.trim())}` : ''}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-2 bg-emerald-500/20 hover:bg-emerald-500 hover:text-black border border-emerald-500/30 rounded-xl text-emerald-300 transition-colors flex items-center gap-1 shrink-0 font-sans font-bold text-[11px]"
+                                        title="Testar Menu Digital Agora"
+                                    >
+                                        <ExternalLink size={14} />
+                                        <span>Testar</span>
+                                    </a>
                                 </div>
 
                                 {/* Premium Golden Download Button */}
@@ -275,8 +389,8 @@ const QRCodeGenerator = ({ url = "https://menusjindungo.com/menu/demo", restaura
                                         {/* QR inside acrylic */}
                                         <div ref={acrylicQrRef} className="p-3 bg-white rounded-2xl shadow-xl">
                                             <QRCodeCanvas
-                                                value={finalUrl} size={150} level={"H"} includeMargin={false}
-                                                imageSettings={{ src: qrLogoSrc, height: 30, width: 30, excavate: true }}
+                                                value={finalUrl} size={150} level={"H"} includeMargin={true}
+                                                imageSettings={showLogoInQr ? { src: safeLogoSrc, height: 24, width: 24, excavate: true } : undefined}
                                             />
                                         </div>
 
@@ -313,8 +427,8 @@ const QRCodeGenerator = ({ url = "https://menusjindungo.com/menu/demo", restaura
                                         {/* QR inside sticker */}
                                         <div ref={stickerQrRef} className="p-3.5 bg-white rounded-2xl shadow-2xl group-hover:scale-105 transition-transform duration-500">
                                             <QRCodeCanvas
-                                                value={finalUrl} size={140} level={"H"} includeMargin={false}
-                                                imageSettings={{ src: qrLogoSrc, height: 28, width: 28, excavate: true }}
+                                                value={finalUrl} size={140} level={"H"} includeMargin={true}
+                                                imageSettings={showLogoInQr ? { src: safeLogoSrc, height: 22, width: 22, excavate: true } : undefined}
                                             />
                                         </div>
 

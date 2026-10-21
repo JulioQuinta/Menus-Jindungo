@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: './',
+  base: '/',
   plugins: [
     react(),
     VitePWA({
@@ -34,6 +34,11 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html}', '**/jindungo_logo_v3.png'], // Apenas código e o logotipo principal essencial
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api\//, /\/[^/?]+\.[^/]+$/],
         maximumFileSizeToCacheInBytes: 5000000, // [NEW] Allow files up to 5MB to be cached (important for large bundles)
         runtimeCaching: [
           {

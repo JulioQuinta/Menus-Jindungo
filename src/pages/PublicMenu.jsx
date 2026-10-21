@@ -83,7 +83,7 @@ const PublicMenu = () => {
 
             try {
                 // 1. Combined Fetch (Restaurant + Theme + Menu)
-                const normalizedSlug = slug ? slug.trim().replace(/\s+/g, '-') : '';
+                const normalizedSlug = slug ? decodeURIComponent(slug).trim().replace(/^\/+|\/+$/g, '').replace(/\s+/g, '-') : '';
                 console.log("Step 1: Fetching optimized menu data for slug:", normalizedSlug);
 
                 let restaurantData;
@@ -107,7 +107,7 @@ const PublicMenu = () => {
                                 menu_items (*)
                             )
                         `)
-                        .eq('slug', normalizedSlug);
+                        .ilike('slug', normalizedSlug);
 
                     if (rError) throw rError;
 
@@ -334,29 +334,37 @@ const PublicMenu = () => {
     }, [restaurant, businessInfo, config]);
 
     const checkIsOpen = (info) => {
-        if (!info || !info.opening_hours) return;
+        try {
+            if (!info || !Array.isArray(info.opening_hours)) return;
 
-        const now = new Date();
-        const daysPort = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-        const currentDay = daysPort[now.getDay()];
-        const currentTime = now.getHours() * 60 + now.getMinutes();
+            const now = new Date();
+            const daysPort = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+            const currentDay = daysPort[now.getDay()];
+            const currentTime = now.getHours() * 60 + now.getMinutes();
 
-        const todayHours = info.opening_hours.find(h => h.day === currentDay);
+            const todayHours = info.opening_hours.find(h => h && h.day === currentDay);
 
-        if (!todayHours || todayHours.closed) {
-            setIsCurrentlyClosed(true);
-            return;
-        }
+            if (!todayHours || todayHours.closed) {
+                setIsCurrentlyClosed(true);
+                return;
+            }
 
-        const [openH, openM] = todayHours.open.split(':').map(Number);
-        const [closeH, closeM] = todayHours.close.split(':').map(Number);
-        const openTotal = openH * 60 + openM;
-        const closeTotal = closeH * 60 + closeM;
+            if (!todayHours.open || !todayHours.close) return;
 
-        if (currentTime < openTotal || currentTime > closeTotal) {
-            setIsCurrentlyClosed(true);
-        } else {
-            setIsCurrentlyClosed(false);
+            const [openH, openM] = String(todayHours.open).split(':').map(Number);
+            const [closeH, closeM] = String(todayHours.close).split(':').map(Number);
+            if (isNaN(openH) || isNaN(openM) || isNaN(closeH) || isNaN(closeM)) return;
+
+            const openTotal = openH * 60 + openM;
+            const closeTotal = closeH * 60 + closeM;
+
+            if (currentTime < openTotal || currentTime > closeTotal) {
+                setIsCurrentlyClosed(true);
+            } else {
+                setIsCurrentlyClosed(false);
+            }
+        } catch (err) {
+            console.warn("Could not parse opening_hours:", err);
         }
     };
 

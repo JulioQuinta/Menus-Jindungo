@@ -7,7 +7,10 @@ const QRCodeShare = ({ slug, restaurantName, isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
-    const url = `${window.location.origin}/${slug}`;
+    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://menusjindungo.ao';
+    const isLocal = currentOrigin.includes('localhost') || currentOrigin.includes('127.0.0.1') || currentOrigin.startsWith('file:');
+    const baseOrigin = isLocal ? 'https://menusjindungo.ao' : currentOrigin;
+    const url = `${baseOrigin}/r/${slug}`;
 
     const downloadQRCode = () => {
         const canvas = qrRef.current.querySelector('canvas');
@@ -29,8 +32,8 @@ const QRCodeShare = ({ slug, restaurantName, isOpen, onClose }) => {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
             <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden">
                 <div className="bg-gradient-to-r from-red-600 to-orange-600 p-6 text-center">
-                    <h3 className="text-white font-bold text-xl mb-1">Compartilhe seu Menu</h3>
-                    <p className="text-white/80 text-sm">Leve seus clientes direto para a mesa</p>
+                    <h3 className="text-white font-bold text-xl mb-1">Partilhe o seu Menu</h3>
+                    <p className="text-white/80 text-sm">Leve os seus clientes directo para a mesa</p>
                 </div>
 
                 <div className="p-8 flex flex-col items-center gap-6">
@@ -41,11 +44,9 @@ const QRCodeShare = ({ slug, restaurantName, isOpen, onClose }) => {
                             level={"H"}
                             includeMargin={true}
                             imageSettings={{
-                                src: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=64&q=80",
-                                x: undefined,
-                                y: undefined,
-                                height: 40,
-                                width: 40,
+                                src: "/jindungo_logo_v3.png",
+                                height: 34,
+                                width: 34,
                                 excavate: true,
                             }}
                         />

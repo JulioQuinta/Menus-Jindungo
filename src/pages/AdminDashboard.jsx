@@ -610,7 +610,7 @@ const AdminDashboard = () => {
                         } />
 
                         <Route path="/chat" element={<ChatAdminPanel categories={categories} onUpdate={handleMenuUpdate} restaurantId={restaurant?.id} />} />
-                        <Route path="/qrcode" element={<QRCodeGenerator url={`${window.location.origin}/r/${restaurant?.slug}`} restaurantName={restaurant?.name || restaurant?.slug} logoUrl={config?.logoUrl} />} />
+                        <Route path="/qrcode" element={<QRCodeGenerator url={`${window.location.origin}/r/${restaurant?.slug || ''}`} slug={restaurant?.slug} restaurantName={restaurant?.name || restaurant?.slug} logoUrl={config?.logoUrl} />} />
                         <Route path="/settings" element={
                             <SettingsManager
                                 restaurantId={restaurant?.id}

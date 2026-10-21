@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import net from 'net';
+import http from 'http';
 import fs from 'fs';
 import crypto from 'crypto';
 
@@ -9,6 +10,66 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let mainWindow;
+let localStaticServer = null;
+
+function startLocalDistServer(distDir) {
+    return new Promise((resolve) => {
+        if (localStaticServer) {
+            const addr = localStaticServer.address();
+            if (addr && addr.port) return resolve(`http://127.0.0.1:${addr.port}`);
+        }
+        const mimeTypes = {
+            '.html': 'text/html; charset=utf-8',
+            '.js': 'application/javascript; charset=utf-8',
+            '.mjs': 'application/javascript; charset=utf-8',
+            '.css': 'text/css; charset=utf-8',
+            '.json': 'application/json; charset=utf-8',
+            '.webmanifest': 'application/manifest+json; charset=utf-8',
+            '.png': 'image/png',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.gif': 'image/gif',
+            '.svg': 'image/svg+xml',
+            '.ico': 'image/x-icon',
+            '.woff': 'font/woff',
+            '.woff2': 'font/woff2',
+            '.ttf': 'font/ttf',
+            '.mp3': 'audio/mpeg',
+            '.wav': 'audio/wav'
+        };
+
+        localStaticServer = http.createServer((req, res) => {
+            try {
+                const parsedUrl = new URL(req.url, 'http://127.0.0.1');
+                let safePath = path.normalize(decodeURIComponent(parsedUrl.pathname)).replace(/^(\.\.[\/\\])+/, '');
+                let filePath = path.join(distDir, safePath);
+
+                if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+                    filePath = path.join(distDir, 'index.html');
+                }
+
+                const ext = path.extname(filePath).toLowerCase();
+                const contentType = mimeTypes[ext] || 'application/octet-stream';
+                res.writeHead(200, { 'Content-Type': contentType });
+                fs.createReadStream(filePath).pipe(res);
+            } catch (err) {
+                const indexFallback = path.join(distDir, 'index.html');
+                if (fs.existsSync(indexFallback)) {
+                    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+                    fs.createReadStream(indexFallback).pipe(res);
+                } else {
+                    res.writeHead(500);
+                    res.end('Internal Server Error');
+                }
+            }
+        });
+
+        localStaticServer.listen(0, '127.0.0.1', () => {
+            const { port } = localStaticServer.address();
+            resolve(`http://127.0.0.1:${port}`);
+        });
+    });
+}
 
 function createWindow() {
     const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
@@ -48,7 +109,16 @@ function createWindow() {
         };
         loadDevServer();
     } else {
-        mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
+        const distPath = path.join(__dirname, 'dist');
+        startLocalDistServer(distPath).then((serverUrl) => {
+            if (mainWindow) {
+                mainWindow.loadURL(serverUrl);
+            }
+        }).catch(() => {
+            if (mainWindow) {
+                mainWindow.loadFile(path.join(distPath, 'index.html'));
+            }
+        });
     }
 
     mainWindow.on('closed', () => {

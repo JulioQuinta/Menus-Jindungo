@@ -115,7 +115,7 @@ const QuemSomos = () => {
                             <div className="w-full bg-black/40 border border-emerald-500/30 rounded-2xl p-4 mb-6 text-left">
                                 <div className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-1">Conformidade Fiscal Oficial</div>
                                 <div className="text-sm font-black text-white">Processado por Programa Validado N.º FE/305/AGT/2026</div>
-                                <div className="text-[11px] text-gray-400 mt-1">Assinatura criptográfica JWS RS256 • Exportação SAF-T (AO) v1.01_01</div>
+                                <div className="text-[11px] text-gray-400 mt-1">Assinatura criptográfica JWS RS256 • Facturação Electrónica Certificada AGT</div>
                             </div>
 
                             <div className="w-full pt-4 border-t border-white/10 grid grid-cols-3 gap-2 text-xs text-gray-300 font-bold">

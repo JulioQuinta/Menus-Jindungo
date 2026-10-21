@@ -121,7 +121,7 @@ const LIVE_SIMULATOR_STEPS = [
         screenItems: [
             { label: 'Total Facturado (IVA 14% Incluído)', val: '18.000,00 Kz' },
             { label: 'Meio de Pagamento: Multicaixa Express', val: 'Confirmado' },
-            { label: 'Assinatura JWS RS256 + Registo SAF-T (AO)', val: 'Validado AGT' }
+            { label: 'Assinatura JWS RS256 + Facturação Electrónica AGT', val: 'Validado AGT' }
         ],
         screenFooter: 'Processado por programa validado n.º FE/305/AGT/2026 | Menus Jindungo v3.1',
         highlightColor: 'border-emerald-400 text-emerald-300'
@@ -356,7 +356,7 @@ const LandingPage = () => {
         },
         {
             q: 'A Facturação Electrónica está certificada pela AGT em Angola?',
-            a: 'Sim! Todas as Facturas-Recibo (FR), Facturas (FT), Facturas Proforma (PP) e Notas de Crédito (NC) são emitidas ao abrigo do Certificado Oficial AGT N.º FE/305/AGT/2026 (Versão v3.1), com assinatura criptográfica JWS RS256 e exportação directa do ficheiro SAF-T (AO).'
+            a: 'Sim! Todas as Facturas-Recibo (FR), Facturas (FT), Facturas Proforma (PP) e Notas de Crédito (NC) são emitidas através do sistema de Facturação Electrónica certificado pela AGT sob o N.º FE/305/AGT/2026 (Versão v3.1), com assinatura criptográfica JWS RS256 e submissão directa de Facturação Electrónica.'
         }
     ];
 
@@ -1001,7 +1001,7 @@ const LandingPage = () => {
                             <li className="flex items-start gap-3"><Check size={17} className="text-[#D4AF37] shrink-0 mt-0.5" /> <strong>Ecrã KDS na Cozinha</strong> em tempo real com etiquetas de Mesa, Take-Away e Delivery</li>
                             <li className="flex items-start gap-3"><Check size={17} className="text-[#D4AF37] shrink-0 mt-0.5" /> <strong>Terminais Separados por PIN:</strong> Garçom, Cozinha e Caixa vêem apenas a sua função</li>
                             <li className="flex items-start gap-3"><Check size={17} className="text-[#D4AF37] shrink-0 mt-0.5" /> <strong>App Desktop Windows (.EXE)</strong> que continua a vender e facturar 30 dias sem internet</li>
-                            <li className="flex items-start gap-3"><Check size={17} className="text-emerald-400 shrink-0 mt-0.5" /> <strong>Certificado Oficial AGT N.º FE/305/AGT/2026</strong> com assinatura JWS e SAF-T (AO)</li>
+                            <li className="flex items-start gap-3"><Check size={17} className="text-emerald-400 shrink-0 mt-0.5" /> <strong>Certificado Oficial AGT N.º FE/305/AGT/2026</strong> de Facturação Electrónica com assinatura JWS</li>
                         </ul>
                     </div>
                 </div>
@@ -1105,7 +1105,7 @@ const LandingPage = () => {
                             </h2>
 
                             <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
-                                Emita <strong className="text-white">Facturas-Recibo (FR)</strong>, <strong className="text-white">Facturas (FT)</strong>, <strong className="text-white">Facturas Proforma (PP)</strong> e <strong className="text-white">Notas de Crédito (NC)</strong> em total conformidade com a Administração Geral Tributária. Cada documento inclui assinatura criptográfica <strong className="text-emerald-400">JWS RS256</strong> e exportação imediata do ficheiro oficial <strong className="text-emerald-400">SAF-T (AO)</strong>.
+                                Emita <strong className="text-white">Facturas-Recibo (FR)</strong>, <strong className="text-white">Facturas (FT)</strong>, <strong className="text-white">Facturas Proforma (PP)</strong> e <strong className="text-white">Notas de Crédito (NC)</strong> em total conformidade com a Administração Geral Tributária. Cada documento inclui assinatura criptográfica <strong className="text-emerald-400">JWS RS256</strong> e comunicação oficial de <strong className="text-emerald-400">Facturação Electrónica</strong>.
                             </p>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1402,7 +1402,7 @@ const LandingPage = () => {
                                 <li className="flex items-start gap-2.5"><Check size={15} className="text-emerald-400 shrink-0 mt-0.5" /> <strong>Facturação Electrónica AGT (FE/305/AGT/2026)</strong></li>
                                 <li className="flex items-start gap-2.5"><Check size={15} className="text-[#D4AF37] shrink-0 mt-0.5" /> <strong>App Desktop Windows (.EXE)</strong> c/ 30 dias Offline</li>
                                 <li className="flex items-start gap-2.5"><Check size={15} className="text-[#D4AF37] shrink-0 mt-0.5" /> Controlo de Stock, Receitas (Ficha Técnica) e Turnos</li>
-                                <li className="flex items-start gap-2.5"><Check size={15} className="text-[#D4AF37] shrink-0 mt-0.5" /> Exportação SAF-T (AO) e apoio prioritário 24/7</li>
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-[#D4AF37] shrink-0 mt-0.5" /> Facturação Electrónica certificada e apoio prioritário 24/7</li>
                             </ul>
                         </div>
 
@@ -1443,7 +1443,7 @@ const LandingPage = () => {
                             <ul className="space-y-3 text-xs text-gray-200 mb-8">
                                 <li className="flex items-start gap-2.5"><Check size={15} className="text-emerald-400 shrink-0 mt-0.5" /> <strong>Certificado AGT N.º FE/305/AGT/2026</strong></li>
                                 <li className="flex items-start gap-2.5"><Check size={15} className="text-emerald-400 shrink-0 mt-0.5" /> Emissão de FR, FT, Proforma e Nota de Crédito</li>
-                                <li className="flex items-start gap-2.5"><Check size={15} className="text-emerald-400 shrink-0 mt-0.5" /> Talão Térmico 80mm, PDF A4 e ficheiro SAF-T (AO)</li>
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-emerald-400 shrink-0 mt-0.5" /> Talão Térmico 80mm, PDF A4 e Facturação Electrónica AGT</li>
                                 <li className="flex items-start gap-2.5"><Check size={15} className="text-emerald-400 shrink-0 mt-0.5" /> Terminal de Caixa POS + App Desktop Offline</li>
                             </ul>
                         </div>

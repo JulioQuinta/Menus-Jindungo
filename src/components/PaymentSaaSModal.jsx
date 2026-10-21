@@ -3,11 +3,25 @@ import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabaseClient';
 import { CreditCard, Smartphone, X } from 'lucide-react';
 
+const PLAN_PRICES_KZ = {
+    'Start': 15000,
+    'Plano Start': 15000,
+    'Business': 25000,
+    'Plano Business': 25000,
+    'Corporate': 40000,
+    'Plano Corporate': 40000,
+    'Facturação Electrónica': 25000,
+    'Faturação Eletrónica': 25000,
+};
+
 const PaymentSaaSModal = ({ isOpen, onClose, restaurant }) => {
     const [phone, setPhone] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
 
     if (!isOpen) return null;
+
+    const planName = restaurant?.plan || 'Business';
+    const planAmount = PLAN_PRICES_KZ[planName] || 25000;
 
     const handlePayment = async () => {
         if (!phone || phone.length < 9) {
@@ -20,7 +34,7 @@ const PaymentSaaSModal = ({ isOpen, onClose, restaurant }) => {
         try {
             const { data, error } = await supabase.functions.invoke('process-payment', {
                 body: {
-                    amount: 35000, // Preço fixo da assinatura mensal (exemplo)
+                    amount: planAmount,
                     phone: phone,
                     restaurant_id: restaurant.id,
                     is_subscription: true,
@@ -33,11 +47,7 @@ const PaymentSaaSModal = ({ isOpen, onClose, restaurant }) => {
                 return;
             }
 
-            toast.success("Abra a sua App Multicaixa Express ou consulte o SMS para confirmar a renovação do Menús Jindungo!", { id: 'mcx-saas', duration: 10000 });
-            
-            // Aqui normalmente haveria um polling para saber quando foi pago com sucesso
-            // Mas o Webhook "webhook-subscription" irá atualizar a BD em background.
-            // O ideal é assinar canais postgres para a tabela 'restaurants' e fechar o modal.
+            toast.success("Abra a sua aplicação Multicaixa Express ou consulte o SMS para confirmar a renovação do Menús Jindungo!", { id: 'mcx-saas', duration: 10000 });
             onClose();
 
         } catch (err) {
@@ -64,18 +74,18 @@ const PaymentSaaSModal = ({ isOpen, onClose, restaurant }) => {
                 
                 <div className="mb-6 bg-white/5 border border-white/10 rounded-xl p-4">
                     <div className="flex justify-between items-center mb-2">
-                        <span className="text-gray-400 text-sm">Plano Atual:</span>
-                        <span className="font-bold text-[#D4AF37]">{restaurant?.plan}</span>
+                        <span className="text-gray-400 text-sm">Plano Actual:</span>
+                        <span className="font-bold text-[#D4AF37]">{planName}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                        <span className="text-gray-400 text-sm">Total a Pagar:</span>
-                        <span className="font-bold text-xl">35 000 Kz</span>
+                        <span className="text-gray-400 text-sm">Total Mensal a Pagar:</span>
+                        <span className="font-bold text-xl">{planAmount.toLocaleString('pt-AO')} Kz</span>
                     </div>
                 </div>
 
                 <div className="space-y-4 mb-8">
                     <label className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                        <Smartphone size={14} /> Nº Telemóvel Associado ao MCX
+                        <Smartphone size={14} /> N.º de Telemóvel Associado ao MCX Express
                     </label>
                     <input
                         type="tel"

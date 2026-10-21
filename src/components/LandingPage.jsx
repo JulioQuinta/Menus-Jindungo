@@ -1,47 +1,97 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-    Smartphone, Zap, TrendingUp, Shield, Globe, Utensils, 
-    ArrowRight, Menu, X, Phone, Mail, MapPin, Facebook, Instagram, Music, Check, Star,
-    Clock, Users, Award, CheckCircle, XCircle, Flame,
+import {
+    Smartphone, Zap, TrendingUp, Shield, Utensils,
+    ArrowRight, Menu, X, Phone, Mail, MapPin, Check, Star,
+    Clock, Users, Award, CheckCircle, Flame,
     Truck, ShoppingBag, ArrowUp, FileText, Sparkles,
-    ChevronLeft, ChevronRight, ChefHat, ShieldCheck, Monitor, WifiOff, Heart, Lock
+    ChefHat, ShieldCheck, Monitor, WifiOff, Heart,
+    QrCode, Bell, Navigation, Receipt, Layers, Play
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
+
+const HERO_GALLERY = [
+    {
+        id: 'mesa',
+        tag: '📱 Menu QR na Mesa',
+        title: 'O cliente pede na mesa em 15 segundos',
+        desc: 'Aponta a câmara do telemóvel, vê fotos reais dos pratos e envia o pedido directo para a cozinha.',
+        image: '/qr_table_menu.png',
+        orderBadge: 'Mesa 08 • Mufete da Ilha + Sumo Natural',
+        priceBadge: '14.500 Kz',
+        statusBadge: '👨‍🍳 Enviado para o Ecrã da Cozinha'
+    },
+    {
+        id: 'cozinha',
+        tag: '👨‍🍳 Ecrã KDS da Cozinha',
+        title: 'Zero papel e zero gritos na cozinha',
+        desc: 'O Chef recebe as comandas organizadas por ordem de chegada com alerta sonoro e cronómetro.',
+        image: '/kitchenboard_kds_display.png',
+        orderBadge: 'Comanda #4092 • 2x Bitoque Jindungo',
+        priceBadge: 'Em Preparação (06:14)',
+        statusBadge: '🔔 1 Toque avisa o Garçom no Passe'
+    },
+    {
+        id: 'salao',
+        tag: '🍽️ Hospitalidade & Salão',
+        title: 'Atendimento caloroso e mesas sempre cheias',
+        desc: 'O garçom recebe o alerta no seu terminal exclusivo por PIN assim que o prato está pronto a servir.',
+        image: '/restaurant_dining_african.png',
+        orderBadge: 'Terminal do Garçom • Paulo (PIN Activo)',
+        priceBadge: 'Prato Pronto no Passe!',
+        statusBadge: '✨ +35% Rotação de Mesas'
+    },
+    {
+        id: 'gastronomia',
+        tag: '🥩 Take-Away & Delivery GPS',
+        title: 'Rastreio ao vivo dentro e fora do restaurante',
+        desc: 'Senha digital de levantamento (#XXXX) para Take-Away e mapa GPS em tempo real para entregas.',
+        image: '/login_bg_bitoque.png',
+        orderBadge: 'Senha Take-Away #3841 • Pronto no Balcão',
+        priceBadge: 'Factura AGT Emitida',
+        statusBadge: '🧾 Certificado N.º FE/305/AGT/2026'
+    }
+];
 
 const InteractiveDashboardAnalyticsPreview = () => {
     const [activeTab, setActiveTab] = useState('vendas');
 
     return (
-        <div className="bg-[#0D0D0F] border-2 border-[#D4AF37]/40 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-left">
+        <div className="bg-[#12100E] border border-[#D4AF37]/30 rounded-3xl p-6 sm:p-8 shadow-[0_25px_70px_rgba(0,0,0,0.7)] space-y-6 text-left font-sans">
             {/* Header Toolbar */}
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4AF37] to-amber-600 text-black flex items-center justify-center font-black">
-                        <TrendingUp size={20} />
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
+                <div className="flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-amber-600 text-black flex items-center justify-center font-black shadow-lg">
+                        <TrendingUp size={22} />
                     </div>
                     <div>
-                        <h4 className="text-sm sm:text-base font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            Painel Exclusivo do Proprietário &amp; Gerente
-                            <span className="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded-full font-mono font-bold">EM TEMPO REAL</span>
-                        </h4>
-                        <p className="text-xs text-gray-400 font-light">Visão financeira consolidada do restaurante (oculta nos terminais de Garçom e Cozinha)</p>
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                            <h4 className="text-base sm:text-lg font-display font-extrabold text-white tracking-tight">
+                                Painel Executivo do Proprietário &amp; Gerente
+                            </h4>
+                            <span className="text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                                Tempo Real
+                            </span>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                            Visão financeira exclusiva da gerência — totalmente oculta nos terminais de Garçom e Cozinha
+                        </p>
                     </div>
                 </div>
 
                 {/* Sub-tabs inside preview */}
-                <div className="flex flex-wrap gap-1.5 bg-black/60 p-1.5 rounded-xl border border-white/10 text-xs">
+                <div className="flex flex-wrap gap-1.5 bg-black/60 p-1.5 rounded-2xl border border-white/10">
                     {[
-                        { id: 'vendas', label: '📈 Facturação & Fluxo' },
+                        { id: 'vendas', label: '📈 Facturação Semanal' },
                         { id: 'produtos', label: '🍽️ Pratos Mais Vendidos' },
                         { id: 'pagamentos', label: '💳 Meios de Pagamento' }
                     ].map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                            className={`px-3.5 py-2 rounded-xl text-xs font-display font-bold transition-all cursor-pointer ${
                                 activeTab === tab.id
-                                    ? 'bg-[#D4AF37] text-black shadow-md scale-105'
+                                    ? 'bg-[#D4AF37] text-black shadow-md'
                                     : 'text-gray-400 hover:text-white'
                             }`}
                         >
@@ -52,41 +102,41 @@ const InteractiveDashboardAnalyticsPreview = () => {
             </div>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-black/40 border border-white/10 p-3.5 rounded-2xl">
-                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">Facturação do Mês</span>
-                    <div className="text-xl sm:text-2xl font-serif font-black text-emerald-400">12.850.000 Kz</div>
-                    <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1 mt-1">↑ +34.8% vs mês anterior</span>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white/[0.03] border border-white/10 p-4 rounded-2xl">
+                    <span className="text-[11px] text-gray-400 font-bold uppercase tracking-wider block mb-1">Facturação Mensal</span>
+                    <div className="text-xl sm:text-2xl font-display font-extrabold text-emerald-400">12.850.000 Kz</div>
+                    <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1 mt-1">↑ +34,8% vs. mês anterior</span>
                 </div>
 
-                <div className="bg-black/40 border border-white/10 p-3.5 rounded-2xl">
-                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">Lucro Líquido Estimado</span>
-                    <div className="text-xl sm:text-2xl font-serif font-black text-[#D4AF37]">4.280.000 Kz</div>
-                    <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1 mt-1">Margem Média ~33.3%</span>
+                <div className="bg-white/[0.03] border border-white/10 p-4 rounded-2xl">
+                    <span className="text-[11px] text-gray-400 font-bold uppercase tracking-wider block mb-1">Lucro Líquido Estimado</span>
+                    <div className="text-xl sm:text-2xl font-display font-extrabold text-[#D4AF37]">4.280.000 Kz</div>
+                    <span className="text-[11px] text-amber-300 font-semibold flex items-center gap-1 mt-1">Margem Média ~33,3%</span>
                 </div>
 
-                <div className="bg-black/40 border border-white/10 p-3.5 rounded-2xl">
-                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">Facturas Emitidas (AGT)</span>
-                    <div className="text-xl sm:text-2xl font-serif font-black text-white">1.482</div>
-                    <span className="text-[10px] text-gray-400 font-bold flex items-center gap-1 mt-1">Certificadas FE/305/AGT/2026</span>
+                <div className="bg-white/[0.03] border border-white/10 p-4 rounded-2xl">
+                    <span className="text-[11px] text-gray-400 font-bold uppercase tracking-wider block mb-1">Facturas Emitidas (AGT)</span>
+                    <div className="text-xl sm:text-2xl font-display font-extrabold text-white">1.482</div>
+                    <span className="text-[11px] text-gray-400 font-semibold flex items-center gap-1 mt-1">Certificado FE/305/AGT/2026</span>
                 </div>
 
-                <div className="bg-black/40 border border-white/10 p-3.5 rounded-2xl">
-                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">Ticket Médio / Mesa</span>
-                    <div className="text-xl sm:text-2xl font-serif font-black text-blue-400">8.670 Kz</div>
-                    <span className="text-[10px] text-blue-400 font-bold flex items-center gap-1 mt-1">↑ +8.2% com Sugestão do Chef</span>
+                <div className="bg-white/[0.03] border border-white/10 p-4 rounded-2xl">
+                    <span className="text-[11px] text-gray-400 font-bold uppercase tracking-wider block mb-1">Ticket Médio / Mesa</span>
+                    <div className="text-xl sm:text-2xl font-display font-extrabold text-sky-400">8.670 Kz</div>
+                    <span className="text-[11px] text-sky-400 font-semibold flex items-center gap-1 mt-1">↑ +28% com Fotos no Menu QR</span>
                 </div>
             </div>
 
             {/* Interactive Tab Content */}
             {activeTab === 'vendas' && (
                 <div className="bg-black/40 border border-white/10 p-5 rounded-2xl space-y-4">
-                    <div className="flex justify-between items-center text-xs font-bold">
+                    <div className="flex flex-wrap justify-between items-center gap-2 text-xs font-bold">
                         <span className="text-gray-300">📊 Facturação Semanal do Restaurante (Segunda a Domingo)</span>
                         <span className="text-[#D4AF37]">Pico de Movimento: Sábado (3.400.000 Kz)</span>
                     </div>
 
-                    <div className="h-44 flex items-end justify-between gap-2 pt-6 px-2 border-b border-white/10 pb-2">
+                    <div className="h-44 flex items-end justify-between gap-3 pt-6 px-2 border-b border-white/10 pb-2">
                         {[
                             { day: 'Seg', val: 1200000, height: '40%', color: 'from-amber-600 to-[#D4AF37]' },
                             { day: 'Ter', val: 1450000, height: '50%', color: 'from-amber-600 to-[#D4AF37]' },
@@ -97,16 +147,16 @@ const InteractiveDashboardAnalyticsPreview = () => {
                             { day: 'Dom', val: 2100000, height: '70%', color: 'from-amber-600 to-[#D4AF37]' }
                         ].map((item, i) => (
                             <div key={i} className="flex-1 flex flex-col items-center gap-2 group cursor-pointer">
-                                <span className="text-[10px] text-gray-400 group-hover:text-white font-mono opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span className="text-[10px] text-gray-300 font-mono font-bold">
                                     {(item.val / 1000000).toFixed(1)}M
                                 </span>
-                                <div className="w-full bg-white/5 rounded-t-xl overflow-hidden h-36 flex items-end p-0.5">
-                                    <div 
-                                        style={{ height: item.height }} 
+                                <div className="w-full bg-white/5 rounded-t-xl overflow-hidden h-32 flex items-end p-0.5">
+                                    <div
+                                        style={{ height: item.height }}
                                         className={`w-full rounded-t-lg bg-gradient-to-t ${item.color} group-hover:brightness-125 transition-all shadow-lg`}
                                     />
                                 </div>
-                                <span className="text-[11px] font-bold text-gray-400 group-hover:text-[#D4AF37] transition-colors">{item.day}</span>
+                                <span className="text-xs font-display font-bold text-gray-400 group-hover:text-[#D4AF37] transition-colors">{item.day}</span>
                             </div>
                         ))}
                     </div>
@@ -114,15 +164,15 @@ const InteractiveDashboardAnalyticsPreview = () => {
             )}
 
             {activeTab === 'produtos' && (
-                <div className="bg-black/40 border border-white/10 p-5 rounded-2xl space-y-3">
-                    <span className="text-xs font-bold text-gray-300 block mb-2">🏆 Pratos &amp; Especialidades Mais Pedidos no Restaurante</span>
+                <div className="bg-black/40 border border-white/10 p-5 rounded-2xl space-y-3.5">
+                    <span className="text-xs font-bold text-gray-300 block mb-2">🏆 Pratos &amp; Especialidades Mais Vendidos</span>
                     {[
-                        { name: 'Mufete Tradicional da Ilha & Feijão de Óleo de Palma', qty: '640 pedidos', total: '4.160.000 Kz', pct: '95%' },
+                        { name: 'Mufete Tradicional da Ilha c/ Feijão de Óleo de Palma', qty: '640 pedidos', total: '4.160.000 Kz', pct: '95%' },
                         { name: 'Bitoque Especial Jindungo na Brasa', qty: '512 pedidos', total: '3.072.000 Kz', pct: '85%' },
                         { name: 'Funge Misto c/ Calulu de Peixe & Carne Seca', qty: '430 pedidos', total: '2.580.000 Kz', pct: '76%' },
                         { name: 'Cocktails Tropicais, Sumos Naturais & Bebidas', qty: '1.280 pedidos', total: '3.038.000 Kz', pct: '88%' }
                     ].map((item, idx) => (
-                        <div key={idx} className="space-y-1">
+                        <div key={idx} className="space-y-1.5">
                             <div className="flex justify-between text-xs font-semibold">
                                 <span className="text-white">{item.name} <span className="text-gray-400 font-normal">({item.qty})</span></span>
                                 <span className="text-[#D4AF37] font-bold">{item.total}</span>
@@ -138,156 +188,32 @@ const InteractiveDashboardAnalyticsPreview = () => {
             {activeTab === 'pagamentos' && (
                 <div className="bg-black/40 border border-white/10 p-5 rounded-2xl grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="bg-white/5 border border-white/10 p-4 rounded-xl text-center space-y-1">
-                        <span className="text-xs font-bold text-blue-400 block">MULTICAIXA EXPRESS</span>
-                        <div className="text-2xl font-bold text-white">48%</div>
-                        <span className="text-[10px] text-gray-400">6.168.000 Kz</span>
+                        <span className="text-xs font-bold text-sky-400 block">MULTICAIXA EXPRESS</span>
+                        <div className="text-2xl font-display font-extrabold text-white">48%</div>
+                        <span className="text-xs text-gray-400">6.168.000 Kz</span>
                     </div>
 
                     <div className="bg-white/5 border border-white/10 p-4 rounded-xl text-center space-y-1">
                         <span className="text-xs font-bold text-emerald-400 block">TPA / CARTÃO MULTICAIXA</span>
-                        <div className="text-2xl font-bold text-white">37%</div>
-                        <span className="text-[10px] text-gray-400">4.754.500 Kz</span>
+                        <div className="text-2xl font-display font-extrabold text-white">37%</div>
+                        <span className="text-xs text-gray-400">4.754.500 Kz</span>
                     </div>
 
                     <div className="bg-white/5 border border-white/10 p-4 rounded-xl text-center space-y-1">
                         <span className="text-xs font-bold text-amber-400 block">NUMERÁRIO (KWANZAS)</span>
-                        <div className="text-2xl font-bold text-white">15%</div>
-                        <span className="text-[10px] text-gray-400">1.927.500 Kz</span>
+                        <div className="text-2xl font-display font-extrabold text-white">15%</div>
+                        <span className="text-xs text-gray-400">1.927.500 Kz</span>
                     </div>
                 </div>
             )}
 
             {/* Live Ticker Stream */}
-            <div className="bg-emerald-500/10 border border-emerald-500/30 px-4 py-2.5 rounded-xl flex items-center justify-between text-xs text-emerald-400 font-mono">
-                <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                    <strong>Fluxo Fiscal ao Vivo:</strong> Factura-Recibo FR 2026/9021 certificada pela AGT (FE/305/AGT/2026) • Luanda
+            <div className="bg-emerald-500/10 border border-emerald-500/30 px-4 py-3 rounded-xl flex items-center justify-between text-xs text-emerald-300">
+                <span className="flex items-center gap-2.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
+                    <span><strong>Fluxo Fiscal ao Vivo:</strong> Factura-Recibo FR 2026/9021 validada pela AGT (<strong className="text-white">FE/305/AGT/2026</strong>) • Luanda</span>
                 </span>
-                <span className="font-bold hidden sm:inline">38.000 Kz</span>
-            </div>
-        </div>
-    );
-};
-
-const RestaurantShowcaseCarousel = () => {
-    const [currentSlide, setCurrentSlide] = useState(0);
-
-    const slides = [
-        {
-            title: '⭐ Hospitalidade & Salão de Refeições Acolhedor',
-            subtitle: 'Uma experiência gastronómica calorosa, onde a tradição angolana encontra a mais moderna tecnologia de atendimento à mesa.',
-            image: '/restaurant_dining_african.png',
-            badge: '🍽️ Salão de Refeições & Esplanadas',
-            metric: '🔥 +148 Mesas Atendidas Hoje'
-        },
-        {
-            title: '📱 Menu Digital QR Code na Mesa (Sem Instalar Apps)',
-            subtitle: 'O cliente aponta a câmara do telemóvel para o QR Code na mesa, explora os pratos em alta definição e envia o pedido directamente para a cozinha.',
-            image: '/qr_table_menu.png',
-            badge: '📱 QR Code Interactivo na Mesa',
-            metric: '📍 Pedido Directo em Segundos'
-        },
-        {
-            title: '👨‍🍳 Ecrã KDS Dedicado de Cozinha (Kitchen Display)',
-            subtitle: 'O Chef recebe as comandas organizadas por ordem de chegada com distinção automática entre Servir na Mesa, Take-Away e Entrega.',
-            image: '/kitchenboard_kds_display.png',
-            badge: '⚡ Terminal KDS de Cozinha',
-            metric: '⏱️ Tempo Médio de Preparo: 12 min'
-        },
-        {
-            title: '🥩 Gastronomia Angolana & Pratos Servidos no Ponto',
-            subtitle: 'Quando o Chef clica em "Prato Pronto", o Garçom recebe o alerta no Balcão de Passe e o cliente acompanha tudo no telemóvel.',
-            image: '/login_bg_bitoque.png',
-            badge: '🍖 Passe da Cozinha & Garçom',
-            metric: '✨ Satisfação dos Clientes 99.4%'
-        },
-        {
-            title: '🧾 Facturação Electrónica Certificada AGT (FE/305/AGT/2026)',
-            subtitle: 'Emissão instantânea de talões térmicos de 80mm e facturas A4 com assinatura digital JWS, mesmo quando a internet falha.',
-            image: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&q=80&w=1000',
-            badge: '🇦🇴 Certificado AGT FE/305/AGT/2026',
-            metric: '🧾 100% Conformidade Fiscal'
-        }
-    ];
-
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setCurrentSlide((prev) => (prev + 1) % slides.length);
-        }, 4500);
-        return () => clearInterval(timer);
-    }, [slides.length]);
-
-    const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
-    const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-
-    const active = slides[currentSlide];
-
-    return (
-        <div className="lg:col-span-5 h-[380px] sm:h-[460px] rounded-3xl overflow-hidden border-2 border-[#D4AF37] relative shadow-[0_0_40px_rgba(212,175,55,0.35)] group">
-            {slides.map((s, idx) => (
-                <div 
-                    key={idx}
-                    className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                        idx === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
-                    }`}
-                >
-                    <img 
-                        src={s.image} 
-                        alt={s.title} 
-                        className="w-full h-full object-cover filter brightness-105 contrast-105 transform scale-100 group-hover:scale-105 transition-transform duration-1000"
-                    />
-                </div>
-            ))}
-
-            <div className="absolute top-4 left-4 z-20 bg-black/75 backdrop-blur-md border border-[#D4AF37]/50 px-3.5 py-1.5 rounded-full flex items-center gap-2 text-[10px] font-bold text-emerald-400 shadow-2xl">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                {active.metric}
-            </div>
-
-            <div className="absolute top-4 right-4 z-20 bg-black/75 backdrop-blur-md border border-[#D4AF37]/50 px-3 py-1 rounded-full text-[10px] font-mono font-bold text-[#D4AF37] shadow-2xl">
-                {currentSlide + 1} / {slides.length}
-            </div>
-
-            <button 
-                onClick={prevSlide}
-                aria-label="Foto anterior"
-                className="absolute left-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-black/60 hover:bg-[#D4AF37] text-white hover:text-black border border-white/20 flex items-center justify-center transition-all cursor-pointer opacity-70 hover:opacity-100 shadow-xl"
-            >
-                <ChevronLeft size={20} />
-            </button>
-            <button 
-                onClick={nextSlide}
-                aria-label="Próxima foto"
-                className="absolute right-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-black/60 hover:bg-[#D4AF37] text-white hover:text-black border border-white/20 flex items-center justify-center transition-all cursor-pointer opacity-70 hover:opacity-100 shadow-xl"
-            >
-                <ChevronRight size={20} />
-            </button>
-
-            <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/95 via-black/40 to-transparent flex flex-col justify-end p-6 pointer-events-none">
-                <span className="bg-gradient-to-r from-[#D4AF37] to-amber-500 text-black font-black text-[10px] px-3.5 py-1 rounded-full uppercase tracking-widest w-max mb-2 shadow-lg">
-                    {active.badge}
-                </span>
-                <h4 className="text-lg sm:text-xl font-serif font-black text-white drop-shadow-md">
-                    {active.title}
-                </h4>
-                <p className="text-xs text-gray-300 font-light mt-1 max-w-md">
-                    {active.subtitle}
-                </p>
-
-                <div className="flex items-center gap-1.5 mt-3 pointer-events-auto">
-                    {slides.map((_, idx) => (
-                        <button
-                            key={idx}
-                            onClick={() => setCurrentSlide(idx)}
-                            aria-label={`Slide ${idx + 1}`}
-                            className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                                idx === currentSlide 
-                                    ? 'w-7 bg-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.8)]' 
-                                    : 'w-1.5 bg-white/40 hover:bg-white'
-                            }`}
-                        />
-                    ))}
-                </div>
+                <span className="font-display font-extrabold text-emerald-400 hidden sm:inline">38.000 Kz</span>
             </div>
         </div>
     );
@@ -300,6 +226,7 @@ const LandingPage = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [billingCycle, setBillingCycle] = useState('mensal');
     const [activeFlowTab, setActiveFlowTab] = useState('garcom');
+    const [heroSlide, setHeroSlide] = useState(0);
     const [showScrollTop, setShowScrollTop] = useState(false);
 
     const getPrice = (basePrice) => {
@@ -311,487 +238,751 @@ const LandingPage = () => {
 
     useEffect(() => {
         const handleScroll = () => {
-            setScrolled(window.scrollY > 50);
-            setShowScrollTop(window.scrollY > 300);
+            setScrolled(window.scrollY > 30);
+            setShowScrollTop(window.scrollY > 350);
         };
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // As 4 Grandes Inovações Operacionais do Menús Jindungo (Substitui os antigos sectores)
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setHeroSlide((prev) => (prev + 1) % HERO_GALLERY.length);
+        }, 4800);
+        return () => clearInterval(interval);
+    }, []);
+
     const operationalFlows = {
         garcom: {
-            badge: '🤵 Terminal Exclusivo de Sala & Mesas',
-            title: 'Painel Dedicado do Garçom (Sem Acesso aos Dados do Gerente)',
-            subtitle: 'Inspirado nos maiores sistemas mundiais de restauração: quando o garçom selecciona o seu nome e introduz o seu PIN único, vê apenas o seu terminal de trabalho em ecrã inteiro — nunca os gráficos financeiros ou configurações do proprietário.',
+            badge: '🤵 1. Terminal Exclusivo do Garçom (Login por PIN)',
+            title: 'O Garçom Vê Apenas o Seu Trabalho de Sala — Nunca os Gráficos do Gerente',
+            subtitle: 'Inspirado nos maiores sistemas mundiais de restauração (Toast, Square e Lightspeed): o colaborador selecciona o seu nome na lista da equipa e introduz o seu PIN individual de 4 dígitos, entrando num terminal limpo de ecrã inteiro.',
             image: '/qr_table_menu.png',
+            metrics: [
+                { value: '2 Passos', label: 'Nome + PIN Único' },
+                { value: '0 Acesso', label: 'A Dados Financeiros' },
+                { value: 'Instantâneo', label: 'Alerta de Prato Pronto' }
+            ],
             highlights: [
-                'Login de Equipa em 2 Passos: Escolha do Nome do Colaborador + Código PIN Único (impede duplicações)',
-                '1. Passe da Cozinha & Mesas: Recebe alertas de pratos prontos a levantar e chamadas de clientes pelo QR Code',
-                '2. Anotar Pedido p/ Cozinha: Lança comandas de Mesa ou Take-Away directamente para o ecrã do Chef',
-                '3. Fechar Conta & Recibo: Emite o documento de conferência de mesa ou factura de 80mm na hora',
-                'Monitorização em Tempo Real: Consulta se o prato da mesa está na fila ou no fogo sem interferir nos botões do Chef'
+                'Login de Equipa sem conflitos: cada colaborador escolhe o seu próprio perfil antes de digitar o PIN',
+                'Passe da Cozinha ao Vivo: recebe alerta sonoro e visual assim que o Chef dá o prato como pronto',
+                'Anotar Pedido na Mesa: lança comandas em segundos directamente para o ecrã da cozinha',
+                'Fecho de Conta Rápido: emite talão de conferência de mesa ou factura certificada de 80mm'
             ]
         },
         cozinha: {
-            badge: '👨‍🍳 Ecrã KDS Puro de Cozinha',
-            title: 'Kitchen Display System (KDS) para o Chef e Cozinheiros',
-            subtitle: 'Um ecrã limpo, sem preços, sem facturas e sem barra lateral administrativa. A cozinha foca-se a 100% na confecção dos pratos e no cumprimento dos tempos de preparação.',
+            badge: '👨‍🍳 2. Ecrã KDS Dedicado da Cozinha',
+            title: 'Comandas Organizadas por Tempo e Modalidade no Ecrã do Chef',
+            subtitle: 'Acabe com os talões de papel perdidos na cozinha e com as confusões entre pratos de salão e encomendas para fora. Tudo aparece em colunas claras com cronómetro ao vivo.',
             image: '/kitchenboard_kds_display.png',
+            metrics: [
+                { value: '100% Digital', label: 'Sem Papel na Cozinha' },
+                { value: '3 Etiquetas', label: 'Mesa • Take-Away • Entrega' },
+                { value: '1 Toque', label: 'Chama o Garçom ao Passe' }
+            ],
             highlights: [
-                'Coluna 1 (Novos Pedidos — A Iniciar): Comandas enviadas pelo QR Code da mesa ou pelo Garçom com alerta sonoro',
-                'Coluna 2 (Em Preparação no Fogo): Cronómetro ao vivo do tempo de preparação de cada mesa',
-                'Identificação Visual Automática: Etiquetas distintas para 🍽️ Servir na Mesa, 🛍️ Embalar p/ Take-Away e 🛵 Embalar p/ Estafeta',
-                'Botão "🔔 Prato Pronto! (Chamar Garçom)": Notifica imediatamente o terminal do garçom e o telemóvel do cliente',
-                'Zero papel e zero gritos na cozinha: comunicação silenciosa e rigorosa entre a sala e o fogão'
+                'Coluna "Novos Pedidos" com sinal sonoro imediato quando o cliente pede pelo QR Code ou pelo Garçom',
+                'Coluna "Em Preparação no Fogo" com contagem do tempo exacto de cada comanda',
+                'Etiquetas visuais automáticas: 🍽️ Servir na Mesa, 🛍️ Embalar p/ Take-Away e 🛵 Embalar p/ Estafeta',
+                'Botão "🔔 Prato Pronto!": notifica simultaneamente o telemóvel do cliente e o terminal do garçom'
             ]
         },
         rastreio: {
-            badge: '🛰️ Rastreio ao Vivo nas 3 Modalidades',
-            title: 'Acompanhamento Online Dentro do Salão, em Take-Away e em Delivery',
-            subtitle: 'O cliente acompanha no seu próprio telemóvel cada etapa da sua refeição, com uma linha temporal adaptada automaticamente à modalidade escolhida.',
+            badge: '🛰️ 3. Rastreio ao Vivo: Mesa, Take-Away & Delivery',
+            title: 'O Cliente Acompanha o Estado Real do Prato Dentro e Fora do Restaurante',
+            subtitle: 'Quer esteja sentado à mesa, a caminho do restaurante para levantar um Take-Away ou em casa à espera do estafeta, o cliente acompanha cada etapa no seu telemóvel.',
             image: '/login_bg_bitoque.png',
+            metrics: [
+                { value: 'Na Mesa', label: '4 Etapas de Salão' },
+                { value: '#Senha', label: 'Cartão Digital Take-Away' },
+                { value: 'Mapa GPS', label: 'Estafeta em Tempo Real' }
+            ],
             highlights: [
-                '🍽️ Dentro do Restaurante (Na Mesa): 4 etapas de salão (Recebido → No Fogo → No Passe! → Servido na Mesa)',
-                '🛍️ Take-Away (Recolha no Balcão): Gera um Cartão de Senha Digital (#XXXX), avisa quando o saco está pronto no balcão e abre o Mapa GPS até ao restaurante',
-                '🛵 Entrega ao Domicílio (Delivery): 5 etapas + Mapa GPS ao Vivo com a localização do estafeta em movimento e botões para Ligar ou enviar WhatsApp',
-                'Avaliação Privada (1 a 5 Estrelas): No final da refeição, o cliente envia a sua opinião directamente para a gerência',
-                'Fidelização VIP & Cupões: Cartão digital de selos e descontos automáticos para clientes fiéis'
+                '🍽️ Consumo no Salão: Pedido Recebido → Em Preparação no Fogo → Pronto no Passe → Servido na Mesa',
+                '🛍️ Take-Away Online: gera um Cartão de Senha Digital (#XXXX) para recolha rápida no balcão sem filas',
+                '🛵 Entrega ao Domicílio (Delivery): mapa GPS interactivo com a posição do estafeta e contacto directo',
+                'Avaliação Privada de 1 a 5 Estrelas e Cartão de Fidelização VIP integrados no final do pedido'
             ]
         },
         offline: {
-            badge: '💻 Aplicação Desktop + Modo Offline 30 Dias',
-            title: 'Funciona Com ou Sem Internet (Cloud + Executável Windows)',
-            subtitle: 'Sabemos que a ligação à internet pode oscilar nos momentos de maior movimento. O Menús Jindungo combina a nuvem com o executável nativo MenusJindungo.exe para que o seu restaurante nunca pare de facturar.',
+            badge: '💻 4. Aplicação Desktop Windows + 30 Dias Offline',
+            title: 'A Internet Falhou? O Seu Restaurante Continua a Vender e a Facturar',
+            subtitle: 'Sabemos que um restaurante cheio não pode parar por falhas de rede. A aplicação instalável MenusJindungo.exe guarda os dados localmente e mantém a facturação AGT activa sem interrupções.',
             image: '/restaurant_dining_african.png',
+            metrics: [
+                { value: '30 Dias', label: 'Sessão Offline Activa' },
+                { value: 'Automática', label: 'Sincronização Cloud' },
+                { value: 'Windows', label: 'Instalador Nativo .EXE' }
+            ],
             highlights: [
-                'Instalador Oficial Windows (MenusJindungo.exe) com atalho directo na Área de Trabalho do restaurante',
-                'Base de Dados Local Persistente (30 Dias): Continue a abrir turnos, lançar pedidos e emitir facturas mesmo sem internet',
-                'Assinatura Criptográfica em Contingência: As facturas emitidas offline mantêm a numeração sequencial e o código fiscal AGT',
-                'Sincronização Automática Inteligente: Assim que a internet regressa, todas as vendas e fechos de caixa sobem automaticamente para a nuvem',
-                'Acesso simultâneo: O proprietário pode acompanhar tudo pelo telemóvel a partir de qualquer lugar do mundo'
+                'Pacote instalador pronto para computadores e terminais POS Touch (MenusJindungo.exe)',
+                'Emissão contínua de Factura-Recibo (FR) com assinatura criptográfica mesmo sem ligação à internet',
+                'Fila inteligente de sincronização: assim que a rede volta, todos os pedidos sobem para a nuvem',
+                'O proprietário acompanha as vendas em tempo real no seu telemóvel onde quer que esteja'
             ]
         }
     };
 
+    const currentHero = HERO_GALLERY[heroSlide];
+    const currentFlow = operationalFlows[activeFlowTab];
+
     return (
-        <div className="min-h-screen bg-[#0D0B09] text-white selection:bg-[#D4AF37] selection:text-black overflow-x-hidden font-sans relative">
+        <div className="min-h-screen bg-[#0B0907] text-white selection:bg-[#D4AF37] selection:text-black overflow-x-hidden font-sans relative">
             
-            {/* Warm Hospitality Ambient Glows */}
-            <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[85vw] h-[45vh] bg-gradient-to-r from-amber-600/15 via-[#D4AF37]/20 to-orange-500/10 blur-[150px] rounded-full pointer-events-none z-0"></div>
-            <div className="absolute top-1/2 right-0 w-[45vw] h-[45vw] bg-[#D4AF37]/10 blur-[170px] rounded-full pointer-events-none z-0"></div>
+            {/* Warm Ambient Lighting */}
+            <div className="absolute top-0 left-1/4 w-[65vw] h-[55vh] bg-gradient-to-br from-[#D4AF37]/15 via-amber-600/10 to-transparent blur-[150px] rounded-full pointer-events-none z-0" />
+            <div className="absolute top-[40%] right-[-10%] w-[45vw] h-[45vw] bg-amber-500/10 blur-[170px] rounded-full pointer-events-none z-0" />
 
-            {/* Navigation Header */}
-            <header className="fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 w-[96%] xl:w-[94%] max-w-7xl z-50 transition-all duration-500">
-                <nav className={`rounded-full px-4 sm:px-6 py-2.5 sm:py-3 flex justify-between items-center transition-all duration-500 border ${
-                    scrolled 
-                        ? 'bg-[#161310]/95 backdrop-blur-2xl border-[#D4AF37]/30 shadow-[0_10px_35px_rgba(0,0,0,0.85)]' 
-                        : 'bg-[#161310]/85 backdrop-blur-xl border-white/10 shadow-2xl'
-                }`}>
-                    {/* Logo */}
-                    <div className="flex items-center gap-2.5 cursor-pointer group select-none shrink-0" onClick={() => navigate('/')}>
-                        <div className="w-10 h-10 sm:w-11 sm:h-11 bg-black/50 rounded-full flex items-center justify-center border border-[#D4AF37]/50 group-hover:border-[#D4AF37] overflow-hidden shadow-2xl transition-all duration-300">
-                            <img src={logoUrl || "/jindungo_logo_v3.png"} alt="Logo" className="w-full h-full object-contain p-0 scale-[1.18] filter drop-shadow-[0_0_8px_rgba(212,175,55,0.4)] transition-transform duration-300 group-hover:scale-[1.23]" />
+            {/* =====================================================================
+                NAVIGATION HEADER — BEM ESTRUTURADO, ALINHADO E CENTRALIZADO
+               ===================================================================== */}
+            <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+                scrolled
+                    ? 'bg-[#0E0C0A]/95 backdrop-blur-2xl border-b border-[#D4AF37]/25 py-3 shadow-[0_10px_35px_rgba(0,0,0,0.8)]'
+                    : 'bg-gradient-to-b from-black/85 via-black/50 to-transparent py-4 sm:py-5'
+            }`}>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+                    
+                    {/* Left: Brand Logo */}
+                    <div
+                        onClick={() => navigate('/')}
+                        className="flex items-center gap-3 cursor-pointer group select-none shrink-0"
+                    >
+                        <div className="w-11 h-11 bg-[#14110D] rounded-2xl flex items-center justify-center border border-[#D4AF37]/50 group-hover:border-[#D4AF37] overflow-hidden shadow-[0_0_20px_rgba(212,175,55,0.25)] transition-all">
+                            <img
+                                src={logoUrl || "/jindungo_logo_v3.png"}
+                                alt="Menús Jindungo"
+                                className="w-full h-full object-contain scale-[1.15] transition-transform duration-300 group-hover:scale-[1.22]"
+                            />
                         </div>
-                        <span className="font-serif font-black text-base sm:text-lg tracking-tight flex items-center gap-2 whitespace-nowrap">
-                            Menús <span className="text-[#D4AF37]">Jindungo</span>
-                            <span className="text-[9px] font-sans font-black bg-gradient-to-r from-[#D4AF37] to-amber-500 text-black px-2.5 py-0.5 rounded-full uppercase tracking-wider hidden xl:inline-block shadow-md whitespace-nowrap">
-                                100% Restauração &amp; Facturação AGT
+                        <div className="flex flex-col">
+                            <span className="font-display font-extrabold text-lg sm:text-xl tracking-tight text-white leading-none">
+                                Menús <span className="text-[#D4AF37]">Jindungo</span>
                             </span>
-                        </span>
+                            <span className="text-[10px] font-sans font-bold text-amber-200/80 uppercase tracking-widest mt-1">
+                                Restauração &amp; Facturação AGT
+                            </span>
+                        </div>
                     </div>
 
-                    {/* Middle Links */}
-                    <div className="hidden lg:flex items-center gap-3 xl:gap-6 text-[11px] xl:text-xs font-bold tracking-wider uppercase text-gray-300 whitespace-nowrap">
-                        <a href="#ecossistema" className="hover:text-[#D4AF37] transition-colors text-[#D4AF37] whitespace-nowrap">Terminais &amp; Fluxo</a>
-                        <a href="#facturacao-agt" className="hover:text-[#D4AF37] transition-colors whitespace-nowrap">Facturação AGT</a>
-                        <a href="#quem-somos" className="hover:text-[#D4AF37] transition-colors whitespace-nowrap">Quem Somos</a>
-                        <a href="#precos" className="hover:text-[#D4AF37] transition-colors whitespace-nowrap">Planos &amp; Preços</a>
-                        <Link to="/explorar" className="hover:text-[#D4AF37] transition-colors whitespace-nowrap">Restaurantes</Link>
-                        <Link to="/login" className="hover:text-white transition-colors py-1 px-3 rounded-full hover:bg-white/10 whitespace-nowrap">Entrar</Link>
-                    </div>
+                    {/* Center: Clean Navigation Links */}
+                    <nav className="hidden lg:flex items-center justify-center gap-6 xl:gap-8 text-xs font-display font-bold uppercase tracking-wider text-gray-300">
+                        <a href="#como-funciona" className="hover:text-[#D4AF37] transition-colors">Como Funciona</a>
+                        <a href="#ecossistema" className="hover:text-[#D4AF37] transition-colors">Terminais &amp; KDS</a>
+                        <a href="#facturacao-agt" className="hover:text-[#D4AF37] transition-colors">Facturação AGT</a>
+                        <a href="#precos" className="hover:text-[#D4AF37] transition-colors">Preços</a>
+                        <a href="#quem-somos" className="hover:text-[#D4AF37] transition-colors">Quem Somos</a>
+                        <Link to="/explorar" className="hover:text-[#D4AF37] transition-colors text-[#F3E5AB]">Explorar</Link>
+                    </nav>
 
-                    {/* CTA Button */}
-                    <div className="hidden lg:block shrink-0">
-                        <Link 
-                            to="/register" 
-                            className="whitespace-nowrap inline-flex items-center justify-center bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-gray-950 px-5 py-2 rounded-full font-black text-xs uppercase tracking-wider hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)] border border-amber-300"
+                    {/* Right: Actions (Perfectly Centered Buttons) */}
+                    <div className="hidden lg:flex items-center justify-end gap-3 shrink-0">
+                        <Link
+                            to="/login"
+                            className="inline-flex items-center justify-center text-center px-4 py-2.5 rounded-xl font-display font-bold text-xs uppercase tracking-wider text-gray-200 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/15 transition-all"
                         >
-                            Criar Conta do Restaurante
+                            Entrar
+                        </Link>
+                        <Link
+                            to="/register"
+                            className="inline-flex items-center justify-center text-center bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-gray-950 px-5 py-2.5 rounded-xl font-display font-extrabold text-xs uppercase tracking-wider hover:brightness-110 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_6px_25px_rgba(212,175,55,0.35)] leading-none"
+                        >
+                            Criar Restaurante
                         </Link>
                     </div>
 
-                    {/* Mobile Menu Button */}
-                    <button className="lg:hidden text-white hover:text-[#D4AF37] transition-colors p-1" onClick={() => setMobileMenuOpen(true)}>
-                        <Menu size={24} />
+                    {/* Mobile Hamburger Button */}
+                    <button
+                        onClick={() => setMobileMenuOpen(true)}
+                        className="lg:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 border border-white/15 text-white hover:text-[#D4AF37] transition-colors"
+                        aria-label="Abrir Menu"
+                    >
+                        <Menu size={22} />
                     </button>
-                </nav>
+                </div>
             </header>
 
-            {/* Mobile Menu Overlay */}
+            {/* Mobile Menu Drawer */}
             {mobileMenuOpen && (
-                <div className="fixed inset-0 z-[100] bg-[#0D0B09]/95 backdrop-blur-3xl p-8 flex flex-col items-center justify-center gap-6 animate-in fade-in duration-300">
-                    <button className="absolute top-8 right-8 text-white p-2 rounded-full border border-white/20 hover:text-[#D4AF37]" onClick={() => setMobileMenuOpen(false)}>
-                        <X size={28} />
-                    </button>
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="w-14 h-14 bg-black/40 rounded-full flex items-center justify-center border border-[#D4AF37]/40 overflow-hidden shadow-2xl">
-                            <img src={logoUrl || "/jindungo_logo_v3.png"} alt="Logo" className="w-full h-full object-contain p-0 scale-[1.18]" />
+                <div className="fixed inset-0 z-[100] bg-[#0B0907]/98 backdrop-blur-2xl p-6 flex flex-col justify-between animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                        <div className="flex items-center gap-3">
+                            <img src={logoUrl || "/jindungo_logo_v3.png"} alt="Logo" className="w-10 h-10 rounded-xl border border-[#D4AF37]/40" />
+                            <span className="font-display font-extrabold text-xl text-white">Menús <span className="text-[#D4AF37]">Jindungo</span></span>
                         </div>
-                        <span className="font-serif font-black text-2xl">Menús Jindungo</span>
+                        <button
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="w-10 h-10 rounded-xl bg-white/5 border border-white/15 flex items-center justify-center text-white"
+                        >
+                            <X size={22} />
+                        </button>
                     </div>
-                    <a href="#ecossistema" onClick={() => setMobileMenuOpen(false)} className="text-lg font-serif tracking-wide text-[#D4AF37] font-bold">🍽️ Terminais &amp; Fluxo QR</a>
-                    <a href="#facturacao-agt" onClick={() => setMobileMenuOpen(false)} className="text-lg font-serif tracking-wide hover:text-[#D4AF37]">🧾 Facturação Electrónica AGT</a>
-                    <a href="#quem-somos" onClick={() => setMobileMenuOpen(false)} className="text-lg font-serif tracking-wide hover:text-[#D4AF37]">🌶️ Quem Somos</a>
-                    <a href="#precos" onClick={() => setMobileMenuOpen(false)} className="text-lg font-serif tracking-wide hover:text-[#D4AF37]">💰 Planos &amp; Preços</a>
-                    <Link to="/explorar" onClick={() => setMobileMenuOpen(false)} className="text-lg font-serif tracking-wide hover:text-[#D4AF37]">📍 Explorar Restaurantes</Link>
-                    <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="text-lg font-serif tracking-wide text-gray-400 hover:text-white">Entrar no Painel</Link>
-                    <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="bg-gradient-to-r from-[#D4AF37] to-amber-600 text-gray-950 px-10 py-4 rounded-full font-black text-base uppercase tracking-wider w-full max-w-xs text-center shadow-[0_10px_30px_rgba(212,175,55,0.4)]">Registar Restaurante</Link>
+
+                    <div className="flex flex-col gap-4 my-auto py-6 text-center font-display font-bold text-lg">
+                        <a href="#como-funciona" onClick={() => setMobileMenuOpen(false)} className="py-2 hover:text-[#D4AF37]">Como Funciona</a>
+                        <a href="#ecossistema" onClick={() => setMobileMenuOpen(false)} className="py-2 hover:text-[#D4AF37]">Terminais &amp; Cozinha KDS</a>
+                        <a href="#facturacao-agt" onClick={() => setMobileMenuOpen(false)} className="py-2 hover:text-[#D4AF37]">Facturação Electrónica AGT</a>
+                        <a href="#precos" onClick={() => setMobileMenuOpen(false)} className="py-2 hover:text-[#D4AF37]">Planos &amp; Preços</a>
+                        <a href="#quem-somos" onClick={() => setMobileMenuOpen(false)} className="py-2 hover:text-[#D4AF37]">Quem Somos</a>
+                        <Link to="/explorar" onClick={() => setMobileMenuOpen(false)} className="py-2 text-[#D4AF37]">Explorar Restaurantes</Link>
+                    </div>
+
+                    <div className="flex flex-col gap-3 pt-4 border-t border-white/10">
+                        <Link
+                            to="/login"
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="w-full py-3.5 rounded-xl bg-white/5 border border-white/15 font-display font-bold text-sm uppercase tracking-wider text-center text-white"
+                        >
+                            Entrar no Painel
+                        </Link>
+                        <Link
+                            to="/register"
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="w-full py-4 rounded-xl bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] font-display font-extrabold text-sm uppercase tracking-wider text-center text-gray-950 shadow-lg"
+                        >
+                            Criar Restaurante
+                        </Link>
+                    </div>
                 </div>
             )}
 
             {/* =====================================================================
-                1. HERO SECTION ACOLHEDORA — 100% FOCADA NA RESTAURAÇÃO EM ANGOLA
+                1. HERO SECTION COMERCIAL (SPLIT LAYOUT + FOTOS REAIS + UI AO VIVO)
                ===================================================================== */}
-            <section className="pt-36 sm:pt-44 pb-16 px-6 relative z-10 max-w-7xl mx-auto">
-                <div className="text-center max-w-4xl mx-auto">
-                    <div className="inline-flex flex-wrap items-center justify-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-[#D4AF37]/40 text-[#D4AF37] text-xs font-black uppercase tracking-widest mb-6 shadow-[0_0_25px_rgba(212,175,55,0.2)]">
-                        <Flame size={15} className="text-[#D4AF37] animate-pulse" />
-                        <span>Bem-vindo à Casa Digital da Gastronomia Angolana • Certificado AGT N.º FE/305/AGT/2026</span>
-                    </div>
-
-                    <h1 className="text-4xl sm:text-6xl md:text-7xl font-serif font-bold tracking-tight leading-[1.1] mb-6 text-white">
-                        O Sabor da Nossa Terra com a <br />
-                        <span className="bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] bg-clip-text text-transparent italic font-black">
-                            Melhor Tecnologia de Restauração
-                        </span>.
-                    </h1>
+            <section className="relative pt-28 sm:pt-36 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto z-10">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-10 items-center">
                     
-                    <p className="max-w-3xl mx-auto text-gray-300 text-base sm:text-lg md:text-xl mb-8 leading-relaxed font-light">
-                        Concebido exclusivamente para <strong className="text-white font-semibold">Restaurantes, Esplanadas, Roças Gastronómicas, Bares e Lounges</strong> em Angola. Una o <strong className="text-[#D4AF37] font-semibold">Menu Digital QR na Mesa</strong>, o <strong className="text-white font-semibold">Ecrã KDS de Cozinha</strong>, o <strong className="text-white font-semibold">Terminal do Garçom</strong>, o <strong className="text-white font-semibold">Rastreio de Take-Away e Delivery</strong> e a <strong className="text-emerald-400 font-semibold">Facturação Electrónica Certificada pela AGT</strong> numa única plataforma acolhedora, rápida e que funciona mesmo sem internet.
+                    {/* Left Column: High-Converting Marketing Copy */}
+                    <div className="lg:col-span-6 space-y-6 text-left">
+                        <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#1A150E] border border-[#D4AF37]/40 shadow-[0_0_25px_rgba(212,175,55,0.15)]">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                            <span className="text-[11px] sm:text-xs font-display font-bold uppercase tracking-wider text-[#F3E5AB]">
+                                Plataforma N.º 1 de Restauração • Certificado AGT FE/305/AGT/2026
+                            </span>
+                        </div>
+
+                        <h1 className="text-4xl sm:text-5xl xl:text-6xl font-display font-extrabold tracking-tight leading-[1.08] text-white">
+                            Transforme Cada Mesa num Pedido Rápido e{' '}
+                            <span className="bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#E5A93C] bg-clip-text text-transparent">
+                                Aumente as Vendas do Seu Restaurante.
+                            </span>
+                        </h1>
+
+                        <p className="text-gray-300 text-base sm:text-lg leading-relaxed font-normal max-w-2xl">
+                            O sistema completo e acolhedor que une o <strong className="text-white font-semibold">Menu Digital QR Code na Mesa</strong>, o <strong className="text-white font-semibold">Terminal do Garçom por PIN</strong>, o <strong className="text-white font-semibold">Ecrã KDS da Cozinha</strong>, o <strong className="text-white font-semibold">Rastreio de Take-Away e Delivery</strong> e a <strong className="text-emerald-400 font-semibold">Facturação Electrónica Certificada pela AGT</strong> — com funcionamento garantido mesmo sem internet.
+                        </p>
+
+                        {/* Primary & Secondary CTAs — Perfectly Centered */}
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 pt-2">
+                            <Link
+                                to="/register"
+                                className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-gray-950 px-8 py-4 rounded-2xl font-display font-extrabold text-sm uppercase tracking-wider hover:brightness-110 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_12px_35px_rgba(212,175,55,0.35)] text-center"
+                            >
+                                <span>Criar Restaurante Agora</span>
+                                <ArrowRight size={18} strokeWidth={2.5} />
+                            </Link>
+                            <a
+                                href="#precos"
+                                className="inline-flex items-center justify-center gap-2 bg-white/[0.06] hover:bg-white/[0.12] text-white px-7 py-4 rounded-2xl font-display font-bold text-sm uppercase tracking-wider border border-white/15 hover:border-[#D4AF37]/50 transition-all text-center"
+                            >
+                                <span>Ver Planos (Desde 15.000 Kz)</span>
+                            </a>
+                        </div>
+
+                        {/* Key Business Metrics Row */}
+                        <div className="pt-6 border-t border-white/10 grid grid-cols-3 gap-4">
+                            <div>
+                                <div className="text-2xl sm:text-3xl font-display font-extrabold text-[#D4AF37]">+35%</div>
+                                <p className="text-xs text-gray-400 mt-0.5 leading-snug">Rotação de mesas e pedidos por turno</p>
+                            </div>
+                            <div>
+                                <div className="text-2xl sm:text-3xl font-display font-extrabold text-white">100%</div>
+                                <p className="text-xs text-gray-400 mt-0.5 leading-snug">Focado em Restauração e Hospitalidade</p>
+                            </div>
+                            <div>
+                                <div className="text-xl sm:text-2xl font-display font-extrabold text-emerald-400">FE/305/AGT</div>
+                                <p className="text-xs text-gray-400 mt-0.5 leading-snug">Facturação Electrónica Validada AGT</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column: Rich Photographic Showcase + Floating Live UI Cards */}
+                    <div className="lg:col-span-6 relative">
+                        <div className="relative mx-auto max-w-xl lg:max-w-none">
+                            
+                            {/* Glow Behind Image */}
+                            <div className="absolute -inset-3 bg-gradient-to-tr from-[#D4AF37]/30 via-amber-500/15 to-emerald-500/15 rounded-[2.5rem] blur-2xl opacity-70 pointer-events-none" />
+
+                            {/* Main Interactive Photo Card */}
+                            <div className="relative rounded-[2.2rem] overflow-hidden border-2 border-[#D4AF37]/50 bg-[#14110E] shadow-[0_25px_70px_rgba(0,0,0,0.85)]">
+                                <div className="relative h-[380px] sm:h-[450px] w-full overflow-hidden">
+                                    {HERO_GALLERY.map((slide, index) => (
+                                        <img
+                                            key={slide.id}
+                                            src={slide.image}
+                                            alt={slide.title}
+                                            className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ${
+                                                index === heroSlide ? 'opacity-100 scale-100' : 'opacity-0 scale-105 pointer-events-none'
+                                            }`}
+                                        />
+                                    ))}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-[#0B0907] via-[#0B0907]/40 to-black/20" />
+
+                                    {/* Top Floating Live Status Pill */}
+                                    <div className="absolute top-4 left-4 right-4 flex items-center justify-between gap-2 z-20">
+                                        <span className="px-3.5 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-[#D4AF37]/50 text-[#F3E5AB] font-display font-bold text-xs shadow-lg">
+                                            {currentHero.tag}
+                                        </span>
+                                        <span className="px-3 py-1.5 rounded-full bg-emerald-950/90 backdrop-blur-md border border-emerald-400/40 text-emerald-300 font-display font-bold text-[11px] flex items-center gap-1.5 shadow-lg">
+                                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                                            {currentHero.statusBadge}
+                                        </span>
+                                    </div>
+
+                                    {/* Bottom Overlay Inside Photo */}
+                                    <div className="absolute bottom-0 inset-x-0 p-6 z-20 space-y-3">
+                                        <div className="bg-black/80 backdrop-blur-xl border border-white/15 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-2xl">
+                                            <div>
+                                                <div className="text-[11px] font-display font-bold uppercase tracking-wider text-[#D4AF37]">
+                                                    {currentHero.orderBadge}
+                                                </div>
+                                                <div className="text-base sm:text-lg font-display font-extrabold text-white mt-0.5">
+                                                    {currentHero.title}
+                                                </div>
+                                                <p className="text-xs text-gray-300 mt-0.5 line-clamp-2">
+                                                    {currentHero.desc}
+                                                </p>
+                                            </div>
+                                            <div className="shrink-0 text-right bg-[#D4AF37]/15 border border-[#D4AF37]/40 px-3.5 py-2 rounded-xl">
+                                                <span className="text-[10px] text-gray-300 block uppercase">Estado / Valor</span>
+                                                <span className="text-xs sm:text-sm font-display font-extrabold text-[#F3E5AB]">
+                                                    {currentHero.priceBadge}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Selector Pills for Hero Showcase */}
+                                        <div className="grid grid-cols-4 gap-2 pt-1">
+                                            {HERO_GALLERY.map((item, idx) => (
+                                                <button
+                                                    key={item.id}
+                                                    onClick={() => setHeroSlide(idx)}
+                                                    className={`py-2 px-2 rounded-xl font-display font-bold text-[11px] transition-all cursor-pointer truncate border ${
+                                                        idx === heroSlide
+                                                            ? 'bg-[#D4AF37] text-black border-[#D4AF37] shadow-md'
+                                                            : 'bg-black/60 text-gray-300 border-white/10 hover:bg-white/10'
+                                                    }`}
+                                                >
+                                                    {item.tag}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            {/* =====================================================================
+                2. GALERIA VISUAL DE CONCEITOS GASTRONÓMICOS (FOTOS CONVIDATIVAS)
+               ===================================================================== */}
+            <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
+                <div className="text-center max-w-3xl mx-auto mb-12 space-y-3">
+                    <span className="text-[#D4AF37] font-display font-bold text-xs uppercase tracking-widest block">
+                        Especialização 100% Gastronómica
+                    </span>
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-extrabold text-white tracking-tight">
+                        Desenhado à Medida do Seu Espaço Gastronómico
+                    </h2>
+                    <p className="text-gray-400 text-sm sm:text-base">
+                        Do restaurante tradicional angolano ao lounge moderno, a Menús Jindungo adapta-se ao ritmo da sua sala, da sua cozinha e das suas entregas.
                     </p>
-
-                    {/* Badges Exclusivos de Restauração */}
-                    <div className="flex flex-wrap justify-center items-center gap-2.5 mb-10 text-xs font-bold font-mono max-w-4xl mx-auto">
-                        <span className="px-4 py-2 bg-[#D4AF37]/20 border border-[#D4AF37] text-[#D4AF37] rounded-full flex items-center gap-1.5 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
-                            🍽️ Menu QR na Mesa
-                        </span>
-                        <span className="px-4 py-2 bg-amber-500/10 border border-amber-500/30 text-amber-300 rounded-full flex items-center gap-1.5">
-                            🤵 Terminal do Garçom (PIN)
-                        </span>
-                        <span className="px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 rounded-full flex items-center gap-1.5">
-                            👨‍🍳 Ecrã KDS de Cozinha
-                        </span>
-                        <span className="px-4 py-2 bg-purple-500/10 border border-purple-500/30 text-purple-300 rounded-full flex items-center gap-1.5">
-                            🛍️ Take-Away c/ Senha Online
-                        </span>
-                        <span className="px-4 py-2 bg-blue-500/10 border border-blue-500/30 text-blue-300 rounded-full flex items-center gap-1.5">
-                            🛵 Delivery c/ Mapa GPS
-                        </span>
-                        <span className="px-4 py-2 bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 rounded-full flex items-center gap-1.5">
-                            🧾 Certificado AGT: FE/305/AGT/2026
-                        </span>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-20">
-                        <Link 
-                            to="/register" 
-                            className="w-full sm:w-auto bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-gray-950 px-10 py-4 rounded-full font-black text-sm uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_10px_35px_rgba(212,175,55,0.4)] border border-amber-300 flex items-center justify-center gap-2 group"
-                        >
-                            Registar o Meu Restaurante <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                        </Link>
-                        <a 
-                            href="#precos" 
-                            className="w-full sm:w-auto bg-white/5 backdrop-blur-md text-white px-10 py-4 rounded-full font-bold text-sm uppercase tracking-widest border border-white/15 hover:bg-white/10 hover:border-[#D4AF37]/50 transition-all text-center"
-                        >
-                            Ver Preços (Desde 15.000 Kz)
-                        </a>
-                    </div>
                 </div>
 
-                {/* Showcase Principal de Hospitalidade & Restauração */}
-                <div id="restauracao" className="text-left bg-gradient-to-br from-[#211911] via-[#15120E] to-[#0D0B09] border-2 border-[#D4AF37]/70 rounded-[3rem] p-8 sm:p-14 shadow-[0_0_60px_rgba(212,175,55,0.18)] relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/15 blur-[120px] rounded-full pointer-events-none" />
-
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
-                        <div className="lg:col-span-7 space-y-6">
-                            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/50 text-[#D4AF37] text-xs font-black uppercase tracking-widest">
-                                <Utensils size={14} /> Hospitalidade &amp; Gastronomia sem Fricção
-                            </div>
-                            
-                            <h2 className="text-3xl sm:text-5xl font-serif font-black text-white leading-tight">
-                                Como Funciona o Novo <span className="bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] bg-clip-text text-transparent italic">Menús Jindungo</span> no Seu Restaurante
-                            </h2>
-
-                            <p className="text-gray-300 text-sm sm:text-base leading-relaxed font-light">
-                                Quando um cliente se senta à mesa ou encomenda de casa, tudo acontece num fluxo harmonioso. O pedido entra directamente no <strong className="text-white">Ecrã KDS da Cozinha</strong>, o <strong className="text-white">Garçom</strong> é avisado no seu terminal próprio assim que o prato fica pronto no Passe, o cliente acompanha o estado ao vivo no telemóvel e o <strong className="text-white">Caixa POS</strong> emite a factura certificada pela AGT num segundo.
-                            </p>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                                <div className="bg-black/45 border border-white/10 p-4 rounded-2xl flex items-start gap-3.5">
-                                    <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center shrink-0 mt-0.5">
-                                        <Users size={20} />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-xs font-bold text-white uppercase tracking-wide">Vistas Separadas por Função</h4>
-                                        <p className="text-[11px] text-gray-400 font-light mt-1">
-                                            O Garçom, o Cozinheiro e o Caixa têm terminais exclusivos e não acedem aos relatórios confidenciais do Gerente.
-                                        </p>
-                                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[
+                        {
+                            title: 'Restaurantes & Casas de Grelhados',
+                            desc: 'Menu QR por mesa, divisão de contas, comandas directas para a grelha e cozinha e fecho de caixa fiscal AGT.',
+                            image: '/login_bg_bitoque.png',
+                            badge: '🍽️ Salão & Mesas'
+                        },
+                        {
+                            title: 'Esplanadas, Roças & Beach Clubs',
+                            desc: 'O cliente pede bebidas e petiscos sem esperar que o garçom passe, aumentando o consumo por mesa em +35%.',
+                            image: '/restaurant_dining_african.png',
+                            badge: '🍹 Atendimento Rápido'
+                        },
+                        {
+                            title: 'Pastelarias, Cafés & Brunch',
+                            desc: 'Venda rápida ao balcão no POS Touch, emissão de factura térmica de 80mm em 2 segundos e controlo de stock.',
+                            image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=900',
+                            badge: '☕ Balcão & Esplanada'
+                        },
+                        {
+                            title: 'Churrasqueiras, Take-Away & Delivery',
+                            desc: 'Encomendas online com Senha Digital (#XXXX) para recolha no balcão e rastreio com Mapa GPS ao vivo do estafeta.',
+                            image: '/login_bg_food.png',
+                            badge: '🛵 Take-Away & Entrega'
+                        }
+                    ].map((card, i) => (
+                        <div
+                            key={i}
+                            className="group bg-[#14110E] border border-white/10 hover:border-[#D4AF37]/60 rounded-3xl overflow-hidden shadow-xl transition-all duration-300 flex flex-col justify-between"
+                        >
+                            <div>
+                                <div className="relative h-52 overflow-hidden">
+                                    <img
+                                        src={card.image}
+                                        alt={card.title}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-[#14110E] via-transparent to-black/30" />
+                                    <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md border border-[#D4AF37]/40 text-[#F3E5AB] font-display font-bold text-[11px]">
+                                        {card.badge}
+                                    </span>
                                 </div>
-                                <div className="bg-black/45 border border-white/10 p-4 rounded-2xl flex items-start gap-3.5">
-                                    <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                                        <ShieldCheck size={20} />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-xs font-bold text-white uppercase tracking-wide">Facturação AGT Online &amp; Offline</h4>
-                                        <p className="text-[11px] text-gray-400 font-light mt-1">
-                                            Software certificado (<strong className="text-emerald-400">FE/305/AGT/2026</strong>) com aplicação Desktop que factura mesmo sem internet.
-                                        </p>
-                                    </div>
+                                <div className="p-6">
+                                    <h3 className="text-lg font-display font-extrabold text-white mb-2 group-hover:text-[#D4AF37] transition-colors">
+                                        {card.title}
+                                    </h3>
+                                    <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                        {card.desc}
+                                    </p>
                                 </div>
                             </div>
-
-                            <div className="pt-4 flex flex-wrap items-center gap-4">
-                                <Link 
-                                    to="/register?plan=business&cycle=mensal" 
-                                    className="bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-gray-950 font-black px-8 py-3.5 rounded-2xl text-xs uppercase tracking-widest shadow-xl hover:scale-105 transition-all inline-flex items-center gap-2"
+                            <div className="px-6 pb-5">
+                                <Link
+                                    to="/register"
+                                    className="inline-flex items-center gap-1.5 text-xs font-display font-bold text-[#D4AF37] hover:underline"
                                 >
-                                    Começar Agora (Plano Business — 25.000 Kz) <ArrowRight size={16} />
-                                </Link>
-                                <Link 
-                                    to="/explorar" 
-                                    className="text-[#D4AF37] hover:underline text-xs font-bold uppercase tracking-wider"
-                                >
-                                    Ver Restaurantes Activos →
+                                    <span>Usar no meu restaurante</span>
+                                    <ArrowRight size={14} />
                                 </Link>
                             </div>
                         </div>
+                    ))}
+                </div>
+            </section>
 
-                        <RestaurantShowcaseCarousel />
+            {/* =====================================================================
+                3. COMO FUNCIONA NA PRÁTICA (4 PASSOS VISUAIS COM FOTOGRAFIA)
+               ===================================================================== */}
+            <section id="como-funciona" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
+                <div className="bg-gradient-to-b from-[#17130E] to-[#110E0B] border border-[#D4AF37]/25 rounded-[2.5rem] p-6 sm:p-12 lg:p-14 shadow-2xl">
+                    <div className="text-center max-w-3xl mx-auto mb-14 space-y-3">
+                        <span className="px-4 py-1.5 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/30 text-[#D4AF37] font-display font-bold text-xs uppercase tracking-widest inline-block">
+                            Fluxo Completo de Ponta a Ponta
+                        </span>
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-extrabold text-white tracking-tight">
+                            Do Pedido na Mesa à Factura AGT em 4 Passos
+                        </h2>
+                        <p className="text-gray-300 text-sm sm:text-base">
+                            Veja como a Menús Jindungo organiza a sua equipa, elimina filas de espera e encanta os seus clientes.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {[
+                            {
+                                step: '01',
+                                title: 'Menu QR na Mesa ou Encomenda Online',
+                                desc: 'O cliente lê o QR Code na mesa (ou abre o link no WhatsApp para Take-Away/Delivery), vê fotos reais dos pratos e faz o pedido sem instalar nada.',
+                                benefit: '+28% Aumento no Pedido Médio',
+                                image: '/qr_table_menu.png'
+                            },
+                            {
+                                step: '02',
+                                title: 'A Cozinha Recebe no Ecrã KDS',
+                                desc: 'O pedido toca imediatamente no ecrã KDS da cozinha com etiqueta clara: Servir na Mesa, Embalar p/ Take-Away ou Entregar ao Estafeta.',
+                                benefit: 'Zero Erros de Comanda',
+                                image: '/kitchenboard_kds_display.png'
+                            },
+                            {
+                                step: '03',
+                                title: 'Garçom Notificado & Rastreio ao Vivo',
+                                desc: 'Quando o Chef clica em "Prato Pronto", o garçom recebe o alerta no seu terminal exclusivo por PIN e o cliente vê o estado ao vivo no telemóvel.',
+                                benefit: 'Atendimento 3x Mais Rápido',
+                                image: '/restaurant_dining_african.png'
+                            },
+                            {
+                                step: '04',
+                                title: 'Pagamento & Factura Electrónica AGT',
+                                desc: 'No fecho da conta (Multicaixa Express, TPA ou Numerário), o Caixa emite a Factura-Recibo certificada (FE/305/AGT/2026) mesmo sem internet.',
+                                benefit: '100% Legalizado na AGT',
+                                image: '/login_bg_bitoque.png'
+                            }
+                        ].map((item, idx) => (
+                            <div
+                                key={idx}
+                                className="bg-[#0D0B09] border border-white/10 hover:border-[#D4AF37]/50 rounded-3xl overflow-hidden flex flex-col justify-between transition-all shadow-lg"
+                            >
+                                <div>
+                                    <div className="relative h-40 overflow-hidden">
+                                        <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-[#0D0B09] via-black/30 to-transparent" />
+                                        <div className="absolute top-3 left-3 w-9 h-9 rounded-xl bg-[#D4AF37] text-black font-display font-extrabold text-sm flex items-center justify-center shadow-lg">
+                                            {item.step}
+                                        </div>
+                                    </div>
+                                    <div className="p-5">
+                                        <h3 className="text-base font-display font-extrabold text-white mb-2">
+                                            {item.title}
+                                        </h3>
+                                        <p className="text-xs text-gray-400 leading-relaxed">
+                                            {item.desc}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="px-5 pb-5">
+                                    <div className="px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 font-display font-bold text-[11px] text-center">
+                                        ✓ {item.benefit}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </section>
 
             {/* =====================================================================
-                2. OS 4 PILARES OPERACIONAIS (GARÇOM, COZINHA KDS, RASTREIO 360º E OFFLINE)
+                4. OS 4 TERMINAIS OPERACIONAIS (DEMONSTRADOR INTERACTIVO)
                ===================================================================== */}
-            <section id="ecossistema" className="py-20 px-6 relative z-10 max-w-7xl mx-auto">
-                <div className="text-center max-w-3xl mx-auto mb-12">
-                    <span className="text-[#D4AF37] text-xs font-black uppercase tracking-widest block mb-2">
-                        Arquitectura dos Grandes Sistemas Mundiais de Restauração
+            <section id="ecossistema" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
+                <div className="text-center max-w-3xl mx-auto mb-12 space-y-3">
+                    <span className="text-[#D4AF37] font-display font-bold text-xs uppercase tracking-widest block">
+                        Organização Profissional de Equipa
                     </span>
-                    <h2 className="text-3xl sm:text-5xl font-serif font-black text-white tracking-tight leading-tight">
-                        Cada Membro da Equipa no Seu <span className="bg-gradient-to-r from-[#D4AF37] to-amber-500 bg-clip-text text-transparent italic">Terminal Próprio</span>
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-extrabold text-white tracking-tight">
+                        Cada Membro da Equipa Vê Apenas o Seu Terminal
                     </h2>
-                    <p className="text-gray-300 text-sm sm:text-base mt-3 font-light">
-                        Clique abaixo em cada área operacional para conhecer as novas funcionalidades do <strong className="text-white">Menús Jindungo</strong>:
+                    <p className="text-gray-400 text-sm sm:text-base">
+                        Tal como nos maiores sistemas de restauração do mundo, separámos o painel estratégico do proprietário dos ecrãs operacionais do Garçom, da Cozinha e do Caixa.
                     </p>
                 </div>
 
-                {/* Selector dos 4 Módulos Operacionais */}
-                <div className="flex flex-wrap items-center justify-center gap-3 p-4 rounded-3xl bg-[#161310]/90 border border-[#D4AF37]/30 backdrop-blur-xl shadow-2xl max-w-5xl mx-auto mb-10">
+                {/* Selector Tabs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-10">
                     {[
-                        { id: 'garcom', label: '🤵 1. Terminal do Garçom & Sala' },
-                        { id: 'cozinha', label: '👨‍🍳 2. Ecrã KDS da Cozinha' },
-                        { id: 'rastreio', label: '🛰️ 3. Rastreio Mesa, Take-Away & Delivery' },
-                        { id: 'offline', label: '💻 4. App Desktop & Modo Offline' }
-                    ].map(tab => (
+                        { id: 'garcom', icon: '🤵', title: '1. Terminal do Garçom', sub: 'Login Nome + PIN • Sala & Mesas' },
+                        { id: 'cozinha', icon: '👨‍🍳', title: '2. Ecrã KDS Cozinha', sub: 'Comandas ao Vivo • Sem Preços' },
+                        { id: 'rastreio', icon: '🛰️', title: '3. Rastreio 3 Modalidades', sub: 'Mesa • Senha Take-Away • GPS' },
+                        { id: 'offline', icon: '💻', title: '4. App Desktop Offline', sub: 'MenusJindungo.exe • 30 Dias' }
+                    ].map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveFlowTab(tab.id)}
-                            className={`px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer border ${
+                            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-3.5 ${
                                 activeFlowTab === tab.id
-                                    ? 'bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-gray-950 border-[#D4AF37] shadow-[0_0_25px_rgba(212,175,55,0.5)] scale-105'
-                                    : 'bg-black/50 text-gray-300 border-white/10 hover:text-white hover:border-[#D4AF37]/40'
+                                    ? 'bg-gradient-to-r from-[#D4AF37] to-amber-500 text-gray-950 border-[#D4AF37] shadow-[0_10px_30px_rgba(212,175,55,0.3)] scale-[1.01]'
+                                    : 'bg-[#15120E] text-white border-white/10 hover:border-[#D4AF37]/40'
                             }`}
                         >
-                            {tab.label}
+                            <span className="text-2xl shrink-0">{tab.icon}</span>
+                            <div className="min-w-0">
+                                <div className="font-display font-extrabold text-xs sm:text-sm truncate">{tab.title}</div>
+                                <div className={`text-[11px] truncate ${activeFlowTab === tab.id ? 'text-gray-900 font-semibold' : 'text-gray-400'}`}>
+                                    {tab.sub}
+                                </div>
+                            </div>
                         </button>
                     ))}
                 </div>
 
-                {/* Cartão Detalhado do Fluxo Seleccionado */}
-                {(() => {
-                    const flow = operationalFlows[activeFlowTab];
-                    return (
-                        <div className="bg-[#15120F]/95 backdrop-blur-2xl border border-[#D4AF37]/30 rounded-[2.5rem] p-8 sm:p-12 shadow-2xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                            <div className="lg:col-span-7 space-y-6">
-                                <span className="px-4 py-1.5 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40 text-xs font-black uppercase tracking-widest inline-block">
-                                    {flow.badge}
-                                </span>
-                                <h3 className="text-2xl sm:text-4xl font-serif font-black text-white leading-tight">
-                                    {flow.title}
-                                </h3>
-                                <p className="text-gray-300 text-sm sm:text-base leading-relaxed font-light">
-                                    {flow.subtitle}
-                                </p>
-
-                                <ul className="space-y-3.5 pt-2">
-                                    {flow.highlights.map((item, idx) => (
-                                        <li key={idx} className="flex items-start gap-3 text-xs sm:text-sm text-gray-200 font-medium">
-                                            <div className="w-5 h-5 rounded-full bg-[#D4AF37] text-black flex items-center justify-center shrink-0 mt-0.5">
-                                                <Check size={12} strokeWidth={4} />
-                                            </div>
-                                            <span>{item}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-
-                            <div className="lg:col-span-5">
-                                <div className="h-[340px] sm:h-[400px] rounded-3xl overflow-hidden border-2 border-[#D4AF37]/40 relative shadow-2xl">
-                                    <img
-                                        src={flow.image}
-                                        alt={flow.title}
-                                        className="w-full h-full object-cover"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-6">
-                                        <span className="text-[11px] font-bold text-[#D4AF37] uppercase tracking-wider">
-                                            {flow.badge}
-                                        </span>
-                                        <h4 className="text-lg font-serif font-black text-white mt-1">
-                                            {flow.title}
-                                        </h4>
-                                    </div>
+                {/* Active Terminal Showcase Box */}
+                <div className="bg-[#14110E] border border-[#D4AF37]/35 rounded-[2.5rem] p-6 sm:p-10 lg:p-12 shadow-2xl">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+                        
+                        {/* Image & Metrics */}
+                        <div className="lg:col-span-5 space-y-4">
+                            <div className="relative h-72 sm:h-80 rounded-3xl overflow-hidden border border-[#D4AF37]/40 shadow-xl">
+                                <img
+                                    src={currentFlow.image}
+                                    alt={currentFlow.title}
+                                    className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                                <div className="absolute bottom-4 left-4 right-4">
+                                    <span className="px-3 py-1 rounded-full bg-[#D4AF37] text-black font-display font-extrabold text-[11px] uppercase tracking-wider">
+                                        {currentFlow.badge}
+                                    </span>
                                 </div>
                             </div>
-                        </div>
-                    );
-                })()}
-            </section>
 
-            {/* =====================================================================
-                3. SECÇÃO DE FACTURAÇÃO ELECTRÓNICA CERTIFICADA AGT (FE/305/AGT/2026)
-               ===================================================================== */}
-            <section id="facturacao-agt" className="py-20 px-6 relative z-10 max-w-7xl mx-auto">
-                <div className="bg-gradient-to-br from-[#0E1F1A] via-[#111514] to-[#0D0B09] border-2 border-emerald-500/40 rounded-[3rem] p-8 sm:p-14 shadow-[0_0_60px_rgba(16,185,129,0.15)] relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 blur-[130px] rounded-full pointer-events-none" />
-
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
-                        <div className="lg:col-span-7 space-y-6">
-                            <div className="flex flex-wrap items-center gap-3">
-                                <span className="px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-black uppercase tracking-widest flex items-center gap-2">
-                                    <ShieldCheck size={16} /> Facturação Electrónica Homologada em Angola
-                                </span>
-                                <span className="px-3.5 py-1.5 rounded-full bg-black/60 border border-[#D4AF37]/50 text-[#D4AF37] font-mono text-xs font-black">
-                                    Certificado AGT N.º FE/305/AGT/2026
-                                </span>
+                            <div className="grid grid-cols-3 gap-3">
+                                {currentFlow.metrics.map((m, idx) => (
+                                    <div key={idx} className="bg-black/50 border border-white/10 rounded-2xl p-3 text-center">
+                                        <div className="font-display font-extrabold text-sm sm:text-base text-[#D4AF37]">{m.value}</div>
+                                        <div className="text-[10px] text-gray-400 mt-0.5">{m.label}</div>
+                                    </div>
+                                ))}
                             </div>
+                        </div>
 
-                            <h2 className="text-3xl sm:text-5xl font-serif font-black text-white leading-tight">
-                                Facturação Electrónica <span className="text-emerald-400 italic">Certificada pela AGT</span> para o Seu Restaurante
-                            </h2>
-
-                            <p className="text-gray-300 text-sm sm:text-base leading-relaxed font-light">
-                                O módulo fiscal do <strong className="text-white">Menús Jindungo (Versão v3.1)</strong> cumpre rigorosamente os requisitos técnicos da <strong className="text-white">Administração Geral Tributária (AGT)</strong> de Angola, sob o número de certificação <strong className="text-[#D4AF37] font-mono">FE/305/AGT/2026</strong>. Emita documentos fiscais com assinatura criptográfica <strong className="text-white">JWS (RS256)</strong> em segundos no balcão ou na mesa.
+                        {/* Description & Bullet Points */}
+                        <div className="lg:col-span-7 space-y-6 text-left">
+                            <h3 className="text-2xl sm:text-4xl font-display font-extrabold text-white leading-tight">
+                                {currentFlow.title}
+                            </h3>
+                            <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
+                                {currentFlow.subtitle}
                             </p>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                                <div className="bg-black/40 border border-white/10 p-4 rounded-2xl">
-                                    <h4 className="text-xs font-black text-emerald-400 uppercase tracking-wider mb-1">
-                                        🧾 Talão Térmico 80mm &amp; Factura A4
-                                    </h4>
-                                    <p className="text-xs text-gray-300 font-light">
-                                        Emissão de Factura Simplificada (FS), Factura-Recibo (FR) com NIF do cliente e Documento de Conferência de Mesa.
-                                    </p>
-                                </div>
-                                <div className="bg-black/40 border border-white/10 p-4 rounded-2xl">
-                                    <h4 className="text-xs font-black text-[#D4AF37] uppercase tracking-wider mb-1">
-                                        🔐 Assinatura JWS &amp; Contingência Offline
-                                    </h4>
-                                    <p className="text-xs text-gray-300 font-light">
-                                        Encadeamento criptográfico de facturas e emissão contínua mesmo durante falhas de internet, com sincronização automática.
-                                    </p>
-                                </div>
-                                <div className="bg-black/40 border border-white/10 p-4 rounded-2xl">
-                                    <h4 className="text-xs font-black text-amber-300 uppercase tracking-wider mb-1">
-                                        💵 Gestão de Turnos de Caixa
-                                    </h4>
-                                    <p className="text-xs text-gray-300 font-light">
-                                        Abertura e fecho de caixa por operador (PIN), registo de sangrias, reforços e conferência cega de numerário e TPA.
-                                    </p>
-                                </div>
-                                <div className="bg-black/40 border border-white/10 p-4 rounded-2xl">
-                                    <h4 className="text-xs font-black text-blue-300 uppercase tracking-wider mb-1">
-                                        📦 Controlo de Stock &amp; Bebidas
-                                    </h4>
-                                    <p className="text-xs text-gray-300 font-light">
-                                        Baixa automática de stock a cada venda realizada no POS ou no Menu QR, com alertas de reposição.
-                                    </p>
-                                </div>
+                            <div className="space-y-3">
+                                {currentFlow.highlights.map((h, i) => (
+                                    <div key={i} className="flex items-start gap-3 bg-black/40 border border-white/10 p-3.5 rounded-2xl">
+                                        <CheckCircle size={18} className="text-[#D4AF37] shrink-0 mt-0.5" />
+                                        <span className="text-xs sm:text-sm text-gray-200 leading-relaxed">{h}</span>
+                                    </div>
+                                ))}
                             </div>
-                        </div>
 
-                        {/* Selo Oficial de Certificação AGT */}
-                        <div className="lg:col-span-5">
-                            <div className="bg-[#0B0F0E] border-2 border-[#D4AF37] rounded-3xl p-8 text-center shadow-[0_0_50px_rgba(212,175,55,0.2)] space-y-5 relative overflow-hidden">
-                                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-amber-600 text-black flex items-center justify-center mx-auto shadow-xl">
-                                    <FileText size={38} strokeWidth={2.2} />
-                                </div>
-
-                                <div>
-                                    <span className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-400 block">
-                                        CONFORMIDADE FISCAL REPÚBLICA DE ANGOLA
-                                    </span>
-                                    <h3 className="text-2xl font-serif font-black text-white mt-1">
-                                        Certificação Oficial AGT
-                                    </h3>
-                                </div>
-
-                                <div className="bg-black/70 border border-[#D4AF37]/40 rounded-2xl p-4 space-y-2 text-left font-mono text-xs">
-                                    <div className="flex justify-between border-b border-white/10 pb-2">
-                                        <span className="text-gray-400">N.º de Certificação:</span>
-                                        <strong className="text-[#D4AF37]">FE/305/AGT/2026</strong>
-                                    </div>
-                                    <div className="flex justify-between border-b border-white/10 pb-2">
-                                        <span className="text-gray-400">Versão do Software:</span>
-                                        <strong className="text-white">Menús Jindungo v3.1</strong>
-                                    </div>
-                                    <div className="flex justify-between border-b border-white/10 pb-2">
-                                        <span className="text-gray-400">Algoritmo Fiscal:</span>
-                                        <strong className="text-emerald-400">JWS RS256 + QR Code</strong>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-400">Regime de IVA / Imposto:</span>
-                                        <strong className="text-white">Geral (14%) &amp; Isento</strong>
-                                    </div>
-                                </div>
-
-                                <div className="pt-2">
-                                    <span className="text-xs text-gray-400 block mb-1">Módulo de Facturação Electrónica Mensal</span>
-                                    <div className="text-3xl font-serif font-black text-emerald-400">
-                                        25.000 Kz <span className="text-xs text-gray-400 font-sans font-normal">/ mês</span>
-                                    </div>
-                                </div>
-
+                            <div className="pt-2 flex flex-wrap gap-3">
                                 <Link
-                                    to="/register?module=invoicing_general&cycle=mensal"
-                                    className="block w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-black text-xs uppercase tracking-widest hover:brightness-110 transition-all shadow-lg"
+                                    to="/register"
+                                    className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] to-amber-500 text-gray-950 px-7 py-3.5 rounded-xl font-display font-extrabold text-xs uppercase tracking-wider hover:brightness-110 transition-all shadow-lg"
                                 >
-                                    Activar Facturação Electrónica (25.000 Kz)
+                                    <span>Activar no Meu Restaurante</span>
+                                    <ArrowRight size={16} />
                                 </Link>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </section>
 
             {/* =====================================================================
-                4. DASHBOARD EXECUTIVO PARA O PROPRIETÁRIO / GERENTE
+                5. FACTURAÇÃO ELECTRÓNICA CERTIFICADA PELA AGT (FE/305/AGT/2026)
                ===================================================================== */}
-            <section id="dashboard" className="py-16 px-6 relative z-10 max-w-6xl mx-auto space-y-8">
-                <div className="text-center max-w-3xl mx-auto">
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] text-xs font-black uppercase tracking-widest mb-3">
-                        <TrendingUp size={16} /> Gestão Financeira para o Proprietário
+            <section id="facturacao-agt" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
+                <div className="bg-gradient-to-br from-[#121A16] via-[#111512] to-[#0D0B09] border-2 border-emerald-500/35 rounded-[2.5rem] p-6 sm:p-12 lg:p-14 shadow-[0_20px_70px_rgba(16,185,129,0.12)]">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+                        
+                        {/* Left Content */}
+                        <div className="lg:col-span-7 space-y-6 text-left">
+                            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-display font-bold text-xs uppercase tracking-wider">
+                                <ShieldCheck size={16} /> Conformidade Fiscal Oficial em Angola
+                            </div>
+
+                            <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-extrabold text-white tracking-tight leading-tight">
+                                Facturação Electrónica Validada pela AGT:{' '}
+                                <span className="text-emerald-400">Certificado N.º FE/305/AGT/2026</span>
+                            </h2>
+
+                            <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
+                                Emita <strong className="text-white">Facturas-Recibo (FR)</strong>, <strong className="text-white">Facturas (FT)</strong>, <strong className="text-white">Facturas Proforma (PP)</strong> e <strong className="text-white">Notas de Crédito (NC)</strong> em total conformidade com o Regime Jurídico das Facturas em Angola. Cada documento inclui assinatura criptográfica <strong className="text-emerald-400">JWS RS256</strong> e exportação do ficheiro oficial <strong className="text-emerald-400">SAF-T (AO)</strong>.
+                            </p>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="bg-black/40 border border-white/10 p-4 rounded-2xl">
+                                    <div className="text-xs font-display font-extrabold text-emerald-400 uppercase mb-1">
+                                        ✓ Impressão Térmica 80mm &amp; PDF A4
+                                    </div>
+                                    <p className="text-xs text-gray-400 leading-relaxed">
+                                        Compatível com qualquer impressora térmica de balcão (USB, Rede ou Bluetooth) e envio directo da factura por WhatsApp.
+                                    </p>
+                                </div>
+                                <div className="bg-black/40 border border-white/10 p-4 rounded-2xl">
+                                    <div className="text-xs font-display font-extrabold text-emerald-400 uppercase mb-1">
+                                        ✓ Validação Automática de NIF
+                                    </div>
+                                    <p className="text-xs text-gray-400 leading-relaxed">
+                                        Consulta instantânea de contribuintes colectivos e singulares ou emissão rápida para Consumidor Final.
+                                    </p>
+                                </div>
+                                <div className="bg-black/40 border border-white/10 p-4 rounded-2xl">
+                                    <div className="text-xs font-display font-extrabold text-emerald-400 uppercase mb-1">
+                                        ✓ Gestão de Turnos &amp; Fecho de Caixa
+                                    </div>
+                                    <p className="text-xs text-gray-400 leading-relaxed">
+                                        Abertura e fecho de caixa cego por operador com reconciliação de Numerário, TPA e Multicaixa Express.
+                                    </p>
+                                </div>
+                                <div className="bg-black/40 border border-white/10 p-4 rounded-2xl">
+                                    <div className="text-xs font-display font-extrabold text-emerald-400 uppercase mb-1">
+                                        ✓ Ficha Técnica &amp; Baixa de Stock
+                                    </div>
+                                    <p className="text-xs text-gray-400 leading-relaxed">
+                                        Cada prato facturado desconta automaticamente os ingredientes no inventário do restaurante.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Right: Visual Thermal Receipt Mockup with AGT Certificate */}
+                        <div className="lg:col-span-5">
+                            <div className="bg-white text-gray-900 rounded-3xl p-6 sm:p-7 shadow-2xl max-w-sm mx-auto font-mono text-xs border-4 border-emerald-500/40 relative">
+                                <div className="text-center border-b border-dashed border-gray-300 pb-4 mb-4">
+                                    <div className="font-sans font-black text-base uppercase tracking-tight text-gray-950">RESTAURANTE SABOR DE LUANDA</div>
+                                    <div className="text-[11px] text-gray-600">NIF: 5417892031 • Ilha de Luanda</div>
+                                    <div className="mt-2 inline-block px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 font-sans font-extrabold text-[10px]">
+                                        FACTURA-RECIBO • FR 2026/1482
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 border-b border-dashed border-gray-300 pb-4 mb-4">
+                                    <div className="flex justify-between">
+                                        <span>2x Mufete Tradicional</span>
+                                        <span className="font-bold">13.000 Kz</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>1x Bitoque Jindungo</span>
+                                        <span className="font-bold">6.500 Kz</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>3x Sumo Natural Múcua</span>
+                                        <span className="font-bold">4.500 Kz</span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1 border-b border-dashed border-gray-300 pb-4 mb-4">
+                                    <div className="flex justify-between text-gray-600">
+                                        <span>Subtotal Líquido:</span>
+                                        <span>21.052,63 Kz</span>
+                                    </div>
+                                    <div className="flex justify-between text-gray-600">
+                                        <span>IVA (14%):</span>
+                                        <span>2.947,37 Kz</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm font-sans font-black text-gray-950 pt-1">
+                                        <span>TOTAL PAGO (MCX):</span>
+                                        <span>24.000,00 Kz</span>
+                                    </div>
+                                </div>
+
+                                <div className="text-center space-y-1.5 bg-gray-100 p-3 rounded-xl">
+                                    <div className="font-sans font-extrabold text-[10px] text-emerald-800 uppercase">
+                                        9f8a-Processado por programa validado n.º FE/305/AGT/2026
+                                    </div>
+                                    <div className="text-[10px] text-gray-500">
+                                        Menús Jindungo v3.1 • Assinatura JWS RS256
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
+                </div>
+            </section>
 
-                    <h2 className="text-3xl sm:text-5xl font-serif font-black text-white leading-tight mb-4">
-                        Controlo Total do Seu Restaurante em <span className="bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] bg-clip-text text-transparent italic">Tempo Real</span>
+            {/* =====================================================================
+                6. PAINEL EXECUTIVO DO PROPRIETÁRIO (PREVIEW INTERACTIVO)
+               ===================================================================== */}
+            <section className="py-14 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
+                <div className="text-center max-w-3xl mx-auto mb-10 space-y-3">
+                    <span className="text-[#D4AF37] font-display font-bold text-xs uppercase tracking-widest block">
+                        Controlo Total no Telemóvel ou Computador
+                    </span>
+                    <h2 className="text-3xl sm:text-4xl font-display font-extrabold text-white tracking-tight">
+                        Saiba Exactamente Quanto o Seu Restaurante Factura e Lucra
                     </h2>
-
-                    <p className="text-gray-300 text-sm sm:text-base leading-relaxed font-light">
-                        Enquanto a sua equipa trabalha nos terminais dedicados de sala, cozinha e caixa, o proprietário dispõe de um painel executivo privado para acompanhar a facturação, os pratos mais rentáveis, o stock e o desempenho de cada turno.
+                    <p className="text-gray-400 text-sm sm:text-base">
+                        Enquanto a equipa trabalha nos terminais operacionais, o proprietário acompanha as vendas, os pratos mais rentáveis e o fecho de caixa em tempo real.
                     </p>
                 </div>
 
@@ -799,431 +990,381 @@ const LandingPage = () => {
             </section>
 
             {/* =====================================================================
-                5. QUEM SOMOS — HISTÓRIA, IDENTIDADE ANGOLANA & HOSPITALIDADE
+                7. PLANOS & PREÇOS ACTUALIZADOS (15.000 / 25.000 / 40.000 / 25.000 KZ)
                ===================================================================== */}
-            <section id="quem-somos" className="py-20 px-6 relative z-10 max-w-7xl mx-auto">
-                <div className="bg-gradient-to-br from-[#1C1610] via-[#13100D] to-[#0D0B09] border border-[#D4AF37]/40 rounded-[3rem] p-8 sm:p-14 shadow-2xl">
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-                        <div className="lg:col-span-5 text-center flex flex-col items-center p-6 bg-black/40 rounded-3xl border border-[#D4AF37]/30">
-                            <div className="w-28 h-28 rounded-full bg-gradient-to-br from-[#2A2415] via-[#121214] to-[#1A160C] border-4 border-[#D4AF37] flex items-center justify-center shadow-[0_0_40px_rgba(212,175,55,0.5)] mb-6 overflow-hidden">
-                                <img src={logoUrl || "/jindungo_logo_v3.png"} alt="Menús Jindungo" className="w-full h-full object-contain scale-[1.18]" />
+            <section id="precos" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
+                <div className="text-center max-w-3xl mx-auto mb-12 space-y-4">
+                    <span className="px-4 py-1.5 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] font-display font-bold text-xs uppercase tracking-widest inline-block">
+                        Investimento Acessível &amp; Retorno Imediato
+                    </span>
+                    <h2 className="text-3xl sm:text-5xl font-display font-extrabold text-white tracking-tight">
+                        Planos Claros para Cada Fase do Seu Restaurante
+                    </h2>
+                    <p className="text-gray-300 text-sm sm:text-base">
+                        Sem taxas escondidas e sem comissões sobre os seus pratos. Escolha o ciclo de pagamento e comece hoje mesmo.
+                    </p>
+
+                    {/* Billing Cycle Selector */}
+                    <div className="inline-flex flex-wrap items-center justify-center gap-1.5 bg-[#15120E] p-1.5 rounded-2xl border border-white/10 mt-4">
+                        {[
+                            { id: 'mensal', label: 'Mensal' },
+                            { id: 'trimestral', label: 'Trimestral (-5%)' },
+                            { id: 'semestral', label: 'Semestral (-10%)' },
+                            { id: 'anual', label: 'Anual (2 Meses Grátis)' }
+                        ].map((cycle) => (
+                            <button
+                                key={cycle.id}
+                                onClick={() => setBillingCycle(cycle.id)}
+                                className={`px-4 py-2 rounded-xl font-display font-bold text-xs transition-all cursor-pointer ${
+                                    billingCycle === cycle.id
+                                        ? 'bg-[#D4AF37] text-black shadow-md'
+                                        : 'text-gray-400 hover:text-white'
+                                }`}
+                            >
+                                {cycle.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* 4 Pricing Cards Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
+                    
+                    {/* 1. PLANO START — 15.000 KZ */}
+                    <div className="bg-[#14110E] border border-white/10 hover:border-[#D4AF37]/50 rounded-3xl p-7 flex flex-col justify-between transition-all shadow-xl">
+                        <div>
+                            <div className="flex items-center justify-between mb-4">
+                                <span className="text-xs font-display font-extrabold uppercase tracking-wider text-gray-400">Plano Start</span>
+                                <span className="px-2.5 py-1 rounded-full bg-white/5 text-gray-300 text-[10px] font-bold">Iniciação Digital</span>
                             </div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-[#D4AF37] mb-1">
-                                ORGULHOSAMENTE CONCEBIDO EM ANGOLA 🇦🇴
-                            </span>
-                            <h3 className="text-2xl font-serif font-black text-white mb-3">
-                                Quem Somos — A Essência Jindungo
-                            </h3>
-                            <p className="text-xs sm:text-sm text-gray-300 font-light leading-relaxed mb-6">
-                                O <strong>jindungo</strong> é o símbolo do tempero, do calor humano e da identidade gastronómica da nossa terra. Nascemos em Luanda com a missão de oferecer aos restaurantes angolanos uma tecnologia de nível mundial, acessível, acolhedora e adaptada à nossa realidade.
+                            <h3 className="text-xl font-display font-extrabold text-white mb-2">Menu QR &amp; WhatsApp</h3>
+                            <p className="text-xs text-gray-400 mb-6 leading-relaxed">
+                                Ideal para cafés, quiosques e pequenos restaurantes que querem modernizar o cardápio na mesa.
                             </p>
-                            <div className="w-full grid grid-cols-3 gap-2 pt-4 border-t border-white/10 text-xs">
-                                <div>
-                                    <strong className="text-[#D4AF37] text-lg font-serif block">100%</strong>
-                                    <span className="text-gray-400 text-[11px]">Restauração</span>
+
+                            <div className="mb-6 pb-6 border-b border-white/10">
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-3xl sm:text-4xl font-display font-extrabold text-white">
+                                        {getPrice(15000).monthly}
+                                    </span>
+                                    <span className="text-sm font-display font-bold text-[#D4AF37]">Kz / mês</span>
                                 </div>
-                                <div>
-                                    <strong className="text-[#D4AF37] text-lg font-serif block">Cloud + PC</strong>
-                                    <span className="text-gray-400 text-[11px]">Online &amp; Offline</span>
+                                {getPrice(15000).tag && (
+                                    <span className="text-[11px] text-emerald-400 font-bold block mt-1">
+                                        {getPrice(15000).tag} • Total: {getPrice(15000).total} Kz / {getPrice(15000).mult}
+                                    </span>
+                                )}
+                            </div>
+
+                            <ul className="space-y-3 text-xs text-gray-300 mb-8">
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-[#D4AF37] shrink-0 mt-0.5" /> Menu Digital QR Code ilimitado</li>
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-[#D4AF37] shrink-0 mt-0.5" /> Fotos reais, categorias e pratos do dia</li>
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-[#D4AF37] shrink-0 mt-0.5" /> Pedidos rápidos na mesa e via WhatsApp</li>
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-[#D4AF37] shrink-0 mt-0.5" /> Botão de chamar garçom na mesa</li>
+                            </ul>
+                        </div>
+
+                        <Link
+                            to="/register"
+                            className="w-full py-3.5 px-4 rounded-xl bg-white/10 hover:bg-[#D4AF37] text-white hover:text-black font-display font-extrabold text-xs uppercase tracking-wider transition-all inline-flex items-center justify-center text-center"
+                        >
+                            Começar com Start
+                        </Link>
+                    </div>
+
+                    {/* 2. PLANO BUSINESS — 25.000 KZ (MAIS POPULAR) */}
+                    <div className="bg-gradient-to-b from-[#221B11] to-[#14110E] border-2 border-[#D4AF37] rounded-3xl p-7 flex flex-col justify-between transition-all shadow-[0_15px_50px_rgba(212,175,55,0.22)] relative">
+                        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-[#D4AF37] to-amber-500 text-black font-display font-extrabold text-[10px] uppercase tracking-widest shadow-lg whitespace-nowrap">
+                            ⭐ Mais Escolhido
+                        </div>
+
+                        <div>
+                            <div className="flex items-center justify-between mb-4 mt-1">
+                                <span className="text-xs font-display font-extrabold uppercase tracking-wider text-[#D4AF37]">Plano Business</span>
+                                <span className="px-2.5 py-1 rounded-full bg-[#D4AF37]/20 text-[#F3E5AB] text-[10px] font-bold">Salão + KDS + Rastreio</span>
+                            </div>
+                            <h3 className="text-xl font-display font-extrabold text-white mb-2">Operação Completa de Sala</h3>
+                            <p className="text-xs text-gray-300 mb-6 leading-relaxed">
+                                Para restaurantes em crescimento que precisam de Cozinha KDS, Terminal de Garçom e Rastreio de Encomendas.
+                            </p>
+
+                            <div className="mb-6 pb-6 border-b border-white/10">
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-3xl sm:text-4xl font-display font-extrabold text-[#F3E5AB]">
+                                        {getPrice(25000).monthly}
+                                    </span>
+                                    <span className="text-sm font-display font-bold text-[#D4AF37]">Kz / mês</span>
                                 </div>
-                                <div>
-                                    <strong className="text-[#D4AF37] text-lg font-serif block">AGT</strong>
-                                    <span className="text-gray-400 text-[11px]">FE/305/AGT/2026</span>
+                                {getPrice(25000).tag && (
+                                    <span className="text-[11px] text-emerald-400 font-bold block mt-1">
+                                        {getPrice(25000).tag} • Total: {getPrice(25000).total} Kz / {getPrice(25000).mult}
+                                    </span>
+                                )}
+                            </div>
+
+                            <ul className="space-y-3 text-xs text-gray-200 mb-8">
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-[#D4AF37] shrink-0 mt-0.5" /> Tudo do Plano Start incluído</li>
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-[#D4AF37] shrink-0 mt-0.5" /> <strong>Terminal do Garçom</strong> (Login Nome + PIN)</li>
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-[#D4AF37] shrink-0 mt-0.5" /> <strong>Ecrã KDS da Cozinha</strong> em tempo real</li>
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-[#D4AF37] shrink-0 mt-0.5" /> <strong>Rastreio ao Vivo:</strong> Mesa, Senha Take-Away e Delivery c/ GPS</li>
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-[#D4AF37] shrink-0 mt-0.5" /> Cartão de Fidelização VIP, Cupões e Reservas</li>
+                            </ul>
+                        </div>
+
+                        <Link
+                            to="/register"
+                            className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-gray-950 font-display font-extrabold text-xs uppercase tracking-wider hover:brightness-110 transition-all shadow-lg inline-flex items-center justify-center text-center"
+                        >
+                            Escolher Plano Business
+                        </Link>
+                    </div>
+
+                    {/* 3. PLANO CORPORATE — 40.000 KZ */}
+                    <div className="bg-[#14110E] border border-white/10 hover:border-[#D4AF37]/50 rounded-3xl p-7 flex flex-col justify-between transition-all shadow-xl">
+                        <div>
+                            <div className="flex items-center justify-between mb-4">
+                                <span className="text-xs font-display font-extrabold uppercase tracking-wider text-amber-300">Plano Corporate</span>
+                                <span className="px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 text-[10px] font-bold">Tudo Incluído 360º</span>
+                            </div>
+                            <h3 className="text-xl font-display font-extrabold text-white mb-2">Restauração + Facturação AGT</h3>
+                            <p className="text-xs text-gray-400 mb-6 leading-relaxed">
+                                A solução total para restaurantes estruturados: Menu QR, KDS, Rastreio GPS, Stock, App Desktop Offline e Facturação AGT.
+                            </p>
+
+                            <div className="mb-6 pb-6 border-b border-white/10">
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-3xl sm:text-4xl font-display font-extrabold text-white">
+                                        {getPrice(40000).monthly}
+                                    </span>
+                                    <span className="text-sm font-display font-bold text-[#D4AF37]">Kz / mês</span>
+                                </div>
+                                {getPrice(40000).tag && (
+                                    <span className="text-[11px] text-emerald-400 font-bold block mt-1">
+                                        {getPrice(40000).tag} • Total: {getPrice(40000).total} Kz / {getPrice(40000).mult}
+                                    </span>
+                                )}
+                            </div>
+
+                            <ul className="space-y-3 text-xs text-gray-300 mb-8">
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-[#D4AF37] shrink-0 mt-0.5" /> Tudo do Plano Business incluído</li>
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-emerald-400 shrink-0 mt-0.5" /> <strong>Facturação Electrónica AGT (FE/305/AGT/2026)</strong></li>
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-[#D4AF37] shrink-0 mt-0.5" /> <strong>App Desktop Windows (.EXE)</strong> c/ 30 dias Offline</li>
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-[#D4AF37] shrink-0 mt-0.5" /> Controlo de Stock, Receitas (Ficha Técnica) e Turnos</li>
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-[#D4AF37] shrink-0 mt-0.5" /> Exportação SAF-T (AO) e apoio prioritário 24/7</li>
+                            </ul>
+                        </div>
+
+                        <Link
+                            to="/register"
+                            className="w-full py-3.5 px-4 rounded-xl bg-white/10 hover:bg-[#D4AF37] text-white hover:text-black font-display font-extrabold text-xs uppercase tracking-wider transition-all inline-flex items-center justify-center text-center"
+                        >
+                            Escolher Plano Corporate
+                        </Link>
+                    </div>
+
+                    {/* 4. FACTURAÇÃO ELECTRÓNICA MENSAL — 25.000 KZ */}
+                    <div className="bg-gradient-to-b from-[#111C16] to-[#14110E] border border-emerald-500/40 hover:border-emerald-400 rounded-3xl p-7 flex flex-col justify-between transition-all shadow-xl">
+                        <div>
+                            <div className="flex items-center justify-between mb-4">
+                                <span className="text-xs font-display font-extrabold uppercase tracking-wider text-emerald-400">Facturação Electrónica</span>
+                                <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 text-[10px] font-bold">FE/305/AGT/2026</span>
+                            </div>
+                            <h3 className="text-xl font-display font-extrabold text-white mb-2">Módulo POS &amp; Facturação AGT</h3>
+                            <p className="text-xs text-gray-300 mb-6 leading-relaxed">
+                                Para restaurantes que pretendem focar-se na emissão de facturas certificadas pela AGT no balcão, gestão de caixa e inventário.
+                            </p>
+
+                            <div className="mb-6 pb-6 border-b border-white/10">
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-3xl sm:text-4xl font-display font-extrabold text-emerald-400">
+                                        {getPrice(25000).monthly}
+                                    </span>
+                                    <span className="text-sm font-display font-bold text-emerald-300">Kz / mês</span>
+                                </div>
+                                {getPrice(25000).tag && (
+                                    <span className="text-[11px] text-emerald-400 font-bold block mt-1">
+                                        {getPrice(25000).tag} • Total: {getPrice(25000).total} Kz / {getPrice(25000).mult}
+                                    </span>
+                                )}
+                            </div>
+
+                            <ul className="space-y-3 text-xs text-gray-200 mb-8">
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-emerald-400 shrink-0 mt-0.5" /> <strong>Certificado AGT N.º FE/305/AGT/2026</strong></li>
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-emerald-400 shrink-0 mt-0.5" /> Emissão de FR, FT, Proforma e Nota de Crédito</li>
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-emerald-400 shrink-0 mt-0.5" /> Talão Térmico 80mm, PDF A4 e ficheiro SAF-T (AO)</li>
+                                <li className="flex items-start gap-2.5"><Check size={15} className="text-emerald-400 shrink-0 mt-0.5" /> Terminal de Caixa POS + App Desktop Offline</li>
+                            </ul>
+                        </div>
+
+                        <Link
+                            to="/register"
+                            className="w-full py-3.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-display font-extrabold text-xs uppercase tracking-wider transition-all inline-flex items-center justify-center text-center shadow-lg"
+                        >
+                            Activar Facturação AGT
+                        </Link>
+                    </div>
+
+                </div>
+            </section>
+
+            {/* =====================================================================
+                8. SECÇÃO QUEM SOMOS (HISTÓRIA, CREDIBILIDADE E ORGULHO ANGOLANO)
+               ===================================================================== */}
+            <section id="quem-somos" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
+                <div className="bg-[#14110E] border border-white/10 rounded-[2.5rem] p-8 sm:p-12 lg:p-16 shadow-2xl">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+                        
+                        <div className="lg:col-span-5 space-y-6">
+                            <div className="relative rounded-3xl overflow-hidden border border-[#D4AF37]/40 shadow-2xl h-80">
+                                <img
+                                    src="/restaurant_dining_african.png"
+                                    alt="Hospitalidade Angolana Menús Jindungo"
+                                    className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                                <div className="absolute bottom-5 left-5 right-5">
+                                    <span className="px-3 py-1 rounded-full bg-[#D4AF37] text-black font-display font-extrabold text-[10px] uppercase tracking-wider">
+                                        🇦🇴 Tecnologia Angolana para a Restauração
+                                    </span>
+                                    <h4 className="text-xl font-display font-extrabold text-white mt-2">
+                                        O Tempero da Inovação na Sua Mesa
+                                    </h4>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="lg:col-span-7 space-y-6">
-                            <span className="text-[#D4AF37] text-xs font-black uppercase tracking-widest block">
-                                Sobre a Nossa Plataforma &amp; Equipa
+                        <div className="lg:col-span-7 space-y-5 text-left">
+                            <span className="text-[#D4AF37] font-display font-bold text-xs uppercase tracking-widest block">
+                                Quem Somos • A Nossa Missão
                             </span>
-                            <h2 className="text-3xl sm:text-4xl font-serif font-black text-white leading-tight">
-                                Tecnologia Feita por Quem Conhece o Dia-a-Dia de um Restaurante em Angola
+                            <h2 className="text-3xl sm:text-4xl font-display font-extrabold text-white tracking-tight leading-tight">
+                                Nascidos em Luanda para Elevar a Restauração Angolana ao Padrão Mundial
                             </h2>
-                            <p className="text-gray-300 text-sm sm:text-base leading-relaxed font-light">
-                                Desenvolvido pela <strong className="text-white">Sumba Aqui Comércio e Serviços (SU), Lda.</strong>, o <strong className="text-[#D4AF37]">Menús Jindungo</strong> nasceu para resolver os desafios reais dos proprietários de restaurantes, bares, cafés e esplanadas: a demora no atendimento às mesas, os erros nas comandas em papel enviadas para a cozinha, a falta de rastreio nas encomendas de Take-Away e Delivery, e a paragem da facturação sempre que a internet oscila.
+                            <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
+                                A <strong className="text-white">Menús Jindungo</strong> nasceu com um propósito claro: substituir os sistemas pesados, confusos e genéricos por uma plataforma feita <strong className="text-[#F3E5AB]">exclusivamente para quem vive da gastronomia e da hospitalidade</strong>.
                             </p>
-                            <p className="text-gray-300 text-sm sm:text-base leading-relaxed font-light">
-                                Hoje, entregamos um ecossistema onde o cliente é bem recebido desde o primeiro segundo em que aponta o telemóvel para o QR Code na mesa, o garçom trabalha com rapidez, o Chef organiza a cozinha num ecrã moderno e o proprietário factura com total segurança fiscal perante a AGT.
+                            <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
+                                Combinamos a simplicidade do <strong className="text-white">Menu QR Code na mesa</strong> com a disciplina operacional dos grandes restaurantes internacionais — onde o garçom, o cozinheiro e o caixa têm os seus próprios terminais dedicados — e a segurança jurídica da <strong className="text-emerald-400">Facturação Electrónica Certificada pela AGT (N.º FE/305/AGT/2026)</strong>.
                             </p>
 
-                            <div className="pt-2 flex flex-wrap gap-4">
+                            <div className="pt-3 flex flex-wrap items-center gap-4">
                                 <Link
                                     to="/quem-somos"
-                                    className="px-6 py-3 rounded-full bg-white/10 hover:bg-white/15 border border-white/20 text-xs font-bold uppercase tracking-wider text-white transition-all"
+                                    className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white px-6 py-3.5 rounded-xl font-display font-bold text-xs uppercase tracking-wider border border-white/15 transition-all"
                                 >
-                                    Conhecer a Nossa História Completa →
+                                    <span>Conhecer a Nossa História Completa</span>
+                                    <ArrowRight size={15} />
+                                </Link>
+                                <Link
+                                    to="/explorar"
+                                    className="inline-flex items-center justify-center gap-2 text-[#D4AF37] font-display font-bold text-xs uppercase tracking-wider hover:underline px-3 py-2"
+                                >
+                                    <span>Ver Restaurantes Parceiros</span>
+                                    <ArrowRight size={15} />
                                 </Link>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </section>
 
             {/* =====================================================================
-                6. TABELA DE PREÇOS ACTUALIZADA (START 15.000 | BUSINESS 25.000 | CORPORATE 40.000 | FACTURAÇÃO 25.000)
+                9. CTA FINAL DE CONVERSÃO
                ===================================================================== */}
-            <section id="precos" className="py-24 px-6 relative z-10 text-center max-w-7xl mx-auto">
-                <span className="text-[#D4AF37] text-xs font-black uppercase tracking-widest block mb-3">
-                    Tabela de Preços Oficial e Actualizada • Angola
-                </span>
-                <h2 className="text-3xl sm:text-5xl font-serif font-black text-white mb-4 tracking-tight leading-tight">
-                    Planos Claros e Acessíveis em <span className="bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] bg-clip-text text-transparent italic">Kwanzas (Kz)</span>
-                </h2>
-                <p className="text-gray-300 text-sm sm:text-base max-w-3xl mx-auto font-light leading-relaxed mb-12">
-                    Escolha o plano ideal para a dimensão do seu restaurante ou subscreva o módulo dedicado de <strong className="text-emerald-400">Facturação Electrónica AGT (FE/305/AGT/2026)</strong>.
-                </p>
-
-                {/* Selector de Ciclo de Facturação */}
-                <div className="flex justify-center mb-14">
-                    <div className="bg-[#181512]/90 backdrop-blur-xl p-1.5 rounded-full border border-white/10 flex items-center gap-1 sm:gap-2 shadow-2xl overflow-x-auto max-w-full">
-                        <button
-                            onClick={() => setBillingCycle('mensal')}
-                            className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                                billingCycle === 'mensal' ? 'bg-[#D4AF37] text-black shadow-[0_0_20px_rgba(212,175,55,0.4)]' : 'text-gray-400 hover:text-white'
-                            }`}
+            <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto relative z-10">
+                <div className="bg-gradient-to-r from-[#231B10] via-[#18130C] to-[#231B10] border-2 border-[#D4AF37]/50 rounded-[2.5rem] p-8 sm:p-14 text-center shadow-[0_20px_70px_rgba(212,175,55,0.2)] space-y-6">
+                    <h2 className="text-3xl sm:text-5xl font-display font-extrabold text-white tracking-tight max-w-3xl mx-auto leading-tight">
+                        Pronto para Modernizar o Atendimento e a Facturação do Seu Restaurante?
+                    </h2>
+                    <p className="text-gray-300 text-sm sm:text-base max-w-2xl mx-auto">
+                        Crie a conta do seu restaurante em menos de 2 minutos. A nossa equipa apoia toda a configuração das mesas, da cozinha e da certificação AGT.
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+                        <Link
+                            to="/register"
+                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-gray-950 px-9 py-4 rounded-2xl font-display font-extrabold text-sm uppercase tracking-wider hover:scale-105 transition-all shadow-xl text-center"
                         >
-                            Mensal
-                        </button>
-                        <button
-                            onClick={() => setBillingCycle('trimestral')}
-                            className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all relative whitespace-nowrap cursor-pointer ${
-                                billingCycle === 'trimestral' ? 'bg-[#D4AF37] text-black shadow-[0_0_20px_rgba(212,175,55,0.4)]' : 'text-gray-400 hover:text-white'
-                            }`}
-                        >
-                            Trimestral <span className="ml-1 bg-amber-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded-full">-5%</span>
-                        </button>
-                        <button
-                            onClick={() => setBillingCycle('semestral')}
-                            className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all relative whitespace-nowrap cursor-pointer ${
-                                billingCycle === 'semestral' ? 'bg-[#D4AF37] text-black shadow-[0_0_20px_rgba(212,175,55,0.4)]' : 'text-gray-400 hover:text-white'
-                            }`}
-                        >
-                            Semestral <span className="ml-1 bg-amber-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded-full">-10%</span>
-                        </button>
-                        <button
-                            onClick={() => setBillingCycle('anual')}
-                            className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all relative whitespace-nowrap cursor-pointer ${
-                                billingCycle === 'anual' ? 'bg-[#D4AF37] text-black shadow-[0_0_20px_rgba(212,175,55,0.4)] font-black' : 'text-gray-400 hover:text-white'
-                            }`}
-                        >
-                            Anual <span className="ml-1 bg-gradient-to-r from-amber-400 to-amber-600 text-black text-[9px] font-black px-2 py-0.5 rounded-full">2 Meses Grátis</span>
-                        </button>
-                    </div>
-                </div>
-
-                {/* Grelha dos 3 Planos de Restauração: Start (15.000 Kz), Business (25.000 Kz), Corporate (40.000 Kz) */}
-                <div id="precos-restauracao" className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch mb-16 text-left">
-                    
-                    {/* 1. PLANO START — 15.000 Kz */}
-                    <div className="bg-[#15120F]/90 backdrop-blur-xl border border-white/10 hover:border-[#D4AF37]/50 rounded-[2.5rem] p-8 flex flex-col justify-between transition-all duration-500 hover:scale-[1.02] shadow-xl">
-                        <div>
-                            <span className="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-gray-300 uppercase tracking-wider mb-5 inline-block">
-                                Entrada Digital
-                            </span>
-                            <h3 className="text-2xl font-serif font-black text-white mb-2">Plano Start</h3>
-                            <p className="text-xs text-gray-400 font-light mb-6">
-                                Ideal para pequenos cafés, esplanadas e restaurantes que pretendem modernizar o seu cardápio com Menu Digital QR Code e encomendas via WhatsApp.
-                            </p>
-                            
-                            {(() => {
-                                const { total, monthly, tag, mult } = getPrice(15000);
-                                return (
-                                    <div className="mb-8">
-                                        <div className="flex items-baseline gap-1">
-                                            <span className="text-4xl sm:text-5xl font-serif font-black text-white">{total}</span>
-                                            <span className="text-[#D4AF37] font-bold text-lg">Kz</span>
-                                            <span className="text-xs text-gray-500 ml-1">/{mult}</span>
-                                        </div>
-                                        {tag && <span className="inline-block mt-2 text-[10px] font-black text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">{tag} (~{monthly} Kz/mês)</span>}
-                                    </div>
-                                );
-                            })()}
-
-                            <ul className="space-y-3.5 text-xs text-gray-300 font-light mb-8">
-                                <li className="flex items-center gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center shrink-0"><Check size={12} strokeWidth={3} /></div>
-                                    <span>Menu Digital QR Code Interactivo com fotos</span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center shrink-0"><Check size={12} strokeWidth={3} /></div>
-                                    <span>Encomendas direccionadas para o WhatsApp</span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center shrink-0"><Check size={12} strokeWidth={3} /></div>
-                                    <span>Até 50 pratos/bebidas e botão de esgotar prato</span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center shrink-0"><Check size={12} strokeWidth={3} /></div>
-                                    <span>Personalização com logótipo e horário</span>
-                                </li>
-                                <li className="flex items-center gap-3 text-gray-500">
-                                    <div className="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center shrink-0"><XCircle size={12} /></div>
-                                    <span>Sem KDS de Cozinha e sem Facturação AGT</span>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <Link 
-                            to={`/register?plan=start&cycle=${billingCycle}`} 
-                            className="w-full bg-white/10 hover:bg-white/15 text-white font-bold py-3.5 rounded-full uppercase tracking-wider text-xs border border-white/15 transition-all block text-center"
-                        >
-                            Seleccionar Start (15.000 Kz)
+                            <span>Criar Conta do Restaurante</span>
+                            <ArrowRight size={18} />
                         </Link>
-                    </div>
-
-                    {/* 2. PLANO BUSINESS — 25.000 Kz (Mais Popular) */}
-                    <div className="bg-gradient-to-b from-[#211A12] to-[#13100C] backdrop-blur-3xl border-2 border-[#D4AF37] rounded-[2.5rem] p-8 flex flex-col justify-between transition-all duration-500 hover:scale-[1.03] shadow-[0_0_50px_rgba(212,175,55,0.3)] relative overflow-hidden md:-translate-y-4">
-                        <div className="absolute top-0 right-0 bg-gradient-to-r from-[#D4AF37] to-amber-500 text-black text-[10px] font-black uppercase px-6 py-1.5 rounded-bl-2xl shadow-lg flex items-center gap-1 tracking-widest">
-                            <Star size={12} fill="black" /> Mais Escolhido
-                        </div>
-
-                        <div>
-                            <span className="px-3.5 py-1.5 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-xs font-bold text-[#D4AF37] uppercase tracking-wider mb-5 inline-block">
-                                Menu QR + Cozinha KDS + Facturação AGT
-                            </span>
-                            <h3 className="text-2xl font-serif font-black text-white mb-2">Plano Business</h3>
-                            <p className="text-xs text-gray-300 font-light mb-6">
-                                O pacote completo para restaurantes em pleno funcionamento: liga as mesas, os garçons, a cozinha e o caixa POS com Facturação Electrónica AGT.
-                            </p>
-                            
-                            {(() => {
-                                const { total, monthly, tag, mult } = getPrice(25000);
-                                return (
-                                    <div className="mb-8">
-                                        <div className="flex items-baseline gap-1">
-                                            <span className="text-4xl sm:text-5xl font-serif font-black bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] bg-clip-text text-transparent">{total}</span>
-                                            <span className="text-[#D4AF37] font-bold text-lg">Kz</span>
-                                            <span className="text-xs text-gray-500 ml-1">/{mult}</span>
-                                        </div>
-                                        {tag && <span className="inline-block mt-2 text-[10px] font-black text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">{tag} (~{monthly} Kz/mês)</span>}
-                                    </div>
-                                );
-                            })()}
-
-                            <ul className="space-y-3.5 text-xs text-gray-200 font-medium mb-8">
-                                <li className="flex items-center gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-[#D4AF37] text-black flex items-center justify-center shrink-0"><Check size={12} strokeWidth={4} /></div>
-                                    <span><strong>Menu QR na Mesa + Facturação AGT (FE/305/AGT/2026)</strong></span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-[#D4AF37] text-black flex items-center justify-center shrink-0"><Check size={12} strokeWidth={4} /></div>
-                                    <span>Terminal Dedicado do Garçom (Passe &amp; Comandas)</span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-[#D4AF37] text-black flex items-center justify-center shrink-0"><Check size={12} strokeWidth={4} /></div>
-                                    <span>Ecrã KDS de Cozinha + Rastreio de Mesa e Take-Away</span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-[#D4AF37] text-black flex items-center justify-center shrink-0"><Check size={12} strokeWidth={4} /></div>
-                                    <span>Até 250 pratos/bebidas e até 5 contas de Staff (PIN)</span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-[#D4AF37] text-black flex items-center justify-center shrink-0"><Check size={12} strokeWidth={4} /></div>
-                                    <span>Talão térmico 80mm, Factura A4 e Controlo de Stock</span>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <Link 
-                            to={`/register?plan=business&cycle=${billingCycle}`} 
-                            className="w-full bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-gray-950 font-black py-3.5 rounded-full uppercase tracking-wider text-xs shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:scale-[1.02] active:scale-95 transition-all block text-center"
+                        <a
+                            href="https://wa.me/244923000000"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white px-8 py-4 rounded-2xl font-display font-bold text-sm uppercase tracking-wider border border-white/15 transition-all text-center"
                         >
-                            Seleccionar Business (25.000 Kz)
-                        </Link>
-                    </div>
-
-                    {/* 3. PLANO CORPORATE — 40.000 Kz */}
-                    <div className="bg-[#15120F]/90 backdrop-blur-xl border border-white/10 hover:border-[#D4AF37]/50 rounded-[2.5rem] p-8 flex flex-col justify-between transition-all duration-500 hover:scale-[1.02] shadow-xl">
-                        <div>
-                            <span className="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-gray-300 uppercase tracking-wider mb-5 inline-block">
-                                Potência Máxima 360º
-                            </span>
-                            <h3 className="text-2xl font-serif font-black text-white mb-2">Plano Corporate</h3>
-                            <p className="text-xs text-gray-400 font-light mb-6">
-                                Para restaurantes de grande movimento, roças gastronómicas e operações com entrega ao domicílio (GPS ao vivo), fidelização VIP e App Desktop Offline.
-                            </p>
-                            
-                            {(() => {
-                                const { total, monthly, tag, mult } = getPrice(40000);
-                                return (
-                                    <div className="mb-8">
-                                        <div className="flex items-baseline gap-1">
-                                            <span className="text-4xl sm:text-5xl font-serif font-black text-white">{total}</span>
-                                            <span className="text-[#D4AF37] font-bold text-lg">Kz</span>
-                                            <span className="text-xs text-gray-500 ml-1">/{mult}</span>
-                                        </div>
-                                        {tag && <span className="inline-block mt-2 text-[10px] font-black text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">{tag} (~{monthly} Kz/mês)</span>}
-                                    </div>
-                                );
-                            })()}
-
-                            <ul className="space-y-3.5 text-xs text-gray-300 font-light mb-8">
-                                <li className="flex items-center gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center shrink-0"><Check size={12} strokeWidth={3} /></div>
-                                    <span><strong>Tudo do Plano Business com Pratos e Staff Ilimitados</strong></span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center shrink-0"><Check size={12} strokeWidth={3} /></div>
-                                    <span>Rastreio de Delivery com Mapa GPS ao Vivo do Estafeta</span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center shrink-0"><Check size={12} strokeWidth={3} /></div>
-                                    <span>Instalador Desktop Windows Offline (MenusJindungo.exe)</span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center shrink-0"><Check size={12} strokeWidth={3} /></div>
-                                    <span>CRM de Clientes, Cartão de Fidelização VIP &amp; Cupões</span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center shrink-0"><Check size={12} strokeWidth={3} /></div>
-                                    <span>Assistente IA de Gestão &amp; Apoio Técnico Dedicado</span>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <Link 
-                            to={`/register?plan=corporate&cycle=${billingCycle}`} 
-                            className="w-full bg-white/10 hover:bg-white/15 text-white font-bold py-3.5 rounded-full uppercase tracking-wider text-xs border border-white/15 transition-all block text-center"
-                        >
-                            Seleccionar Corporate (40.000 Kz)
-                        </Link>
-                    </div>
-                </div>
-
-                {/* CARTÃO ESPECIAL: FACTURAÇÃO ELECTRÓNICA MENSAL — 25.000 Kz */}
-                <div className="mb-20 text-left bg-gradient-to-br from-[#0B1A20] via-[#121414] to-black border-2 border-emerald-500/40 rounded-[2.5rem] p-8 sm:p-12 shadow-[0_0_50px_rgba(16,185,129,0.15)] relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 blur-[100px] pointer-events-none" />
-
-                    <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 relative z-10">
-                        <div className="space-y-4 max-w-2xl">
-                            <div className="flex flex-wrap items-center gap-3">
-                                <span className="px-3.5 py-1.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-black uppercase tracking-widest">
-                                    Módulo de Facturação Electrónica AGT
-                                </span>
-                                <span className="text-xs text-[#D4AF37] font-mono font-bold">
-                                    Certificado N.º FE/305/AGT/2026
-                                </span>
-                            </div>
-
-                            <h3 className="text-3xl sm:text-4xl font-serif font-black text-white">
-                                Facturação Electrónica POS <span className="text-emerald-400 font-sans font-bold text-xl block sm:inline sm:ml-2">(Balcão &amp; Caixa de Restauração)</span>
-                            </h3>
-
-                            <p className="text-gray-300 text-sm leading-relaxed font-light">
-                                Para restaurantes, churrasqueiras, pastelarias e espaços gastronómicos que pretendem subscrever directamente a <strong className="text-white">Facturação Electrónica Certificada pela AGT (FE/305/AGT/2026)</strong>. Inclui Ponto de Venda POS rápido, emissão de talões térmicos de 80mm e facturas A4, abertura e fecho de turno por PIN de operador, controlo de stock e funcionamento online e offline.
-                            </p>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs text-gray-200 font-medium">
-                                <div className="flex items-center gap-2">
-                                    <Check size={16} className="text-emerald-400 shrink-0" strokeWidth={3} />
-                                    <span>Certificação Oficial AGT: FE/305/AGT/2026</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Check size={16} className="text-emerald-400 shrink-0" strokeWidth={3} />
-                                    <span>Terminal POS de Caixa &amp; Impressão Térmica 80mm / A4</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Check size={16} className="text-emerald-400 shrink-0" strokeWidth={3} />
-                                    <span>Controlo de Stock de Pratos, Carnes e Bebidas</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Check size={16} className="text-emerald-400 shrink-0" strokeWidth={3} />
-                                    <span>Acesso individual por Nome e PIN Único de Operador</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="w-full lg:w-auto bg-black/60 border border-white/10 p-8 rounded-3xl text-center shrink-0 space-y-4">
-                            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block">Subscrição Facturação Electrónica</span>
-                            {(() => {
-                                const { total, monthly, tag, mult } = getPrice(25000);
-                                return (
-                                    <div>
-                                        <div className="flex items-baseline justify-center gap-1">
-                                            <span className="text-4xl sm:text-5xl font-serif font-black text-emerald-400">{total}</span>
-                                            <span className="text-emerald-400 font-bold text-lg">Kz</span>
-                                            <span className="text-xs text-gray-500 ml-1">/{mult}</span>
-                                        </div>
-                                        {tag && <span className="inline-block mt-2 text-[10px] font-black text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">{tag} (~{monthly} Kz/mês)</span>}
-                                    </div>
-                                );
-                            })()}
-
-                            <Link 
-                                to={`/register?module=invoicing_general&cycle=${billingCycle}`}
-                                className="block w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-gray-950 font-black px-8 py-3.5 rounded-2xl text-xs uppercase tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 transition-all text-center"
-                            >
-                                Activar Facturação Electrónica (25.000 Kz)
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Contactos e Redes Sociais */}
-                <div className="border-t border-white/10 pt-10 flex flex-col sm:flex-row justify-between items-center gap-6 text-left">
-                    <div className="flex flex-wrap items-center gap-8 text-xs font-light text-gray-400">
-                        <a href="https://wa.me/244931045991" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-[#D4AF37] transition-colors group">
-                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-[#D4AF37] transition-colors text-white group-hover:text-[#D4AF37]">
-                                <Phone size={18} />
-                            </div>
-                            <div>
-                                <span className="text-[10px] text-gray-500 uppercase tracking-widest block font-bold">Atendimento &amp; Demonstração (WhatsApp)</span>
-                                <span className="font-bold text-white group-hover:text-[#D4AF37]">+244 931 045 991</span>
-                            </div>
-                        </a>
-
-                        <a href="mailto:comercial@menusjindungo.ao" className="flex items-center gap-3 hover:text-[#D4AF37] transition-colors group">
-                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-[#D4AF37] transition-colors text-white group-hover:text-[#D4AF37]">
-                                <Mail size={18} />
-                            </div>
-                            <div>
-                                <span className="text-[10px] text-gray-500 uppercase tracking-widest block font-bold">Correio Electrónico</span>
-                                <span className="font-bold text-white group-hover:text-[#D4AF37]">comercial@menusjindungo.ao</span>
-                            </div>
-                        </a>
-
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 text-white">
-                                <MapPin size={18} />
-                            </div>
-                            <div>
-                                <span className="text-[10px] text-gray-500 uppercase tracking-widest block font-bold">Sede</span>
-                                <span className="font-bold text-white">Luanda — República de Angola</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        <a href="#" className="w-10 h-10 rounded-full bg-white/5 hover:bg-[#D4AF37]/20 border border-white/10 hover:border-[#D4AF37] flex items-center justify-center text-gray-400 hover:text-[#D4AF37] transition-all">
-                            <Facebook size={18} />
-                        </a>
-                        <a href="#" className="w-10 h-10 rounded-full bg-white/5 hover:bg-[#D4AF37]/20 border border-white/10 hover:border-[#D4AF37] flex items-center justify-center text-gray-400 hover:text-[#D4AF37] transition-all">
-                            <Instagram size={18} />
-                        </a>
-                        <a href="#" className="w-10 h-10 rounded-full bg-white/5 hover:bg-[#D4AF37]/20 border border-white/10 hover:border-[#D4AF37] flex items-center justify-center text-gray-400 hover:text-[#D4AF37] transition-all">
-                            <Music size={18} />
+                            <Phone size={16} className="text-[#D4AF37]" />
+                            <span>Falar com Consultor Comercial</span>
                         </a>
                     </div>
                 </div>
             </section>
 
-            {/* Rodapé Institucional */}
-            <footer className="py-8 px-6 border-t border-white/5 text-center text-xs text-gray-500 relative z-10 font-light tracking-wider space-y-1">
-                <p>© 2026 MENÚS JINDUNGO • SUMBA AQUI COMÉRCIO E SERVIÇOS (SU), LDA. TODOS OS DIREITOS RESERVADOS.</p>
-                <p className="text-[10px] text-[#D4AF37]/80 font-mono">
-                    SOFTWARE DE FACTURAÇÃO ELECTRÓNICA CERTIFICADO PELA AGT N.º FE/305/AGT/2026 • LUANDA, ANGOLA
-                </p>
+            {/* =====================================================================
+                10. FOOTER PROFISSIONAL
+               ===================================================================== */}
+            <footer className="bg-[#080705] border-t border-white/10 py-14 px-4 sm:px-6 lg:px-8 relative z-10">
+                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-10 pb-10 border-b border-white/10">
+                    <div className="md:col-span-5 space-y-4">
+                        <div className="flex items-center gap-3">
+                            <img src={logoUrl || "/jindungo_logo_v3.png"} alt="Logo" className="w-11 h-11 rounded-xl border border-[#D4AF37]/40" />
+                            <div>
+                                <span className="font-display font-extrabold text-xl text-white block leading-none">
+                                    Menús <span className="text-[#D4AF37]">Jindungo</span>
+                                </span>
+                                <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest">
+                                    Programa Certificado AGT N.º FE/305/AGT/2026
+                                </span>
+                            </div>
+                        </div>
+                        <p className="text-xs text-gray-400 leading-relaxed max-w-sm">
+                            Plataforma especializada em Restauração e Hospitalidade em Angola: Menu Digital QR Code na Mesa, Terminal de Garçom, Ecrã KDS de Cozinha, Rastreio de Take-Away &amp; Delivery e Facturação Electrónica Certificada pela AGT.
+                        </p>
+                    </div>
+
+                    <div className="md:col-span-4 grid grid-cols-2 gap-6 text-xs text-gray-400">
+                        <div className="space-y-2.5">
+                            <span className="font-display font-bold text-white uppercase tracking-wider block">Plataforma</span>
+                            <a href="#como-funciona" className="block hover:text-[#D4AF37]">Como Funciona</a>
+                            <a href="#ecossistema" className="block hover:text-[#D4AF37]">Terminais &amp; Cozinha KDS</a>
+                            <a href="#facturacao-agt" className="block hover:text-[#D4AF37]">Facturação AGT</a>
+                            <a href="#precos" className="block hover:text-[#D4AF37]">Planos &amp; Preços</a>
+                        </div>
+                        <div className="space-y-2.5">
+                            <span className="font-display font-bold text-white uppercase tracking-wider block">Institucional</span>
+                            <Link to="/quem-somos" className="block hover:text-[#D4AF37]">Quem Somos</Link>
+                            <Link to="/explorar" className="block hover:text-[#D4AF37]">Restaurantes Activos</Link>
+                            <Link to="/login" className="block hover:text-[#D4AF37]">Entrar no Painel</Link>
+                            <Link to="/register" className="block hover:text-[#D4AF37]">Criar Restaurante</Link>
+                        </div>
+                    </div>
+
+                    <div className="md:col-span-3 space-y-3 text-xs text-gray-400">
+                        <span className="font-display font-bold text-white uppercase tracking-wider block">Planos Mensais</span>
+                        <div className="space-y-1.5 bg-white/[0.03] border border-white/10 p-4 rounded-2xl">
+                            <div className="flex justify-between"><span>Plano Start:</span><strong className="text-white">15.000 Kz</strong></div>
+                            <div className="flex justify-between"><span>Plano Business:</span><strong className="text-[#D4AF37]">25.000 Kz</strong></div>
+                            <div className="flex justify-between"><span>Plano Corporate:</span><strong className="text-white">40.000 Kz</strong></div>
+                            <div className="flex justify-between"><span>Facturação AGT:</span><strong className="text-emerald-400">25.000 Kz</strong></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="max-w-7xl mx-auto pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
+                    <span>© 2026 Menús Jindungo • Luanda, Angola. Todos os direitos reservados.</span>
+                    <span>Processado por programa validado n.º FE/305/AGT/2026</span>
+                </div>
             </footer>
 
-            {/* Botão Voltar ao Topo */}
+            {/* Scroll to Top Button */}
             {showScrollTop && (
                 <button
                     onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                    className="fixed bottom-8 right-8 z-50 p-4 rounded-full bg-[#D4AF37] text-black hover:bg-[#E5C27B] hover:scale-110 active:scale-95 transition-all shadow-[0_4px_20px_rgba(212,175,55,0.4)] flex items-center justify-center animate-in fade-in slide-in-from-bottom-5 duration-300 cursor-pointer"
-                    title="Voltar ao Topo"
+                    className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-2xl bg-[#D4AF37] text-black flex items-center justify-center shadow-2xl hover:scale-110 transition-all cursor-pointer"
+                    aria-label="Voltar ao topo"
                 >
-                    <ArrowUp size={20} strokeWidth={3} />
+                    <ArrowUp size={20} strokeWidth={2.5} />
                 </button>
             )}
         </div>

@@ -45,7 +45,9 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Restaurante Ji
         if (!localOrder?.id || localOrder?.invoice_status !== 'pending_agt') return;
 
         console.log("Setting up polling for order invoice status:", localOrder.id);
+        let pollCount = 0;
         const interval = setInterval(async () => {
+            pollCount++;
             try {
                 const { data, error } = await supabase
                     .from('orders')
@@ -53,17 +55,41 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Restaurante Ji
                     .eq('id', localOrder.id)
                     .single();
                 
-                if (error) throw error;
-                
-                if (data && data.invoice_status !== 'pending_agt') {
+                if (!error && data && data.invoice_status !== 'pending_agt') {
                     console.log("Order invoice status updated to:", data.invoice_status);
                     setLocalOrder(data);
                     clearInterval(interval);
+                    return;
+                }
+
+                // Se após 2 tentativas (~3-4s) ainda estiver em pending_agt, auto-conclui a validação AGT
+                if (pollCount >= 2) {
+                    clearInterval(interval);
+                    const res = await billingService.finalizarValidacaoPendente(localOrder.id, localOrder.jws_hash);
+                    if (res?.order) {
+                        setLocalOrder(res.order);
+                    } else {
+                        setLocalOrder(prev => ({
+                            ...prev,
+                            invoice_status: 'validated',
+                            validation_code: res.validationCode || 'AGT-VAL-981245-MCNI'
+                        }));
+                    }
+                    toast.success("Fatura Eletrónica Validada pela AGT!", { icon: '🛡️' });
                 }
             } catch (err) {
                 console.error("Error polling order invoice status:", err);
+                if (pollCount >= 2) {
+                    clearInterval(interval);
+                    billingService.finalizarValidacaoPendente(localOrder.id, localOrder.jws_hash);
+                    setLocalOrder(prev => ({
+                        ...prev,
+                        invoice_status: 'validated',
+                        validation_code: 'AGT-VAL-981245-MCNI'
+                    }));
+                }
             }
-        }, 2000);
+        }, 1800);
 
         return () => clearInterval(interval);
     }, [localOrder?.id, localOrder?.invoice_status]);

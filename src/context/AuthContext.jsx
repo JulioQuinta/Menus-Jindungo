@@ -82,11 +82,31 @@ export const AuthProvider = ({ children }) => {
             } catch {}
         }
 
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
             if (session) {
                 fetchProfile(session);
-            } else if (!offlineSessionRaw) {
-                setLoading(false);
+            } else {
+                if (navigator.onLine) {
+                    const offlineCredsRaw = localStorage.getItem('jindungo_offline_credentials');
+                    if (offlineCredsRaw) {
+                        try {
+                            const creds = JSON.parse(offlineCredsRaw);
+                            if (creds?.email && creds?.password) {
+                                const { data: reAuth, error: reErr } = await supabase.auth.signInWithPassword({
+                                    email: creds.email,
+                                    password: creds.password
+                                });
+                                if (!reErr && reAuth?.session) {
+                                    fetchProfile(reAuth.session);
+                                    return;
+                                }
+                            }
+                        } catch {}
+                    }
+                }
+                if (!offlineSessionRaw) {
+                    setLoading(false);
+                }
             }
         }).catch(() => {
             setLoading(false);

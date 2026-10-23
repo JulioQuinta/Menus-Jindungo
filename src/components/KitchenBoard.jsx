@@ -632,6 +632,28 @@ const OrderCard = React.memo(({ order, onStatusChange, onPrint, enablePrint, sta
                         </div>
                     </div>
                 )}
+
+                {(status === 'delivered' || status === 'completed' || status === 'concluido' || status === 'entregue') && (
+                    <div className="flex items-center gap-2 w-full">
+                        {enablePrint && (
+                            <button
+                                onClick={() => onPrint(order)}
+                                className="flex-1 bg-gradient-to-r from-[#D4AF37]/25 via-[#D4AF37]/15 to-amber-500/20 hover:from-[#D4AF37]/40 hover:to-amber-500/35 text-[#D4AF37] border border-[#D4AF37]/50 hover:border-[#D4AF37] py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-wider flex justify-center items-center gap-2 transition-all shadow-[0_0_25px_rgba(212,175,55,0.2)] active:scale-95 cursor-pointer"
+                                title="Imprimir Talão Fiscal / Ver Fatura"
+                            >
+                                <Printer size={16} className="text-[#D4AF37]" />
+                                <span>Imprimir / Ver Fatura</span>
+                            </button>
+                        )}
+                        <button
+                            onClick={() => onStatusChange(order.id, 'ready', 'Reaberto para cozinha')}
+                            className="w-12 h-12 bg-[#1A1A1C] hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer shrink-0"
+                            title="Reabrir pedido se necessário"
+                        >
+                            <RefreshCw size={15} />
+                        </button>
+                    </div>
+                )}
             </div>
 
             {order.customer_phone && (status === 'ready' || status === 'pronto' || status === 'out_for_delivery' || status === 'arrived') && (
@@ -870,8 +892,12 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
         const toastId = toast.loading('A atualizar pedido...');
 
         try {
-            await orderService.updateOrderStatus(id, status, reason, extraData);
-            toast.success('Pedido atualizado!', { id: toastId });
+            const res = await orderService.updateOrderStatus(id, status, reason, extraData);
+            if (res?.isOfflineLocal) {
+                toast.success('Pedido atualizado no terminal local!', { id: toastId });
+            } else {
+                toast.success('Pedido atualizado!', { id: toastId });
+            }
         } catch (error) {
             console.error('Falha ao atualizar pedido:', error);
             setOrders(previousOrders);

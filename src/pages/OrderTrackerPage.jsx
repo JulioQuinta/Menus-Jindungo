@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import ReceiptModal from '../components/ReceiptModal';
 
 // Golden Metallic Palette
 const PRIMARY_GOLD = '#D4AF37';
@@ -90,6 +91,7 @@ const OrderTrackerPage = () => {
     const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [showReceiptModal, setShowReceiptModal] = useState(false);
     const previousStatusRef = useRef(null);
 
     const handleBackToMenu = () => {
@@ -906,12 +908,20 @@ const OrderTrackerPage = () => {
                             </div>
                         )}
 
-                        <div className="pt-4 border-t border-white/10 flex justify-between items-center">
-                            <span className="text-xs font-black uppercase tracking-widest text-gray-500">Total Pago</span>
-                            <span className="text-2xl font-serif font-black text-[#D4AF37]">
-                                {new Intl.NumberFormat('pt-AO').format(order?.total || 0)}
-                                <span className="text-xs font-bold text-gray-400 ml-1">Kz</span>
-                            </span>
+                        <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
+                            <div>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 block">Total do Pedido</span>
+                                <span className="text-2xl font-serif font-black text-[#D4AF37]">
+                                    {new Intl.NumberFormat('pt-AO').format(order?.total || 0)}
+                                    <span className="text-xs font-bold text-gray-400 ml-1">Kz</span>
+                                </span>
+                            </div>
+                            <button
+                                onClick={() => setShowReceiptModal(true)}
+                                className="w-full sm:w-auto bg-[#D4AF37]/15 hover:bg-[#D4AF37]/25 text-[#D4AF37] border border-[#D4AF37]/40 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shadow-sm"
+                            >
+                                <FileText size={14} /> Ver Fatura Fiscal (AGT)
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -995,6 +1005,15 @@ const OrderTrackerPage = () => {
                     Powered by Menús Jindungos 🌶️ • Angola 🇦🇴
                 </p>
             </div>
+
+            {showReceiptModal && (
+                <ReceiptModal
+                    isOpen={showReceiptModal}
+                    onClose={() => setShowReceiptModal(false)}
+                    order={order}
+                    restaurantName={order?.restaurant?.name || 'Comidas da Terra'}
+                />
+            )}
         </div>
     );
 };

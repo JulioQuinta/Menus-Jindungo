@@ -358,9 +358,9 @@ const MenuItemList = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
                     alt={item.name}
                     className="w-full h-full object-cover"
                 />
-                {item.isHighlight && (
+                {(item.badge || item.isHighlight) && (
                     <span className="absolute top-2 left-2 bg-[#D4AF37] text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg z-10 tracking-widest uppercase border border-white/20">
-                        ★ {t('highlight')}
+                        {item.badge ? (item.badge === 'Prato do Dia' ? '⭐ PRATO DO DIA' : item.badge) : `★ ${t('highlight')}`}
                     </span>
                 )}
                 {quantityInCart > 0 && (
@@ -443,9 +443,9 @@ const MenuItemGrid = ({ item, primaryColor, isEditing, darkMode, selectedLanguag
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-transparent opacity-80"></div>
                 
-                {item.isHighlight && (
+                {(item.badge || item.isHighlight) && (
                     <span className="absolute top-2.5 left-2.5 bg-[#E5C27B] text-gray-950 text-[8px] sm:text-[9px] font-black px-2.5 py-0.5 rounded-full shadow-lg z-10 tracking-widest uppercase border border-amber-300/40">
-                        ★ {t('highlight')}
+                        {item.badge ? (item.badge === 'Prato do Dia' ? '⭐ PRATO DO DIA' : item.badge) : `★ ${t('highlight')}`}
                     </span>
                 )}
                 

@@ -5,6 +5,7 @@ import { GridLayout, ListLayout, MinimalLayout, GridLayoutSkeleton, ListLayoutSk
 import { getContrastColor, darkenColor } from '../utils/colorUtils';
 import { Search, X, Utensils, ArrowLeft } from 'lucide-react';
 import { getTranslation, UI_TRANSLATIONS, translateFoodText } from '../utils/i18n';
+import DailySpecialShowcase from './DailySpecialShowcase';
 
 const FlagSelector = ({ selected, onSelect }) => {
     const [isOpen, ReactSetIsOpen] = React.useState(false);
@@ -376,6 +377,19 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
                     </div>
                 </div>
             </div>
+
+            {/* Prato do Dia - Hero Showcase */}
+            {!isLoading && categories?.length > 0 && !searchTerm && (
+                <div className="pt-8">
+                    <DailySpecialShowcase
+                        categories={categories}
+                        selectedLanguage={selectedLanguage}
+                        primaryColor={effectivePrimaryColor}
+                        restaurantClosed={restaurantClosed}
+                        onItemAdded={onItemAdded}
+                    />
+                </div>
+            )}
 
             {/* Sticky Navigation Carousel */}
             {!isLoading && categories.length > 0 && (

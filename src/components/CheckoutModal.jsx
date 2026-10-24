@@ -568,6 +568,11 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                     // Dispatch event so ActiveOrderTracker catches it immediately
                     window.dispatchEvent(new Event('jindungo_new_order'));
                 }
+
+                // Disparo de evento ultrarrápido para KDS e som com zero latência
+                if (typeof window !== 'undefined' && newOrder) {
+                    window.dispatchEvent(new CustomEvent('jindungo_order_created', { detail: newOrder }));
+                }
             }
 
             // 2. Track Analytics

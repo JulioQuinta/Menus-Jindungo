@@ -815,10 +815,16 @@ const KitchenBoard = ({ restaurantId, config, restaurantName }) => {
     };
 
     useRealtimeOrders(restaurantId, (newOrder) => {
+        // Atualização instantânea da UI (0ms)
+        setOrders(prev => {
+            if (prev.find(o => o.id === newOrder.id)) return prev;
+            return [newOrder, ...prev];
+        });
+
         if (autoPrint && isBluetoothReady) {
             setTimeout(() => {
                 handlePrintOrder(newOrder);
-            }, 1000);
+            }, 500);
         }
     }, isAudioEnabled);
 

@@ -85,7 +85,11 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
     };
 
     const sensors = useSensors(
-        useSensor(MouseSensor),
+        useSensor(MouseSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
         useSensor(TouchSensor, {
             activationConstraint: {
                 delay: 250,
@@ -698,7 +702,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
                                 {filteredCategories.map((cat) => {
                                     const items = cat.items || [];
                                     return (
-                                        <SortableItem key={cat.id} id={cat.id}>
+                                        <SortableItem key={cat.id} id={cat.id} useHandle={true}>
                                             {(context) => (
                                                 <div id={`cat-section-${cat.id}`} className="bg-[#141414]/90 backdrop-blur-xl border border-[#262626] rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl hover:border-[#F5C542]/30 transition-all">
                                                     
@@ -727,17 +731,17 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
                                                     <SortableContext items={items.map(i => i.id)} strategy={rectSortingStrategy}>
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                                                             {items.map((item) => (
-                                                                <SortableItem key={item.id} id={item.id}>
+                                                                <SortableItem key={item.id} id={item.id} useHandle={true}>
                                                                     {(itemContext) => (
                                                                         <div className={`group relative bg-[#1A1A1A] border rounded-2xl p-4 flex gap-4 items-center transition-all duration-300 hover:scale-[1.02] shadow-md ${
                                                                             item.available !== false ? 'border-[#2A2A2A] hover:border-[#F5C542]/50' : 'border-red-900/30 opacity-60'
                                                                         }`}>
-                                                                            <div {...itemContext.attributes} {...itemContext.listeners} className="cursor-move text-gray-600 hover:text-[#F5C542] transition-colors p-1">
+                                                                            <div {...itemContext.attributes} {...itemContext.listeners} className="cursor-move text-gray-600 hover:text-[#F5C542] transition-colors p-1" title="Arraste para reordenar">
                                                                                 <GripVertical size={16} />
                                                                             </div>
                                                                             
                                                                             <div 
-                                                                                onClick={() => setEditingItem({ ...item })}
+                                                                                onClick={(e) => { e.stopPropagation(); setEditingItem({ ...item, category_id: item.category_id || cat.id }); }}
                                                                                 className="w-16 h-16 rounded-2xl overflow-hidden bg-[#111] border border-white/10 shrink-0 relative shadow-inner cursor-pointer"
                                                                                 title="Clique para editar prato e foto"
                                                                             >
@@ -756,14 +760,15 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
                                                                             <div className="flex-1 min-w-0 space-y-1">
                                                                                 <div className="flex items-start justify-between gap-1">
                                                                                     <h4 
-                                                                                        onClick={() => setEditingItem({ ...item })}
+                                                                                        onClick={(e) => { e.stopPropagation(); setEditingItem({ ...item, category_id: item.category_id || cat.id }); }}
                                                                                         className="font-bold text-sm text-white truncate group-hover:text-[#F5C542] transition-colors cursor-pointer"
                                                                                         title="Clique para editar este prato"
                                                                                     >
                                                                                         {item.name}
                                                                                     </h4>
                                                                                     <button 
-                                                                                        onClick={() => setEditingItem({ ...item })} 
+                                                                                        type="button"
+                                                                                        onClick={(e) => { e.stopPropagation(); setEditingItem({ ...item, category_id: item.category_id || cat.id }); }} 
                                                                                         className="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-[#F5C542] text-gray-400 hover:text-black transition-all flex items-center gap-1 cursor-pointer text-[10px] font-bold shrink-0"
                                                                                         title="Editar Prato / Mudar Preço"
                                                                                     >
@@ -774,7 +779,8 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
 
                                                                                 <div className="flex items-center justify-between pt-1">
                                                                                     <button
-                                                                                        onClick={() => setEditingItem({ ...item })}
+                                                                                        type="button"
+                                                                                        onClick={(e) => { e.stopPropagation(); setEditingItem({ ...item, category_id: item.category_id || cat.id }); }}
                                                                                         className="text-[#F5C542] font-black text-xs font-mono hover:underline cursor-pointer bg-[#F5C542]/10 hover:bg-[#F5C542]/20 px-2 py-0.5 rounded-md border border-[#F5C542]/30 flex items-center gap-1"
                                                                                         title="Clique para alterar o preço"
                                                                                     >
@@ -790,13 +796,16 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
 
                                                                                 <div className="flex items-center justify-between pt-2 border-t border-[#222] gap-1.5">
                                                                                     <button 
-                                                                                        onClick={async () => {
+                                                                                        type="button"
+                                                                                        onClick={async (e) => {
+                                                                                            e.stopPropagation();
                                                                                             const newVal = !(item.available !== false);
                                                                                             setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, items: c.items.map(i => i.id === item.id ? { ...i, available: newVal } : i) } : c));
                                                                                             await supabase.from('menu_items').update({ available: newVal }).eq('id', item.id);
                                                                                             toast.success(newVal ? terms.activatedToast : terms.deactivatedToast);
+                                                                                            if (onUpdate) onUpdate();
                                                                                         }}
-                                                                                        className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${
+                                                                                        className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
                                                                                             item.available !== false 
                                                                                                 ? 'bg-green-500/20 text-green-400 border border-green-500/40 shadow-[0_0_10px_rgba(16,185,129,0.2)]' 
                                                                                                 : 'bg-gray-800 text-gray-400 border border-gray-700'
@@ -809,7 +818,8 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
                                                                                     {/* 1-Click Prato do Dia Toggle */}
                                                                                     <button
                                                                                         type="button"
-                                                                                        onClick={async () => {
+                                                                                        onClick={async (e) => {
+                                                                                            e.stopPropagation();
                                                                                             const isCurrentlySpecial = item.badge === 'Prato do Dia' || item.is_highlight;
                                                                                             const newBadge = isCurrentlySpecial ? null : 'Prato do Dia';
                                                                                             const newHighlight = !isCurrentlySpecial;
@@ -832,7 +842,12 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
                                                                                         <span className="text-[8px] font-black">{(item.badge === 'Prato do Dia' || item.is_highlight) ? 'PRATO DO DIA' : 'DIA'}</span>
                                                                                     </button>
 
-                                                                                    <button onClick={() => handleDelete(item.id)} className="text-gray-600 hover:text-red-500 p-1 transition-colors" title={`Apagar ${terms.itemSingle}`}>
+                                                                                    <button 
+                                                                                        type="button"
+                                                                                        onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} 
+                                                                                        className="text-gray-600 hover:text-red-500 p-1 transition-colors cursor-pointer" 
+                                                                                        title={`Apagar ${terms.itemSingle}`}
+                                                                                    >
                                                                                         <X size={14} />
                                                                                     </button>
                                                                                 </div>

@@ -298,6 +298,25 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
                     </button>
                 </div>
                 <div className="flex flex-col gap-6">
+                    {/* SELEÇÃO DE CATEGORIA */}
+                    <div className="bg-[#111] p-4 rounded-2xl border border-[#222] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div>
+                            <span className="text-xs font-black text-gray-400 uppercase tracking-widest block">Categoria do Prato</span>
+                            <span className="text-[11px] text-gray-500">Selecione onde este item será apresentado na ementa</span>
+                        </div>
+                        <select
+                            value={editingItem.category_id || (categories[0]?.id || '')}
+                            onChange={e => setEditingItem({ ...editingItem, category_id: e.target.value })}
+                            className="bg-[#1A1A1A] border border-[#333] rounded-xl px-4 py-2.5 text-xs font-bold text-[#F5C542] outline-none focus:border-[#F5C542] cursor-pointer min-w-[200px]"
+                        >
+                            {categories.map(c => (
+                                <option key={c.id} value={c.id} className="bg-[#141416] text-white">
+                                    {c.label || c.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
                     <div className="flex items-center gap-2 bg-[#111] p-1.5 rounded-2xl border border-[#222] w-fit">
                         {[
                             { id: 'pt', label: 'Português', flag: '🇵🇹' },
@@ -517,6 +536,14 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
                     </div>
 
                     <button 
+                        onClick={() => setEditingItem({ ...DEFAULT_ITEM, category_id: categories[0]?.id || '' })} 
+                        className="px-5 py-3 bg-gradient-to-r from-emerald-500 via-emerald-400 to-green-600 text-black rounded-2xl border border-emerald-400 hover:brightness-110 transition-all font-black uppercase tracking-widest text-[10px] shadow-[0_0_20px_rgba(16,185,129,0.35)] flex items-center gap-2 cursor-pointer active:scale-95"
+                    >
+                        <Plus size={15} strokeWidth={3} />
+                        <span>+ Adicionar Prato</span>
+                    </button>
+
+                    <button 
                         onClick={handleResetStock}
                         className="px-5 py-3 bg-[#F5C542]/10 text-[#F5C542] rounded-2xl border border-[#F5C542]/40 flex items-center gap-2 hover:bg-[#F5C542] hover:text-black transition-all font-black uppercase tracking-widest text-[10px] shadow-[0_0_15px_rgba(245,197,66,0.2)]"
                         title="Repor Stock Global"
@@ -709,7 +736,11 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
                                                                                 <GripVertical size={16} />
                                                                             </div>
                                                                             
-                                                                            <div className="w-16 h-16 rounded-2xl overflow-hidden bg-[#111] border border-white/10 shrink-0 relative shadow-inner">
+                                                                            <div 
+                                                                                onClick={() => setEditingItem({ ...item })}
+                                                                                className="w-16 h-16 rounded-2xl overflow-hidden bg-[#111] border border-white/10 shrink-0 relative shadow-inner cursor-pointer"
+                                                                                title="Clique para editar prato e foto"
+                                                                            >
                                                                                 <img 
                                                                                     src={item.img_url || getSectorCategoryIllustration(cat.label, activeSectorId)} 
                                                                                     alt={item.name} 
@@ -724,16 +755,32 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
 
                                                                             <div className="flex-1 min-w-0 space-y-1">
                                                                                 <div className="flex items-start justify-between gap-1">
-                                                                                    <h4 className="font-bold text-sm text-white truncate group-hover:text-[#F5C542] transition-colors">
+                                                                                    <h4 
+                                                                                        onClick={() => setEditingItem({ ...item })}
+                                                                                        className="font-bold text-sm text-white truncate group-hover:text-[#F5C542] transition-colors cursor-pointer"
+                                                                                        title="Clique para editar este prato"
+                                                                                    >
                                                                                         {item.name}
                                                                                     </h4>
-                                                                                    <button onClick={() => setEditingItem({ ...item })} className="text-gray-500 hover:text-[#F5C542] p-1 transition-colors">
-                                                                                        <Pencil size={13} />
+                                                                                    <button 
+                                                                                        onClick={() => setEditingItem({ ...item })} 
+                                                                                        className="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-[#F5C542] text-gray-400 hover:text-black transition-all flex items-center gap-1 cursor-pointer text-[10px] font-bold shrink-0"
+                                                                                        title="Editar Prato / Mudar Preço"
+                                                                                    >
+                                                                                        <Pencil size={11} />
+                                                                                        <span>Editar</span>
                                                                                     </button>
                                                                                 </div>
 
                                                                                 <div className="flex items-center justify-between pt-1">
-                                                                                    <p className="text-[#F5C542] font-black text-xs font-mono">{item.price}</p>
+                                                                                    <button
+                                                                                        onClick={() => setEditingItem({ ...item })}
+                                                                                        className="text-[#F5C542] font-black text-xs font-mono hover:underline cursor-pointer bg-[#F5C542]/10 hover:bg-[#F5C542]/20 px-2 py-0.5 rounded-md border border-[#F5C542]/30 flex items-center gap-1"
+                                                                                        title="Clique para alterar o preço"
+                                                                                    >
+                                                                                        <span>{item.price}</span>
+                                                                                        <span className="text-[9px] text-[#F5C542]/70 font-sans">✏️</span>
+                                                                                    </button>
                                                                                     {item.track_stock && (
                                                                                         <span className="text-[9px] font-mono font-bold text-gray-300 bg-[#111] px-2 py-0.5 rounded-md border border-[#2E2E2E]">
                                                                                             {item.stock_quantity} UN

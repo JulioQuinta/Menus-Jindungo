@@ -23,7 +23,8 @@ import {
     verticalListSortingStrategy,
     rectSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Search, X, GripVertical, RotateCcw, Sparkles, Plus, Pencil, Check, AlertCircle, Eye, EyeOff, Pill, Package, Activity, ShieldCheck, Filter } from 'lucide-react';
+import { Search, X, GripVertical, RotateCcw, Sparkles, Plus, Pencil, Check, AlertCircle, Eye, EyeOff, Pill, Package, Activity, ShieldCheck, Filter, Calendar } from 'lucide-react';
+import WeeklySpecialsModal from './WeeklySpecialsModal';
 
 const DEFAULT_ITEM = {
     name: '',
@@ -45,6 +46,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
     const [editingItem, setEditingItem] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
     const [showCategoryManager, setShowCategoryManager] = useState(false);
+    const [showWeeklyModal, setShowWeeklyModal] = useState(false);
     const [adminSearch, setAdminSearch] = useState('');
     const [activeLang, setActiveLang] = useState('pt');
     const [activeCategoryFilter, setActiveCategoryFilter] = useState('all');
@@ -524,6 +526,14 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
                     </button>
 
                     <button 
+                        onClick={() => setShowWeeklyModal(true)} 
+                        className="px-5 py-3 bg-gradient-to-r from-[#D4AF37] via-amber-400 to-[#D4AF37] text-black rounded-2xl border border-[#D4AF37] hover:brightness-110 transition-all font-black uppercase tracking-widest text-[10px] shadow-[0_0_20px_rgba(212,175,55,0.35)] flex items-center gap-2 cursor-pointer active:scale-95"
+                    >
+                        <Calendar size={14} strokeWidth={2.5} />
+                        <span>Ementa Semanal (Pratos do Dia)</span>
+                    </button>
+
+                    <button 
                         onClick={() => setShowCategoryManager(true)} 
                         className="px-6 py-3 bg-[#1C1C1C] text-gray-200 rounded-2xl border border-[#2E2E2E] hover:border-[#F5C542]/50 hover:text-white transition-all font-black uppercase tracking-widest text-[10px] shadow-md"
                     >
@@ -777,6 +787,19 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
             </div>
 
             {showCategoryManager && <CategoryManager categories={categories} restaurantId={restaurantId} onUpdate={onUpdate} onClose={() => setShowCategoryManager(false)} />}
+            
+            {showWeeklyModal && (
+                <WeeklySpecialsModal
+                    isOpen={showWeeklyModal}
+                    onClose={() => setShowWeeklyModal(false)}
+                    restaurantId={restaurantId}
+                    categories={categories}
+                    initialSchedule={restaurant?.business_info?.weekly_specials || {}}
+                    onSaved={() => {
+                        if (onUpdate) onUpdate();
+                    }}
+                />
+            )}
         </div>
         </ComponentErrorBoundary>
     );

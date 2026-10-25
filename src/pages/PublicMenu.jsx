@@ -681,6 +681,7 @@ const PublicMenuInner = ({
                         isEditing={false} 
                         isLoading={loading} 
                         restaurantId={restaurant?.id}
+                        businessInfo={restaurant?.business_info}
                         features={features}
                         onItemAdded={(item) => {
                             handleItemAdded(item);

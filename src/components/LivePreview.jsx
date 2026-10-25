@@ -212,7 +212,7 @@ const CategorySection = ({ cat, Layout, commonProps, onItemAdded, selectedLangua
     );
 };
 
-const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, restaurantId, features = {}, onItemAdded, selectedLanguage = 'PT', onLanguageChange, coupons = [], restaurantClosed = false }) => {
+const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, restaurantId, businessInfo, features = {}, onItemAdded, selectedLanguage = 'PT', onLanguageChange, coupons = [], restaurantClosed = false }) => {
     const { slug } = useParams();
     const navigate = useNavigate();
     const isDemo = (slug === 'demo-restaurant' || window.location.pathname.includes('demo-restaurant')) && !window.location.pathname.includes('/admin/');
@@ -383,6 +383,7 @@ const LivePreview = ({ config, categories, isEditing, isLoading, isFullPage, res
                 <div className="pt-8">
                     <DailySpecialShowcase
                         categories={categories}
+                        businessInfo={businessInfo || config?.businessInfo}
                         selectedLanguage={selectedLanguage}
                         primaryColor={effectivePrimaryColor}
                         restaurantClosed={restaurantClosed}

@@ -542,6 +542,36 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
                 </div>
             </div>
 
+            {/* DEDICATED BANNER: EMENTA SEMANAL & PRATOS DO DIA */}
+            <div className="w-full bg-gradient-to-r from-[#1E1906] via-[#141416] to-[#0E0E10] border-2 border-[#D4AF37]/50 hover:border-[#D4AF37] rounded-3xl p-5 sm:p-6 shadow-[0_15px_40px_rgba(0,0,0,0.85)] flex flex-col md:flex-row items-center justify-between gap-5 transition-all">
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#D4AF37] via-amber-400 to-amber-600 text-black flex items-center justify-center font-bold text-2xl shadow-[0_0_25px_rgba(212,175,55,0.45)] shrink-0">
+                        📅
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#D4AF37] bg-[#D4AF37]/15 px-2.5 py-0.5 rounded-full border border-[#D4AF37]/40 flex items-center gap-1">
+                                <Sparkles size={11} /> Automação Semanal
+                            </span>
+                            <span className="text-xs text-gray-400 font-medium hidden sm:inline">Segunda a Domingo</span>
+                        </div>
+                        <h3 className="text-lg sm:text-xl font-serif font-black text-white mt-1">
+                            Ementa Semanal dos Pratos do Dia
+                        </h3>
+                        <p className="text-xs text-gray-300 font-light max-w-xl">
+                            Defina os pratos de cada dia da semana. O sistema altera o menu digital automaticamente todos os dias à meia-noite sem intervenção manual!
+                        </p>
+                    </div>
+                </div>
+                <button
+                    onClick={() => setShowWeeklyModal(true)}
+                    className="w-full md:w-auto px-6 py-4 bg-gradient-to-r from-[#D4AF37] via-amber-400 to-[#D4AF37] text-black rounded-2xl font-black uppercase tracking-wider text-xs shadow-[0_0_25px_rgba(212,175,55,0.45)] hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                >
+                    <Calendar size={16} strokeWidth={2.5} />
+                    <span>Configurar Ementa Semanal ✨</span>
+                </button>
+            </div>
+
             {/* QUICK CATEGORY FILTER BAR */}
             <div className="w-full flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
                 <button
@@ -742,6 +772,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
                                                                                             })));
                                                                                             await supabase.from('menu_items').update({ badge: newBadge, is_highlight: newHighlight }).eq('id', item.id);
                                                                                             toast.success(newHighlight ? `⭐ ${item.name} definido como Prato do Dia!` : `${item.name} removido do Prato do Dia.`);
+                                                                                            if (onUpdate) onUpdate();
                                                                                         }}
                                                                                         className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all border flex items-center gap-1 cursor-pointer ${
                                                                                             (item.badge === 'Prato do Dia' || item.is_highlight)

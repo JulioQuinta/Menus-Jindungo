@@ -66,31 +66,14 @@ const CustomizationBottomSheet = ({ item, isOpen, onClose, primaryColor, darkMod
     const groups = React.useMemo(() => {
         if (!item) return [];
         let generated = [...existingGroups];
-        if (generated.length === 0) {
-            if (hasVariants) {
-                generated.push({
-                    id: 'var',
-                    title: getTranslation(selectedLanguage, 'chooseOption'),
-                    required: true,
-                    min: 1,
-                    max: 1,
-                    options: item.translations.variants.map(v => ({ name: v, price: 0 }))
-                });
-            }
+        if (generated.length === 0 && hasVariants) {
             generated.push({
-                id: 'extras',
-                title: getTranslation(selectedLanguage, 'extras'),
-                subtitle: getTranslation(selectedLanguage, 'customizeOrder'),
-                required: false,
-                min: 0,
-                max: 3,
-                options: [
-                    { name: 'Molho de Jindungo Extra', price: 500 },
-                    { name: 'Batata Frita Rústica', price: 1500 },
-                    { name: 'Arroz Branco Soltinho', price: 1200 },
-                    { name: 'Bacon Crocante', price: 800 },
-                    { name: 'Ovo Estrelado', price: 500 },
-                ]
+                id: 'var',
+                title: getTranslation(selectedLanguage, 'chooseOption'),
+                required: true,
+                min: 1,
+                max: 1,
+                options: item.translations.variants.map(v => ({ name: v, price: 0 }))
             });
         }
         return generated;

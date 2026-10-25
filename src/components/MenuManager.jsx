@@ -25,6 +25,7 @@ import {
 } from '@dnd-kit/sortable';
 import { Search, X, GripVertical, RotateCcw, Sparkles, Plus, Pencil, Check, AlertCircle, Eye, EyeOff, Pill, Package, Activity, ShieldCheck, Filter, Calendar } from 'lucide-react';
 import WeeklySpecialsModal from './WeeklySpecialsModal';
+import ItemModifiersEditor from './ItemModifiersEditor';
 
 const DEFAULT_ITEM = {
     name: '',
@@ -38,7 +39,7 @@ const DEFAULT_ITEM = {
     track_stock: true,
     stock_quantity: 50,
     upsell_ids: [],
-    translations: { pt: {}, en: {}, fr: {} }
+    translations: { pt: {}, en: {}, fr: {}, customization_groups: [] }
 };
 
 const MenuManager = ({ categories: initialCategories = [], restaurantId, restaurant, sectorId = 'restaurant', onUpdate }) => {
@@ -203,6 +204,7 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
                 upsell_ids: editingItem.upsell_ids || [],
                 translations: {
                     ...(editingItem.translations || {}),
+                    customization_groups: editingItem.translations?.customization_groups || [],
                     pt: { 
                         ...(editingItem.translations?.pt || {}),
                         name: editingItem.name,
@@ -461,6 +463,18 @@ const MenuManager = ({ categories: initialCategories = [], restaurantId, restaur
                                 })}
                             </div>
                         </div>
+
+                        {/* MODIFICADORES & ACOMPANHAMENTOS */}
+                        <ItemModifiersEditor
+                            groups={editingItem.translations?.customization_groups || []}
+                            onChange={(newGroups) => setEditingItem({
+                                ...editingItem,
+                                translations: {
+                                    ...(editingItem.translations || {}),
+                                    customization_groups: newGroups
+                                }
+                            })}
+                        />
                     </div>
 
                     <div>

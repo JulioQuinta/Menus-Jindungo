@@ -10,7 +10,7 @@ import { queueOfflineOrder } from '../utils/offlineSync';
 import OrderStatusView from './OrderStatusView';
 import CheckoutUpsell from './CheckoutUpsell';
 import { couponService } from '../services/couponService';
-import { Ticket, X, CheckCircle2, Award, Star, UtensilsCrossed, Bike, User, Smartphone, MapPin, Banknote, CreditCard, ChevronRight, Clock, ShoppingBag } from 'lucide-react';
+import { Ticket, X, CheckCircle2, Award, Star, UtensilsCrossed, Bike, User, Smartphone, MapPin, Banknote, CreditCard, ChevronRight, Clock, ShoppingBag, Users } from 'lucide-react';
 import { loyaltyService } from '../services/loyaltyService';
 import MapPicker from './MapPicker';
 import { getTranslation } from '../utils/i18n';
@@ -31,6 +31,8 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
         }
     }, [step]);
     const [orderType, setOrderType] = useState('dine-in'); // 'dine-in' | 'delivery'
+    const [isSplitting, setIsSplitting] = useState(false);
+    const [splitCount, setSplitCount] = useState(2);
     const [selectedZone, setSelectedZone] = useState(null);
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
@@ -337,6 +339,8 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
     }
 
     const total = Math.max(0, subtotal + deliveryFee - discount);
+    const splitAmount = Math.max(1, Math.round(total / (splitCount || 2)));
+    const formattedSplitAmount = new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(splitAmount).replace('AOA', 'Kz');
 
     const handleApplyCoupon = async () => {
         if (!couponCode) return;
@@ -391,7 +395,8 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
         
         let baseTableOrAddress = '';
         if (orderType === 'dine-in') {
-            baseTableOrAddress = `Mesa: ${tableNumber}`;
+            const splitNote = (orderType === 'dine-in' && isSplitting) ? ` | 👥 Conta Dividida (${splitCount}x ${formattedSplitAmount})` : '';
+            baseTableOrAddress = `Mesa: ${tableNumber}${splitNote}`;
         } else if (orderType === 'takeaway') {
             baseTableOrAddress = `Takeaway / Recolha (Pronto em 30-40 min)`;
         } else {
@@ -428,6 +433,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
             customer_phone: customerPhone,
             payment_method: paymentMethod,
             table_number: `${baseTableOrAddress} | Pgto: ${paymentInfo}`,
+            split_bill: (orderType === 'dine-in' && isSplitting) ? { count: splitCount, per_person: splitAmount, per_person_formatted: formattedSplitAmount } : null,
             coupon_id: appliedCoupon?.id || null,
             coupon_code: appliedCoupon?.code || null,
             coupon_discount: discount,
@@ -595,6 +601,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                         changeFor,
                         tableNumber,
                         restaurantSlug: restaurantSlug,
+                        splitBill: (orderType === 'dine-in' && isSplitting) ? { count: splitCount, per_person_formatted: formattedSplitAmount } : null,
                         geolocationMode: geolocationMode,
                         locationLink: gpsCoords ? `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : null
                     });
@@ -665,6 +672,7 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                         changeFor,
                         tableNumber,
                         restaurantSlug: restaurantSlug,
+                        splitBill: (orderType === 'dine-in' && isSplitting) ? { count: splitCount, per_person_formatted: formattedSplitAmount } : null,
                         geolocationMode: geolocationMode,
                         locationLink: gpsCoords ? `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}` : null
                     });
@@ -853,7 +861,11 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                                     {cartItems.map(item => (
                                         <div key={item.cartItemId || item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#4a5568' }}>
-                                            <span>{item.quantity}x {item.name} {item.selectedVariant ? `(${item.selectedVariant})` : ''}</span>
+                                            <div className="flex-1 pr-2">
+                                                <span>{item.quantity}x {item.name} {item.selectedVariant ? `(${item.selectedVariant})` : ''}</span>
+                                                {item.variant_name && <span className="block text-[11px] text-[#D4AF37] font-semibold">✨ {item.variant_name}</span>}
+                                                {item.notes && <span className="block text-[10px] text-gray-400 italic">Obs: {item.notes}</span>}
+                                            </div>
                                             <span style={{ fontWeight: 'bold', color: '#1a202c' }}>
                                                 {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(item.price).replace('AOA', 'Kz')}
                                             </span>
@@ -909,6 +921,67 @@ const CheckoutModal = ({ isOpen, onClose, restaurantId, restaurantSlug = '', wha
                                             </div>
                                         </div>
                                     </div>
+                                  {/* Split Bill na Mesa (Divisão de Conta Inteligente) */}
+                                  {orderType === 'dine-in' && (
+                                      <div className="bg-[#121213] rounded-3xl p-4 sm:p-5 border border-[#D4AF37]/30 shadow-xl text-white">
+                                          <div className="flex items-center justify-between">
+                                              <div className="flex items-center gap-3">
+                                                  <div className="w-9 h-9 rounded-2xl bg-[#D4AF37]/15 border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] shrink-0">
+                                                      <Users size={18} />
+                                                  </div>
+                                                  <div>
+                                                      <h4 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                                                          Dividir Conta na Mesa
+                                                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#D4AF37] text-black font-mono font-black">NOVO</span>
+                                                      </h4>
+                                                      <p className="text-[11px] text-gray-400">Calcular o valor exato por pessoa</p>
+                                                  </div>
+                                              </div>
+                                              <button
+                                                  type="button"
+                                                  onClick={() => setIsSplitting(!isSplitting)}
+                                                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${isSplitting ? 'bg-[#D4AF37]' : 'bg-white/20'}`}
+                                              >
+                                                  <span className={`inline-block h-4 w-4 transform rounded-full bg-black transition-transform ${isSplitting ? 'translate-x-6' : 'translate-x-1'}`} />
+                                              </button>
+                                          </div>
+
+                                          {isSplitting && (
+                                              <div className="mt-4 pt-3 border-t border-white/10 animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
+                                                  <div className="flex items-center justify-between">
+                                                      <span className="text-xs text-gray-300 font-medium">Quantas pessoas na mesa?</span>
+                                                      <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
+                                                          {[2, 3, 4, 5, 6].map(num => (
+                                                              <button
+                                                                  key={num}
+                                                                  type="button"
+                                                                  onClick={() => setSplitCount(num)}
+                                                                  className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                                                      splitCount === num
+                                                                          ? 'bg-[#D4AF37] text-black shadow-md font-black scale-105'
+                                                                          : 'text-gray-400 hover:text-white hover:bg-white/10'
+                                                                  }`}
+                                                              >
+                                                                  {num}
+                                                              </button>
+                                                          ))}
+                                                      </div>
+                                                  </div>
+
+                                                  <div className="p-3 rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-between">
+                                                      <div className="flex items-center gap-2">
+                                                          <Users size={16} className="text-[#D4AF37]" />
+                                                          <span className="text-xs text-gray-200 font-semibold">Valor por pessoa ({splitCount}x):</span>
+                                                      </div>
+                                                      <span className="text-base font-black text-[#D4AF37] font-mono">
+                                                          {formattedSplitAmount}
+                                                      </span>
+                                                  </div>
+                                              </div>
+                                          )}
+                                      </div>
+                                  )}
+
                                 </div>
 
                                 <button

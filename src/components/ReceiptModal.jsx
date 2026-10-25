@@ -497,6 +497,7 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Restaurante Ji
                                             <div className="flex-1 text-left pr-2">
                                                 <span className="font-bold block">{item.name}</span>
                                                 {item.variant_name && <span className="text-[9px] text-gray-500 block">↳ {item.variant_name}</span>}
+                                                {item.notes && <span className="text-[8px] text-gray-400 italic block">Obs: {item.notes}</span>}
                                             </div>
                                             <span className="w-20 text-right font-mono font-bold">
                                                 {new Intl.NumberFormat('pt-AO').format(item.price * item.quantity)}
@@ -686,6 +687,7 @@ const ReceiptModal = ({ isOpen, onClose, order, restaurantName = 'Restaurante Ji
                                                     <td className="p-3 font-bold text-gray-900">
                                                         <div>{item.name}</div>
                                                         {item.variant_name && <div className="text-[10px] text-gray-500 font-normal">↳ {item.variant_name}</div>}
+                                                        {item.notes && <div className="text-[9px] text-gray-400 italic font-normal">Obs: {item.notes}</div>}
                                                     </td>
                                                     <td className="p-3 text-center font-mono font-bold text-gray-900">{item.quantity}</td>
                                                     <td className="p-3 text-right font-mono text-gray-700">{formatCurr(item.price)}</td>

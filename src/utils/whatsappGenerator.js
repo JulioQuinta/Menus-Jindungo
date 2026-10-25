@@ -29,6 +29,12 @@ export const generateWhatsAppMessageText = (cartItems, total, orderType, details
 
     cartItems.forEach(item => {
         message += `${item.quantity}x ${item.name} ${item.selectedVariant ? `(${item.selectedVariant})` : ''}\n`;
+        if (item.variant_name) {
+            message += `   ↳ ✨ ${item.variant_name}\n`;
+        }
+        if (item.notes) {
+            message += `   ↳ 📝 Obs: ${item.notes}\n`;
+        }
     });
 
     // Format total nicely
@@ -40,6 +46,9 @@ export const generateWhatsAppMessageText = (cartItems, total, orderType, details
     }
 
     message += `\n*Total: ${formattedTotal}*\n`;
+    if (details.splitBill && details.splitBill.count > 1) {
+        message += `👥 *Conta Dividida:* ${details.splitBill.count} pessoas (${details.splitBill.per_person_formatted} cada)\n`;
+    }
 
     const slug = details.restaurantSlug || '';
     if (slug) {

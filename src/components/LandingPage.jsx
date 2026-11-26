@@ -390,60 +390,96 @@ const LandingPage = () => {
                         </div>
                         <div className="flex items-center gap-4">
                             <span className="text-gray-400">🇦🇴 Luanda &amp; Todas as Províncias</span>
-                            <a href="#precos" className="text-[#D4AF37] font-bold hover:underline">Planos desde 15.000 Kz/mês →</a>
+                            <a href="#precos" className="text-[#D4AF37] font-bold hover:underline">Planos desde 20.000 Kz/mês →</a>
                         </div>
                     </div>
                 </div>
 
-                {/* Main Navbar Row */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+                {/* Main Navbar Row — World-Class Global SaaS Standard */}
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3 lg:gap-4">
                     
                     {/* Left: Brand Logo */}
                     <div
                         onClick={() => navigate('/')}
                         className="flex items-center gap-3 cursor-pointer group select-none shrink-0"
                     >
-                        <div className="w-11 h-11 bg-[#14110D] rounded-2xl flex items-center justify-center border border-[#D4AF37]/50 group-hover:border-[#D4AF37] overflow-hidden shadow-[0_0_20px_rgba(212,175,55,0.25)] transition-all">
+                        <div className="w-10 h-10 sm:w-11 sm:h-11 bg-gradient-to-br from-[#1E1912] to-[#120F0C] rounded-2xl flex items-center justify-center border border-[#D4AF37]/45 group-hover:border-[#D4AF37] overflow-hidden shadow-[0_0_20px_rgba(212,175,55,0.22)] transition-all">
                             <img
                                 src={logoUrl || "/jindungo_logo_v3.png"}
                                 alt="Menús Jindungo"
-                                className="w-full h-full object-contain scale-[1.15] transition-transform duration-300 group-hover:scale-[1.22]"
+                                className="w-full h-full object-contain scale-[1.12] transition-transform duration-300 group-hover:scale-[1.2]"
                             />
                         </div>
-                        <div className="flex flex-col">
-                            <span className="font-display font-extrabold text-lg sm:text-xl tracking-tight text-white leading-none">
-                                Menús <span className="text-[#D4AF37]">Jindungo</span>
-                            </span>
-                            <span className="text-[10px] font-sans font-bold text-amber-200/80 uppercase tracking-widest mt-1">
-                                Restauração &amp; Facturação AGT
+                        <div className="flex flex-col text-left">
+                            <div className="flex items-center gap-2">
+                                <span className="font-display font-extrabold text-lg sm:text-xl tracking-tight text-white leading-none">
+                                    Menús <span className="bg-gradient-to-r from-[#F5E6C8] to-[#D4AF37] bg-clip-text text-transparent">Jindungo</span>
+                                </span>
+                                <span className="hidden sm:inline-flex text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                                    FE/305/AGT
+                                </span>
+                            </div>
+                            <span className="text-[10px] font-medium text-zinc-400 tracking-wider mt-0.5 hidden xs:block">
+                                Smart POS &amp; Restauração
                             </span>
                         </div>
                     </div>
 
-                    {/* Center: Clean Navigation Links */}
-                    <nav className="hidden lg:flex items-center justify-center gap-6 xl:gap-7 text-xs font-display font-bold uppercase tracking-wider text-gray-300">
-                        <a href="#simulador" className="hover:text-[#D4AF37] transition-colors flex items-center gap-1.5 text-[#F3E5AB]">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                            Simulador ao Vivo
+                    {/* Center: Sleek Segmented Island Nav Links (Never Wraps, Ultra Clean) */}
+                    <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5 p-1.5 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-xl shadow-inner">
+                        <a
+                            href="#simulador"
+                            className="whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#F3E5AB] hover:text-white hover:bg-white/[0.08] transition-all flex items-center gap-1.5"
+                        >
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                            </span>
+                            <span>Simulador ao Vivo</span>
                         </a>
-                        <a href="#rastreio-360" className="hover:text-[#D4AF37] transition-colors">Rastreio &amp; KDS</a>
-                        <a href="#facturacao-agt" className="hover:text-[#D4AF37] transition-colors">Facturação AGT</a>
-                        <a href="#precos" className="hover:text-[#D4AF37] transition-colors">Preços</a>
-                        <a href="#quem-somos" className="hover:text-[#D4AF37] transition-colors">Quem Somos</a>
-                        <Link to="/explorar" className="hover:text-[#D4AF37] transition-colors">Restaurantes</Link>
+                        <a
+                            href="#rastreio-360"
+                            className="whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold text-zinc-300 hover:text-white hover:bg-white/[0.08] transition-all"
+                        >
+                            Rastreio &amp; KDS
+                        </a>
+                        <a
+                            href="#facturacao-agt"
+                            className="whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold text-zinc-300 hover:text-white hover:bg-white/[0.08] transition-all"
+                        >
+                            Facturação AGT
+                        </a>
+                        <a
+                            href="#precos"
+                            className="whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold text-zinc-300 hover:text-white hover:bg-white/[0.08] transition-all"
+                        >
+                            Preços
+                        </a>
+                        <a
+                            href="#quem-somos"
+                            className="whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold text-zinc-300 hover:text-white hover:bg-white/[0.08] transition-all"
+                        >
+                            Quem Somos
+                        </a>
+                        <Link
+                            to="/explorar"
+                            className="whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold text-amber-200/90 hover:text-white hover:bg-white/[0.08] transition-all"
+                        >
+                            Restaurantes
+                        </Link>
                     </nav>
 
-                    {/* Right: Actions (Perfectly Centered Buttons) */}
-                    <div className="hidden lg:flex items-center justify-end gap-3 shrink-0">
+                    {/* Right: Actions (Sleek Pills) */}
+                    <div className="hidden lg:flex items-center gap-2.5 shrink-0">
                         <Link
                             to="/login"
-                            className="inline-flex items-center justify-center text-center px-4 py-2.5 rounded-xl font-display font-bold text-xs uppercase tracking-wider text-gray-200 hover:text-white hover:bg-white/10 border border-white/10 hover:border-white/25 transition-all leading-none"
+                            className="whitespace-nowrap px-4 py-2 rounded-full font-display font-semibold text-xs tracking-wide text-zinc-300 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/15 transition-all"
                         >
                             Entrar
                         </Link>
                         <Link
                             to="/register"
-                            className="inline-flex items-center justify-center text-center bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-gray-950 px-5 py-2.5 rounded-xl font-display font-extrabold text-xs uppercase tracking-wider hover:brightness-110 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_6px_25px_rgba(212,175,55,0.35)] leading-none"
+                            className="whitespace-nowrap bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-zinc-950 px-5 py-2.5 rounded-full font-display font-bold text-xs uppercase tracking-wider hover:brightness-110 hover:shadow-[0_0_25px_rgba(212,175,55,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md"
                         >
                             Criar Restaurante
                         </Link>
@@ -512,39 +548,39 @@ const LandingPage = () => {
                     
                     {/* Left Column: Direct, High-Converting Value Proposition */}
                     <div className="lg:col-span-6 space-y-6 text-left">
-                        <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#18130D] border border-[#D4AF37]/45 shadow-[0_0_25px_rgba(212,175,55,0.18)]">
-                            <Flame size={15} className="text-[#D4AF37]" />
-                            <span className="text-[11px] sm:text-xs font-display font-bold uppercase tracking-wider text-[#F3E5AB]">
-                                100% Especializado em Restauração • Certificado FE/305/AGT/2026
+                        <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/10 via-[#D4AF37]/15 to-transparent border border-[#D4AF37]/35 shadow-[0_0_20px_rgba(212,175,55,0.15)]">
+                            <span className="w-2 h-2 rounded-full bg-[#D4AF37] animate-pulse" />
+                            <span className="text-xs font-display font-semibold tracking-wide text-[#F3E5AB]">
+                                Especializado em Restauração • Facturação Certificada FE/305/AGT/2026
                             </span>
                         </div>
 
-                        <h1 className="text-4xl sm:text-5xl xl:text-[3.55rem] font-display font-extrabold tracking-tight leading-[1.07] text-white">
-                            Mesas Cheias, Cozinha Sincronizada e{' '}
-                            <span className="bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#E5A93C] bg-clip-text text-transparent">
-                                Facturação AGT num Único Sistema.
+                        <h1 className="text-3xl sm:text-5xl xl:text-[3.4rem] font-display font-extrabold tracking-tight leading-[1.12] text-white">
+                            Mesas cheias, cozinha sincronizada e{' '}
+                            <span className="bg-gradient-to-r from-[#F5E6C8] via-[#D4AF37] to-[#E5A93C] bg-clip-text text-transparent">
+                                Facturação AGT num único sistema.
                             </span>
                         </h1>
 
-                        <p className="text-gray-300 text-base sm:text-lg leading-relaxed font-normal max-w-2xl">
-                            A plataforma angolana criada para <strong className="text-white font-semibold">Restaurantes, Esplanadas, Pastelarias, Churrasqueiras e Lounges</strong>. Ligue o <strong className="text-[#F3E5AB] font-semibold">Menu QR Code na Mesa</strong> ao <strong className="text-white font-semibold">Ecrã KDS da Cozinha</strong>, dê a cada <strong className="text-white font-semibold">Garçom o seu Terminal por PIN</strong>, ofereça <strong className="text-white font-semibold">Rastreio de Take-Away e Delivery GPS</strong> e emita <strong className="text-emerald-400 font-semibold">Facturas Certificadas pela AGT</strong> — mesmo quando a internet falha.
+                        <p className="text-zinc-300 text-sm sm:text-base lg:text-lg leading-relaxed font-normal max-w-xl">
+                            A plataforma inteligente criada para <strong className="text-white font-medium">Restaurantes, Cafés, Pastelarias, Churrasqueiras e Lounges</strong>. Ligue o <strong className="text-[#F3E5AB] font-medium">Menu QR na mesa</strong> ao <strong className="text-white font-medium">Ecrã KDS da cozinha</strong>, com terminais dedicados por PIN para garçons, rastreio em tempo real e emissão fiscal com ou sem internet.
                         </p>
 
-                        {/* Primary & Secondary Action Buttons — Perfectly Centered */}
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 pt-2">
+                        {/* Primary & Secondary Action Buttons */}
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
                             <Link
                                 to="/register"
-                                className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-gray-950 px-8 py-4 rounded-2xl font-display font-extrabold text-sm uppercase tracking-wider hover:brightness-110 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_12px_35px_rgba(212,175,55,0.4)] text-center"
+                                className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#C59B27] text-zinc-950 px-7 py-3.5 rounded-xl font-display font-bold text-xs sm:text-sm uppercase tracking-wider hover:brightness-110 hover:shadow-[0_10px_30px_rgba(212,175,55,0.35)] active:scale-[0.99] transition-all text-center"
                             >
-                                <span>Criar Restaurante Agora</span>
-                                <ArrowRight size={18} strokeWidth={2.5} />
+                                <span>Criar Restaurante Grátis</span>
+                                <ArrowRight size={17} strokeWidth={2.5} />
                             </Link>
                             <a
                                 href="#simulador"
-                                className="inline-flex items-center justify-center gap-2.5 bg-white/[0.06] hover:bg-white/[0.12] text-white px-7 py-4 rounded-2xl font-display font-bold text-sm uppercase tracking-wider border border-white/15 hover:border-[#D4AF37]/50 transition-all text-center"
+                                className="inline-flex items-center justify-center gap-2.5 bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 hover:text-white px-6 py-3.5 rounded-xl font-display font-semibold text-xs sm:text-sm border border-white/10 hover:border-[#D4AF37]/40 transition-all text-center"
                             >
-                                <Play size={16} className="text-[#D4AF37] fill-[#D4AF37]" />
-                                <span>Ver Simulador ao Vivo</span>
+                                <Play size={15} className="text-[#D4AF37] fill-[#D4AF37]" />
+                                <span>Ver Demonstração ao Vivo</span>
                             </a>
                         </div>
 
@@ -552,30 +588,30 @@ const LandingPage = () => {
                         <div className="pt-5 border-t border-white/10 space-y-4">
                             <div className="flex flex-wrap items-center gap-3">
                                 <div className="flex -space-x-2">
-                                    <img src="/restaurant_dining_african.png" alt="Cliente" className="w-8 h-8 rounded-full object-cover border-2 border-[#D4AF37]" />
-                                    <img src="/login_bg_bitoque.png" alt="Cliente" className="w-8 h-8 rounded-full object-cover border-2 border-[#D4AF37]" />
-                                    <img src="/qr_table_menu.png" alt="Cliente" className="w-8 h-8 rounded-full object-cover border-2 border-[#D4AF37]" />
-                                    <div className="w-8 h-8 rounded-full bg-[#D4AF37] text-black font-display font-extrabold text-[10px] flex items-center justify-center border-2 border-black">
+                                    <img src="/restaurant_dining_african.png" alt="Cliente" className="w-8 h-8 rounded-full object-cover border-2 border-[#14110E] ring-1 ring-[#D4AF37]/40" />
+                                    <img src="/login_bg_bitoque.png" alt="Cliente" className="w-8 h-8 rounded-full object-cover border-2 border-[#14110E] ring-1 ring-[#D4AF37]/40" />
+                                    <img src="/qr_table_menu.png" alt="Cliente" className="w-8 h-8 rounded-full object-cover border-2 border-[#14110E] ring-1 ring-[#D4AF37]/40" />
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4AF37] to-amber-600 text-black font-display font-extrabold text-[10px] flex items-center justify-center border-2 border-[#14110E]">
                                         +50
                                     </div>
                                 </div>
-                                <div className="text-xs text-gray-300">
-                                    <span className="text-[#D4AF37] font-bold">★★★★★ 4,9/5</span> • Escolhido por restaurantes de referência em Angola
+                                <div className="text-xs text-zinc-300">
+                                    <span className="text-[#D4AF37] font-bold">★★★★★ 4.9/5</span> • Recomendado por restaurantes de referência em Angola
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-3">
-                                <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-3">
-                                    <div className="text-xl sm:text-2xl font-display font-extrabold text-[#D4AF37]">+35%</div>
-                                    <p className="text-[11px] text-gray-400">Rotação de mesas</p>
+                            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                                <div className="bg-white/[0.03] backdrop-blur-sm border border-white/10 rounded-2xl p-2.5 sm:p-3 transition-all hover:border-[#D4AF37]/30">
+                                    <div className="text-lg sm:text-2xl font-display font-extrabold text-[#D4AF37]">+35%</div>
+                                    <p className="text-[11px] text-zinc-400 font-medium leading-tight mt-0.5">Rotação de mesas</p>
                                 </div>
-                                <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-3">
-                                    <div className="text-xl sm:text-2xl font-display font-extrabold text-white">0 Papel</div>
-                                    <p className="text-[11px] text-gray-400">Na cozinha (KDS)</p>
+                                <div className="bg-white/[0.03] backdrop-blur-sm border border-white/10 rounded-2xl p-2.5 sm:p-3 transition-all hover:border-[#D4AF37]/30">
+                                    <div className="text-lg sm:text-2xl font-display font-extrabold text-white">0 Papel</div>
+                                    <p className="text-[11px] text-zinc-400 font-medium leading-tight mt-0.5">Na cozinha (KDS)</p>
                                 </div>
-                                <div className="bg-white/[0.03] border border-emerald-500/25 rounded-2xl p-3">
-                                    <div className="text-base sm:text-xl font-display font-extrabold text-emerald-400">FE/305/AGT</div>
-                                    <p className="text-[11px] text-gray-400">Validado pela AGT</p>
+                                <div className="bg-white/[0.03] backdrop-blur-sm border border-emerald-500/25 rounded-2xl p-2.5 sm:p-3 transition-all hover:border-emerald-500/40">
+                                    <div className="text-sm sm:text-xl font-display font-extrabold text-emerald-400">FE/305/AGT</div>
+                                    <p className="text-[11px] text-zinc-400 font-medium leading-tight mt-0.5">Validado pela AGT</p>
                                 </div>
                             </div>
                         </div>
@@ -586,89 +622,115 @@ const LandingPage = () => {
                         <div className="relative mx-auto max-w-xl lg:max-w-none">
                             
                             {/* Ambient Golden Halo */}
-                            <div className="absolute -inset-4 bg-gradient-to-tr from-[#D4AF37]/30 via-amber-500/15 to-emerald-500/15 rounded-[2.8rem] blur-2xl opacity-75 pointer-events-none" />
+                            <div className="absolute -inset-4 bg-gradient-to-tr from-[#D4AF37]/25 via-amber-500/10 to-emerald-500/10 rounded-[2.8rem] blur-2xl opacity-70 pointer-events-none" />
 
                             {/* Floating Top-Right Badge: Kitchen Pass Notification */}
-                            <div className="hidden sm:flex absolute -top-5 -right-3 z-30 bg-[#14110D]/95 backdrop-blur-xl border-2 border-[#D4AF37] rounded-2xl px-4 py-3 items-center gap-3 shadow-[0_15px_35px_rgba(0,0,0,0.8)]">
-                                <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center shrink-0">
-                                    <Bell size={20} className="animate-bounce" />
+                            <div className="hidden sm:flex absolute -top-5 -right-3 z-30 bg-[#14110D]/95 backdrop-blur-xl border border-[#D4AF37]/60 rounded-2xl px-4 py-3 items-center gap-3 shadow-[0_15px_35px_rgba(0,0,0,0.8)]">
+                                <div className="w-9 h-9 rounded-xl bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center shrink-0">
+                                    <Bell size={18} className="animate-bounce" />
                                 </div>
                                 <div className="text-left">
-                                    <div className="text-[10px] font-display font-extrabold uppercase tracking-wider text-[#D4AF37]">
+                                    <div className="text-[10px] font-display font-bold uppercase tracking-wider text-[#D4AF37]">
                                         Passe da Cozinha • Ao Vivo
                                     </div>
-                                    <div className="text-xs font-display font-bold text-white">
+                                    <div className="text-xs font-display font-semibold text-white">
                                         Mesa 08 pronta a servir! (Garçom Paulo)
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Main Interactive Photo Showcase Card */}
-                            <div className="relative rounded-[2.2rem] overflow-hidden border-2 border-[#D4AF37]/50 bg-[#14110E] shadow-[0_25px_70px_rgba(0,0,0,0.9)]">
-                                <div className="relative h-[400px] sm:h-[470px] w-full overflow-hidden">
+                            {/* 4-Module Navigation Tabs - Sits ABOVE the image so the photo stays 100% visible */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1.5 rounded-2xl bg-black/60 border border-white/10 backdrop-blur-xl mb-3 shadow-inner">
+                                {HERO_GALLERY.map((item, idx) => {
+                                    const isActive = idx === heroSlide;
+                                    return (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => setHeroSlide(idx)}
+                                            className={`py-2 px-2.5 rounded-xl font-display text-xs transition-all duration-200 cursor-pointer text-center truncate ${
+                                                isActive
+                                                    ? 'bg-gradient-to-r from-[#D4AF37] to-amber-500 text-black font-bold shadow-md shadow-[#D4AF37]/25 scale-[1.02]'
+                                                    : 'text-zinc-400 hover:text-white hover:bg-white/5 font-medium'
+                                            }`}
+                                        >
+                                            {item.tag}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Main Showcase Stage with Unobstructed Image */}
+                            <div className="relative rounded-3xl overflow-hidden border border-[#D4AF37]/40 bg-[#120F0C] shadow-[0_25px_70px_rgba(0,0,0,0.9)]">
+                                
+                                {/* Photo Container: Pristine, Fully Visible and Framed */}
+                                <div className="relative h-[250px] sm:h-[340px] md:h-[370px] w-full overflow-hidden bg-black/60">
                                     {HERO_GALLERY.map((slide, index) => (
                                         <img
                                             key={slide.id}
                                             src={slide.image}
                                             alt={slide.title}
-                                            className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ${
-                                                index === heroSlide ? 'opacity-100 scale-100' : 'opacity-0 scale-105 pointer-events-none'
+                                            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-out ${
+                                                index === heroSlide
+                                                    ? 'opacity-100 scale-100 brightness-[0.95]'
+                                                    : 'opacity-0 scale-105 pointer-events-none'
                                             }`}
                                         />
                                     ))}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-[#0B0907] via-[#0B0907]/35 to-black/25" />
 
-                                    {/* Top-Left Step Indicator */}
-                                    <div className="absolute top-4 left-4 flex items-center gap-2 z-20">
-                                        <span className="px-3.5 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-[#D4AF37]/50 text-[#F3E5AB] font-display font-bold text-xs shadow-lg">
-                                            {currentHero.tag}
-                                        </span>
-                                        <span className="px-3 py-1.5 rounded-full bg-emerald-950/90 backdrop-blur-md border border-emerald-400/40 text-emerald-300 font-display font-bold text-[11px] flex items-center gap-1.5 shadow-lg">
+                                    {/* Soft cinematic vignette gradient that never covers the content */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-[#120F0C] via-transparent to-black/25 pointer-events-none" />
+
+                                    {/* Top-Left Live Step Indicator (Compact Glass Pill) */}
+                                    <div className="absolute top-3.5 left-3.5 flex items-center gap-2 z-20">
+                                        <span className="px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-emerald-400/30 text-emerald-300 font-display font-semibold text-[11px] sm:text-xs flex items-center gap-1.5 shadow-lg">
                                             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
                                             {currentHero.liveStep}
                                         </span>
                                     </div>
 
-                                    {/* Bottom Interactive Card Overlay */}
-                                    <div className="absolute bottom-0 inset-x-0 p-5 sm:p-6 z-20 space-y-3">
-                                        <div className="bg-black/85 backdrop-blur-xl border border-white/15 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-2xl">
-                                            <div className="text-left">
-                                                <div className="text-[11px] font-display font-bold uppercase tracking-wider text-[#D4AF37]">
-                                                    {currentHero.orderBadge}
-                                                </div>
-                                                <div className="text-base sm:text-lg font-display font-extrabold text-white mt-0.5">
-                                                    {currentHero.title}
-                                                </div>
-                                                <p className="text-xs text-gray-300 mt-0.5 line-clamp-2">
-                                                    {currentHero.desc}
-                                                </p>
-                                            </div>
-                                            <div className="shrink-0 text-right bg-[#D4AF37]/15 border border-[#D4AF37]/40 px-3.5 py-2.5 rounded-xl">
-                                                <span className="text-[10px] text-emerald-300 font-bold block uppercase">{currentHero.statusBadge}</span>
-                                                <span className="text-xs sm:text-sm font-display font-extrabold text-[#F3E5AB] mt-0.5 block">
-                                                    {currentHero.priceBadge}
-                                                </span>
-                                            </div>
-                                        </div>
+                                    {/* Top-Right Badge (Compact Glass Pill) */}
+                                    <div className="absolute top-3.5 right-3.5 z-20">
+                                        <span className="px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-[#D4AF37]/50 text-[#F3E5AB] font-display font-semibold text-[11px] sm:text-xs shadow-lg">
+                                            {currentHero.priceBadge}
+                                        </span>
+                                    </div>
 
-                                        {/* 4-Mode Interactive Selector */}
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-                                            {HERO_GALLERY.map((item, idx) => (
+                                    {/* Bottom-Right Floating Status Pill */}
+                                    <div className="absolute bottom-3 right-3 z-20">
+                                        <span className="px-3 py-1 rounded-full bg-black/85 backdrop-blur-md border border-[#D4AF37]/40 text-amber-200 font-display font-medium text-[11px] sm:text-xs shadow-xl">
+                                            {currentHero.statusBadge}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Content Dock BELOW the Image (Leaving the photo 100% visible!) */}
+                                <div className="p-4 sm:p-5 bg-gradient-to-b from-[#15120E] to-[#0E0C09] border-t border-white/10 text-left space-y-1.5">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="text-[11px] font-display font-bold uppercase tracking-wider text-[#D4AF37]">
+                                            {currentHero.orderBadge}
+                                        </span>
+                                        {/* Slide indicator dots */}
+                                        <div className="flex items-center gap-1.5">
+                                            {HERO_GALLERY.map((_, i) => (
                                                 <button
-                                                    key={item.id}
-                                                    onClick={() => setHeroSlide(idx)}
-                                                    className={`py-2.5 px-2.5 rounded-xl font-display font-bold text-[11px] transition-all cursor-pointer truncate border text-center ${
-                                                        idx === heroSlide
-                                                            ? 'bg-[#D4AF37] text-black border-[#D4AF37] shadow-md'
-                                                            : 'bg-black/70 text-gray-300 border-white/15 hover:bg-white/10'
+                                                    key={i}
+                                                    onClick={() => setHeroSlide(i)}
+                                                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                                                        i === heroSlide ? 'w-5 bg-[#D4AF37]' : 'w-1.5 bg-white/20 hover:bg-white/40'
                                                     }`}
-                                                >
-                                                    {item.tag}
-                                                </button>
+                                                    aria-label={`Slide ${i + 1}`}
+                                                />
                                             ))}
                                         </div>
                                     </div>
+                                    <h3 className="text-base sm:text-lg font-display font-bold text-white tracking-tight">
+                                        {currentHero.title}
+                                    </h3>
+                                    <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed line-clamp-2">
+                                        {currentHero.desc}
+                                    </p>
                                 </div>
+
                             </div>
 
                         </div>
@@ -738,15 +800,15 @@ const LandingPage = () => {
                         
                         {/* Left: Photo + Live Device Mockup */}
                         <div className="lg:col-span-5 relative">
-                            <div className="relative h-72 sm:h-80 rounded-2xl overflow-hidden border border-[#D4AF37]/40 shadow-xl">
+                            <div className="relative h-72 sm:h-80 rounded-2xl overflow-hidden border border-[#D4AF37]/40 shadow-xl group">
                                 <img
                                     src={currentSim.image}
                                     alt={currentSim.title}
-                                    className="w-full h-full object-cover transition-all duration-700"
+                                    className="w-full h-full object-cover transition-all duration-700 brightness-[0.95] group-hover:scale-105"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-                                <div className="absolute bottom-4 left-4 right-4">
-                                    <span className="px-3 py-1 rounded-full bg-[#D4AF37] text-black font-display font-extrabold text-[11px] uppercase">
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                                <div className="absolute bottom-3.5 left-3.5 right-3.5">
+                                    <span className="px-3 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-[#D4AF37]/50 text-[#F3E5AB] font-display font-semibold text-xs shadow-lg inline-block">
                                         {currentSim.badge}
                                     </span>
                                 </div>
@@ -858,15 +920,15 @@ const LandingPage = () => {
                                 </div>
                             </div>
                             <div className="lg:col-span-6">
-                                <div className="relative h-72 sm:h-80 rounded-3xl overflow-hidden border border-[#D4AF37]/40">
-                                    <img src="/qr_table_menu.png" alt="Rastreio na Mesa" className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent flex items-end p-6">
-                                        <div className="bg-black/80 backdrop-blur-md border border-[#D4AF37]/50 rounded-2xl p-4 w-full flex items-center justify-between">
-                                            <div>
-                                                <div className="text-xs font-display font-bold text-[#D4AF37]">MESA 08 • SALÃO PRINCIPAL</div>
-                                                <div className="text-sm font-display font-extrabold text-white">🔔 O seu prato saiu para o Passe! O garçom já vem servir.</div>
+                                <div className="relative h-72 sm:h-80 rounded-3xl overflow-hidden border border-[#D4AF37]/40 shadow-xl group">
+                                    <img src="/qr_table_menu.png" alt="Rastreio na Mesa" className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent flex items-end p-3.5 sm:p-5 pointer-events-none">
+                                        <div className="bg-black/80 backdrop-blur-md border border-[#D4AF37]/40 rounded-2xl p-3 sm:p-3.5 w-full flex items-center justify-between gap-3 shadow-xl">
+                                            <div className="text-left">
+                                                <div className="text-[11px] font-display font-semibold text-[#D4AF37]">MESA 08 • SALÃO PRINCIPAL</div>
+                                                <div className="text-xs sm:text-sm font-display font-semibold text-white mt-0.5">🔔 O seu prato saiu para o Passe! O garçom já vem servir.</div>
                                             </div>
-                                            <span className="px-3 py-1 rounded-full bg-emerald-500 text-black font-display font-extrabold text-xs">Ao Vivo</span>
+                                            <span className="px-2.5 py-1 rounded-full bg-emerald-500 text-black font-display font-bold text-[11px] shrink-0">Ao Vivo</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1243,7 +1305,7 @@ const LandingPage = () => {
             </section>
 
             {/* =====================================================================
-                8. PLANOS & PREÇOS ACTUALIZADOS (15.000 / 25.000 / 40.000 / 25.000 KZ)
+                8. PLANOS & PREÇOS ACTUALIZADOS (20.000 / 30.000 / 45.000 / 30.000 KZ)
                ===================================================================== */}
             <section id="precos" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
                 <div className="text-center max-w-3xl mx-auto mb-12 space-y-4">
@@ -1282,7 +1344,7 @@ const LandingPage = () => {
                 {/* 4 Pricing Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
                     
-                    {/* 1. PLANO START — 15.000 KZ */}
+                    {/* 1. PLANO START — 20.000 KZ */}
                     <div className="bg-[#14110E] border border-white/10 hover:border-[#D4AF37]/50 rounded-3xl p-7 flex flex-col justify-between transition-all shadow-xl text-left">
                         <div>
                             <div className="flex items-center justify-between mb-4">
@@ -1297,13 +1359,13 @@ const LandingPage = () => {
                             <div className="mb-6 pb-6 border-b border-white/10">
                                 <div className="flex items-baseline gap-1">
                                     <span className="text-3xl sm:text-4xl font-display font-extrabold text-white">
-                                        {getPrice(15000).monthly}
+                                        {getPrice(20000).monthly}
                                     </span>
                                     <span className="text-sm font-display font-bold text-[#D4AF37]">Kz / mês</span>
                                 </div>
-                                {getPrice(15000).tag && (
+                                {getPrice(20000).tag && (
                                     <span className="text-[11px] text-emerald-400 font-bold block mt-1">
-                                        {getPrice(15000).tag} • Total: {getPrice(15000).total} Kz / {getPrice(15000).mult}
+                                        {getPrice(20000).tag} • Total: {getPrice(20000).total} Kz / {getPrice(20000).mult}
                                     </span>
                                 )}
                             </div>
@@ -1324,7 +1386,7 @@ const LandingPage = () => {
                         </Link>
                     </div>
 
-                    {/* 2. PLANO BUSINESS — 25.000 KZ */}
+                    {/* 2. PLANO BUSINESS — 30.000 KZ */}
                     <div className="bg-gradient-to-b from-[#221B11] to-[#14110E] border-2 border-[#D4AF37] rounded-3xl p-7 flex flex-col justify-between transition-all shadow-[0_15px_50px_rgba(212,175,55,0.22)] relative text-left">
                         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-[#D4AF37] to-amber-500 text-black font-display font-extrabold text-[10px] uppercase tracking-widest shadow-lg whitespace-nowrap">
                             ⭐ Mais Escolhido
@@ -1343,13 +1405,13 @@ const LandingPage = () => {
                             <div className="mb-6 pb-6 border-b border-white/10">
                                 <div className="flex items-baseline gap-1">
                                     <span className="text-3xl sm:text-4xl font-display font-extrabold text-[#F3E5AB]">
-                                        {getPrice(25000).monthly}
+                                        {getPrice(30000).monthly}
                                     </span>
                                     <span className="text-sm font-display font-bold text-[#D4AF37]">Kz / mês</span>
                                 </div>
-                                {getPrice(25000).tag && (
+                                {getPrice(30000).tag && (
                                     <span className="text-[11px] text-emerald-400 font-bold block mt-1">
-                                        {getPrice(25000).tag} • Total: {getPrice(25000).total} Kz / {getPrice(25000).mult}
+                                        {getPrice(30000).tag} • Total: {getPrice(30000).total} Kz / {getPrice(30000).mult}
                                     </span>
                                 )}
                             </div>
@@ -1371,7 +1433,7 @@ const LandingPage = () => {
                         </Link>
                     </div>
 
-                    {/* 3. PLANO CORPORATE — 40.000 KZ */}
+                    {/* 3. PLANO CORPORATE — 45.000 KZ */}
                     <div className="bg-[#14110E] border border-white/10 hover:border-[#D4AF37]/50 rounded-3xl p-7 flex flex-col justify-between transition-all shadow-xl text-left">
                         <div>
                             <div className="flex items-center justify-between mb-4">
@@ -1386,13 +1448,13 @@ const LandingPage = () => {
                             <div className="mb-6 pb-6 border-b border-white/10">
                                 <div className="flex items-baseline gap-1">
                                     <span className="text-3xl sm:text-4xl font-display font-extrabold text-white">
-                                        {getPrice(40000).monthly}
+                                        {getPrice(45000).monthly}
                                     </span>
                                     <span className="text-sm font-display font-bold text-[#D4AF37]">Kz / mês</span>
                                 </div>
-                                {getPrice(40000).tag && (
+                                {getPrice(45000).tag && (
                                     <span className="text-[11px] text-emerald-400 font-bold block mt-1">
-                                        {getPrice(40000).tag} • Total: {getPrice(40000).total} Kz / {getPrice(40000).mult}
+                                        {getPrice(45000).tag} • Total: {getPrice(45000).total} Kz / {getPrice(45000).mult}
                                     </span>
                                 )}
                             </div>
@@ -1414,7 +1476,7 @@ const LandingPage = () => {
                         </Link>
                     </div>
 
-                    {/* 4. FACTURAÇÃO ELECTRÓNICA MENSAL — 25.000 KZ */}
+                    {/* 4. FACTURAÇÃO ELECTRÓNICA MENSAL — 30.000 KZ */}
                     <div className="bg-gradient-to-b from-[#111C16] to-[#14110E] border border-emerald-500/40 hover:border-emerald-400 rounded-3xl p-7 flex flex-col justify-between transition-all shadow-xl text-left">
                         <div>
                             <div className="flex items-center justify-between mb-4">
@@ -1429,13 +1491,13 @@ const LandingPage = () => {
                             <div className="mb-6 pb-6 border-b border-white/10">
                                 <div className="flex items-baseline gap-1">
                                     <span className="text-3xl sm:text-4xl font-display font-extrabold text-emerald-400">
-                                        {getPrice(25000).monthly}
+                                        {getPrice(30000).monthly}
                                     </span>
                                     <span className="text-sm font-display font-bold text-emerald-300">Kz / mês</span>
                                 </div>
-                                {getPrice(25000).tag && (
+                                {getPrice(30000).tag && (
                                     <span className="text-[11px] text-emerald-400 font-bold block mt-1">
-                                        {getPrice(25000).tag} • Total: {getPrice(25000).total} Kz / {getPrice(25000).mult}
+                                        {getPrice(30000).tag} • Total: {getPrice(30000).total} Kz / {getPrice(30000).mult}
                                     </span>
                                 )}
                             </div>

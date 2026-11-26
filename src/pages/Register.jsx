@@ -322,10 +322,10 @@ const Register = () => {
                                 </label>
                                 <div className="grid grid-cols-2 gap-2.5">
                                     {[
-                                        { id: 'start', name: 'Plano Start', price: '15.000 Kz/mês', desc: 'Menu QR + Pedidos WhatsApp' },
-                                        { id: 'business', name: 'Plano Business', price: '25.000 Kz/mês', desc: 'Salão, Cozinha KDS + Rastreio' },
-                                        { id: 'corporate', name: 'Plano Corporate', price: '40.000 Kz/mês', desc: 'Completo + Facturação AGT' },
-                                        { id: 'billing_only', name: 'Facturação POS AGT', price: '25.000 Kz/mês', desc: 'Certificado FE/305/AGT/2026' }
+                                        { id: 'start', name: 'Plano Start', price: '20.000 Kz/mês', desc: 'Menu QR + Pedidos WhatsApp' },
+                                        { id: 'business', name: 'Plano Business', price: '30.000 Kz/mês', desc: 'Salão, Cozinha KDS + Rastreio' },
+                                        { id: 'corporate', name: 'Plano Corporate', price: '45.000 Kz/mês', desc: 'Completo + Facturação AGT' },
+                                        { id: 'billing_only', name: 'Facturação POS AGT', price: '30.000 Kz/mês', desc: 'Certificado FE/305/AGT/2026' }
                                     ].map((plan) => (
                                         <button
                                             key={plan.id}
